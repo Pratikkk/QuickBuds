@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">Voix plus claires dans les morceaux</string>
     <string name="row_wind_noise_title">Réduction du bruit du vent</string>
     <string name="row_wind_noise_sub">Moins de bruit de vent en extérieur</string>
+    <string name="settings_protocol_next_title">Nouveau protocole (bêta)</string>
+    <string name="settings_protocol_next_sub">Une liaison refaite et plus précise avec les écouteurs. Reconnectez-vous pour l\'appliquer.</string>
+    <string name="protocol_next_dialog_title">Nouveau protocole disponible</string>
+    <string name="protocol_next_dialog_body">QuickBuds 5.0 a une couche de protocole refaite. Elle dialogue avec les écouteurs de façon plus précise et plus propre. Elle est désactivée par défaut. Vous pouvez l\'activer ou la désactiver à tout moment dans les Paramètres.</string>
+    <string name="protocol_next_dialog_try">Essayer le nouveau protocole</string>
+    <string name="protocol_next_dialog_later">Pas maintenant</string>
     <string name="row_game_eq_title">Égaliseur de jeu</string>
     <string name="row_game_eq_sub">Passe les écouteurs sur leur son de jeu tant qu\'un jeu est ouvert</string>
     <string name="game_eq_access_title">Accès à l\'utilisation requis</string>

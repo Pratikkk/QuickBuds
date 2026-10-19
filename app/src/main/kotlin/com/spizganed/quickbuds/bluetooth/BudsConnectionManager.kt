@@ -23,6 +23,8 @@ import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.GoldenSound
 import com.spizganed.quickbuds.protocol.OppoPacketFramer
+import com.spizganed.quickbuds.protocol2.ProtocolNext
+import com.spizganed.quickbuds.protocol2.Wire
 import com.spizganed.quickbuds.protocol.UserInteractionParser
 import com.spizganed.quickbuds.protocol.WearingStatusParser
 import com.spizganed.quickbuds.ui.GestureConfigStore
@@ -1070,6 +1072,9 @@ class BudsConnectionManager(private val context: Context) {
         private val framer = OppoPacketFramer().also { f ->
             f.onDiscard = { log("DISCARDED RX bytes (not a frame): ${OpoProtocol.bytesToHex(it)}") }
         }
+        /** The "new protocol" setting (docs/PROTOCOL-NEXT.md): the rebuilt link layer, read once per connection. */
+        private val next = ProtocolNext.enabled(context)
+        private val wire = Wire.Reassembler { log("DISCARDED RX bytes (not a frame): ${OpoProtocol.bytesToHex(it)}") }
 
         override fun run() {
             while (true) {
@@ -1079,9 +1084,12 @@ class BudsConnectionManager(private val context: Context) {
                     if (bytes < 0) throw IOException("stream closed")
                     if (bytes > 0) {
                         bridge?.forward(buffer, bytes)
-                        val frames = framer.append(buffer, bytes)
-                        for (frame in frames) {
-                            handlePacket(frame)
+                        if (next) {
+                            // The handlers still read the fixed 9-byte header, so each message goes in as one.
+                            for (m in wire.push(buffer, bytes))
+                                handlePacket(OppoPacketFramer.normalise(OpoProtocol.buildPacket(m.cmd, m.seq, m.payload)))
+                        } else {
+                            for (frame in framer.append(buffer, bytes)) handlePacket(frame)
                         }
                     }
                 } catch (e: IOException) {
@@ -1104,7 +1112,9 @@ class BudsConnectionManager(private val context: Context) {
 
         fun write(bytes: ByteArray) {
             try {
-                outputStream.write(bytes)
+                // New protocol: a message too big for one frame goes out in slices (docs/PROTOCOL-NEXT.md §2).
+                val frames = if (next) Wire.Reassembler().push(bytes).flatMap { Wire.encode(it) }.ifEmpty { listOf(bytes) } else listOf(bytes)
+                for (f in frames) outputStream.write(f)
                 outputStream.flush()
             } catch (e: IOException) {
                 log("Write failed: ${e.message}")

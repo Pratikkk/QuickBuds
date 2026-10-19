@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">Klarerer Gesang in Songs</string>
     <string name="row_wind_noise_title">Windgeräuschreduzierung</string>
     <string name="row_wind_noise_sub">Weniger Windgeräusche im Freien</string>
+    <string name="settings_protocol_next_title">Neues Protokoll (Beta)</string>
+    <string name="settings_protocol_next_sub">Eine neu aufgebaute, genauere Verbindung zu den Ohrhörern. Zum Anwenden neu verbinden.</string>
+    <string name="protocol_next_dialog_title">Neues Protokoll verfügbar</string>
+    <string name="protocol_next_dialog_body">QuickBuds 5.0 hat eine neu aufgebaute Protokollschicht. Sie spricht genauer und sauberer mit den Ohrhörern. Sie ist standardmäßig aus. In den Einstellungen kannst du sie jederzeit ein- oder ausschalten.</string>
+    <string name="protocol_next_dialog_try">Neues Protokoll testen</string>
+    <string name="protocol_next_dialog_later">Nicht jetzt</string>
     <string name="row_game_eq_title">Game-Equalizer</string>
     <string name="row_game_eq_sub">Schaltet die Ohrhörer auf ihren Spielsound, solange ein Spiel läuft</string>
     <string name="game_eq_access_title">Nutzungszugriff nötig</string>

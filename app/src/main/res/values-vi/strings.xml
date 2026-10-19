@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">Giọng hát rõ hơn trong bài hát</string>
     <string name="row_wind_noise_title">Giảm tiếng ồn gió</string>
     <string name="row_wind_noise_sub">Ít tiếng ồn gió hơn khi ở ngoài trời</string>
+    <string name="settings_protocol_next_title">Giao thức mới (beta)</string>
+    <string name="settings_protocol_next_sub">Kết nối với tai nghe được xây dựng lại, chính xác hơn. Kết nối lại để áp dụng.</string>
+    <string name="protocol_next_dialog_title">Có giao thức mới</string>
+    <string name="protocol_next_dialog_body">QuickBuds 5.0 có lớp giao thức được xây dựng lại. Nó giao tiếp với tai nghe chính xác và gọn hơn. Mặc định đang tắt. Bạn có thể bật hoặc tắt bất cứ lúc nào trong Cài đặt.</string>
+    <string name="protocol_next_dialog_try">Thử giao thức mới</string>
+    <string name="protocol_next_dialog_later">Để sau</string>
     <string name="row_game_eq_title">Bộ cân bằng cho game</string>
     <string name="row_game_eq_sub">Chuyển tai nghe sang âm thanh game khi đang mở game</string>
     <string name="game_eq_access_title">Cần quyền truy cập mức sử dụng</string>

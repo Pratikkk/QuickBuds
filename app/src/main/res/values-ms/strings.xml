@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">Vokal lebih jelas dalam lagu</string>
     <string name="row_wind_noise_title">Pengurangan bunyi angin</string>
     <string name="row_wind_noise_sub">Kurang bunyi angin di luar</string>
+    <string name="settings_protocol_next_title">Protokol baharu (beta)</string>
+    <string name="settings_protocol_next_sub">Sambungan yang dibina semula dan lebih tepat ke earbud. Sambung semula untuk menggunakannya.</string>
+    <string name="protocol_next_dialog_title">Protokol baharu tersedia</string>
+    <string name="protocol_next_dialog_body">QuickBuds 5.0 mempunyai lapisan protokol yang dibina semula. Ia berkomunikasi dengan earbud dengan lebih tepat dan bersih. Ia dimatikan secara lalai. Anda boleh menghidupkan atau mematikannya bila-bila masa dalam Tetapan.</string>
+    <string name="protocol_next_dialog_try">Cuba protokol baharu</string>
+    <string name="protocol_next_dialog_later">Bukan sekarang</string>
     <string name="row_game_eq_title">Penyama game</string>
     <string name="row_game_eq_sub">Menukar earbud kepada bunyi game semasa game dibuka</string>
     <string name="game_eq_access_title">Akses penggunaan diperlukan</string>

@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">Mas malinaw na boses sa mga kanta</string>
     <string name="row_wind_noise_title">Pagbawas ng ingay ng hangin</string>
     <string name="row_wind_noise_sub">Mas kaunting ingay ng hangin sa labas</string>
+    <string name="settings_protocol_next_title">Bagong protocol (beta)</string>
+    <string name="settings_protocol_next_sub">Isang muling-ginawa, mas tumpak na koneksyon sa earbuds. Kumonekta ulit para ilapat.</string>
+    <string name="protocol_next_dialog_title">May bagong protocol</string>
+    <string name="protocol_next_dialog_body">May muling-ginawang protocol layer ang QuickBuds 5.0. Mas tumpak at malinis itong nakikipag-usap sa earbuds. Naka-off ito bilang default. Maaari mo itong i-on o i-off anumang oras sa Settings.</string>
+    <string name="protocol_next_dialog_try">Subukan ang bagong protocol</string>
+    <string name="protocol_next_dialog_later">Mamaya na</string>
     <string name="row_game_eq_title">Game equalizer</string>
     <string name="row_game_eq_sub">Inilalagay ang earbuds sa game sound habang bukas ang isang laro</string>
     <string name="game_eq_access_title">Kailangan ang usage access</string>

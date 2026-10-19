@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">Более чёткий вокал в песнях</string>
     <string name="row_wind_noise_title">Подавление шума ветра</string>
     <string name="row_wind_noise_sub">Меньше шума ветра на улице</string>
+    <string name="settings_protocol_next_title">Новый протокол (бета)</string>
+    <string name="settings_protocol_next_sub">Переработанное, более точное соединение с наушниками. Подключитесь заново, чтобы применить.</string>
+    <string name="protocol_next_dialog_title">Доступен новый протокол</string>
+    <string name="protocol_next_dialog_body">В QuickBuds 5.0 переработан уровень протокола. Он обменивается данными с наушниками точнее и чище. По умолчанию он выключен. Включить или выключить его можно в любой момент в настройках.</string>
+    <string name="protocol_next_dialog_try">Попробовать новый протокол</string>
+    <string name="protocol_next_dialog_later">Не сейчас</string>
     <string name="row_game_eq_title">Эквалайзер для игр</string>
     <string name="row_game_eq_sub">Переключает наушники на игровой звук, пока открыта игра</string>
     <string name="game_eq_access_title">Нужен доступ к данным об использовании</string>

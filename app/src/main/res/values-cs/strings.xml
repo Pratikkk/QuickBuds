@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">Čistší zpěv ve skladbách</string>
     <string name="row_wind_noise_title">Potlačení hluku větru</string>
     <string name="row_wind_noise_sub">Méně hluku větru venku</string>
+    <string name="settings_protocol_next_title">Nový protokol (beta)</string>
+    <string name="settings_protocol_next_sub">Přestavěné, přesnější spojení se sluchátky. Použijete ho po opětovném připojení.</string>
+    <string name="protocol_next_dialog_title">Je dostupný nový protokol</string>
+    <string name="protocol_next_dialog_body">QuickBuds 5.0 má přestavěnou vrstvu protokolu. Se sluchátky komunikuje přesněji a čistěji. Ve výchozím stavu je vypnutá. V Nastavení ji můžete kdykoli zapnout nebo vypnout.</string>
+    <string name="protocol_next_dialog_try">Vyzkoušet nový protokol</string>
+    <string name="protocol_next_dialog_later">Teď ne</string>
     <string name="row_game_eq_title">Herní ekvalizér</string>
     <string name="row_game_eq_sub">Při otevřené hře přepne sluchátka na herní zvuk</string>
     <string name="game_eq_access_title">Je potřeba přístup k využití</string>

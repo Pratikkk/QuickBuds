@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">গানে আরও স্পষ্ট কণ্ঠ</string>
     <string name="row_wind_noise_title">বাতাসের শব্দ কমানো</string>
     <string name="row_wind_noise_sub">বাইরে বাতাসের শব্দ কম</string>
+    <string name="settings_protocol_next_title">নতুন প্রোটোকল (বিটা)</string>
+    <string name="settings_protocol_next_sub">ইয়ারবাডের সাথে নতুন করে তৈরি, আরও নির্ভুল সংযোগ। প্রয়োগ করতে আবার সংযোগ করুন।</string>
+    <string name="protocol_next_dialog_title">নতুন প্রোটোকল পাওয়া যাচ্ছে</string>
+    <string name="protocol_next_dialog_body">QuickBuds 5.0-এ প্রোটোকল স্তর নতুন করে তৈরি হয়েছে। এটি ইয়ারবাডের সাথে আরও নির্ভুল ও পরিষ্কারভাবে কথা বলে। এটি ডিফল্টভাবে বন্ধ থাকে। সেটিংসে যেকোনো সময় চালু বা বন্ধ করতে পারেন।</string>
+    <string name="protocol_next_dialog_try">নতুন প্রোটোকল চেষ্টা করুন</string>
+    <string name="protocol_next_dialog_later">এখন নয়</string>
     <string name="row_game_eq_title">গেম ইকুয়ালাইজার</string>
     <string name="row_game_eq_sub">গেম চলার সময় ইয়ারবাডকে গেম সাউন্ডে নেয়</string>
     <string name="game_eq_access_title">ব্যবহারের অ্যাক্সেস দরকার</string>

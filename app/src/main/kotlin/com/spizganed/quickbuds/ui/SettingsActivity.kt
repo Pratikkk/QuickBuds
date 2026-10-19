@@ -53,7 +53,9 @@ class SettingsActivity : Activity() {
             backgroundRow(prefs),
             toggle(R.drawable.ic_battery, R.string.settings_clear_battery_title, R.string.settings_clear_battery_sub,
                 BudsService.PREF_CLEAR_BATTERY, false),
-            toggle(R.drawable.ic_dev_tools, R.string.settings_devtools_title, R.string.settings_devtools_sub, KEY_DEV_TOOLS_BUTTON, true)
+            toggle(R.drawable.ic_dev_tools, R.string.settings_devtools_title, R.string.settings_devtools_sub, KEY_DEV_TOOLS_BUTTON, true),
+            toggle(R.drawable.ic_earbud, R.string.settings_protocol_next_title, R.string.settings_protocol_next_sub,
+                com.spizganed.quickbuds.protocol2.ProtocolNext.KEY, false)
         )
         general.add(0, link(R.drawable.ic_language, R.string.settings_language_title, R.string.settings_language_sub) {
             startActivity(Intent(this, LanguageActivity::class.java))

@@ -296,6 +296,17 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         renderConnectionPill(state.connected)
     }
 
+    /** From 5.0.0 on, once: tells the user about the new protocol switch and offers to turn it on. */
+    private fun maybeAskProtocolNext() {
+        val next = com.spizganed.quickbuds.protocol2.ProtocolNext
+        if (isFinishing || !next.shouldAsk(this, UpdateChecker.installed(this))) return
+        next.markAsked(this)
+        ConfirmDialog.show(
+            this, getString(R.string.protocol_next_dialog_title), getString(R.string.protocol_next_dialog_body),
+            getString(R.string.protocol_next_dialog_try), cancelRes = R.string.protocol_next_dialog_later
+        ) { next.set(this, true) }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Theme selection FIRST, before super.onCreate. setTheme() is a style-id
         // lookup and cannot fail; this replaced a runtime configuration override
@@ -312,6 +323,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         maybeShowCrashReport()
 
         setContentView(R.layout.activity_main)
+        window.decorView.post { maybeAskProtocolNext() }
 
         mainLayout = findViewById<LinearLayout>(R.id.mainLayout)
         featureList = findViewById<LinearLayout>(R.id.featureList)

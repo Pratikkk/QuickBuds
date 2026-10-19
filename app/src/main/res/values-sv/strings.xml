@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">Tydligare sång i låtar</string>
     <string name="row_wind_noise_title">Vindbrusreducering</string>
     <string name="row_wind_noise_sub">Mindre vindbrus utomhus</string>
+    <string name="settings_protocol_next_title">Nytt protokoll (beta)</string>
+    <string name="settings_protocol_next_sub">En ombyggd, mer exakt anslutning till hörlurarna. Anslut igen för att använda den.</string>
+    <string name="protocol_next_dialog_title">Nytt protokoll tillgängligt</string>
+    <string name="protocol_next_dialog_body">QuickBuds 5.0 har ett ombyggt protokollager. Det pratar mer exakt och rent med hörlurarna. Det är avstängt som standard. Du kan slå på eller av det när som helst i Inställningar.</string>
+    <string name="protocol_next_dialog_try">Prova nya protokollet</string>
+    <string name="protocol_next_dialog_later">Inte nu</string>
     <string name="row_game_eq_title">Spelequalizer</string>
     <string name="row_game_eq_sub">Växlar hörlurarna till spelljud medan ett spel är öppet</string>
     <string name="game_eq_access_title">Åtkomst till användning krävs</string>

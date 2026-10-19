@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">Duidelijkere zang in nummers</string>
     <string name="row_wind_noise_title">Windruisonderdrukking</string>
     <string name="row_wind_noise_sub">Minder windruis buiten</string>
+    <string name="settings_protocol_next_title">Nieuw protocol (bèta)</string>
+    <string name="settings_protocol_next_sub">Een herbouwde, nauwkeurigere verbinding met de oordopjes. Maak opnieuw verbinding om het toe te passen.</string>
+    <string name="protocol_next_dialog_title">Nieuw protocol beschikbaar</string>
+    <string name="protocol_next_dialog_body">QuickBuds 5.0 heeft een herbouwde protocollaag. Die praat nauwkeuriger en schoner met de oordopjes. Standaard staat hij uit. In Instellingen zet je hem altijd aan of uit.</string>
+    <string name="protocol_next_dialog_try">Nieuw protocol proberen</string>
+    <string name="protocol_next_dialog_later">Niet nu</string>
     <string name="row_game_eq_title">Game-equalizer</string>
     <string name="row_game_eq_sub">Zet de oordopjes op hun gamegeluid zolang een game open is</string>
     <string name="game_eq_access_title">Toegang tot gebruik nodig</string>

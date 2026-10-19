@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">Πιο καθαρά φωνητικά στα τραγούδια</string>
     <string name="row_wind_noise_title">Μείωση θορύβου ανέμου</string>
     <string name="row_wind_noise_sub">Λιγότερος θόρυβος ανέμου σε εξωτερικούς χώρους</string>
+    <string name="settings_protocol_next_title">Νέο πρωτόκολλο (beta)</string>
+    <string name="settings_protocol_next_sub">Μια ανακατασκευασμένη, πιο ακριβής σύνδεση με τα ακουστικά. Επανασυνδεθείτε για εφαρμογή.</string>
+    <string name="protocol_next_dialog_title">Διαθέσιμο νέο πρωτόκολλο</string>
+    <string name="protocol_next_dialog_body">Το QuickBuds 5.0 έχει ανακατασκευασμένο επίπεδο πρωτοκόλλου. Επικοινωνεί με τα ακουστικά πιο ακριβώς και καθαρά. Είναι απενεργοποιημένο από προεπιλογή. Μπορείτε να το ενεργοποιείτε ή να το απενεργοποιείτε ανά πάσα στιγμή στις Ρυθμίσεις.</string>
+    <string name="protocol_next_dialog_try">Δοκιμή νέου πρωτοκόλλου</string>
+    <string name="protocol_next_dialog_later">Όχι τώρα</string>
     <string name="row_game_eq_title">Ισοσταθμιστής παιχνιδιών</string>
     <string name="row_game_eq_sub">Αλλάζει τα ακουστικά σε ήχο παιχνιδιού όσο είναι ανοιχτό ένα παιχνίδι</string>
     <string name="game_eq_access_title">Απαιτείται πρόσβαση χρήσης</string>

@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">歌曲人聲更清晰</string>
     <string name="row_wind_noise_title">風噪抑制</string>
     <string name="row_wind_noise_sub">減少戶外風噪</string>
+    <string name="settings_protocol_next_title">新協定（測試版）</string>
+    <string name="settings_protocol_next_sub">重新建構、更精確的耳機連線。重新連線後生效。</string>
+    <string name="protocol_next_dialog_title">新協定可用</string>
+    <string name="protocol_next_dialog_body">QuickBuds 5.0 重新建構了協定層，與耳機的通訊更精確、更簡潔。預設為關閉，您可隨時在設定中開啟或關閉。</string>
+    <string name="protocol_next_dialog_try">試用新協定</string>
+    <string name="protocol_next_dialog_later">暫不</string>
     <string name="row_game_eq_title">遊戲等化器</string>
     <string name="row_game_eq_sub">開啟遊戲時，耳機切換為遊戲音效</string>
     <string name="game_eq_access_title">需要使用情況存取權</string>

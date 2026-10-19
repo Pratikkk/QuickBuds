@@ -30,6 +30,7 @@ capture the Bluetooth traffic itself, including what HeyMelody sends.
 ```bash
 python3 scripts/check-locales.py   # every string in all 26 locales
 cd desktop && cargo test           # the desktop tests
+./gradlew :app:testDebugUnitTest  # the Android protocol tests (app/src/test)
 ```
 
 `scripts/release-build.sh` runs every check of the Build workflow and builds all release files. It

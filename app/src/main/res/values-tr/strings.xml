@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">Şarkılarda daha net vokal</string>
     <string name="row_wind_noise_title">Rüzgar gürültüsü azaltma</string>
     <string name="row_wind_noise_sub">Dışarıda daha az rüzgar gürültüsü</string>
+    <string name="settings_protocol_next_title">Yeni protokol (beta)</string>
+    <string name="settings_protocol_next_sub">Kulaklıkla yeniden kurulmuş, daha doğru bir bağlantı. Uygulamak için yeniden bağlanın.</string>
+    <string name="protocol_next_dialog_title">Yeni protokol kullanılabilir</string>
+    <string name="protocol_next_dialog_body">QuickBuds 5.0, yeniden yazılmış bir protokol katmanı içerir. Kulaklıkla daha doğru ve temiz iletişim kurar. Varsayılan olarak kapalıdır. Ayarlar\'dan istediğiniz zaman açıp kapatabilirsiniz.</string>
+    <string name="protocol_next_dialog_try">Yeni protokolü dene</string>
+    <string name="protocol_next_dialog_later">Şimdi değil</string>
     <string name="row_game_eq_title">Oyun ekolayzırı</string>
     <string name="row_game_eq_sub">Oyun açıkken kulaklığı oyun sesine geçirir</string>
     <string name="game_eq_access_title">Kullanım erişimi gerekli</string>

@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">गानों में साफ़ आवाज़</string>
     <string name="row_wind_noise_title">हवा का शोर कम करें</string>
     <string name="row_wind_noise_sub">बाहर हवा का शोर कम</string>
+    <string name="settings_protocol_next_title">नया प्रोटोकॉल (बीटा)</string>
+    <string name="settings_protocol_next_sub">ईयरबड्स से नया बना, ज़्यादा सटीक कनेक्शन। लागू करने के लिए दोबारा कनेक्ट करें।</string>
+    <string name="protocol_next_dialog_title">नया प्रोटोकॉल उपलब्ध है</string>
+    <string name="protocol_next_dialog_body">QuickBuds 5.0 में प्रोटोकॉल लेयर नए सिरे से बनी है। यह ईयरबड्स से ज़्यादा सटीक और साफ़ तरीके से बात करती है। यह डिफ़ॉल्ट रूप से बंद है। आप सेटिंग में कभी भी इसे चालू या बंद कर सकते हैं।</string>
+    <string name="protocol_next_dialog_try">नया प्रोटोकॉल आज़माएँ</string>
+    <string name="protocol_next_dialog_later">अभी नहीं</string>
     <string name="row_game_eq_title">गेम इक्वलाइज़र</string>
     <string name="row_game_eq_sub">गेम खुला रहने तक ईयरबड्स को गेम साउंड पर रखता है</string>
     <string name="game_eq_access_title">उपयोग एक्सेस चाहिए</string>

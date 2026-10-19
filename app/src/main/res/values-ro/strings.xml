@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">Voce mai clară în melodii</string>
     <string name="row_wind_noise_title">Reducerea zgomotului vântului</string>
     <string name="row_wind_noise_sub">Mai puțin zgomot de vânt afară</string>
+    <string name="settings_protocol_next_title">Protocol nou (beta)</string>
+    <string name="settings_protocol_next_sub">O conexiune refăcută și mai precisă cu căștile. Reconectați-vă pentru a o aplica.</string>
+    <string name="protocol_next_dialog_title">Protocol nou disponibil</string>
+    <string name="protocol_next_dialog_body">QuickBuds 5.0 are un strat de protocol refăcut. Comunică mai precis și mai curat cu căștile. Este dezactivat implicit. Îl puteți activa sau dezactiva oricând în Setări.</string>
+    <string name="protocol_next_dialog_try">Încearcă protocolul nou</string>
+    <string name="protocol_next_dialog_later">Nu acum</string>
     <string name="row_game_eq_title">Egalizator pentru jocuri</string>
     <string name="row_game_eq_sub">Trece căștile pe sunetul de joc cât timp un joc este deschis</string>
     <string name="game_eq_access_title">Este necesar accesul la utilizare</string>

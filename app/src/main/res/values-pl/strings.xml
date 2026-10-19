@@ -76,6 +76,12 @@
     <string name="row_vocal_sub">Wyraźniejszy wokal w utworach</string>
     <string name="row_wind_noise_title">Redukcja szumu wiatru</string>
     <string name="row_wind_noise_sub">Mniej szumu wiatru na zewnątrz</string>
+    <string name="settings_protocol_next_title">Nowy protokół (beta)</string>
+    <string name="settings_protocol_next_sub">Przebudowane, dokładniejsze połączenie ze słuchawkami. Połącz ponownie, aby zastosować.</string>
+    <string name="protocol_next_dialog_title">Dostępny nowy protokół</string>
+    <string name="protocol_next_dialog_body">QuickBuds 5.0 ma przebudowaną warstwę protokołu. Komunikuje się ze słuchawkami dokładniej i czyściej. Domyślnie jest wyłączona. W Ustawieniach możesz ją włączyć lub wyłączyć w dowolnej chwili.</string>
+    <string name="protocol_next_dialog_try">Wypróbuj nowy protokół</string>
+    <string name="protocol_next_dialog_later">Nie teraz</string>
     <string name="row_game_eq_title">Korektor do gier</string>
     <string name="row_game_eq_sub">Przełącza słuchawki na dźwięk do gier, gdy gra jest otwarta</string>
     <string name="game_eq_access_title">Wymagany dostęp do danych użytkowania</string>
