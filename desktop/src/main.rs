@@ -16,7 +16,6 @@ mod report;
 mod session;
 mod theme;
 mod update;
-#[allow(dead_code)] // the new protocol layer: wired in step by step
 mod wire;
 
 mod icons { include!(concat!(env!("OUT_DIR"), "/icons.rs")); }
@@ -137,6 +136,9 @@ fn load_settings() -> serde_json::Value {
     settings_path().and_then(|p| std::fs::read_to_string(p).ok())
         .and_then(|s| serde_json::from_str(&s).ok()).unwrap_or_else(|| serde_json::json!({}))
 }
+
+/// The "new protocol" setting: the rebuilt protocol layer (docs/PROTOCOL-NEXT.md). Off unless turned on.
+fn protocol_next() -> bool { load_settings()["protocol_next"].as_bool().unwrap_or(false) }
 
 fn save_setting(key: &str, value: serde_json::Value) {
     let Some(path) = settings_path() else { return };
@@ -398,6 +400,12 @@ fn set_texts(tr: &Tr, s: &[String]) {
     tr.set_update_auto_sub(t(s, "update_auto_sub").into());
     tr.set_clear_battery_title(t(s, "settings_clear_battery_title").into());
     tr.set_clear_battery_sub(t(s, "settings_clear_battery_sub").into());
+    tr.set_protocol_next_title(t(s, "settings_protocol_next_title").into());
+    tr.set_protocol_next_sub(t(s, "settings_protocol_next_sub").into());
+    tr.set_protocol_dialog_title(t(s, "protocol_next_dialog_title").into());
+    tr.set_protocol_dialog_body(t(s, "protocol_next_dialog_body").into());
+    tr.set_protocol_dialog_try(t(s, "protocol_next_dialog_try").into());
+    tr.set_protocol_dialog_later(t(s, "protocol_next_dialog_later").into());
     tr.set_style_classic(t(s, "widget_style_classic").into());
     tr.set_style_dots(t(s, "widget_style_nothing").into());
     tr.set_style_material(t(s, "widget_style_material").into());

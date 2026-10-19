@@ -167,6 +167,18 @@ pub fn setup(main: &MainWindow) {
     g.on_check(|| with_app(check));
     g.on_set_auto(|on| with_app(|a| { save_setting("update_auto", on.into()); a.main.global::<Update>().set_auto(on); }));
     g.set_clear_battery(load_settings()["clear_battery"].as_bool().unwrap_or(false));
+    g.set_protocol_next(crate::protocol_next());
+    g.on_set_protocol_next(|on| with_app(|a| { save_setting("protocol_next", on.into()); a.main.global::<Update>().set_protocol_next(on); }));
+    // From 5.0, once: tell the user about the switch (the phone app's dialog).
+    if env!("CARGO_PKG_VERSION").split('.').next().and_then(|m| m.parse::<u32>().ok()).is_some_and(|m| m >= 5)
+        && load_settings()["protocol_next_asked"].as_bool() != Some(true) {
+        slint::Timer::single_shot(std::time::Duration::from_secs(3), || with_app(|a| {
+            if !a.main.window().is_visible() || crate::report::crash_shown() { return; }
+            save_setting("protocol_next_asked", true.into());
+            let g = a.main.global::<Update>();
+            g.set_protocol_ask(g.get_protocol_ask() + 1);
+        }));
+    }
     g.on_set_clear_battery(|on| with_app(|a| { save_setting("clear_battery", on.into()); a.main.global::<Update>().set_clear_battery(on); }));
     g.on_install(|| with_app(|a| {
         let Some(r) = FOUND.lock().unwrap().take() else { return };

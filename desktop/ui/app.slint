@@ -115,6 +115,11 @@ export global Update {
     // Settings › Hide old battery levels (`clear_battery`).
     in property <bool> clear-battery;
     callback set-clear-battery(bool);
+    // Settings › New protocol (`protocol_next`).
+    in property <bool> protocol-next;
+    callback set-protocol-next(bool);
+    // Counts up when the update dialog about the new protocol should show (`update.rs`).
+    in property <int> protocol-ask;
     // Settings › Language: "System default" first, then each locale (`main.rs` LANGUAGES).
     in property <[Choice]> languages;
     in property <int> language;
@@ -198,6 +203,12 @@ export global Tr {
     in property <string> update-auto-sub: "Look for a new version when the app opens";
     in property <string> clear-battery-title: "Hide old battery levels";
     in property <string> clear-battery-sub: "Clear a level the buds stop reporting, like the case after the lid closes";
+    in property <string> protocol-next-title: "New protocol (beta)";
+    in property <string> protocol-next-sub: "A rebuilt, more accurate link to the earbuds. Reconnect to apply.";
+    in property <string> protocol-dialog-title: "New protocol available";
+    in property <string> protocol-dialog-body: "QuickBuds 5.0 has a rebuilt protocol layer. It talks to the earbuds more accurately and cleanly. It is off by default. You can switch it on or off at any time in Settings.";
+    in property <string> protocol-dialog-try: "Try new protocol";
+    in property <string> protocol-dialog-later: "Not now";
     in property <string> style-classic: "Classic";
     in property <string> style-dots: "Dot matrix";
     in property <string> style-material: "Material";
@@ -3297,6 +3308,11 @@ component SettingsPage inherits Rectangle {
                         icon: Buds.icon-battery; title: Tr.clear-battery-title; subtitle: Tr.clear-battery-sub;
                         checked: Update.clear-battery; live: true; toggled(on) => { Update.set-clear-battery(on); }
                     }
+                    Divider {}
+                    FeatureRow {
+                        icon: Buds.icon-earbud; title: Tr.protocol-next-title; subtitle: Tr.protocol-next-sub;
+                        checked: Update.protocol-next; live: true; toggled(on) => { Update.set-protocol-next(on); }
+                    }
                 }
             }
             Card {
@@ -3592,6 +3608,14 @@ export component MainWindow inherits Window {
         x: (root.width - self.width) / 2; y: (root.height - 200px) / 2;
         title: Tr.report-title; body: Tr.test-ask-body; ok: Tr.test-title; cancel: Tr.test-ask-later;
         accepted => { root.page = 12; }
+    }
+    // The one-time update dialog about the new protocol (`update.rs`), from 5.0 on.
+    property <int> protocol-ask: Update.protocol-ask;
+    changed protocol-ask => { protocol-prompt.show(); }
+    protocol-prompt := Dialog {
+        x: (root.width - self.width) / 2; y: (root.height - 220px) / 2;
+        title: Tr.protocol-dialog-title; body: Tr.protocol-dialog-body; ok: Tr.protocol-dialog-try; cancel: Tr.protocol-dialog-later;
+        accepted => { Update.set-protocol-next(true); }
     }
     home-ask := Dialog {
         x: (root.width - self.width) / 2; y: (root.height - 180px) / 2;

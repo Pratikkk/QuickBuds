@@ -230,6 +230,8 @@ struct Conn<'a> {
     /// 0 for the bridge.
     addr: u64,
     framer: Framer,
+    /// The "new protocol" setting (docs/PROTOCOL-NEXT.md): the rebuilt link layer, read once per connection.
+    next: Option<crate::wire::Reassembler>,
     seq: u8,
     /// The last ANC level sent, to name a report that says only "noise cancelling".
     level: Option<String>,
@@ -242,13 +244,20 @@ impl<'a> Conn<'a> {
         let model = find_model(None, Some(&name));
         let mut s = Snapshot { status: Status::On, name, detected: model, ..Default::default() };
         pick_model(&mut s);
-        Conn { link, addr: 0, framer: Framer::default(), seq: 0, level: None, s, emit }
+        Conn { link, addr: 0, framer: Framer::default(), next: crate::protocol_next().then(Default::default), seq: 0, level: None, s, emit }
     }
 
     fn send(&mut self, cmd: u16, seq: Option<u8>, payload: &[u8]) -> Result<(), String> {
         let seq = seq.unwrap_or_else(|| { self.seq = self.seq % 0xFE + 1; self.seq });
         let p = build_packet(cmd, seq, payload);
         log("TX", p.clone(), describe_tx(cmd, payload));
+        if self.next.is_some() {
+            // A message too big for one frame goes out in slices (PROTOCOL-NEXT.md §2).
+            for f in crate::wire::encode(&crate::wire::Message { cmd, seq, payload: payload.to_vec() }, crate::wire::BUDGET) {
+                self.link.write(&f)?;
+            }
+            return Ok(());
+        }
         self.link.write(&p)
     }
 
@@ -259,7 +268,12 @@ impl<'a> Conn<'a> {
         loop {
             let n = self.link.read(&mut buf)?;
             let mut changed = false;
-            for p in self.framer.push(&buf[..n]).into_iter().flat_map(|p| {
+            let frames: Vec<Vec<u8>> = match &mut self.next {
+                // The handlers still read whole frames, so each message goes in as one.
+                Some(w) => w.push(&buf[..n]).iter().map(|m| build_packet(m.cmd, m.seq, &m.payload)).collect(),
+                None => self.framer.push(&buf[..n]),
+            };
+            for p in frames.into_iter().flat_map(|p| {
                 // A batch reply is logged as it came, then handled as the replies it carries.
                 if cmd_of(&p) != CMD_BATCH_REPLY { return vec![p]; }
                 let parts = unbatch(&p);
@@ -281,6 +295,7 @@ impl<'a> Conn<'a> {
                 if let Some(e) = e { changed |= self.apply(e); }
             }
             if !self.framer.discarded.is_empty() { log("DISCARDED RX", std::mem::take(&mut self.framer.discarded), None); }
+            if let Some(w) = self.next.as_mut().filter(|w| !w.discarded.is_empty()) { log("DISCARDED RX", std::mem::take(&mut w.discarded), None); }
             if changed { (self.emit)(self.s.clone()); }
             if Instant::now() >= end { return Ok(()); }
         }
