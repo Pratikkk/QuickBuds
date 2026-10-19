@@ -52,24 +52,24 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
 
         /** `[VENDOR]` HeyMelody: the model's `customEqualizer` flag and `0x0418` in the command bitmap. */
         fun hasCustom(context: Context) =
-            flag(context, "customEqualizer") && Capabilities.supports(context, OpoProtocol.CMD_SAVE_CUSTOM_EQ)
+            flag(context, "customEq") && Capabilities.supports(context, OpoProtocol.CMD_SAVE_CUSTOM_EQ)
 
         /** `[VENDOR]` HeyMelody: the model's `bassEngineSupport` flag and `0x041B` in the command bitmap. */
         fun hasBassWave(context: Context) =
-            flag(context, "bassEngineSupport") && Capabilities.supports(context, OpoProtocol.CMD_SET_BASSWAVE_LEVEL)
+            flag(context, "bassEngine") && Capabilities.supports(context, OpoProtocol.CMD_SET_BASSWAVE_LEVEL)
 
         /** `[VENDOR]` HeyMelody's EQ row: built-in presets (`equalizer` 1-4) or custom presets. */
         fun hasEq(context: Context) = hasCustom(context) ||
-            ((ModelCatalog.current(context)?.json?.optInt("equalizer") ?: 1) in 1..4 &&
+            ((ModelCatalog.current(context)?.json?.optInt("eqKind") ?: 1) in 1..4 &&
                 Capabilities.supports(context, OpoProtocol.CMD_SET_EQ))
 
         /** `[VENDOR]` `customEqMax`, else HeyMelody's default of 3. */
         fun maxCustom(context: Context) =
-            ModelCatalog.current(context)?.json?.optInt("customEqMax")?.takeIf { it > 0 } ?: 3
+            ModelCatalog.current(context)?.json?.optInt("customEqLimit")?.takeIf { it > 0 } ?: 3
 
         /** `[VENDOR]` `customEqFrequency` (10 bands on 8 models), else HeyMelody's six. */
         fun modelFreqs(context: Context): List<Int> =
-            ModelCatalog.current(context)?.json?.optJSONArray("customEqFrequency")
+            ModelCatalog.current(context)?.json?.optJSONArray("customEqBands")
                 ?.let { a -> (0 until a.length()).map { a.getInt(it) } } ?: EqCodec.DEFAULT_FREQS
     }
 
@@ -82,9 +82,9 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
     private fun modelModes(json: JSONObject, firmware: String?): List<JSONObject> {
         val parts = firmware?.split('.')?.map { it.toIntOrNull() ?: 0 }.orEmpty()
         val version = if (parts.size == 3) parts.take(2).filter { it != 0 }.minOrNull() ?: 0 else parts.firstOrNull() ?: 0
-        return listOf("equalizerModeCompat", "equalizerModeByVersion", "equalizerMode")
+        return listOf("eqPresetsCompat", "eqPresetsByFirmware", "eqPresets")
             .flatMap { key -> json.optJSONArray(key)?.let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.orEmpty() }
-            .filter { it.optInt("minFirmVersion") <= version }
+            .filter { it.optInt("minFirmware") <= version }
             .sortedBy { it.optInt("order") }
     }
 
@@ -103,13 +103,13 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         val modes = when {
             model != null -> modelModes(model.json, prefs.getString(BudsConnectionManager.KEY_FIRMWARE, null))
             prefs.getString(Capabilities.KEY_PRODUCT_ID, null) != null -> return emptyList()
-            else -> JSONArray("""[{"modeType":11,"protocolIndex":0},{"modeType":14,"protocolIndex":1},{"modeType":12,"protocolIndex":2}]""")
+            else -> JSONArray("""[{"mode":11,"slot":0},{"mode":14,"slot":1},{"mode":12,"slot":2}]""")
                 .let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
         }
         // Types 1-4 have other names on these models (`f(name) == 2` is the `equalizer` field).
-        val alt = model != null && (model.name == "OPPO Enco R" || model.name == "OPPO Enco Air2" || model.json.optInt("equalizer") == 2)
+        val alt = model != null && (model.name == "OPPO Enco R" || model.name == "OPPO Enco Air2" || model.json.optInt("eqKind") == 2)
         return modes.mapNotNull { mode ->
-            val name = when (mode.getInt("modeType")) {
+            val name = when (mode.getInt("mode")) {
                 1 -> if (alt) R.string.eq_nature_balance else R.string.eq_classic
                 2 -> if (alt) R.string.eq_bass_boost else R.string.eq_dynamic_bass
                 3, 14, 32 -> R.string.eq_clear_vocals
@@ -150,7 +150,7 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
                 104 -> R.string.eq_pure_bass
                 else -> null  // unnamed in HeyMelody too
             } ?: return@mapNotNull null
-            mode.getInt("protocolIndex") to name
+            mode.getInt("slot") to name
         }
     }
 

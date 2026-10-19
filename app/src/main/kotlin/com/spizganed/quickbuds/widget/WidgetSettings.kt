@@ -139,7 +139,7 @@ object WidgetSettings {
             "trans", "adapt" -> anc.supports(MODES.first { it.key == key }.store)
             "off" -> !anc.isEmpty
             "ll" -> true
-            "wind" -> Capabilities.offered(c, OpoProtocol.FEATURE_WIND_NOISE, "windNoise")
+            "wind" -> Capabilities.offered(c, OpoProtocol.FEATURE_WIND_NOISE, "windMode")
             else -> false
         }
     }

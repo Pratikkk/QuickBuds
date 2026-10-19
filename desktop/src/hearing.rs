@@ -142,7 +142,7 @@ fn start(a: &App) {
     let uid = (random() % 0x7FFF_FFFE) as u32 + 1;
     st(|s| { s.uid = uid; s.scan_data.clear(); s.warned = false; });
     // Ear scan only where HeyMelody's model list has it (`earScan`).
-    let scan = a.snap.model.is_some_and(|m| m["earScan"] == 1) && a.snap.caps.supports(CMD_HEARING_SCAN_DATA);
+    let scan = a.snap.model.is_some_and(|m| m["hearingScan"] == 1) && a.snap.caps.supports(CMD_HEARING_SCAN_DATA);
     if scan {
         st(|s| s.step = Step::Scan);
         show(a, "golden_scanning", Some("golden_scan_hint"), Button::None, false);

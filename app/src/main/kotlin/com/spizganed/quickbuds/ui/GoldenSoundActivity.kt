@@ -144,7 +144,7 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
 
     private fun startTest() {
         // Ear scan only where HeyMelody's model list has it (`earScan`, PROTOCOL.md §9).
-        val scan = ModelCatalog.current(this)?.json?.optInt("earScan") == 1 &&
+        val scan = ModelCatalog.current(this)?.json?.optInt("hearingScan") == 1 &&
             Capabilities.supports(this, OpoProtocol.CMD_GOLDEN_SCAN_DATA)
         testSheet = GoldenTestSheet(this, scan, { manager?.golden(*it) }) { r ->
             apply(r)

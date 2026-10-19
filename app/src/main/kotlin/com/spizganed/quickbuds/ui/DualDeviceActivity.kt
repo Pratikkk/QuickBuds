@@ -38,7 +38,7 @@ class DualDeviceActivity : Activity(), BudsConnectionManager.Listener {
 
     /** A device-manager function of this model (`[VENDOR]` `multiConnectFunctions`), on buds that take `0x0429`. */
     private fun has(fn: String): Boolean {
-        val list = ModelCatalog.current(this)?.json?.optJSONArray("multiConnect") ?: return false
+        val list = ModelCatalog.current(this)?.json?.optJSONArray("dualDevice") ?: return false
         if ((0 until list.length()).none { list.getString(it) == fn }) return false
         return Capabilities.supports(this, OpoProtocol.CMD_MULTI_CONNECT) || ModelCatalog.manual(this) != null
     }

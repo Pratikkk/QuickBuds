@@ -119,7 +119,7 @@ Details in the sections cited. `—` = empty payload.
 | `0x0412` | Personalised ANC test | `01` / `02` / `03` | 9 |
 | `0x0413` | Phone state for device switching | `<flags> 00 <values>` | 9 |
 | `0x0418` | Custom EQ create / save / delete | see §9 | 9 |
-| `0x041A` | Set codec (`highAudio` models) | `<codec> <hiRes> 00` | 9 |
+| `0x041A` | Set codec (`hiRes` models) | `<codec> <hiRes> 00` | 9 |
 | `0x041B` | BassWave level | `FB 05 <level>` | 9 |
 | `0x041E` | 3D audio source: `00` buds, `01` phone | `<source>` | 9 |
 | `0x0422` | Spatial type (bitmap `0x012A` models) | `<type>` | 9 |
@@ -248,18 +248,18 @@ ANC), plus `04` / `08` / `0B` as above, **kept to the ids the buds offer in `0x8
 
 ### Per-model bits `[VENDOR]`
 
-Each model's `noiseReductionMode` in `assets/models.json` (`protocol/AncModes.kt`) is a tree of
-`{modeType, protocolIndex, childrenMode}`. modeType: `1` Off, `2` Transparency, `3` Light (weak),
+Each model's `ancModes` in `assets/models.json` (`protocol/AncModes.kt`) is a tree of
+`{mode, slot, variants}`. mode: `1` Off, `2` Transparency, `3` Light (weak),
 `8` Medium, `4` Deep (strong), `5` noise reduction (a parent of levels, or alone), `7` Smart,
 `10` Adaptive, `6` transparency with voice (**not** Adaptive, as `[OSS]` OppoPods maps it).
 
-- **SET** sends the mode's `protocolIndex` as the bit; a level sends its child's index.
+- **SET** sends the mode's `slot` as the bit; a level sends its child's index.
 - **A report** is looked up in the same tree, parents first, then children.
 - Tree shapes: Buds 4 style (with or without Adaptive `11`, with or without Medium); legacy `NC 0,
   Off 1, Transparency 2` (9 models: **Buds 4's Off bytes turn ANC on there**); `Off 0, Transparency 1,
   Light 2, Deep 3` (Enco X, Buds Z2), plus `Smart 4` on Buds Pro. Voice-transparency modes that need a
   per-bud support read (4 OPPO models) are not offered.
-- A model with no `noiseReductionMode` (76 of 137) gets no noise control. Before detection, Buds 4's
+- A model with no `ancModes` (76 of 137) gets no noise control. Before detection, Buds 4's
   tree is used.
 - **realme models** `[VENDOR]` (realme Link 5.5.514): HeyMelody lists some realme ids with no modes;
   realme Link has their data. Its write and report tables are **the same** (unlike Buds 4): Off `01`,
@@ -286,7 +286,7 @@ Each model's `noiseReductionMode` in `assets/models.json` (`protocol/AncModes.kt
 | Adaptive | **11** | `01 01 00 08` |
 
 **Adaptive is bit 11 (mask `0x0800`), not 8.** Bit 8 gives `01 01 00 01`, a different mode. Take the
-bit from the model's `protocolIndex`, never from a mode's position in a list.
+bit from the model's `slot`, never from a mode's position in a list.
 
 ### NOTIFY — push `03 01 01 <LO> <HI>` and the `0x810C 01 01` reply `[CAPTURE]`+`[OSS]`
 
@@ -328,7 +328,7 @@ setting**; clearing `fn` to `0x00` does not stop the cycle `[CAPTURE]`.
 
 - The mask uses **the SET bits** `[CAPTURE]`: adding Adaptive in HeyMelody moved it `0x0007` →
   `0x0807`. Buds 4 bits: Off 0, ANC 1, Transparency 2, Adaptive 11 (same numbering as `OpoProtocol.anc`).
-  Other models use their top-level modes' `protocolIndex` `[VENDOR]`.
+  Other models use their top-level modes' `slot` `[VENDOR]`.
 - The mask is sent in as few bytes as needed, 1-4 `[VENDOR]`: `02 01 03` acked and read back as
   `0x0003` `[CAPTURE]`.
 - A single-bit mask is valid (HeyMelody's minimum is one mode) `[CAPTURE]`. The app never sends 0.
@@ -396,7 +396,7 @@ only `btn 06`. Never hardcode a button group or a count.
 
 ### Per-model gesture menus `[VENDOR]` (`GestureModel`)
 
-Each model's `control` and `callControl` in `assets/models.json`: one entry per row,
+Each model's `gestures` and `callGestures` in `assets/models.json`: one entry per row,
 `{action, support, minSelectCount}`. `support` is a mask of options:
 
 | bit | option | | bit | option |
@@ -421,7 +421,7 @@ Buds 4: `1:516 2:8807 3:3154531 5:3584`, hold `27` — matches HeyMelody's menus
 - **realme models** `[VENDOR]` (realme Link, issue #8), wired; the Air7 Pro's owner confirms them, the
   others are unverified: per-bud double tap, triple
   tap and hold, same `fn` bytes as above, `dev` 1 / 2, `btn 01`. A hold with the noise cycle is
-  `longPressType` 8833; its cycle is **one mask for both buds** (`0x0404 02 01 <mask>`, read
+  `holdMask` 8833; its cycle is **one mask for both buds** (`0x0404 02 01 <mask>`, read
   `0x010C 02 01`; the Air7 Pro log's `0A` = ANC + Transparency), so our own key `"sharedHoldMask":1`
   keeps type 1 on a per-bud hold. **Holding both buds** (Air 3S, T01, T110, T200 Lite, T200x): one
   entry `04 01 04 <fn>`, game mode `11` or none, read back as its own `dev 04` entry (realme Link reads
@@ -432,10 +432,10 @@ Buds 4: `1:516 2:8807 3:3154531 5:3584`, hold `27` — matches HeyMelody's menus
   written as the left bud, `01 01 <act> <fn>`, act 1-4 (single, double, triple, hold). Our own key
   `"oneButton":1` hides Left / Right. The noise button of the two ANC ones (`01 04 01 08`, single
   press = the noise cycle) is not offered.
-- **Per-bud hold** (`longPressType`, 25 models): options 512 none, 128 noise cycle, 1 voice assistant,
+- **Per-bud hold** (`holdMask`, 25 models): options 512 none, 128 noise cycle, 1 voice assistant,
   8192 game mode. Each bud written alone (`dev` 1/2, `act 04`); the cycle mask per bud with type 3 / 4,
   read with `0x010C 02 03` / `02 04`.
-- **Minimum modes in the cycle:** `minSelectCount`, else 2 on OnePlus models and per-bud holds, else 1
+- **Minimum modes in the cycle:** `minSelected`, else 2 on OnePlus models and per-bud holds, else 1
   (Buds 4: 1).
 - **Top-level ANC levels:** Buds Z2 and Enco X list strong (4) and weak (3) as their own cycle options.
   OnePlus Buds Pro (`060C14`) shows 3 / 4 / 7 as one "ANC" option whose bit is the current level's, or
@@ -502,7 +502,7 @@ HeyMelody calls "safe remind". Both apps clear bit 3, so only the codes below re
   capture). Enco Buds2: `05 06` `[TESTED]`.
 - **A longer list drops some links.** Was: one fixed 23-id list, which dropped the Enco Buds2 (issue
   #5). Is: the per-model list. `02 05 0D` kept that link up `[CAPTURE]`.
-- A model without `statusQuery` (hand-added) gets the 23 ids, plus `1A` where it has `windNoise`.
+- A model without `statusQuery` (hand-added) gets the 23 ids, plus `1A` where it has `windMode`.
 - **realme models** `[VENDOR]` (realme Link 5.8.811): its per-model screen lists name the rows a model shows.
   Our `statusQuery` for 28 realme models asks only for the ids of those rows: `04` smart play/pause, `06` game
   mode, `0B` hearing profile, `11` dual connection, `18` Hi-Res, `1B` 3D sound. Only the Air8 Pro and Air7 Pro,
@@ -530,22 +530,22 @@ speechPerception, `34` meetingAssistant, `35` longPressVolume, `37` swiftPair, `
 | `04` | Auto play/pause (wear detection) | `[CAPTURE]` |
 | `05` | ? | HeyMelody asks it first for every model, ignores the value and never writes it `[VENDOR]` |
 | `06` | Game mode / low latency | `[VENDOR]` all models, **except** `28` where the bitmap has `0x0423` (`gameModeId()`) |
-| `09` | Vocal enhancement | flag `vocalEnhance` |
+| `09` | Vocal enhancement | flag `voiceBoost` |
 | `0B` | Golden Sound (hearing profile) | see below `[CAPTURE]` |
 | `0C` | Personalised ANC applied | see below |
 | `11` | Dual connection | see below `[CAPTURE]` |
 | `17` | Power saving | restarts the buds, see below `[CAPTURE]` |
 | `18` | Hi-Res | quality switch, drops the link, see below `[CAPTURE]` |
-| `1A` | Wind noise reduction | realme Link `[VENDOR]`; asked in `0x010D` only for models with flag `windNoise` (Air7 Pro), unverified |
+| `1A` | Wind noise reduction | realme Link `[VENDOR]`; asked in `0x010D` only for models with flag `windMode` (Air7 Pro), unverified |
 | `1B` | Spatial sound | on models without `0x012A` `[CAPTURE]` |
-| `1C` | Smart volume | flag `controlAutoVolumeSupport` |
+| `1C` | Smart volume | flag `autoVolume` |
 | `1D` | BassWave | `[CAPTURE]` |
 | `27` | Game sound effects | flag `gameSoundList` |
 | `30` | Adaptive volume | |
 | `31` | Adaptive left / right ear | |
 | `32` | Conversation awareness | HeyMelody turns it off against voice commands (`19`) |
-| `35` | Touch-and-hold volume | flag `longPressVolume` |
-| `37` | Windows Swift Pair | flag `swiftPair` |
+| `35` | Touch-and-hold volume | flag `holdVolume` |
+| `37` | Windows Swift Pair | flag `fastPair` |
 | `38` | Adaptive sound (ear canal and fit) | HeyMelody asks first (battery) |
 | `3A` | Pause when asleep | |
 | `3B` | Head gestures | mapping below |
@@ -569,7 +569,7 @@ Ids `09`-`3B` without a `[CAPTURE]` are `[VENDOR]`, wired, unverified on buds. A
 
 ### Personalised ANC — `0x0412` `[VENDOR]`, wired, unverified
 
-Model flag `personalNoise` (11 models), bitmap `0x0412` (bit 26 with `0x011A`). Buds 4 lacks it.
+Model flag `personalAnc` (11 models), bitmap `0x0412` (bit 26 with `0x011A`). Buds 4 lacks it.
 
 | Step | Frame |
 |---|---|
@@ -582,7 +582,7 @@ Both buds in an ear; 5 s timeout for `0x811A`, 15 s for a result; cancel when th
 
 ### Tap sensitivity — `0x042D` `[VENDOR]`, wired, unverified
 
-Flag `tapLevelSetting`. `0x042D <level>` 1..5 (lower = taps trigger more easily). Read `0x0133` →
+Flag `tapLevel`. `0x042D <level>` 1..5 (lower = taps trigger more easily). Read `0x0133` →
 `00 <level> <default>`. Warn below the default; offer a reset.
 
 ### Golden Sound (Hearing profile) `[VENDOR]`+`[CAPTURE]`
@@ -623,7 +623,7 @@ the active record; the phone keeps the list. A record: 4-byte id (big-endian, ch
 
 - **Two ways** `[VENDOR]`: if the bitmap has `0x012A` (bit 47), `0x0422 <type>` (`0` off, `1` fixed,
   `2` head tracking), read `0x012A` → `00 <type>`, pushed as `0x0510 <type>`. Else feature `1B`.
-  Head tracking only where `spatialTypes` has `2` (Buds Pro 2, Buds Pro 3, Enco X3). `0x0422`
+  Head tracking only where `spatialModes` has `2` (Buds Pro 2, Buds Pro 3, Enco X3). `0x0422`
   wired, unverified.
 - **Spatial and Hi-Res are mutually exclusive.** HeyMelody warns, then: spatial on = `1B 01` then
   `18 00`; Hi-Res on = `1B 00` then `18 01`.
@@ -638,7 +638,7 @@ the active record; the phone keeps the list. A record: 4-byte id (big-endian, ch
 - **3D audio source `0x041E`** `[VENDOR]` (bitmap bit 43, with `0xEF03`): `00` the buds render 3D audio,
   `01` the phone does. HeyMelody sends only `01`, when the phone's own spatializer takes over. realme
   Link sends `00` on every connect (no realme model prefers the phone). The apps do the same for
-  `spatialSwitch` models. Issue #9's "`1B` changes nothing" was a false alarm: the buds play no sound
+  `spatialToggle` models. Issue #9's "`1B` changes nothing" was a false alarm: the buds play no sound
   on the switch.
 - **realme Link's `0x0403` ids** `[VENDOR]`, not used yet: dynamic bass `1D`, vocal enhance `09`, `0C`
   "enhance voice" (ours: personalised ANC applied; do not assume they match), game mode `06`, wear `04`,
@@ -647,9 +647,9 @@ the active record; the phone keeps the list. A record: 4-byte id (big-endian, ch
   400 kbps cap. Off: 44.1 / 48 kHz, 256 kbps. The phone chose 48 kHz / 24-bit both times. No LDAC on
   Buds 4.
 
-### Codec picker (`highAudio` models) `[VENDOR]`, wired
+### Codec picker (`hiRes` models) `[VENDOR]`, wired
 
-Models with `highAudio` (Enco X2, Enco Air3 Pro, Enco Free3) and `0x0123` in the bitmap; replaces
+Models with `hiRes` (Enco X2, Enco Air3 Pro, Enco Free3) and `0x0123` in the bitmap; replaces
 the Hi-Res switch.
 
 - Codecs: `1` SBC, `2` AAC, `3` LDAC, `4` aptX, `5` aptX HD, `6` aptX Adaptive, `7` LHDC, `8` LHDC V5.
@@ -658,7 +658,7 @@ the Hi-Res switch.
 - Write `0x041A <codec> <hiRes> 00`, `hiRes` only with codec 3 or 8 (else `0`). The buds restart; the
   app warns and asks for phone audio on the reconnect.
 - Buds 4 `[CAPTURE]`: `0x8114` = `00 08` (LHDC V5, correct). `0x8123` = `00 46 01`, which the table
-  misreads (LDAC, no SBC) — so the mask is trusted only on `highAudio` models.
+  misreads (LDAC, no SBC) — so the mask is trusted only on `hiRes` models.
 
 ### Equalizer `[CAPTURE]`+`[VENDOR]`
 
@@ -677,20 +677,20 @@ push 0x0504 <id>                     EQ changed
 - `0x0418` actions: `01` create (send id `00`; the buds assign it, returned in the ack), `02` save and
   select (the whole preset, every time, also on every drag step and rename), `03` delete (selection
   falls back to `00`). **Ids are renumbered after create / delete: always re-read `0x0122`.**
-- **Built-ins differ per model** `[VENDOR]`: `equalizerMode` lists `{modeType, protocolIndex}`;
-  `protocolIndex` is the `0x0406` id. Buds 4: 0 Balanced, 1 Clear Vocals, 2 Bass; Nord Buds 2r: 0, 1
+- **Built-ins differ per model** `[VENDOR]`: `eqPresets` lists `{mode, slot}`;
+  `slot` is the `0x0406` id. Buds 4: 0 Balanced, 1 Clear Vocals, 2 Bass; Nord Buds 2r: 0, 1
   Bold, 2. Types 1-4 are named differently where `equalizer` is `2` (or Enco R / Air2). 40 of 137
   models have none.
 - **realme** `[VENDOR]` realme Link: 27 realme models have four built-ins, not in HeyMelody's list.
   `0x0406` ids: 0 Pure Raw, 1 Deep Bass, 2 Pure Voice, 3 Pure Bass. `models.json` gives them our own
   types 101-104 (Pure Raw, Deep Bass, Pure Voice, Pure Bass), `equalizer` 1. T110 and T01 have three
-  other presets with unknown ids: no EQ until a capture. Firmware-gated: use `equalizerModeCompat`, else `equalizerModeByVersion`, else
-  `equalizerMode`; drop entries whose `minFirmVersion` is above the buds' firmware (the lower non-zero
+  other presets with unknown ids: no EQ until a capture. Firmware-gated: use `eqPresetsCompat`, else `eqPresetsByFirmware`, else
+  `eqPresets`; drop entries whose `minFirmware` is above the buds' firmware (the lower non-zero
   of left and right, `138` on Buds 4; unreadable = 0); stable sort by `order` (0 if absent).
 - **What a model shows** `[VENDOR]`: EQ row where `equalizer` is 1-4 or custom presets exist; custom
-  presets with `customEqualizer` and `0x0418` in the bitmap; BassWave with `bassEngineSupport` and
-  `0x041B`. New presets use `customEqFrequency` bands (10 bands `31 62 125 250 500 1k 2k 4k 8k 16k`, 8
-  models), else 6 bands `62 250 1k 4k 8k 16k`. `customEqMax` caps presets (default 3). EQ reads go out
+  presets with `customEq` and `0x0418` in the bitmap; BassWave with `bassEngine` and
+  `0x041B`. New presets use `customEqBands` bands (10 bands `31 62 125 250 500 1k 2k 4k 8k 16k`, 8
+  models), else 6 bands `62 250 1k 4k 8k 16k`. `customEqLimit` caps presets (default 3). EQ reads go out
   only where the bitmap lists them.
 
 ### Find my earbuds — `0x0400` `[CAPTURE]`
@@ -719,7 +719,7 @@ entry: <MAC, 6 bytes reversed> <len> <state> <flags> <nameLen> <name UTF-8>
 - `0x0413` `[VENDOR]`: the phone's state for switching between devices. `<flags> 00`, then one byte per set
   flag in bit order: `01` protocol version, `02` screen on, `04` held by hand, `08` auto switch on, `10`
   music playing. So `08 00 01` = auto switch on.
-- **Device manager** `[VENDOR]`, wired, unverified: models whose `multiConnect` lists it (11;
+- **Device manager** `[VENDOR]`, wired, unverified: models whose `dualDevice` lists it (11;
   bitmap bit 59 `0x0429` / `0x0132`, Buds 4 lacks it). `0x0429 01 <MAC>` connect, `02 <MAC>`
   disconnect (MAC in written order, the reverse of the list); `03 <MAC>` unpair (unused). Preferred
   device: `0x0429 04 00` automatic, `04 01 <MAC>`; read `0x0132 02` → `00 02 <00 | 01 <MAC>>`.

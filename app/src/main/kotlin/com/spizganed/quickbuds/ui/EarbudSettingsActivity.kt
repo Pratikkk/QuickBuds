@@ -160,8 +160,8 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
         }
         // Personalized ANC: off is a plain switch write, on runs HeyMelody's test flow (PROTOCOL.md §9).
         // The model's flag too: HeyMelody gates on it alone, and Buds 4 list 0x0C without having the feature.
-        if ((ModelCatalog.current(this)?.json?.optInt("personalNoise") ?: 1) == 1 &&
-            Capabilities.offered(this, OpoProtocol.FEATURE_PERSONAL_NOISE, "personalNoise") &&
+        if ((ModelCatalog.current(this)?.json?.optInt("personalAnc") ?: 1) == 1 &&
+            Capabilities.offered(this, OpoProtocol.FEATURE_PERSONAL_NOISE, "personalAnc") &&
             (Capabilities.supports(this, OpoProtocol.CMD_PERSONAL_NOISE) || ModelCatalog.manual(this) != null)) {
             val id = OpoProtocol.FEATURE_PERSONAL_NOISE
             val sw = SettingRowFactory.buildSwitch(this, manager?.featureStates?.get(id) == 1)
@@ -176,9 +176,9 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
                 sw.performClick()
             })
         }
-        switch(OpoProtocol.FEATURE_VOCAL_ENHANCE, "vocalEnhance", R.drawable.ic_equalizer,
+        switch(OpoProtocol.FEATURE_VOCAL_ENHANCE, "voiceBoost", R.drawable.ic_equalizer,
             R.string.row_vocal_title, R.string.row_vocal_sub)
-        switch(OpoProtocol.FEATURE_GAME_SOUND, "gameSound", R.drawable.ic_low_latency,
+        switch(OpoProtocol.FEATURE_GAME_SOUND, "gameSoundFx", R.drawable.ic_low_latency,
             R.string.row_game_sound_title, R.string.row_game_sound_sub)
         // Which effect it applies: `0x0423 <type> 01`, HeyMelody's radio list (PROTOCOL.md §9).
         if (featureSwitches.containsKey(OpoProtocol.FEATURE_GAME_SOUND) &&
@@ -190,7 +190,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
             paintGameSound()
             card.addView(row)
         }
-        switch(OpoProtocol.FEATURE_SMART_VOLUME, "controlAutoVolumeSupport", R.drawable.ic_volume,
+        switch(OpoProtocol.FEATURE_SMART_VOLUME, "autoVolume", R.drawable.ic_volume,
             R.string.row_smart_volume_title, R.string.row_smart_volume_sub)
         switch(OpoProtocol.FEATURE_ADAPTIVE_VOLUME, null, R.drawable.ic_volume,
             R.string.row_adaptive_volume_title, R.string.row_adaptive_volume_sub)
@@ -202,7 +202,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
             R.string.row_speech_title, R.string.row_speech_sub)
         switch(OpoProtocol.FEATURE_HEARING_OPTIMIZE, null, R.drawable.ic_hearing,
             R.string.row_hearing_optimize_title, R.string.row_hearing_optimize_sub, R.string.hearing_optimize_confirm)
-        switch(OpoProtocol.FEATURE_LONG_PRESS_VOLUME, "longPressVolume", R.drawable.ic_volume,
+        switch(OpoProtocol.FEATURE_LONG_PRESS_VOLUME, "holdVolume", R.drawable.ic_volume,
             R.string.row_long_press_volume_title, R.string.row_long_press_volume_sub)
         switch(OpoProtocol.FEATURE_HEAD_MOTION, null, R.drawable.ic_gesture,
             R.string.row_head_motion_title, R.string.row_head_motion_sub)
@@ -216,7 +216,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
             paintHeadMotion()
             card.addView(row)
         }
-        switch(OpoProtocol.FEATURE_SWIFT_PAIR, "swiftPair", R.drawable.ic_devices,
+        switch(OpoProtocol.FEATURE_SWIFT_PAIR, "fastPair", R.drawable.ic_devices,
             R.string.row_swift_pair_title, R.string.row_swift_pair_sub)
         switch(OpoProtocol.FEATURE_POWER_SAVING, null, R.drawable.ic_power,
             R.string.row_power_saving_title, R.string.row_power_saving_sub, R.string.power_saving_confirm)
@@ -323,7 +323,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
      * the warning shows below the buds' default, as in HeyMelody (PROTOCOL.md §9).
      */
     private fun tapSensitivity(root: LinearLayout) {
-        if (ModelCatalog.current(this)?.json?.optInt("tapLevelSetting") != 1) return
+        if (ModelCatalog.current(this)?.json?.optInt("tapLevel") != 1) return
         if (!Capabilities.supports(this, OpoProtocol.CMD_SET_TAP_LEVEL) && ModelCatalog.manual(this) == null) return
         val dp = { v: Float -> ThemeRes.dp(this, v) }
         val secondary = ThemeRes.color(this, R.attr.appColorTextSecondary)

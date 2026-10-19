@@ -355,23 +355,23 @@ class GestureModel private constructor(
         }
 
         private fun parse(json: JSONObject, name: String, id: String): GestureModel {
-            val control = json.optJSONArray("control") ?: JSONArray()
+            val control = json.optJSONArray("gestures") ?: JSONArray()
             val rows = LinkedHashMap<Gesture, List<GestureAction>>()
             var holdBits = emptyMap<GestureAction, Int>()
             val levelBits = ArrayList<Int>()
-            val longPressType = json.optInt("longPressType")
+            val longPressType = json.optInt("holdMask")
             var holdMin = 1
             for (gesture in Gesture.values()) {
                 val entry = (0 until control.length()).map { control.getJSONObject(it) }
-                    .firstOrNull { it.getInt("action") in gesture.controlActions } ?: continue
+                    .firstOrNull { it.getInt("gesture") in gesture.controlActions } ?: continue
                 if (gesture == Gesture.TAP_HOLD) {
                     holdBits = holdBits(json, if (id == BUDS_PRO) levelBits else null) ?: continue
                     rows[gesture] = holdBits.keys.toList()
                     // `[VENDOR]` the entry's own minimum, else 2 on OnePlus and per-bud holds.
-                    holdMin = entry.optInt("minSelectCount").takeIf { it > 0 }
+                    holdMin = entry.optInt("minSelected").takeIf { it > 0 }
                         ?: if (name.startsWith("OnePlus") || longPressType != 0) 2 else 1
                 } else {
-                    val support = entry.optInt("support")
+                    val support = entry.optInt("options")
                     val options = ORDER.filter { support and it != 0 }
                         .map { bit -> GestureAction.values().first { it.supportBit == bit } }
                     if (options.isNotEmpty()) rows[gesture] = options
@@ -379,15 +379,15 @@ class GestureModel private constructor(
             }
             // `[VENDOR]` a callControl row is only a choice if it offers None (512); the others
             // (36 / 37 and the 32 / 33 of four models) are fixed, with nothing to write.
-            val call = json.optJSONArray("callControl") ?: JSONArray()
+            val call = json.optJSONArray("callGestures") ?: JSONArray()
             fun hasCall(action: Int) = (0 until call.length()).map { call.getJSONObject(it) }
-                .any { it.getInt("action") == action && it.optInt("support") and 512 != 0 }
+                .any { it.getInt("gesture") == action && it.optInt("options") and 512 != 0 }
             val onCall = OnCallGesture.values().filter { hasCall(it.callAction) }
             // `[VENDOR]` order, without spy tap (8388608), which needs a phone-side feature.
             val holdChoices = if (longPressType == 0) emptyList()
                 else intArrayOf(512, HOLD_NOISE, 1, 8192).filter { longPressType and it != 0 }
             return GestureModel(rows, holdBits, onCall, name == "OnePlus Buds" || name == "OnePlus Buds Z",
-                longPressType != 0, holdChoices, holdMin, levelBits, json.optInt("sharedHoldMask") == 1,
+                longPressType != 0, holdChoices, holdMin, levelBits, json.optInt("sharedHold") == 1,
                 json.optInt("oneButton") == 1, json.optInt("bothHold") == 1)
         }
 
@@ -398,20 +398,20 @@ class GestureModel private constructor(
          * (HeyMelody gives them one label on that model).
          */
         private fun holdBits(json: JSONObject, levelBits: MutableList<Int>?): Map<GestureAction, Int>? {
-            val modes = json.optJSONArray("noiseReductionMode") ?: return null
+            val modes = json.optJSONArray("ancModes") ?: return null
             val bits = LinkedHashMap<GestureAction, Int>()
             for (i in 0 until modes.length()) {
                 val mode = modes.getJSONObject(i)
                 // HeyMelody shows these only if a per-bud read says so, which we do not make.
                 if (mode.optBoolean("decideByEarDevice")) continue
-                if (levelBits != null && mode.getInt("modeType") in intArrayOf(3, 4, 7)) {
-                    levelBits += mode.getInt("protocolIndex")
-                    bits.putIfAbsent(GestureAction.ANC_ON, mode.getInt("protocolIndex"))
+                if (levelBits != null && mode.getInt("mode") in intArrayOf(3, 4, 7)) {
+                    levelBits += mode.getInt("slot")
+                    bits.putIfAbsent(GestureAction.ANC_ON, mode.getInt("slot"))
                     continue
                 }
-                val action = GestureAction.values().firstOrNull { it.holdModeType == mode.getInt("modeType") }
+                val action = GestureAction.values().firstOrNull { it.holdModeType == mode.getInt("mode") }
                     ?: return null
-                bits[action] = mode.getInt("protocolIndex")
+                bits[action] = mode.getInt("slot")
             }
             return bits.takeIf { it.isNotEmpty() }
         }

@@ -8,7 +8,7 @@ use slint::{ComponentHandle, ModelRc, VecModel};
 
 /// A device-manager function of this model (`multiConnect`), on buds that take `0x0429`.
 fn has(s: &Snapshot, f: &str) -> bool {
-    s.model.and_then(|m| m["multiConnect"].as_array()).is_some_and(|l| l.iter().any(|x| x == f))
+    s.model.and_then(|m| m["dualDevice"].as_array()).is_some_and(|l| l.iter().any(|x| x == f))
         && (s.caps.supports(CMD_MULTI_CONNECT) || s.manual)
 }
 

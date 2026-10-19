@@ -1311,7 +1311,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
          * yet = shown. Earbud settings gates its own rows. [ModelTest] lists the same rows.
          */
         fun rowSupported(c: Context, key: String): Boolean = when (key) {
-            "wind" -> Capabilities.offered(c, OpoProtocol.FEATURE_WIND_NOISE, "windNoise")
+            "wind" -> Capabilities.offered(c, OpoProtocol.FEATURE_WIND_NOISE, "windMode")
             "game" -> Capabilities.hasFeature(c, Capabilities.gameModeId(c))
             "hires" -> Capabilities.hasFeature(c, OpoProtocol.FEATURE_HIRES_CODEC) || codecPicker(c)
             "spatial" -> Capabilities.hasFeature(c, OpoProtocol.FEATURE_SPATIAL_SOUND) || spatialByType(c)
@@ -1333,17 +1333,17 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
          * Our own key `spatialSwitch` (realme Link data, PROTOCOL.md §9): spatial is feature `1B` alone and
          * Hi-Res `18` alone, never written together, whatever the bitmap says.
          */
-        fun spatialSwitchOnly(c: Context) = ModelCatalog.current(c)?.json?.optInt("spatialSwitch") == 1
+        fun spatialSwitchOnly(c: Context) = ModelCatalog.current(c)?.json?.optInt("spatialToggle") == 1
 
         /** The model's `spatialTypes` has `2`: Off / Fixed / Head tracking instead of a plain switch. */
         fun spatialHeadTracking(c: Context) =
-            ModelCatalog.current(c)?.json?.optJSONArray("spatialTypes")?.toString()?.contains('2') == true
+            ModelCatalog.current(c)?.json?.optJSONArray("spatialModes")?.toString()?.contains('2') == true
 
         /**
          * `[VENDOR]` HeyMelody's "High-quality audio" screen on `highAudio` models (PROTOCOL.md §9): the row
          * picks the codec, and the switch (Hi-Res) is live only with LDAC or LHDC V5, as there.
          */
-        fun codecPicker(c: Context) = ModelCatalog.current(c)?.json?.optInt("highAudio") == 1 &&
+        fun codecPicker(c: Context) = ModelCatalog.current(c)?.json?.optInt("hiRes") == 1 &&
             Capabilities.supports(c, OpoProtocol.CMD_QUERY_CODEC_LIST)
 
         /** Saved row order, completed with any key it does not name, in [defaults] order. */

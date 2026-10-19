@@ -13,18 +13,18 @@ use slint::{ComponentHandle, ModelRc, VecModel};
 const ROWS: &[(u8, Option<&str>, &str, &str, &str, Option<&str>, bool)] = &[
     // Wear detection: the buds' own auto play/pause. The phone's smart auto-pause needs its media session.
     (0x04, None, icons::EARBUD, "wear_firmware_title", "wear_firmware_sub", None, false),
-    (0x09, Some("vocalEnhance"), icons::EQUALIZER, "row_vocal_title", "row_vocal_sub", None, false),
-    (0x27, Some("gameSound"), icons::LOW_LATENCY, "row_game_sound_title", "row_game_sound_sub", None, false),
-    (0x1C, Some("controlAutoVolumeSupport"), icons::VOLUME, "row_smart_volume_title", "row_smart_volume_sub", None, false),
+    (0x09, Some("voiceBoost"), icons::EQUALIZER, "row_vocal_title", "row_vocal_sub", None, false),
+    (0x27, Some("gameSoundFx"), icons::LOW_LATENCY, "row_game_sound_title", "row_game_sound_sub", None, false),
+    (0x1C, Some("autoVolume"), icons::VOLUME, "row_smart_volume_title", "row_smart_volume_sub", None, false),
     (0x30, None, icons::VOLUME, "row_adaptive_volume_title", "row_adaptive_volume_sub", None, false),
     (0x31, None, icons::EARBUD, "row_adaptive_ear_title", "row_adaptive_ear_sub", None, false),
     (0x3A, None, icons::EARBUD, "row_sleep_title", "row_sleep_sub", None, false),
     (0x32, None, icons::TRANSPARENCY, "row_speech_title", "row_speech_sub", None, false),
     // Adaptive sound costs battery: asks only to turn on. Power saving restarts the buds: asks both ways.
     (FEATURE_HEARING_OPTIMIZE, None, icons::HEARING, "row_hearing_optimize_title", "row_hearing_optimize_sub", Some("hearing_optimize_confirm"), false),
-    (0x35, Some("longPressVolume"), icons::VOLUME, "row_long_press_volume_title", "row_long_press_volume_sub", None, false),
+    (0x35, Some("holdVolume"), icons::VOLUME, "row_long_press_volume_title", "row_long_press_volume_sub", None, false),
     (0x3B, None, icons::GESTURE, "row_head_motion_title", "row_head_motion_sub", None, false),
-    (0x37, Some("swiftPair"), icons::DEVICES, "row_swift_pair_title", "row_swift_pair_sub", None, false),
+    (0x37, Some("fastPair"), icons::DEVICES, "row_swift_pair_title", "row_swift_pair_sub", None, false),
     (FEATURE_POWER_SAVING, None, icons::POWER, "row_power_saving_title", "row_power_saving_sub", Some("power_saving_confirm"), true),
 ];
 
@@ -53,7 +53,7 @@ pub fn setup(main: &MainWindow) {
 }
 
 /// Our `spatialSwitch` key (realme): Hi-Res and 3D audio are written alone, never together (§9).
-fn exclusive(s: &Snapshot) -> bool { !s.model.is_some_and(|m| m["spatialSwitch"] == 1) }
+fn exclusive(s: &Snapshot) -> bool { !s.model.is_some_and(|m| m["spatialToggle"] == 1) }
 
 /// 3D audio as HeyMelody picks it (§9): buds whose bitmap has `0x012A` (or a hand-picked model with head
 /// tracking) take a type through `0x0422`, the rest feature `1B`.
@@ -63,11 +63,11 @@ pub(crate) fn spatial_by_type(s: &Snapshot) -> bool {
 
 /// The model's `spatialTypes` has `2`: Off / Fixed / Head tracking instead of a plain switch.
 fn head_tracking(s: &Snapshot) -> bool {
-    s.model.is_some_and(|m| m["spatialTypes"].as_array().is_some_and(|t| t.iter().any(|v| *v == 2)))
+    s.model.is_some_and(|m| m["spatialModes"].as_array().is_some_and(|t| t.iter().any(|v| *v == 2)))
 }
 
 /// The codec picker replaces the Hi-Res write on `highAudio` models with the `0x0123` read (§9).
-pub(crate) fn codec_picker(s: &Snapshot) -> bool { s.model.is_some_and(|m| m["highAudio"] == 1) && s.caps.supports(CMD_QUERY_CODEC_LIST) }
+pub(crate) fn codec_picker(s: &Snapshot) -> bool { s.model.is_some_and(|m| m["hiRes"] == 1) && s.caps.supports(CMD_QUERY_CODEC_LIST) }
 
 fn spatial_on(s: &Snapshot) -> bool {
     if spatial_by_type(s) { s.spatial_type.unwrap_or(0) != 0 } else { s.features.contains(&(FEATURE_SPATIAL, 1)) }
@@ -119,7 +119,7 @@ pub fn home(a: &App) {
         confirm: if confirm.is_empty() { "".into() } else { t(&a.tr, confirm).into() }, confirm_off, ..Default::default()
     };
     let mut rows = vec![];
-    if let Some(v) = listed(FEATURE_WIND_NOISE).or((s.manual && flag("windNoise")).then_some(0)) {
+    if let Some(v) = listed(FEATURE_WIND_NOISE).or((s.manual && flag("windMode")).then_some(0)) {
         rows.push(item(FEATURE_WIND_NOISE as i32, icons::ANC, "row_wind_noise_title", "row_wind_noise_sub", v == 1, "", false));
     }
     if a.has.game {
@@ -178,8 +178,8 @@ pub fn apply(a: &App) {
     // Buds 4 list `0C` without having the feature). Turning it on runs the test flow, not a write.
     let pnc_listed = s.features.iter().find(|f| f.0 == FEATURE_PERSONAL_NOISE).map(|f| f.1);
     // A model without the key has no feature (`optInt` gives 0); no model at all leaves it to the buds.
-    let pnc = (s.model.map_or(true, |m| m["personalNoise"] == 1)
-        && (pnc_listed.is_some() || flagged(Some("personalNoise")))
+    let pnc = (s.model.map_or(true, |m| m["personalAnc"] == 1)
+        && (pnc_listed.is_some() || flagged(Some("personalAnc")))
         && (s.caps.supports(CMD_PERSONAL_NOISE) || s.manual))
         .then(|| FeatureItem {
             id: FEATURE_PERSONAL_NOISE as i32, icon: svg(icons::MODE_ANC_MEDIUM), title: t(&a.tr, "pnc_title").into(),
@@ -226,7 +226,7 @@ pub fn apply(a: &App) {
     e.set_has_alert(s.caps.supports(CMD_SET_ALERT_VOLUME) && s.alert_volume.is_some());
     // Tap sensitivity where HeyMelody's model list has `tapLevelSetting`.
     // Without the buds' word (a manual pick), the slider starts at the middle level.
-    e.set_has_tap(s.model.is_some_and(|m| m["tapLevelSetting"] == 1) && (s.manual || s.caps.supports(CMD_SET_TAP_LEVEL) && s.tap_level.is_some()));
+    e.set_has_tap(s.model.is_some_and(|m| m["tapLevel"] == 1) && (s.manual || s.caps.supports(CMD_SET_TAP_LEVEL) && s.tap_level.is_some()));
     // A held slider keeps its value (`Eq.dragging` is the window's one drag flag).
     if !a.main.global::<crate::Eq>().get_dragging() {
         if let Some(l) = s.alert_volume { e.set_alert(l as i32); }

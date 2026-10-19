@@ -20,7 +20,7 @@ const FEATURES: &[Feature] = &[
         m.supports(OFF) || !m.levels().is_empty() || m.supports(ADAPTIVE) || m.supports(TRANSPARENCY)
     }),
     ("wind", "row_wind_noise_title", "Wind noise reduction", |a| {
-        listed(a, FEATURE_WIND_NOISE) || a.snap.manual && a.snap.model.is_some_and(|m| m["windNoise"] == 1)
+        listed(a, FEATURE_WIND_NOISE) || a.snap.manual && a.snap.model.is_some_and(|m| m["windMode"] == 1)
     }),
     ("game", "row_game_title", "Low latency", |a| a.has.game),
     ("hires", "row_hires_title", "High-quality audio", |a| listed(a, FEATURE_HIRES) || crate::earbuds::codec_picker(&a.snap)),

@@ -349,7 +349,7 @@ class BudsConnectionManager(private val context: Context) {
                 query(OpoProtocol.CMD_QUERY_HEAD_MOTION_TYPE, OpoProtocol.queryHeadMotionType(), "query head motion type")
                 if (!batch.isNullOrEmpty()) { delay(200); sendRawBlocking(OpoProtocol.batch(batch), "batch query (${batch.size})") }
                 // realme Link hands 3D audio to the buds on every connect; else the `1B` switch can do nothing (issue #9).
-                if (ModelCatalog.current(context)?.json?.optInt("spatialSwitch") == 1 &&
+                if (ModelCatalog.current(context)?.json?.optInt("spatialToggle") == 1 &&
                     Capabilities.supports(context, OpoProtocol.CMD_SPATIAL_SOURCE)) {
                     delay(200); sendRawBlocking(OpoProtocol.spatialOnBuds(), "3D audio on the buds")
                 }
@@ -831,7 +831,7 @@ class BudsConnectionManager(private val context: Context) {
 
     /** `0x010D` for the model in use (PROTOCOL.md §9): its own id list, wind noise only where the model has the flag. */
     private fun statusQuery() = ModelCatalog.current(context)?.json.let {
-        OpoProtocol.queryStatus(it?.optString("statusQuery")?.ifEmpty { null }, it?.optInt("windNoise") == 1)
+        OpoProtocol.queryStatus(it?.optString("statusQuery")?.ifEmpty { null }, it?.optInt("windMode") == 1)
     }
 
     /** Timestamp of the last ANC command we flushed; see noteUnattributed(). */

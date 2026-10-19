@@ -68,19 +68,19 @@ class AncModes private constructor(
             val report = HashMap<Int, String>()
             for (i in 0 until modes.length()) {
                 val top = modes.getJSONObject(i)
-                val name = nameOf(top.getInt("modeType")) ?: continue
+                val name = nameOf(top.getInt("mode")) ?: continue
                 val shown = if (name == "Voice") TRANSPARENCY else name
                 // decideByEarDevice: HeyMelody shows it only if a per-bud support read says so,
                 // which we do not make. Only "Voice" carries it today.
-                if (!top.optBoolean("decideByEarDevice")) set.putIfAbsent(name, top.getInt("protocolIndex"))
-                report[top.getInt("protocolIndex")] = shown
-                val children = top.optJSONArray("childrenMode") ?: JSONArray()
+                if (!top.optBoolean("decideByEarDevice")) set.putIfAbsent(name, top.getInt("slot"))
+                report[top.getInt("slot")] = shown
+                val children = top.optJSONArray("variants") ?: JSONArray()
                 for (j in 0 until children.length()) {
                     val child = children.getJSONObject(j)
-                    val childName = nameOf(child.getInt("modeType")) ?: continue
+                    val childName = nameOf(child.getInt("mode")) ?: continue
                     // A child that repeats its parent (Off's bit 3) is a report value only.
-                    if (childName != name) set.putIfAbsent(childName, child.getInt("protocolIndex"))
-                    report[child.getInt("protocolIndex")] = if (childName == "Voice") shown else childName
+                    if (childName != name) set.putIfAbsent(childName, child.getInt("slot"))
+                    report[child.getInt("slot")] = if (childName == "Voice") shown else childName
                 }
             }
             // Plain noise cancelling with no levels is offered as the one level the UI has for it.
@@ -92,10 +92,10 @@ class AncModes private constructor(
 
         /** OnePlus Buds 4 (`065414`): the table used before the product id is read. */
         private val BUDS4 = parse(JSONArray(
-            """[{"modeType":5,"protocolIndex":1,"childrenMode":[{"modeType":4,"protocolIndex":4},
-            {"modeType":8,"protocolIndex":5},{"modeType":3,"protocolIndex":6},{"modeType":7,"protocolIndex":7}]},
-            {"modeType":10,"protocolIndex":11},{"modeType":2,"protocolIndex":2,"childrenMode":[{"modeType":2,"protocolIndex":8}]},
-            {"modeType":1,"protocolIndex":0,"childrenMode":[{"modeType":1,"protocolIndex":3}]}]"""))
+            """[{"mode":5,"slot":1,"variants":[{"mode":4,"slot":4},
+            {"mode":8,"slot":5},{"mode":3,"slot":6},{"mode":7,"slot":7}]},
+            {"mode":10,"slot":11},{"mode":2,"slot":2,"variants":[{"mode":2,"slot":8}]},
+            {"mode":1,"slot":0,"variants":[{"mode":1,"slot":3}]}]"""))
         private val NONE = AncModes(emptyMap(), emptyMap())
 
         @Volatile private var cached: Pair<String, AncModes>? = null
@@ -110,7 +110,7 @@ class AncModes private constructor(
             val model = ModelCatalog.current(context) ?: return if (context.getSharedPreferences(
                     ThemeRes.PREFS_NAME, Context.MODE_PRIVATE).getString(Capabilities.KEY_PRODUCT_ID, null) == null) BUDS4 else NONE
             cached?.let { if (it.first == model.id) return it.second }
-            val modes = runCatching { model.json.optJSONArray("noiseReductionMode")?.let { parse(it) } }.getOrNull() ?: NONE
+            val modes = runCatching { model.json.optJSONArray("ancModes")?.let { parse(it) } }.getOrNull() ?: NONE
             cached = model.id to modes
             return modes
         }

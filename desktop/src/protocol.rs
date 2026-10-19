@@ -138,7 +138,7 @@ pub fn status_query(model: Option<&serde_json::Value>) -> Vec<u8> {
             0x09, 0x17, 0x30, 0x31, 0x3A, 0x32, 0x35, 0x37, 0x38, 0x3B, 0x0C,
         ],
     };
-    if model.is_some_and(|m| m["windNoise"] == 1) { ids.push(FEATURE_WIND_NOISE); }
+    if model.is_some_and(|m| m["windMode"] == 1) { ids.push(FEATURE_WIND_NOISE); }
     let mut q = vec![ids.len() as u8];
     q.extend(ids);
     q
@@ -250,13 +250,13 @@ fn mode_name(t: i64) -> Option<&'static str> {
 }
 
 fn mode_of(v: &Value) -> Option<(&'static str, u8)> {
-    Some((mode_name(v["modeType"].as_i64()?)?, v["protocolIndex"].as_u64()? as u8))
+    Some((mode_name(v["mode"].as_i64()?)?, v["slot"].as_u64()? as u8))
 }
 
 impl AncModes {
     /// A model without `noiseReductionMode` (or none detected) gets no modes: a wrong bit sets another mode silently.
     pub fn of(model: Option<&Value>) -> AncModes {
-        model.and_then(|m| m["noiseReductionMode"].as_array()).map(|a| Self::parse(a)).unwrap_or_default()
+        model.and_then(|m| m["ancModes"].as_array()).map(|a| Self::parse(a)).unwrap_or_default()
     }
 
     fn parse(modes: &[Value]) -> AncModes {
@@ -269,7 +269,7 @@ impl AncModes {
             let shown = if name == "Voice" { TRANSPARENCY } else { name };
             if !top["decideByEarDevice"].as_bool().unwrap_or(false) { put(&mut m.set, name, bit); }
             m.report.push((bit, shown.into()));
-            for child in top["childrenMode"].as_array().into_iter().flatten() {
+            for child in top["variants"].as_array().into_iter().flatten() {
                 let Some((cn, cb)) = mode_of(child) else { continue };
                 // A child that repeats its parent (Off's bit 3) is a report value only.
                 if cn != name { put(&mut m.set, cn, cb); }
@@ -373,29 +373,29 @@ pub fn parse_presets(p: &[u8]) -> Option<Vec<Preset>> {
 fn flag(model: Option<&Value>, key: &str) -> bool { model.map_or(true, |m| m[key].as_i64() == Some(1)) }
 
 pub fn eq_has_custom(model: Option<&Value>, caps: &Caps) -> bool {
-    flag(model, "customEqualizer") && caps.supports(CMD_SAVE_CUSTOM_EQ)
+    flag(model, "customEq") && caps.supports(CMD_SAVE_CUSTOM_EQ)
 }
 
 /// Any equalizer at all (`EqActivity.hasEq`): custom presets, or built-in ones on a model with `equalizer` 1..4.
 pub fn eq_has(model: Option<&Value>, caps: &Caps) -> bool {
     eq_has_custom(model, caps)
-        || (1..=4).contains(&model.map_or(1, |m| m["equalizer"].as_i64().unwrap_or(0))) && caps.supports(CMD_SET_EQ)
+        || (1..=4).contains(&model.map_or(1, |m| m["eqKind"].as_i64().unwrap_or(0))) && caps.supports(CMD_SET_EQ)
 }
 
 /// The buds listed switch `id` in their last `0x810D` reply; nothing read yet = yes (`Capabilities.hasFeature`).
 pub fn has_feature(features: &[(u8, u8)], id: u8) -> bool { features.is_empty() || features.iter().any(|f| f.0 == id) }
 
 pub fn eq_has_bass(model: Option<&Value>, caps: &Caps) -> bool {
-    flag(model, "bassEngineSupport") && caps.supports(CMD_SET_BASSWAVE)
+    flag(model, "bassEngine") && caps.supports(CMD_SET_BASSWAVE)
 }
 
 /// `customEqMax`, else 3.
 pub fn eq_max_custom(model: Option<&Value>) -> usize {
-    model.and_then(|m| m["customEqMax"].as_u64()).filter(|&n| n > 0).unwrap_or(3) as usize
+    model.and_then(|m| m["customEqLimit"].as_u64()).filter(|&n| n > 0).unwrap_or(3) as usize
 }
 
 pub fn eq_model_freqs(model: Option<&Value>) -> Vec<u16> {
-    model.and_then(|m| m["customEqFrequency"].as_array())
+    model.and_then(|m| m["customEqBands"].as_array())
         .map(|a| a.iter().filter_map(|f| f.as_u64().map(|f| f as u16)).collect())
         .unwrap_or_else(|| EQ_DEFAULT_FREQS.to_vec())
 }
@@ -409,15 +409,15 @@ pub fn firmware_version(text: &str) -> Option<String> {
 
 /// The model's built-in presets as (`0x0406` id, `strings.xml` key), in HeyMelody's order (`EqActivity.builtInPresets`).
 pub fn eq_builtins(model: Option<&Value>, firmware: Option<&str>) -> Vec<(u8, &'static str)> {
-    let buds4 = serde_json::json!([{"modeType":11,"protocolIndex":0},{"modeType":14,"protocolIndex":1},{"modeType":12,"protocolIndex":2}]);
+    let buds4 = serde_json::json!([{"mode":11,"slot":0},{"mode":14,"slot":1},{"mode":12,"slot":2}]);
     let modes: Vec<Value> = match model {
         Some(m) => {
             // The lower non-zero of the two buds' versions; unknown = 0.
             let nums: Vec<i64> = firmware.unwrap_or("").split('.').map(|p| p.parse().unwrap_or(0)).collect();
             let version = if nums.len() == 3 { nums[..2].iter().copied().filter(|&n| n != 0).min().unwrap_or(0) } else { nums.first().copied().unwrap_or(0) };
-            let mut v: Vec<Value> = ["equalizerModeCompat", "equalizerModeByVersion", "equalizerMode"].iter()
+            let mut v: Vec<Value> = ["eqPresetsCompat", "eqPresetsByFirmware", "eqPresets"].iter()
                 .flat_map(|k| m[*k].as_array().cloned().unwrap_or_default())
-                .filter(|e| e["minFirmVersion"].as_i64().unwrap_or(0) <= version)
+                .filter(|e| e["minFirmware"].as_i64().unwrap_or(0) <= version)
                 .collect();
             v.sort_by_key(|e| e["order"].as_i64().unwrap_or(0));
             v
@@ -425,9 +425,9 @@ pub fn eq_builtins(model: Option<&Value>, firmware: Option<&str>) -> Vec<(u8, &'
         None => buds4.as_array().unwrap().clone(),
     };
     let name = model.and_then(|m| m["name"].as_str()).unwrap_or("");
-    let alt = name == "OPPO Enco R" || name == "OPPO Enco Air2" || model.is_some_and(|m| m["equalizer"].as_i64() == Some(2));
+    let alt = name == "OPPO Enco R" || name == "OPPO Enco Air2" || model.is_some_and(|m| m["eqKind"].as_i64() == Some(2));
     modes.iter().filter_map(|m| {
-        let key = match m["modeType"].as_i64()? {
+        let key = match m["mode"].as_i64()? {
             1 => if alt { "eq_nature_balance" } else { "eq_classic" },
             2 => if alt { "eq_bass_boost" } else { "eq_dynamic_bass" },
             3 | 14 | 32 => "eq_clear_vocals",
@@ -468,7 +468,7 @@ pub fn eq_builtins(model: Option<&Value>, firmware: Option<&str>) -> Vec<(u8, &'
             104 => "eq_pure_bass",
             _ => return None, // unnamed in HeyMelody too
         };
-        Some((m["protocolIndex"].as_u64()? as u8, key))
+        Some((m["slot"].as_u64()? as u8, key))
     }).collect()
 }
 
@@ -1085,7 +1085,7 @@ mod tests {
     fn status_query_wind_noise() {
         let plain = status_query(None);
         assert_eq!((plain[0] as usize, plain.len()), (23, 24));
-        let air7 = serde_json::json!({"windNoise": 1});
+        let air7 = serde_json::json!({"windMode": 1});
         let q = status_query(Some(&air7));
         assert_eq!((q[0], q[q.len() - 1], &q[1..24]), (24, FEATURE_WIND_NOISE, &plain[1..]));
     }
