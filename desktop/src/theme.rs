@@ -17,6 +17,8 @@ const MAX_NAME: usize = 24;
 const MAX_RECENT: usize = 5;
 /// The desktop's look before presets: a first start keeps it.
 const DEFAULT: &str = DARK;
+/// The phone's accent with the wallpaper colours on (`system_accent1_200`, read from a screenshot of its app).
+const PHONE_ACCENT: &str = "#C2C6D6";
 
 /// The first `name` colour item after byte `from` (`<item name="x">#RRGGBB</item>`, `<color name="x">`).
 fn xml_color(xml: &str, from: usize, name: &str) -> Color {
@@ -78,14 +80,23 @@ fn name_key(id: &str) -> &'static str {
 fn built_in(id: &str, tr: &[String]) -> Pal {
     let style = match id { OLED => "Theme.App.OLED", DARK => "Theme.App.Dark", _ => "Theme.App.Light" };
     let at = THEMES.find(&format!("<style name=\"{style}\"")).expect(style);
-    let c = |n| xml_color(THEMES, at, n);
-    // Material: the system accent, unless the user set one for this preset.
+    let c = |n: &'static str| xml_color(THEMES, at, n);
+    // Material: the phone's own colours (read from its screen with the wallpaper colours on: neutral greys and a
+    // pale blue-grey accent) for the dark presets, the system accent for White; a user accent wins.
     let sys = if crate::MATERIAL.get() { crate::SYS_ACCENT.get() } else { None };
-    let accent = load_settings()["palette_accent"][id].as_str().and_then(parse_hex).or(sys);
+    let phone = crate::MATERIAL.get() && id != WHITE;
+    let accent = load_settings()["palette_accent"][id].as_str().and_then(parse_hex)
+        .or(if phone { parse_hex(PHONE_ACCENT) } else { sys });
+    let tok = |name: &'static str, phone_hex: &str| if phone { parse_hex(phone_hex).expect(phone_hex) } else { c(name) };
+    // Classic Dark on the phone: neutral 900 page, neutral 800 card.
+    let dark = id == DARK;
     Pal {
-        id: id.into(), name: t(tr, name_key(id)).into(), bg: c("appColorBg"), card: c("appColorCard"),
-        accent: accent.unwrap_or(c("appColorAccent")), text: c("appColorTextPrimary"),
-        text2: c("appColorTextSecondary"), outline: c("appColorOutline"),
+        id: id.into(), name: t(tr, name_key(id)).into(),
+        bg: tok("appColorBg", if dark { "#1B1B1D" } else { "#000000" }),
+        card: tok("appColorCard", if dark { "#303032" } else { "#000000" }),
+        accent: accent.unwrap_or(c("appColorAccent")),
+        text: tok("appColorTextPrimary", "#F3F0F1"), text2: tok("appColorTextSecondary", "#C8C6C7"),
+        outline: tok("appColorOutline", if dark { "#46474A" } else { "#2E2E30" }),
     }
 }
 
