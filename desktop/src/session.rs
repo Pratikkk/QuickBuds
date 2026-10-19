@@ -280,7 +280,10 @@ impl<'a> Conn<'a> {
                 log("RX", p, Some(format!("batch reply, {} answers", parts.len())));
                 parts
             }) {
-                let e = decode(&p);
+                // The "new protocol" setting decodes with `msg` first; what it does not know yet goes to the shipping decoder.
+                let e = if self.next.is_some() {
+                    crate::msg::to_event(&crate::wire::Message { cmd: cmd_of(&p), seq: seq_of(&p), payload: payload_of(&p).to_vec() }).or_else(|| decode(&p))
+                } else { decode(&p) };
                 let human = e.as_ref().map(describe).or_else(|| describe_other(&p));
                 // Some buds drop the link a few seconds after an unanswered request (issue #2: the time request).
                 let now = SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs() as u32);

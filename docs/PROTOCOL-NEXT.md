@@ -151,40 +151,86 @@ are off `[VENDOR]`. Buds 4 `[CAPTURE]`: `00 FF 77 5A EA 67 0E 20 07`.
 
 ## 5. Pushes — `0x0204`
 
-`payload[0]` is the event code. `Seq` is `FF`.
+`payload[0]` is the event code. `Seq` is `FF`. "After the code" below means the bytes that follow `payload[0]`.
+A known code with too few bytes is malformed and dropped. An unknown code is kept as raw bytes.
 
-| Code | Event | Payload after the code |
+| Code | Event | Layout after the code |
 |---|---|---|
-| `01` | Battery | list of `<device> <level>` |
-| `02` | Wearing | list of `<device> <state>` |
-| `03` | ANC | `01 <mode...>` current mode; `02` hold-cycle data; `04 01 <level>` smart level |
-| `04` | Fit test | `<dev> <result>` per bud |
+| `01` | Battery | `<count>` then `<part> <raw>` pairs (section 8) |
+| `02` | Wearing | `<count>` then `<part> <state>` pairs (section 8) |
+| `03` | ANC | `01 01 <mode LE, 1-4 bytes>` current mode; `02 <kind> <mask LE>` hold-cycle mask; `04 01 <mask LE>` the level Smart chose |
+| `04` | Fit test | `<dev> <result>` per bud; `dev` `01` left, `02` right. A bud missing from the list has no result |
 | `05` | Game mode | `<state>`; on four product ids (`062410` `062810` `063010` `063410`) `<x> <x> <state>` |
-| `06` | Dual connection devices | count, then devices |
+| `06` | Dual connection devices | `<count>` then devices (section 14) |
 | `08` | Hearing test status | `<kind> <status>`; kind `02` hearing test, `04` ear scan |
-| `0A` | State byte | `<v>`, meaning unknown |
+| `0A` | Zen-mode switch state | `<state>` `[VENDOR]`. QuickBuds has no zen-mode feature (needs the vendor's tone files) |
 | `0B` | Personalised ANC result | `<result>` |
-| `0D` | Multi-device link info `[GUESS]` | layout unread |
-| `0E` | Ear scan result | see PROTOCOL.md §9 |
-| `0F` | Public event | `<flags u16 LE> <data>`: bit 0 alert-sound volume `<v>`; bit 2 handheld-device info; bit 4 tap level `<v>` |
-| `10` | One-shot state | layout unread |
-| `11` | Record list | layout unread |
-| `F1` | Gesture fired | see PROTOCOL.md §6 |
-| `F2` | Connected-devices info (answered) | `<count>` then devices |
+| `0D` | Related-device info | `<flags u16 LE>` then the fields whose flag is set, in this order: bit 0 capability `<u8>`, bit 1 version `<u8>`, bit 2 wear `<u8>`, bit 3 status `<u8>`, bit 4 name `<len> <bytes>` `[VENDOR]`. Status bits: 0 phone has no active command, 1 connected by the related device, 2 HFP busy, 3 A2DP busy, 4 the other device's auto switch is closed. A field whose bytes are missing is absent |
+| `0E` | Ear scan result | `<kind> <len u16 LE> <data> <id u32 BE>`; `len` is not 0 (section 16) |
+| `0F` | Public event | `<flags u16 LE> <data>`. The first match wins: bit 0 alert-sound volume `<v>`; bit 1 nothing; bit 2 handheld device `<mode> [<MAC 6, reversed>]`, mode `00` = automatic, no MAC; bit 4 tap level `<v>` `[VENDOR]`. Needs at least 1 data byte; a MAC needs 6 more |
+| `10` | One-shot state | Voice-wakeup audio stream setup `[VENDOR]`: flags, sample-rate type, format, channels, codec, frame size u16 LE, session state, VAD state. Not built (voice wakeup is decided against) |
+| `11` | Tone-change list | List of tone records `[VENDOR]`. Not built (tone files come from the vendor's servers) |
+| `F1` | Gesture fired | `<side> <button> <act> <fn> <context> <int16 LE options...>`; needs 5 bytes (section 10) |
+| `F2` | Connected-devices info (answered) | `<count>` then `<MAC 6, reversed> <times u16 LE> <nameLen> <name>` |
 | `F4` | Diagnostic JSON (answered) | UTF-8 JSON |
 | `F5` | Head gesture type | `<type>` |
 | `F6` | Head-motion try result | `<v>` |
-| `F7` | Voice-assist control type | layout unread |
-| `F8` | LE / BR link switch state | layout unread |
+| `F7` | Voice-assist control type | `<bits>`: bit 0 type 0, bit 1 type 1, bit 2 type 2 (highest set bit wins), bit 7 a support flag `[VENDOR]` |
+| `F8` | LE / BR link switch state | `<bits>`: bit 0 state, bit 1 owner, bit 2 reset flag `[VENDOR]` |
 | `F9` | AI translation audio focus | `<v>`; online feature, not built |
+
+Codes `07` and `0C` have no handler; `09` goes to a separate parser for a list of records (not read, unused). `F3` is
+offered by the buds and ignored `[VENDOR]`.
 
 Registration: `0x0200` reads which codes the buds offer (`00 <count> <codes>`). `0x0205 <count> <codes...>`
 subscribes. Buds without `0x0205` in the bitmap take `0x0201 <code>` once per code `[VENDOR]`.
 
-## 6. To move over from PROTOCOL.md
+## 6. Connection
 
-Connection and init sequence, batch query `0x012F`, ANC, gestures, battery, wearing, feature switches, EQ,
-Golden Sound, spatial sound, codec, dual connection, requests from the buds. Each is re-checked against the
-vendor behaviour before it moves, and each move updates the code in the same commit.
+Init sequence `[CAPTURE]` (Buds 4, both apps): wait 300 ms, then one message every 200 ms.
 
-The writes the apps do not use (`0x0408`, `0x0414`, `0x0419`, `0x041D`, `0x0420` and others) stay in PROTOCOL.md §3.
+```
+0x0100 bitmap → 0x0103 product id → 0x0200 offered codes → 0x0205 subscribe (or 0x0201 per code) →
+reads (section 7 when the bitmap has bit 56, else one by one)
+```
+
+Nothing is polled after that. Battery, wearing, ANC and game mode arrive as pushes `[TESTED]`.
+
+- **Bitmap** `0x8100` (section 4). Every command the app sends is checked against it. A command with no bit is not sent.
+- **Product id** `0x8103`: `00 <id, 3 bytes LE>`. Buds 4: `00 14 54 06` is `065414` `[CAPTURE]`. Four colour ranges
+  fold into one id before the model lookup `[VENDOR]`: `100100`-`100102` → `060414`, `100200`-`100202` → `060814`,
+  `108100`-`108102` → `068414`, `108200`-`108202` → `068814`.
+- **Firmware** `0x0105` → `00 <count>` then UTF-8 text `device,type,version` repeated, joined by commas `[CAPTURE]`.
+  Device `1` left, `2` right, `3` case. Buds 4: `1,2,138,2,2,138,3,1,01,3,2,105`. The app shows the type `2` versions in reply
+  order, joined by dots: `138.138.105`.
+- **Offered codes** `0x8200` = `00 <count> <codes>`. Buds 4 `[CAPTURE]`: `00 09 01 02 03 04 08 0B F1 F2 F3`. Read it
+  before deciding that an event does not exist: silence usually means "not subscribed".
+- **Subscribe** `0x0205 <count> <codes>`, count first `[CAPTURE]`. The app asks for `01 02 03`, plus `04` when the bitmap has
+  `0x0405`, `08` when it has `0x040D`, `0B` when it has `0x0412`. It keeps only the codes the buds offered, as the vendor app
+  registers exactly the offered list `[VENDOR]`.
+  - Never send `01 01 02 02`: that is "count 1, battery only". The buds accept it and never push wearing.
+  - Never drop `03` when offered. Without it Buds 4 sends no ANC change made on the buds.
+  - Nord Buds 3 Pro offers only `02 01` `[CAPTURE]` and sent no `0x8205` when asked for more. OPPO Enco Buds2 also offers `02 01`.
+  - The `0x8205` reply is `01 <count>` then `<code> 00` per code `[GUESS]`. The vendor app reads none of it; the reply ends the setup.
+- Which model the buds are is the app's choice, not the protocol's. The model list matches the Bluetooth name first, then the
+  product id.
+
+## 7. Batch query — `0x012F`
+
+Bitmap bit 56. One message carries many queries `[CAPTURE]`: HeyMelody sends one with 24 queries after `0x0100`, `0x0200`
+and `0x0205`.
+
+- Request: `<count>` then `<cmd LE> <len LE> <payload>` per query.
+- Reply: several `0x812F` messages with the request's `Seq`, each `00 <count>` then `<cmd LE> <len LE> <reply payload>` per
+  answer. `cmd` is the query's. Handle each answer as the reply `cmd | 0x8000` with the batch's `Seq` `[VENDOR]`. An answer
+  that runs past the end ends the list.
+- Buds 4 query list `[CAPTURE]`: `0102 FFFF`, `0106`, `010B`, `0103`, `0101 0002`, `0114`, `0105`, `0107`, `0108 020301`,
+  `010C 0201`, `010C 0101`, `010C 0301`, `010C 0401`, `010F`, `010D 09 05 04 0B 11 18 06 1B 1D 1C`, `0121`, `0123`,
+  `0118 0101`, `011C`, `0115`, `011E`, `0122`, `0105`, `0109`.
+- Buds without bit 56 (Enco Buds2) take the queries one by one.
+- QuickBuds sends its own list. A later status read goes alone.
+
+## 8. To move over
+
+Battery and wearing, ANC, gestures, feature switches, EQ, sound settings, dual connection, requests from the buds,
+Golden Sound.

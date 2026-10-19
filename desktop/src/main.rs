@@ -2,6 +2,8 @@
 #![windows_subsystem = "windows"]
 
 mod bt;
+#[allow(dead_code)]
+mod cmd;
 mod controls;
 mod devtools;
 mod dots;
@@ -11,6 +13,8 @@ mod eq;
 mod hearing;
 mod models;
 mod modeltest;
+#[allow(dead_code)]
+mod msg;
 mod protocol;
 mod report;
 mod session;

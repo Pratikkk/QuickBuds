@@ -23,6 +23,7 @@ import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.GoldenSound
 import com.spizganed.quickbuds.protocol.OppoPacketFramer
+import com.spizganed.quickbuds.protocol2.Decode
 import com.spizganed.quickbuds.protocol2.ProtocolNext
 import com.spizganed.quickbuds.protocol2.Wire
 import com.spizganed.quickbuds.protocol.UserInteractionParser
@@ -1086,8 +1087,10 @@ class BudsConnectionManager(private val context: Context) {
                         bridge?.forward(buffer, bytes)
                         if (next) {
                             // The handlers still read the fixed 9-byte header, so each message goes in as one.
-                            for (m in wire.push(buffer, bytes))
+                            for (m in wire.push(buffer, bytes)) {
+                                logNext(m)
                                 handlePacket(OppoPacketFramer.normalise(OpoProtocol.buildPacket(m.cmd, m.seq, m.payload)))
+                            }
                         } else {
                             for (frame in framer.append(buffer, bytes)) handlePacket(frame)
                         }
@@ -1194,6 +1197,15 @@ class BudsConnectionManager(private val context: Context) {
         val head = OpoProtocol.bytesToHex(payload.take(4).toByteArray())
         log("UNATTR RX: cmd=0x${"%04X".format(cmd)} len=${payload.size} " +
             "head=[$head] ancFlush=${if (System.currentTimeMillis() - lastAncFlushAt < 4000) "YES" else "no"}")
+    }
+
+    /**
+     * The "new protocol" setting: what the rebuilt decoder (`protocol2.Decode`) makes of a message, next to the
+     * `RX:` line. The handlers above still act; this line shows where the two layers differ.
+     */
+    private fun logNext(m: Wire.Message) {
+        val all = if (m.cmd == OpoProtocol.CMD_BATCH_REPLY) Decode.unbatch(m) else listOf(m)
+        for (one in all) log("NEXT: %04X seq=%02X -> %s".format(one.cmd, one.seq, Decode.decode(one) ?: "-"))
     }
 
     /** [batched]: one answer unpacked from a `0x812F` batch reply, as if it came on its own. */
