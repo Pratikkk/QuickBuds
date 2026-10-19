@@ -5,7 +5,6 @@ the history of how it was found is in git.
 
 **Evidence tags.** Every claim carries one:
 `[VENDOR]` HeyMelody's behaviour, or realme Link's where a line says so (studied for interoperability only) ·
-`[OSS]` a public project from the README's Credits ·
 `[CAPTURE]` seen in a capture on our own buds · `[TESTED]` checked by hand on our own buds ·
 `[GUESS]` unverified.
 Never promote a claim without evidence. Never remove a `[GUESS]` tag to tidy up.
@@ -45,16 +44,16 @@ AA  <TotalLen>  00 00  <Cmd LE>  <Seq>  <PayLen LE>  <Payload...>
 | TotalLen | Length of everything after this field: `7 + PayLen` |
 | `00 00` | Reserved |
 | Cmd | Command id, little-endian |
-| Seq | `0x01`-`0xFE`; the reply echoes it. **`0xFF` = a push from the buds** `[OSS]` |
+| Seq | `0x01`-`0xFE`; the reply echoes it. **`0xFF` = a push from the buds** `[CAPTURE]` |
 | PayLen | Payload length, little-endian |
 
 - **TotalLen is standard LEB128** `[CAPTURE]`: one byte below 128, else 7 bits per byte, low first,
-  high bit = more. The `[OSS]` "subtract 1 first" is wrong: a 124-byte payload goes out as `AA 83 01`
+  high bit = more. A length that subtracts 1 first does not fit: a 124-byte payload goes out as `AA 83 01`
   (131), a 250-byte reply arrives as `AA 81 02` (257). Golden Sound (§9) uses frames over 127 bytes.
 - `OpoProtocol.buildPacket()` writes it. `OppoPacketFramer` reads it and normalises every frame to a
   one-byte length, so after the framer the header is a fixed 9 bytes: **cmd at 4-5, payload from
   index 9** (`BudsConnectionManager.payloadOf()`). A wrong offset gives garbage, not an error.
-- Replies are **`cmd | 0x8000`** `[OSS]`. Write acks (`0x84xx`) carry `00` for success `[CAPTURE]`.
+- Replies are **`cmd | 0x8000`** `[CAPTURE]`. Write acks (`0x84xx`) carry `00` for success `[CAPTURE]`.
   **An ack of `00` does not prove the write took** (§5 hold mask); read back.
 
 ```
@@ -155,7 +154,7 @@ wearing `0x0109`.
 0x0108 gesture table → 0x010C 02 01 hold cycle
 ```
 
-Nothing is polled after that: battery, wear, ANC and game mode are pushed. Was: the `[OSS]`
+Nothing is polled after that: battery, wear, ANC and game mode are pushed. Was: a
 keep-alive poll. Is: none; no stale link seen `[TESTED]`.
 
 ### What the buds are and accept
@@ -167,7 +166,7 @@ keep-alive poll. Is: none; no stale link seen `[TESTED]`.
   (`protocol/Capabilities.kt`). Buds 4 `[CAPTURE]`: `00 FF 77 5A EA 67 0E 20 07` — every command the
   app uses, not `0x0422` / `0x012A`.
 - **`0x8103` product id:** `00` + 3 bytes LE. Buds 4: `00 14 54 06` = `065414` `[CAPTURE]`. Four colour
-  ranges fold into one id `[VENDOR]`+`[OSS]`: `100100`-`100102` → `060414`, `100200`-`100202` →
+  ranges fold into one id `[VENDOR]`: `100100`-`100102` → `060414`, `100200`-`100202` →
   `060814`, `108100`-`108102` → `068414`, `108200`-`108202` → `068814` (`ModelCatalog.normalise`).
 - **Model lookup** `[VENDOR]` (`ModelCatalog.find`): entries in `assets/models.json` whose `name`
   equals the Bluetooth name exactly, and those whose `id` equals the product id. An entry matching
@@ -179,7 +178,7 @@ keep-alive poll. Is: none; no stale link seen `[TESTED]`.
   versions in reply order, joined by dots (`OpoProtocol.firmwareVersion()`). Device types: 1 left, 2 right,
   3 case `[VENDOR]`.
 - **`0x810D` lists only the switches the firmware has** (§9). A missing id = no such switch
-  `[CAPTURE]`+`[OSS]`.
+  `[CAPTURE]`.
 
 ### Batch query — `0x012F` `[CAPTURE]`
 
@@ -218,9 +217,9 @@ one `0x012F`. A later status read goes alone.
 | `08` | Golden Sound test status (§9) | when the bitmap has `0x040D` |
 | `0B` | Personalised ANC result (§9) | when the bitmap has `0x0412` |
 | `0E` | Golden Sound ear scan result (§9) | pushed, not in the list |
-| `F1` | Gesture fired (§6) | `[OSS]` debug channel |
+| `F1` | Gesture fired (§6) `[CAPTURE]` | in the `0x8200` list |
 | `F2` | Connected-devices info `[VENDOR]`, acked (§9): `<count>`, then per device the MAC (6 bytes, reversed), connect count (u16 LE), name length, name | no |
-| `F3` | `[OSS]` debug channel. HeyMelody ignores it `[VENDOR]` | no |
+| `F3` | Content unknown. HeyMelody ignores it `[VENDOR]` | in the `0x8200` list |
 | `F4` | Diagnostic JSON `[VENDOR]`, acked (§9) | pushed, not in the list |
 | `F5` | Head gesture type `[VENDOR]` | — |
 
@@ -251,7 +250,7 @@ ANC), plus `04` / `08` / `0B` as above, **kept to the ids the buds offer in `0x8
 Each model's `ancModes` in `assets/models.json` (`protocol/AncModes.kt`) is a tree of
 `{mode, slot, variants}`. mode: `1` Off, `2` Transparency, `3` Light (weak),
 `8` Medium, `4` Deep (strong), `5` noise reduction (a parent of levels, or alone), `7` Smart,
-`10` Adaptive, `6` transparency with voice (**not** Adaptive, as `[OSS]` OppoPods maps it).
+`10` Adaptive, `6` transparency with voice (not Adaptive).
 
 - **SET** sends the mode's `slot` as the bit; a level sends its child's index.
 - **A report** is looked up in the same tree, parents first, then children.
@@ -270,7 +269,7 @@ Each model's `ancModes` in `assets/models.json` (`protocol/AncModes.kt`) is a tr
   unverified. The Air7 Pro log's
   `0x810C 01 01` value `02` = Transparency.
 
-### SET — `0x0404 01 01 <mask>` `[OSS]`+`[CAPTURE]`
+### SET — `0x0404 01 01 <mask>` `[CAPTURE]`
 
 `OpoProtocol.anc(bit)`: `bit / 8 + 1` mask bytes after `01 01`, little-endian. Buds 4:
 
@@ -288,7 +287,7 @@ Each model's `ancModes` in `assets/models.json` (`protocol/AncModes.kt`) is a tr
 **Adaptive is bit 11 (mask `0x0800`), not 8.** Bit 8 gives `01 01 00 01`, a different mode. Take the
 bit from the model's `slot`, never from a mode's position in a list.
 
-### NOTIFY — push `03 01 01 <LO> <HI>` and the `0x810C 01 01` reply `[CAPTURE]`+`[OSS]`
+### NOTIFY — push `03 01 01 <LO> <HI>` and the `0x810C 01 01` reply `[CAPTURE]`
 
 **A different table from SET. They are not supposed to agree.** It is the same model tree reported
 one level down (Buds 4's Off has a child at 3, Transparency one at 8).
@@ -350,7 +349,7 @@ setting**; clearing `fn` to `0x00` does not stop the cycle `[CAPTURE]`.
 
 ### Gesture table — read `0x0108`, write `0x0401` `[CAPTURE]`
 
-Entry: 4 bytes `[dev, btn, act, fn]` `[OSS]`. The read reply has a **2-byte header**
+Entry: 4 bytes `[dev, btn, act, fn]` `[CAPTURE]`. The read reply has a **2-byte header**
 `<status 00> <count>` (`KeyFunctionParser.HEADER_SIZE = 2`): 74 bytes = 2 + 18 × 4.
 
 - **`dev`**: `01` left, `02` right; `04` in a write = both buds (on-call rows).
@@ -441,14 +440,14 @@ Buds 4: `1:516 2:8807 3:3154531 5:3584`, hold `27` — matches HeyMelody's menus
   OnePlus Buds Pro (`060C14`) shows 3 / 4 / 7 as one "ANC" option whose bit is the current level's, or
   Smart's (bit 4) outside ANC.
 
-### `F1` push — a gesture fired `[OSS]`+`[CAPTURE]`
+### `F1` push — a gesture fired `[CAPTURE]`
 
 `0x0204` payload `F1 <side> <btn> <act> <fn> <context> <int16 options...>`.
 Example, right hold: `AA 0D 00 00 04 02 FF 06 00 F1 02 01 04 08 03`.
 
 - `act` and `fn` are the gesture table's pair; `fn` is the **effective** function (a slide reports
-  `0B`/`0C` or `05`/`06`; a hold with `fn` cleared still reports `08`). The `[OSS]` "modifier bits"
-  reading is wrong.
+  `0B`/`0C` or `05`/`06`; a hold with `fn` cleared still reports `08`). A "modifier bits"
+  reading does not fit.
 - `act 00` frames (seen on a single tap) are some other event, not a binding `[GUESS]`. HeyMelody
   stores the frame and reads no field of it `[VENDOR]`.
 - **Diagnostic only, never a control signal.** Read the effect from the ANC / game / wear pushes. One
@@ -458,7 +457,7 @@ Example, right hold: `AA 0D 00 00 04 02 FF 06 00 F1 02 01 04 08 03`.
 
 ## 7. Battery — `0x8106` and push `01`
 
-`[OSS]`+`[CAPTURE]` Payload `<count>` then `<index> <raw>` pairs: `01` left, `02` right, `03` case.
+`[CAPTURE]` Payload `<count>` then `<index> <raw>` pairs: `01` left, `02` right, `03` case.
 Level = `raw & 0x7F`, charging = `raw & 0x80`. Example: `03 01 64 02 64 03 50`.
 
 - The case and a bud inside it report only with the lid **open**. With it closed, `0x0106` returns
@@ -470,7 +469,7 @@ Level = `raw & 0x7F`, charging = `raw & 0x80`. Example: `03 01 64 02 64 03 50`.
 
 ## 8. Wearing — `0x8109` and push `02`
 
-`[OSS]` Payload `<count>` then `<component> <status>` pairs; component `1` left, `2` right, `3` case.
+`[CAPTURE]` Payload `<count>` then `<component> <status>` pairs; component `1` left, `2` right, `3` case.
 
 The status is bits `[VENDOR]`: bit 0 out of the case, bit 1 in ear, bit 2 lid open, bit 3 a flag
 HeyMelody calls "safe remind". Both apps clear bit 3, so only the codes below remain.
@@ -745,8 +744,7 @@ sends `0x0500` empty and works either way. Both apps answer from one function (`
 - No other push gets an answer: battery, wear, ANC, `06` and the rest are not acked by HeyMelody either.
   `0x0501` and `0x0504` get none.
 - HeyMelody adds `<zone offset seconds s32 LE>` to the time answer for models whose model list flags
-  `utcTimeZone`. The full list in the `[OSS]` repos (OppoPods, OppoPodsManager; 137 models, the source
-  of `models.json`) flags none, so the 4-byte form goes out for every model. A newer list may flag some.
+  `utcTimeZone`. The model list flags none, so the 4-byte form goes out for every model. A newer list may flag some.
 - Buds 4 `[CAPTURE]`: `0x0500` answered within 5 ms, link unchanged.
 
 ---
@@ -774,7 +772,7 @@ sends `0x0500` empty and works either way. Both apps answer from one function (`
 
 ## 11. Method — learning a new command
 
-1. Check the `[OSS]` sources and HeyMelody first.
+1. Check HeyMelody and realme Link first.
 2. Check the `0x8100` bitmap and the `0x8200` codes: does the firmware claim it?
 3. Subscribe to the event, or silence looks like absence.
 4. Capture from a known state; the developer says what he did, in order
@@ -793,7 +791,7 @@ sends `0x0500` empty and works either way. Both apps answer from one function (`
 - The recurring `F1` family `AA 0D 00 00 04 02 FF 06 00 F1 01 01 XX YY 02`, and `02 01 08 0C 02` /
   `02 01 07 0B 02` (non-multiples of ten; maybe a fine battery field). **Do not guess these from a
   few samples.**
-- `0x0404` with a level form `01 02 <level>` (`[OSS]` mentions it). Unverified.
+- `0x0404` with a level form `01 02 <level>` `[GUESS]`. Unverified.
 - Switch `05`: HeyMelody never uses its value.
 - Other models' ANC bits, gesture writes and `[VENDOR]` features: unverified until an owner reads a
   write back.

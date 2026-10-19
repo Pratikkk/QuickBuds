@@ -162,24 +162,16 @@ project stops, anyone can fork it and publish their own signed build.
 
 ## Credits
 
-The earbud protocol was never publicly documented. QuickBuds stands on the people who worked it out
-first; PROTOCOL.md marks every fact taken from them `[OSS]`.
+The earbud protocol was never publicly documented. These projects gave the first hints:
 
-- [**Zhaoyi-ya/OppoPodsManager**](https://github.com/Zhaoyi-ya/OppoPodsManager): the main
-  reference. Frame layout and length encoding, most of the command table, the noise control tables,
-  the gesture entry shape and the feature IDs.
-- [**Star-ZER0/Pods-Protocol-Reverse-Engineering**](https://github.com/Star-ZER0/Pods-Protocol-Reverse-Engineering)
-  (CC-BY-SA-4.0, used as documentation): independent confirmation of the framing, and the broadcast
-  codes that proved the noise control subscription fix.
-- [Leaf-lsgtky/OppoPods](https://github.com/Leaf-lsgtky/OppoPods): early protocol work and part of
-  the framing knowledge.
-- [Zhaoyi-ya/OPPO-Pods-Win](https://github.com/Zhaoyi-ya/OPPO-Pods-Win): which features each earbud
-  model has.
-- [ORION2809/DevPods](https://github.com/ORION2809/DevPods): a second implementation to cross-check
-  against.
+- [Zhaoyi-ya/OppoPodsManager](https://github.com/Zhaoyi-ya/OppoPodsManager)
+- [Star-ZER0/Pods-Protocol-Reverse-Engineering](https://github.com/Star-ZER0/Pods-Protocol-Reverse-Engineering)
+- [Leaf-lsgtky/OppoPods](https://github.com/Leaf-lsgtky/OppoPods)
+- [Zhaoyi-ya/OPPO-Pods-Win](https://github.com/Zhaoyi-ya/OPPO-Pods-Win)
+- [ORION2809/DevPods](https://github.com/ORION2809/DevPods)
 
-Everything else was captured on real hardware and tested on the device: the gesture values, the
-equalizer writes, the hold's noise control cycle and more (see PROTOCOL.md).
+Every fact in PROTOCOL.md now rests on a capture from real hardware, on the HeyMelody or realme Link apps
+(studied for interoperability), or on a test on the device.
 
 The desktop app is built with [Slint](https://slint.dev) (used under the GPLv3) and
 [tray-icon](https://github.com/tauri-apps/tray-icon).

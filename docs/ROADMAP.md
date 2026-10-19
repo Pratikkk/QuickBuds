@@ -6,10 +6,9 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
 
 ## Planned
 
-- **Own protocol facts and model data, then a dual licence.** Re-derive the `[OSS]` facts and rebuild
-  `models.json` with our own keys from the vendor apps and our captures, in two steps: a fact list first,
-  then the file written from it alone. Add the commercial-on-request licence after that. The desktop app
-  needs Slint's commercial licence first.
+- **Dual licence.** Add the commercial-on-request licence. `models.json` has our own keys and PROTOCOL.md has no
+  `[OSS]` facts. The model values still come from the vendor apps; a licence review must decide if that is enough.
+  The desktop app needs Slint's commercial licence first.
 - **Material style on the desktop**, as on the phone: M3 shapes, sliders, switches and segmented
   lists, with Material as the default style. The desktop has QuickBuds and Pixel art now.
   The desktop style is one on/off value (`Dots.on` in `ui/app.slint`). Change it to a style choice first.
