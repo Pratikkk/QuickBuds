@@ -764,7 +764,8 @@ component Chip inherits Rectangle {
         x: (root.width - self.width) / 2; y: (root.height - self.height) / 2;
         border-radius: self.height / 2;
         background: Dots.on ? transparent : primary ? Palette.accent : ta.has-hover ? Palette.outline : transparent;
-        border-width: primary || Dots.on ? 0 : 1px;
+        // Material 3: a text button, no outline.
+        border-width: primary || Dots.on || Dots.material ? 0 : 1px;
         border-color: Palette.outline-strong;
         animate background { duration: Motion.fast; }
         // Dot matrix: an outline, accent for the primary chip.
@@ -776,7 +777,7 @@ component Chip inherits Rectangle {
     }
     label := Text {
         text: root.text;
-        color: root.primary ? (Dots.on ? Palette.accent : Palette.on-accent) : Palette.text;
+        color: root.primary ? (Dots.on ? Palette.accent : Palette.on-accent) : Dots.material ? Palette.accent : Palette.text;
         font-size: 13px;
         font-weight: 600;
     }
@@ -851,8 +852,8 @@ component DialogCard inherits Rectangle {
     transform-scale: 0.96 + 0.04 * t;
     // Solid behind the dots: the page must not show through the gaps.
     background: Dots.on ? Palette.bg : Palette.card;
-    border-radius: 14px;
-    border-width: Dots.on ? 0 : 1px;
+    border-radius: Dots.material ? 28px : 14px;
+    border-width: Dots.on || Dots.material ? 0 : 1px;
     border-color: Palette.outline;
     if Dots.on: DotBox { width: 100%; height: 100%; radius: 14px; }
     @children
@@ -1023,12 +1024,13 @@ component PresetRow inherits Rectangle {
     init => { marked(selected); }
     changed selected => { marked(selected); }
     height: 40px;
-    border-radius: 10px;
-    background: ta.has-hover ? Palette.outline : transparent;
+    border-radius: Dots.material ? 20px : 10px;
+    // Material 3: a row alone (bar) shows its pick as a tinted pill; a RowCard slides its own.
+    background: Dots.material && bar && selected ? Palette.accent.transparentize(0.82) : ta.has-hover ? Palette.outline : transparent;
     animate background { duration: Motion.fast; }
     Rectangle {
         x: 6px; y: (parent.height - self.height) / 2;
-        width: 3px; height: bar && selected ? 18px : 0;
+        width: 3px; height: bar && selected && !Dots.material ? 18px : 0;
         border-radius: 1.5px;
         background: Palette.accent;
         animate height { duration: Motion.fast; easing: ease-out; }
@@ -1674,7 +1676,7 @@ component Dialog inherits PopupWindow {
     width: 360px;
     DialogCard {
         VerticalLayout {
-            padding: 20px;
+            padding: Dots.material ? 24px : 20px;
             spacing: 12px;
             Text { text: root.title; color: Palette.text; font-size: 15px; font-weight: 600; wrap: word-wrap; }
             if root.body != "": Text { text: root.body; color: Palette.text2; font-size: 13px; wrap: word-wrap; }
@@ -3604,13 +3606,13 @@ export component QuickPanel inherits Window {
     title: "QuickBuds";
     width: 300px;
     height: 250px;
-    background: Palette.outline;
+    background: Dots.material ? Palette.card : Palette.outline;
     default-font-family: Dots.font;
 
     Rectangle {
         x: 1px; y: 1px;
         width: parent.width - 2px; height: parent.height - 2px;
-        background: Palette.bg;
+        background: Dots.material ? Palette.card : Palette.bg;
         VerticalLayout {
             padding: 12px;
             spacing: 8px;
