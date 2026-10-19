@@ -6,9 +6,6 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
 
 ## Planned
 
-- **Dual licence.** Add the commercial-on-request licence. `models.json` has our own keys and PROTOCOL.md has no
-  `[OSS]` facts. The model values still come from the vendor apps; a licence review must decide if that is enough.
-  The desktop app needs Slint's commercial licence first.
 - **Material style on the desktop, next passes.** The main window has the style choice (QuickBuds, Pixel art,
   Material), Material for new installs, the system accent, and M3 cards. Still open: M3 switches, sliders and
   segmented lists, the tray panel, the dialogs. Tested on Xvfb only: check Windows and a real Linux accent.
