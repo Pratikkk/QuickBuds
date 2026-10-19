@@ -20,7 +20,15 @@ sealed class Anc {
     data class HoldCycle(val kind: Int, val mask: Int) : Anc()
     /** The level Smart chose, in SET bits. */
     data class Smart(val mask: Int) : Anc()
+    /** `01 02 <level>`: a level report, never seen on our buds. */
+    data class Level(val level: Int) : Anc()
 }
+
+/** One gesture binding: [dev] 1 left, 2 right, 4 both. */
+data class Binding(val dev: Int, val button: Int, val act: Int, val func: Int)
+
+/** One custom equaliser preset. [range] is echoed back on a save: -6 to 6 is `FA 06`. [bands] are (Hz, dB). */
+data class EqPreset(val id: Int, val name: String, val selected: Boolean, val range: Pair<Int, Int>, val bands: List<Pair<Int, Int>>)
 
 data class Device(val mac: Mac, val name: String, val connected: Boolean, val flags: Int) {
     val thisPhone get() = flags and 1 != 0
@@ -92,6 +100,14 @@ sealed class Msg {
     data class Offered(val codes: List<Int>) : Msg()
     /** The `0x8205` reply. */
     object Registered : Msg() { override fun toString() = "Registered" }
+    /** A write reply (`0x84xx`): the command written, the status (0 accepted) and the bytes after it. */
+    data class Ack(val cmd: Int, val status: Int, val data: List<Int>) : Msg()
+    data class Gestures(val table: List<Binding>) : Msg()
+    /** `0x810D`: (feature id, value). */
+    data class Features(val list: List<Pair<Int, Int>>) : Msg()
+    data class EqCurrent(val id: Int) : Msg()
+    data class EqCustom(val list: List<EqPreset>) : Msg()
+    data class BassLevel(val level: Int) : Msg()
 
     // Pushes (section 5); the same facts also arrive as replies to a query
     data class Battery(val cells: List<Cell>) : Msg()
@@ -144,8 +160,65 @@ object Decode {
             0x8105 -> firmware(p)?.let { Msg.Firmware(it) }
             0x8200 -> if (p.size >= 2 && p[0].toInt() == 0 && p.size >= 2 + u(p, 1)) Msg.Offered(ints(p, 2).take(u(p, 1))) else null
             0x8205 -> Msg.Registered
+            0x8106 -> ok(p)?.let { battery(it, 0) }?.let { Msg.Battery(it) }
+            0x8109 -> {
+                // `<count> <pairs>`, or a status byte first; a list is valid when its parts are 1-3.
+                val list = pairs(p, 0)?.takeIf { l -> l.all { it.first in 1..3 } }
+                    ?: pairs(p, 1)?.takeIf { l -> l.all { it.first in 1..3 } }
+                list?.let { l -> Msg.Wear(l.map { it.first to (it.second and 7) }) }
+            }
+            0x810C -> ok(p)?.let { anc(it, 0) }?.let { Msg.AncMsg(it) }
+            0x8108 -> {
+                if (p.size >= 2 && p[0].toInt() == 0) {
+                    val n = minOf(u(p, 1), (p.size - 2) / 4)
+                    // A reply with no entries is no table: a write is built from the last good one.
+                    if (n == 0) null else Msg.Gestures((0 until n).map { Binding(u(p, 2 + it * 4), u(p, 3 + it * 4), u(p, 4 + it * 4), u(p, 5 + it * 4)) })
+                } else null
+            }
+            0x810D -> ok(p)?.let { pairs(it, 0) }?.let { Msg.Features(it) }
+            0x810F -> ok(p)?.takeIf { it.isNotEmpty() }?.let { Msg.EqCurrent(u(it, 0)) }
+            0x8122 -> ok(p)?.let { presets(it) }?.let { Msg.EqCustom(it) }
+            0x8124 -> ok(p)?.takeIf { it.size >= 3 }?.let { Msg.BassLevel(it[2].toInt()) }
+            0x0504 -> if (p.isNotEmpty()) Msg.EqCurrent(u(p, 0)) else null
+            else -> if (m.cmd and 0xFF00 == 0x8400 && p.isNotEmpty()) Msg.Ack(m.cmd and 0x7FFF, u(p, 0), ints(p, 1)) else null
+        }
+    }
+
+    /** The bytes after a `00` status byte. A reply with another status carries no data. */
+    private fun ok(p: ByteArray): ByteArray? = if (p.isNotEmpty() && p[0].toInt() == 0) p.copyOfRange(1, p.size) else null
+
+    /** ANC data: `01 01 <mode LE>`, `01 02 <level>`, `02 <kind> <mask LE>`, `04 01 <mask LE>`. Used by `0x810C` and push `03`. */
+    private fun anc(p: ByteArray, from: Int): Anc? {
+        val n = p.size - from
+        fun d(i: Int) = u(p, from + i)
+        return when {
+            n >= 3 && d(0) == 1 && d(1) == 1 -> Anc.Mode(leN(p, from + 2))
+            n >= 3 && d(0) == 1 && d(1) == 2 -> Anc.Level(d(2))
+            n >= 3 && d(0) == 2 -> Anc.HoldCycle(d(1), leN(p, from + 2))
+            n >= 3 && d(0) == 4 && d(1) == 1 -> Anc.Smart(leN(p, from + 2))
             else -> null
         }
+    }
+
+    /** `<count>` then per preset `<flag> <min> <max> <id> <nameLen> <name> <bands> [<freq u16 LE> <gain s8>]...`. */
+    private fun presets(p: ByteArray): List<EqPreset>? {
+        if (p.isEmpty()) return null
+        var i = 1
+        val out = ArrayList<EqPreset>()
+        repeat(u(p, 0)) {
+            if (i + 5 > p.size) return null
+            val k = u(p, i + 4)
+            if (i + 6 + k > p.size) return null
+            val bands = u(p, i + 5 + k)
+            if (i + 6 + k + bands * 3 > p.size) return null
+            val at = i + 6 + k
+            out += EqPreset(
+                u(p, i + 3), String(p, i + 5, k, Charsets.UTF_8), u(p, i) == 1, p[i + 1].toInt() to p[i + 2].toInt(),
+                (0 until bands).map { (u(p, at + it * 3) or (u(p, at + it * 3 + 1) shl 8)) to p[at + it * 3 + 2].toInt() },
+            )
+            i = at + bands * 3
+        }
+        return out
     }
 
     /** `00 <count>` then UTF-8 `device,type,version` triples joined by commas. */
@@ -159,13 +232,17 @@ object Decode {
         return v.ifEmpty { null }
     }
 
-    /** `<count>` then `<a> <b>` pairs from [from]. null when the pairs run past the end. */
+    /** `<count>` then `<a> <b>` pairs from [from]. null when the pairs run past the end; a count of 0 is no list. */
     private fun pairs(p: ByteArray, from: Int = 0): List<Pair<Int, Int>>? {
         if (from >= p.size) return null
         val n = u(p, from)
-        if (p.size - from - 1 < n * 2) return null
+        if (n == 0 || p.size - from - 1 < n * 2) return null
         return (0 until n).map { u(p, from + 1 + it * 2) to u(p, from + 2 + it * 2) }
     }
+
+    /** Level 0 means "not known" (a closed case): left out. */
+    private fun battery(p: ByteArray, from: Int): List<Cell>? =
+        pairs(p, from)?.filter { it.second and 0x7F != 0 }?.map { Cell(it.first, it.second and 0x7F, it.second and 0x80 != 0) }
 
     /** `<count>` then `<MAC 6> <len> <state> <flags> <nameLen> <name>`. */
     fun devices(p: ByteArray, from: Int = 0): List<Device>? {
@@ -234,17 +311,9 @@ object Decode {
         val n = p.size - 1  // bytes after the code
         fun d(i: Int) = u(p, 1 + i)
         return when {
-            code == 0x01 -> Msg.Battery(
-                (pairs(p, 1) ?: emptyList()).filter { it.second and 0x7F != 0 }
-                    .map { Cell(it.first, it.second and 0x7F, it.second and 0x80 != 0) }
-            )
+            code == 0x01 -> battery(p, 1)?.let { Msg.Battery(it) }
             code == 0x02 -> pairs(p, 1)?.let { l -> Msg.Wear(l.map { it.first to (it.second and 7) }) }
-            code == 0x03 -> when {
-                n >= 4 && d(0) == 1 && d(1) == 1 -> Msg.AncMsg(Anc.Mode(leN(p, 3)))
-                n >= 3 && d(0) == 2 -> Msg.AncMsg(Anc.HoldCycle(d(1), leN(p, 3)))
-                n >= 3 && d(0) == 4 && d(1) == 1 -> Msg.AncMsg(Anc.Smart(leN(p, 3)))
-                else -> null
-            }
+            code == 0x03 -> anc(p, 1)?.let { Msg.AncMsg(it) }
             code == 0x04 -> {
                 val r = (0 until n / 2).map { d(it * 2) to d(it * 2 + 1) }
                 Msg.FitTest(r.firstOrNull { it.first == 1 }?.second, r.firstOrNull { it.first == 2 }?.second)

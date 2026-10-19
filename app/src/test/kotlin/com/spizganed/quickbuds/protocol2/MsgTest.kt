@@ -132,4 +132,105 @@ class MsgTest {
         assertEquals(Msg.TriangleMsg(Triangle(capability = 2)), dec(push(0x0D, 0x03, 0, 2)))
         assertFalse(Bitmap.UNKNOWN.known)
     }
+
+    private fun payloadOf(packet: ByteArray) = packet.copyOfRange(9, packet.size)
+
+    @Test fun batteryAndWearReplies() {
+        assertEquals(
+            listOf(Cell(1, 100, false), Cell(2, 100, false), Cell(3, 80, false)),
+            (dec(m(0x8106, 0, 3, 1, 0x64, 2, 0x64, 3, 0x50)) as Msg.Battery).cells,
+        )
+        assertEquals(listOf(Cell(1, 90, false)), (dec(m(0x8106, 0, 1, 1, 0x5A)) as Msg.Battery).cells)
+        assertNull(dec(m(0x8106, 1, 1, 1, 0x5A)))
+        assertNull(dec(push(1, 0)))
+        assertEquals(Msg.Wear(listOf(1 to 7, 2 to 7, 3 to 4)), dec(m(0x8109, 3, 1, 7, 2, 7, 3, 4)))
+        assertEquals(Msg.Wear(listOf(1 to 3, 2 to 3, 3 to 4)), dec(m(0x8109, 0, 3, 1, 3, 2, 3, 3, 4)))
+        assertNull(dec(m(0x8109, 3, 9, 7, 2, 7, 3, 4)))
+        // Same facts through the shipping parser.
+        val old = com.spizganed.quickbuds.protocol.WearingStatusParser.parseQueryResponse(b(3, 1, 7, 2, 7, 3, 4))!!
+        assertEquals(7 and 7, old.leftStatus and 7)
+    }
+
+    @Test fun ancRepliesAndPushes() {
+        assertEquals(Msg.AncMsg(Anc.Mode(8)), dec(m(0x810C, 0, 1, 1, 0x08, 0x00)))
+        assertEquals(Msg.AncMsg(Anc.Mode(0x0800)), dec(m(0x810C, 0, 1, 1, 0x00, 0x08)))
+        assertEquals(Msg.AncMsg(Anc.Smart(0x40)), dec(m(0x810C, 0, 4, 1, 0x40)))
+        assertEquals(Msg.AncMsg(Anc.HoldCycle(1, 0x0807)), dec(m(0x810C, 0, 2, 1, 0x07, 0x08)))
+        assertEquals(Msg.AncMsg(Anc.Level(3)), dec(m(0x810C, 0, 1, 2, 3)))
+        assertNull(dec(m(0x810C, 0xE, 1, 1, 8, 0)))
+        assertEquals(Msg.Ack(0x0404, 14, emptyList()), dec(m(0x8404, 0x0E)))
+        assertEquals(Msg.Ack(0x0404, 0, emptyList()), dec(m(0x8404, 0)))
+        assertEquals(Msg.Ack(0x0427, 0, listOf(6)), dec(m(0x8427, 0, 6)))
+    }
+
+    @Test fun gestureTableFromTheBuds4Capture() {
+        val rows = listOf(
+            Triple(1, 1, listOf(1 to 0, 2 to 0x11, 3 to 0, 4 to 8, 6 to 0, 5 to 7)), Triple(1, 6, listOf(2 to 0, 3 to 0, 6 to 0)),
+            Triple(2, 1, listOf(1 to 0, 2 to 0, 3 to 0, 4 to 8, 6 to 0, 5 to 7)), Triple(2, 6, listOf(2 to 0, 3 to 0, 6 to 0)),
+        ).flatMap { (d, bt, acts) -> acts.map { (a, fn) -> Binding(d, bt, a, fn) } }
+        assertEquals(18, rows.size)
+        val payload = byteArrayOf(0, 18) + rows.flatMap { listOf(it.dev, it.button, it.act, it.func) }.map { it.toByte() }
+        val g = (Decode.decode(Message(0x8108, 1, payload)) as Msg.Gestures).table
+        assertEquals(rows, g)
+        val old = com.spizganed.quickbuds.protocol.KeyFunctionParser.parse(payload)
+        assertEquals(old.entries.map { listOf(it.deviceType, it.button, it.action, it.function) }, g.map { listOf(it.dev, it.button, it.act, it.func) })
+        assertNull(dec(m(0x8108, 0, 0)))
+        assertEquals(1, (dec(m(0x8108, 0, 1, 1, 1, 1, 0, 9, 9, 9, 9)) as Msg.Gestures).table.size)
+    }
+
+    @Test fun featureAndEqReplies() {
+        val f = dec(m(0x810D, 0, 8, 5, 0, 4, 0, 0x0B, 1, 0x11, 1, 0x18, 1, 6, 0, 0x1B, 0, 0x1D, 1)) as Msg.Features
+        assertEquals(8, f.list.size)
+        assertEquals(4 to 0, f.list[1])
+        assertEquals(Msg.EqCurrent(2), dec(m(0x810F, 0, 2)))
+        assertEquals(Msg.EqCurrent(1), Decode.decode(Message(0x0504, 0xFF, b(1))))
+        assertEquals(Msg.BassLevel(-2), dec(m(0x8124, 0, 0xFB, 5, 0xFE)))
+        val body = byteArrayOf(0, 1, 1, 0xFA.toByte(), 6, 4, 4) + "Rock".toByteArray() + b(2, 62, 0, 3, 0xFA, 0, 0xFF)
+        val list = (Decode.decode(Message(0x8122, 1, body)) as Msg.EqCustom).list
+        assertEquals(EqPreset(4, "Rock", true, -6 to 6, listOf(62 to 3, 250 to -1)), list[0])
+        val old = com.spizganed.quickbuds.protocol.EqCodec.parseList(body)!!
+        assertEquals(old[0].freqs, list[0].bands.map { it.first })
+        assertEquals(old[0].gains, list[0].bands.map { it.second })
+        assertNull(dec(m(0x8122, 0, 2, 0, 0xFA, 6, 1, 1, 'a'.code, 0)))
+    }
+
+    @Test fun connectionFramesMatchTheShippingBuilders() {
+        assertEquals(Frame(0x0205, b(3, 1, 2, 3)), Cmd.register(listOf(1, 2, 3)))
+        assertTrue(payloadOf(OpoProtocol.registerNotifications(listOf(1, 2, 3))).contentEquals(Cmd.register(listOf(1, 2, 3)).payload))
+        assertEquals(Frame(0x0201, b(4)), Cmd.registerOne(4))
+        val buds4 = Bitmap.parse(b(0, 0xFF, 0x77, 0x5A, 0xEA, 0x67, 0x0E, 0x20, 0x07))!!
+        val offered = listOf(1, 2, 3, 4, 8, 0x0B, 0xF1, 0xF2, 0xF3)
+        assertEquals(OpoProtocol.notifyIds(buds4.allows(0x0405), buds4.allows(0x040D), buds4.allows(0x0412), offered.toSet()).sorted(), Cmd.notifyIds(buds4, offered).sorted())
+        assertEquals(listOf(1, 2), Cmd.notifyIds(Bitmap.UNKNOWN, listOf(2, 1)))
+        for (id in listOf(0x065414, 0x100100, 0x100102, 0x100103, 0x108201, 0x060C12))
+            assertEquals(com.spizganed.quickbuds.protocol.Capabilities.productId(b(0, id and 0xFF, (id shr 8) and 0xFF, id shr 16)), Cmd.productText(id))
+        assertEquals("138.138.105", Cmd.firmwareText(listOf(Triple(1, 2, "138"), Triple(2, 2, "138"), Triple(3, 1, "01"), Triple(3, 2, "105"))))
+        val qs = listOf(Frame(0x0102, b(0xFF, 0xFF)), Frame(0x0106, b()), Frame(0x010C, b(1, 1)))
+        val oldBatch = payloadOf(OpoProtocol.batch(qs.map { OpoProtocol.buildPacket(it.cmd, payload = it.payload) }))
+        assertTrue(oldBatch.contentEquals(Cmd.batch(qs).payload))
+    }
+
+    @Test fun writesMatchTheShippingBuilders() {
+        for ((bit, bytes) in listOf(0 to b(1, 1, 1), 1 to b(1, 1, 2), 2 to b(1, 1, 4), 4 to b(1, 1, 0x10), 11 to b(1, 1, 0, 8))) {
+            assertEquals(Frame(0x0404, bytes), Cmd.ancSet(bit))
+            assertTrue(payloadOf(OpoProtocol.anc(bit)).contentEquals(Cmd.ancSet(bit).payload))
+        }
+        for ((kind, mask) in listOf(1 to 3, 1 to 0x0807, 3 to 1, 4 to 0x0100, 1 to 0x01020304, 1 to 0))
+            assertTrue("$kind $mask", payloadOf(OpoProtocol.setHoldAncModes(mask, kind)).contentEquals(Cmd.holdCycle(kind, mask).payload))
+        val t = listOf(Binding(1, 1, 2, 0x11), Binding(4, 6, 6, 0x1C))
+        val oldT = OpoProtocol.setKeyFunction(t.map { com.spizganed.quickbuds.protocol.KeyFunctionParser.Entry(it.dev, it.button, it.act, it.func) })
+        assertTrue(payloadOf(oldT).contentEquals(Cmd.gestureTable(t).payload))
+        // Call-control capture: `0401 01 04 06 06 1C`.
+        assertEquals(Frame(0x0401, b(1, 4, 6, 6, 0x1C)), Cmd.gestureTable(t.drop(1)))
+        assertEquals(Frame(0x0403, b(0x1D, 1)), Cmd.feature(0x1D, true))
+        assertTrue(payloadOf(OpoProtocol.setFeature(0x1D, true)).contentEquals(Cmd.feature(0x1D, true).payload))
+        assertEquals(Frame(0x0406, b(2)), Cmd.eqSelect(2))
+        assertEquals(Frame(0x041B, b(0xFB, 5, 0xFD)), Cmd.bassSet(-3))
+        assertTrue(payloadOf(OpoProtocol.setBassWaveLevel(-3)).contentEquals(Cmd.bassSet(-3).payload))
+        assertEquals(Frame(0x010C, b(1, 1)), Cmd.ancRead(1, 1))
+        val p = EqPreset(5, "Mine", false, -6 to 6, listOf(62 to -2, 250 to 0, 1000 to 3))
+        val o = com.spizganed.quickbuds.protocol.EqCodec.Preset(5, "Mine", listOf(62, 250, 1000), listOf(-2, 0, 3), false, byteArrayOf(0xFA.toByte(), 6))
+        for ((a, code) in listOf(Cmd.EqAction.Create to 1, Cmd.EqAction.Save to 2, Cmd.EqAction.Delete to 3))
+            assertTrue(payloadOf(OpoProtocol.customEq(code, o)).contentEquals(Cmd.eqPreset(a, p).payload))
+    }
 }

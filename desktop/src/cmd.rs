@@ -1,7 +1,7 @@
 //! Typed messages of docs/PROTOCOL-NEXT.md: builds what the app sends. Each function returns a [`Frame`]
 //! (command, payload); the link layer adds the sequence number and the frame. Written from the spec.
 
-use crate::msg::Bitmap;
+use crate::msg::{Binding, Bitmap, EqPreset};
 
 /// A message to send: (command, payload).
 pub type Frame = (u16, Vec<u8>);
@@ -59,6 +59,74 @@ pub fn batch(queries: &[Frame]) -> Frame {
     (0x012F, p)
 }
 
+// --- Reads ---
+
+pub fn battery() -> Frame { (0x0106, vec![]) }
+pub fn wearing() -> Frame { (0x0109, vec![]) }
+pub fn firmware() -> Frame { (0x0105, vec![]) }
+/// `0x010C <what> <arg>`: `01 01` current mode, `02 01` shared hold cycle (`02 03` left, `02 04` right), `04 01` the level Smart chose.
+pub fn anc_read(what: u8, arg: u8) -> Frame { (0x010C, vec![what, arg]) }
+pub fn gestures() -> Frame { (0x0108, vec![]) }
+/// `0x010D <count> <ids>`.
+pub fn features(ids: &[u8]) -> Frame { (0x010D, [&[ids.len() as u8][..], ids].concat()) }
+pub fn eq_current() -> Frame { (0x010F, vec![]) }
+pub fn eq_custom() -> Frame { (0x0122, vec![]) }
+pub fn bass_level() -> Frame { (0x0124, vec![]) }
+
+// --- Writes ---
+
+/// `0x0404 01 01 <mask LE>`: one bit set, `bit / 8 + 1` mask bytes. `bit` is the model's SET slot.
+pub fn anc_set(bit: u8) -> Frame {
+    let mut p = vec![0; 2 + bit as usize / 8 + 1];
+    p[0] = 1;
+    p[1] = 1;
+    p[2 + bit as usize / 8] = 1 << (bit % 8);
+    (0x0404, p)
+}
+
+/// `0x0404 02 <kind> <mask LE>`: the modes the hold cycles. The mask takes the fewest bytes, 1 to 4.
+pub fn hold_cycle(kind: u8, mask: u32) -> Frame {
+    let n = (1..=4).rev().find(|&n| n == 1 || mask >> ((n - 1) * 8) & 0xFF != 0).unwrap();
+    (0x0404, [&[2, kind][..], &mask.to_le_bytes()[..n]].concat())
+}
+
+/// `0x0401 <count> <entries>`: the whole table, every time.
+pub fn gesture_table(table: &[Binding]) -> Frame {
+    (0x0401, std::iter::once(table.len() as u8).chain(table.iter().flat_map(|b| [b.dev, b.button, b.act, b.func])).collect())
+}
+
+/// `0x0403 <id> <01|00>`.
+pub fn feature(id: u8, on: bool) -> Frame { (0x0403, vec![id, on as u8]) }
+
+/// `0x0406 <id>`: select a built-in preset.
+pub fn eq_select(id: u8) -> Frame { (0x0406, vec![id]) }
+
+/// What `0x0418` does with a preset.
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum EqAction {
+    /// The buds assign the id (send `00`) and return it in the reply.
+    Create = 1,
+    /// The whole preset, every time: also on every drag step and every rename. It selects the preset.
+    Save = 2,
+    /// The selection falls back to `00`.
+    Delete = 3,
+}
+
+/// `0x0418 <action> <min> <max> <id> <nameLen> <name> <bands> [<freq u16 LE> <gain s8>]...`
+pub fn eq_preset(action: EqAction, p: &EqPreset) -> Frame {
+    let mut out = vec![action as u8, p.range.0 as u8, p.range.1 as u8, p.id, p.name.len() as u8];
+    out.extend_from_slice(p.name.as_bytes());
+    out.push(p.bands.len() as u8);
+    for (f, g) in &p.bands {
+        out.extend_from_slice(&f.to_le_bytes());
+        out.push(*g as u8);
+    }
+    (0x0418, out)
+}
+
+/// `0x041B FB 05 <level>`: BassWave level, -5..+5. The BassWave switch is feature `1D`.
+pub fn bass_set(level: i8) -> Frame { (0x041B, vec![0xFB, 0x05, level as u8]) }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -95,5 +163,38 @@ mod tests {
         let parts: Vec<(u8, u8, String)> = vec![(1, 2, "138".into()), (2, 2, "138".into()), (3, 1, "01".into()), (3, 2, "105".into())];
         assert_eq!(firmware_text(&parts).as_deref(), Some("138.138.105"));
         assert_eq!(firmware_text(&[(3, 1, "01".into())]), None);
+    }
+    #[test]
+    fn writes_match_the_shipping_builders() {
+        // ANC, from the Buds 4 capture: Off, ANC, Transparency, Deep, Adaptive (bit 11).
+        for (bit, bytes) in [(0u8, vec![1, 1, 1]), (1, vec![1, 1, 2]), (2, vec![1, 1, 4]), (4, vec![1, 1, 0x10]), (11, vec![1, 1, 0, 8])] {
+            assert_eq!(anc_set(bit), (0x0404, bytes));
+            assert_eq!(anc_set(bit).1, old::anc_payload(bit));
+        }
+        for (kind, mask) in [(1u8, 0x03u32), (1, 0x0807), (3, 0x01), (4, 0x0100), (1, 0x01020304), (1, 0)] {
+            assert_eq!(hold_cycle(kind, mask).1, old::hold_modes_payload(mask, kind));
+        }
+        assert_eq!(hold_cycle(1, 3).1, [2, 1, 3]);
+        let table = [Binding { dev: 1, button: 1, act: 2, func: 0x11 }, Binding { dev: 4, button: 6, act: 6, func: 0x1C }];
+        assert_eq!(gesture_table(&table).1, old::key_function_payload(&[[1, 1, 2, 0x11], [4, 6, 6, 0x1C]]));
+        // Call-control capture: `0401 01 04 06 06 1C`.
+        assert_eq!(gesture_table(&table[1..]), (0x0401, vec![1, 4, 6, 6, 0x1C]));
+        assert_eq!(feature(0x1D, true), (0x0403, vec![0x1D, 1]));
+        assert_eq!(eq_select(2), (0x0406, vec![2]));
+        assert_eq!(bass_set(-3), (0x041B, vec![0xFB, 5, 0xFD]));
+        assert_eq!(features(&[5, 4, 0x0B]).1, [3, 5, 4, 0x0B]);
+        assert_eq!(anc_read(1, 1), (0x010C, vec![1, 1]));
+    }
+
+    #[test]
+    fn custom_preset_bytes_match_the_shipping_encoder() {
+        let p = EqPreset { id: 5, name: "Mine".into(), selected: false, range: (-6, 6), bands: vec![(62, -2), (250, 0), (1000, 3)] };
+        let mut o = old::Preset::new("Mine", vec![62, 250, 1000]);
+        o.id = 5;
+        o.gains = vec![-2, 0, 3];
+        for (a, b) in [(EqAction::Create, old::EQ_CREATE), (EqAction::Save, old::EQ_SAVE), (EqAction::Delete, old::EQ_DELETE)] {
+            assert_eq!(eq_preset(a, &p).1, o.encode(b));
+        }
+        assert_eq!(&eq_preset(EqAction::Save, &p).1[..5], [2, 0xFA, 6, 5, 4]);
     }
 }

@@ -230,7 +230,195 @@ and `0x0205`.
 - Buds without bit 56 (Enco Buds2) take the queries one by one.
 - QuickBuds sends its own list. A later status read goes alone.
 
-## 8. To move over
+## 8. Battery and wearing
 
-Battery and wearing, ANC, gestures, feature switches, EQ, sound settings, dual connection, requests from the buds,
-Golden Sound.
+**Battery** — query `0x0106`, reply `0x8106`, push `01`. Reply: `00 <count> <part> <raw>...`. Push: `<count> <part> <raw>...`
+`[CAPTURE]`. A count of 0, or a list that runs past the end, is no list.
+
+- `part`: `01` left, `02` right, `03` case. Level = `raw & 7F`, charging = `raw & 80`. Example: `03 01 64 02 64 03 50`.
+- Level `0` means "not known": the app leaves that part out. The realme Buds Air7 Pro sends the case at `0` with the lid
+  closed `[CAPTURE]`. HeyMelody hides a part at `0` `[VENDOR]`.
+- The case, and a bud inside it, report only while the lid is open. With the lid closed, the query returns only the bud
+  outside (`01 01 5A`) and nothing is pushed `[CAPTURE]`.
+- Pushes come every 1-6 minutes on the buds' own clock `[CAPTURE]`.
+
+**Wearing** — query `0x0109`, reply `0x8109`, push `02`. Payload: `<count> <part> <state>...`. A reply can put a status byte
+before the count; the receiver accepts both and checks that every part is `1`-`3` `[CAPTURE]`.
+
+- The state is a set of bits `[VENDOR]`: bit 0 out of the case, bit 1 in ear, bit 2 lid open, bit 3 "safe remind". The app
+  clears bit 3.
+
+| State | Meaning |
+|---|---|
+| `0` | In the case, lid closed |
+| `1`, `5` | Out of the ear (lid closed, lid open) |
+| `3`, `7` | In the ear (lid closed, lid open) |
+| `4` | In the case, lid open |
+
+- Lid close `[CAPTURE]`: about 1 s before the socket drops, the pushes fall to `0`, ending with `01 00 02 00 03 00`. No lasting
+  "closed" state exists. Opening the lid brings `04 04 04` and the case battery.
+
+## 9. ANC (noise control)
+
+Query `0x010C <what> <arg>`, reply `0x810C 00 <what> <arg-or-kind> <value>`, push `03`, write `0x0404`.
+
+| Read | Reply or push | Meaning |
+|---|---|---|
+| `010C 01 01` | `01 01 <mode LE, 1-4 bytes>` | Current mode, a bitmask (report table below) `[CAPTURE]` |
+| `010C 02 <kind>` | `02 <kind> <mask LE>` | Modes the hold cycles. `kind` `01` shared, `03` left, `04` right `[CAPTURE]` |
+| `010C 04 01` | `04 01 <mask LE>` | The level Smart chose, in SET bits `[CAPTURE]` |
+| — | `01 02 <level>` | Level report; the vendor app reads it, our buds never send it `[VENDOR]` |
+
+The vendor app also reads `01 05 <mask>` as a mode mask. QuickBuds has not seen it and does not decode it `[GUESS]`.
+
+**SET** — `0x0404 01 01 <mask LE>`: one bit set, `bit / 8 + 1` mask bytes, low byte first `[CAPTURE]`. The bit is the mode's
+`slot` in the model list, never the mode's position in a list.
+
+| Buds 4 mode | Bit | Payload |
+|---|---|---|
+| Off | 0 | `01 01 01` |
+| ANC (last level) | 1 | `01 01 02` |
+| Transparency | 2 | `01 01 04` |
+| Deep | 4 | `01 01 10` |
+| Medium | 5 | `01 01 20` |
+| Light | 6 | `01 01 40` |
+| Smart | 7 | `01 01 80` |
+| Adaptive | 11 | `01 01 00 08` |
+
+Adaptive is bit 11, not bit 8. Bit 8 gives `01 01 00 01`, a different mode.
+
+**Report table** — it is not the SET table. A report names a child of the mode that was set `[CAPTURE]`:
+
+| Raw (LE) | Mode |
+|---|---|
+| `0x0008` | Off |
+| `0x0002` | ANC, generic |
+| `0x0010` `0x0020` `0x0040` `0x0080` | Deep, Medium, Light, Smart |
+| `0x0100` | Transparency |
+| `0x0200` | Transparency with voice enhance |
+| `0x0800` | Adaptive |
+
+- The ANC stop reports whichever level is active. The value is a bitmask, not an enum.
+- The mode tree is per model (`ancModes` in the model list): `mode`, `slot`, `variants`. Mode ids: `1` Off, `2` Transparency,
+  `3` Light, `8` Medium, `4` Deep, `5` noise reduction, `7` Smart, `10` Adaptive, `6` transparency with voice.
+  A model with no tree gets no noise control. Before the model is known, the Buds 4 tree is used `[VENDOR]`.
+- **realme models** `[VENDOR]`: the write table and the report table are the same. Off `01`, Transparency `02`, Light `04`,
+  Deep and plain ANC `08`, Medium `10`, Smart `20`. The Air7 Pro's owner confirms them `[TESTED]`; the others are unverified.
+- With no bud in an ear, a SET is refused: the reply `0x8404` has status `0E` `[CAPTURE]`. One bud in an ear is enough. The app
+  then reads `0x010C 01 01` again, so the display shows the real mode.
+- A push is a mode only when its two bytes after the code are `01 01`. A hold-cycle write also raises `03 02 <kind> <mask>`:
+  that is the new cycle mask, not a mode.
+- Smart `[CAPTURE]`: the SET is acked and pushed as `0x0080`. Right after, the buds push `03 04 01 20 00` and `03 04 01 40 00`.
+  The lowest set bit of that mask is a SET bit: `0x20` Medium, `0x40` Light on Buds 4. The app reads it on connect for models with Smart.
+
+**Hold cycle** — which modes the hold gesture cycles. The gesture table's `fn 08` only says "the hold cycles ANC".
+
+- Write `0x0404 02 <kind> <mask LE>`. The mask uses SET bits and takes 1-4 bytes, the fewest that hold it `[VENDOR]`.
+  Adaptive added moved `0x0007` to `0x0807` `[CAPTURE]`.
+- `kind` `01` is one setting for both buds `[TESTED]`. Models with a per-bud hold use `03` left and `04` right; realme models keep `01`.
+- Level bits are dropped silently: `0x0021` was acked `00` and read back as `0x0001` `[CAPTURE]`. The ANC stop in the cycle
+  is always bit 1.
+- A single-bit mask is valid. The app never sends `0`. Clearing bit 1 alone has not been tested.
+- `0x0404 01 02 <level>` is a possible level write `[GUESS]`. The app does not send it.
+
+## 10. Gestures
+
+**Table** — read `0x0108`, reply `0x8108 00 <count> <entries>`, write `0x0401 <count> <entries>` `[CAPTURE]`. An entry is 4 bytes:
+`<dev> <button> <act> <fn>`.
+
+- `dev`: `01` left, `02` right, `04` both buds (on-call rows, and a write that the buds fan out).
+- `button`: `01` main gestures, `06` on-call group.
+- `act`: `01` single, `02` double, `03` triple, `04` hold, `05` slide, `06` long hold.
+- A write carries the whole table: the entries that do not change come from the last good read. A reply with no entries
+  replaces nothing.
+- `0x0402` is ignored without any reply. A wrong command number fails silently, so the app reads the table again after every
+  write and compares.
+- The table changes shape per bud and between writes `[CAPTURE]`. Slide once lived in button `01` on the left and in two unbound
+  buttons on the right. The app writes every slot the table has for a (side, act) pair and never hardcodes a button group or a count.
+- Buds 4 table (`act:fn`): left/`01` `01:00 02:11 03:00 04:08 06:00 05:07`; left/`06` `02:00 03:00 06:00`; right/`01` `01:00 02:00 03:00 04:08 06:00 05:07`;
+  right/`06` `02:00 03:00 06:00`. Call control `[CAPTURE]`: `0401 01 04 06 02 1D` (double tap answers and ends), `0401 01 04 06 06 1C` (long hold declines).
+
+| `fn` | Function | `fn` | Function |
+|---|---|---|---|
+| `00` | none | `0D` | switch devices |
+| `01` | play/pause | `11` | game mode |
+| `03` | voice assistant | `12` | zen mode |
+| `05` `06` | previous, next track | `16` | collect music |
+| `07` | volume (slide; reports as `0B`/`0C`) | `19` | AI summary |
+| `08` | ANC cycle (hold) | `1A` `1B` | AI translation |
+| `09` | favourite music | `1C` `1D` | decline, answer and end call |
+| `0A` | switch track (slide; reports as `05`/`06`) | `20` | spy tap |
+| `0B` `0C` | volume up, down | | |
+
+`00 01 03 05 06 07 08 0A 0B 0C 11 1C 1D` are measured on Buds 4 `[CAPTURE]`. On "OnePlus Buds" and "OnePlus Buds Z", previous and
+next are `04` and `05` `[VENDOR]`. Which functions a row offers is per model (`gestures` and `callGestures` in the model list).
+
+**Push `F1`** — `<side> <button> <act> <fn> <context> <int16 LE options...>` `[CAPTURE]`. Example, right hold: `AA 0D 00 00 04 02 FF 06 00 F1 02 01 04 08 03`.
+
+- `act` and `fn` are the table's pair; `fn` is the effective function (a slide reports `0B`/`0C` or `05`/`06`).
+- A frame with `act 00` is some other event `[GUESS]`. The vendor app stores the frame and reads no field of it.
+- The push is diagnostic. Never use it as a control signal: read the effect from the ANC, game and wearing pushes. One double tap can report twice.
+
+## 11. Feature switches
+
+Write `0x0403 <id> <01|00>`. Read `0x010D <count> <ids>` → `00 <count> <id> <value>...`. Only ids the firmware has come back
+`[CAPTURE]`; a missing id is a switch these buds do not have.
+
+- The id list is per model `[VENDOR]`. Buds 4: `05 04 0B 11 18 06 1B 1D 1C` (matches the capture; the buds answered all but `1C`).
+  Enco Buds2: `05 06` `[TESTED]`.
+- A longer list drops some links: one fixed 23-id list dropped the Enco Buds2 link (issue #5). `02 05 0D` kept it up `[CAPTURE]`.
+- The id `05` is asked first for every model; the vendor app ignores the value and never writes it.
+- Feature `1F` is for OPPO and OnePlus phones and is never asked.
+
+| Id | Switch | Notes |
+|---|---|---|
+| `04` | Wear detection (auto play/pause) | `[CAPTURE]` |
+| `06` | Game mode, low latency | all models except where the bitmap has `0x0423`; there it is `28` |
+| `09` | Vocal enhancement | `[VENDOR]` |
+| `0B` | Golden Sound | section 16 `[CAPTURE]` |
+| `0C` | Personalised ANC applied | the buds set it when a result applies |
+| `11` | Dual connection | section 14 `[CAPTURE]` |
+| `17` | Power saving | Either write restarts the buds; the link returns about 12 s later `[CAPTURE]` |
+| `18` | Hi-Res | A quality switch, not a codec switch; any change drops the link `[CAPTURE]` |
+| `1A` | Wind noise reduction | Only models with the `windMode` flag; unverified `[GUESS]` |
+| `1B` | Spatial sound | Models without `0x012A` `[CAPTURE]` |
+| `1C` | Smart volume | `[VENDOR]` |
+| `1D` | BassWave | `[CAPTURE]` |
+| `21` | Game equaliser | Section 13 `[VENDOR]` |
+| `27` | Game sound effects | `[VENDOR]` |
+| `30` `31` `32` `35` `37` `38` `3A` `3B` | Adaptive volume, adaptive ear, conversation awareness, hold volume, Swift Pair, adaptive sound, pause when asleep, head gestures | `[VENDOR]`, unverified on buds |
+
+Ids the vendor app also builds: `0D` camera tap, `0F` zen mode, `13` sound record, `14` voice wake, `15` smart call, `16` lost reminder,
+`19` voice command, `1E` log collection, `22`-`24` neck health, `34` meeting assistant, `39` incoming-call control. Decided against: voice wake `14`, voice command `19`,
+call control `39`, neck health, meeting assistant `34` `[TESTED]`.
+
+realme Link writes the same ids: dynamic sound `1D`, enhance voice `09`, wind noise `1A`, game mode `06`, wear `04`, dual `11`, Hi-Res `18`,
+3D sound `1B` `[VENDOR]`. It reports power saving as `05`; the id is unresolved.
+
+## 12. Equalizer and BassWave
+
+```
+0x0406 <id>                                   select a built-in preset     reply 8406 00
+push 0x0504 <id>                              the EQ changed
+0x010F → 810F 00 <id>                         current EQ (Buds 4: 00-02 built-in, 04-06 custom)
+0x0122 → 8122 00 <count> <presets>            custom list
+0x0418 <action> <min> <max> <id> <nameLen> <name> <bands> [<freq u16 LE> <gain s8>]...     reply 8418 00 <id>
+0x0403 1D <01|00>                             BassWave on, off
+0x041B FB 05 <level>                          BassWave level, -5..+5; read 0x0124 → 00 FB 05 <level>
+```
+
+- A preset in the list: `<selected> <min> <max> <id> <nameLen> <name> <bands> <bands...>`. `FA 06` is gain -6..+6.
+- `0x0418` actions: `01` create (send id `00`; the buds assign it and return it in the reply), `02` save and select (the whole
+  preset, every time, also on every drag step and every rename), `03` delete (the selection falls back to `00`).
+- Ids are renumbered after create and delete. Read `0x0122` again each time.
+- Built-in presets differ per model `[VENDOR]`: `eqPresets` lists `{mode, slot}`; `slot` is the `0x0406` id. Buds 4: 0 Balanced, 1 Clear Vocals, 2 Bass.
+  Firmware-gated lists drop entries whose `minFirmware` is above the buds' firmware (the lower non-zero of left and right).
+- realme models `[VENDOR]`: four built-ins. `0x0406` ids: 0 Pure Raw, 1 Deep Bass, 2 Pure Voice, 3 Pure Bass. T110 and T01 have three other presets with unknown ids.
+- A model shows custom presets with `customEq` and `0x0418` in the bitmap, and BassWave with `bassEngine` and `0x041B`. New presets use the model's
+  `customEqBands` (10 bands `31 62 125 250 500 1k 2k 4k 8k 16k` on 8 models), else 6 bands `62 250 1k 4k 8k 16k`. `customEqLimit` caps presets (default 3).
+  Reads go out only where the bitmap lists them.
+
+## 13. To move over
+
+Sound settings (spatial, codec, game sound, alert volume, tap sensitivity, head gestures), dual connection, requests from the buds,
+Golden Sound, fit test, personalised ANC.

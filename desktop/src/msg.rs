@@ -69,6 +69,24 @@ pub enum Anc {
     HoldCycle { kind: u8, mask: u32 },
     /// The level Smart chose, in SET bits.
     Smart(u32),
+    /// `01 02 <level>`: a level report `[VENDOR]`, never seen on our buds.
+    Level(u8),
+}
+
+/// One gesture binding: `dev` 1 left, 2 right, 4 both; `button`; `act`; `func`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Binding { pub dev: u8, pub button: u8, pub act: u8, pub func: u8 }
+
+/// One custom equaliser preset.
+#[derive(Debug, Clone, PartialEq)]
+pub struct EqPreset {
+    pub id: u8,
+    pub name: String,
+    pub selected: bool,
+    /// Gain range `(min, max)` as the buds send it, echoed back on a save. `FA 06` is -6..+6.
+    pub range: (i8, i8),
+    /// `(frequency Hz, gain dB)` per band.
+    pub bands: Vec<(u16, i8)>,
 }
 
 /// One device on the dual-connection list.
@@ -117,6 +135,14 @@ pub enum Inbound {
     Offered(Vec<u8>),
     /// The `0x8205` reply, after the subscription.
     Registered,
+    /// A write reply (`0x84xx`): the command written, the status (`00` accepted) and the bytes after it.
+    Ack { cmd: u16, status: u8, data: Vec<u8> },
+    Gestures(Vec<Binding>),
+    /// `0x810D`: `(feature id, value)`.
+    Features(Vec<(u8, u8)>),
+    EqCurrent(u8),
+    EqCustom(Vec<EqPreset>),
+    BassLevel(i8),
     // Pushes (§5); the same facts also arrive as replies to a query
     Battery(Vec<Cell>),
     Wear(Vec<(u8, u8)>),
@@ -154,8 +180,65 @@ pub fn decode(m: &Message) -> Option<Inbound> {
         0x8105 => Inbound::Firmware(firmware(p)?),
         0x8200 => match p { [0, n, codes @ ..] => Inbound::Offered(codes.get(..*n as usize)?.to_vec()), _ => return None },
         0x8205 => Inbound::Registered,
+        0x8106 => Inbound::Battery(battery(ok(p)?)?),
+        0x8109 => {
+            // `<count> <pairs>`, or a status byte first; a list is valid when its parts are 1-3.
+            let valid = |v: &Vec<(u8, u8)>| v.iter().all(|x| (1..=3).contains(&x.0));
+            let list = pairs(p).filter(valid).or_else(|| pairs(p.get(1..)?).filter(valid))?;
+            Inbound::Wear(list.into_iter().map(|(c, s)| (c, s & 7)).collect())
+        }
+        0x810C => Inbound::Anc(anc(ok(p)?)?),
+        0x8108 => {
+            let [0, n, e @ ..] = p else { return None };
+            let b: Vec<Binding> = e.chunks_exact(4).take(*n as usize).map(|c| Binding { dev: c[0], button: c[1], act: c[2], func: c[3] }).collect();
+            // A reply with no entries is no table: a write is built from the last good one.
+            if b.is_empty() { return None; }
+            Inbound::Gestures(b)
+        }
+        0x810D => Inbound::Features(pairs(ok(p)?)?),
+        0x810F => Inbound::EqCurrent(*ok(p)?.first()?),
+        0x8122 => Inbound::EqCustom(presets(ok(p)?)?),
+        0x8124 => match ok(p)? { [_, _, level, ..] => Inbound::BassLevel(*level as i8), _ => return None },
+        0x0504 => Inbound::EqCurrent(*p.first()?),
+        c if c & 0xFF00 == 0x8400 => {
+            let (&status, data) = p.split_first()?;
+            Inbound::Ack { cmd: c & 0x7FFF, status, data: data.to_vec() }
+        }
         _ => return None,
     })
+}
+
+/// The bytes after a `00` status byte. A reply with another status carries no data.
+fn ok(p: &[u8]) -> Option<&[u8]> { match p { [0, rest @ ..] => Some(rest), _ => None } }
+
+/// ANC data: `01 01 <mode LE>`, `01 02 <level>`, `02 <kind> <mask LE>`, `04 01 <mask LE>`. Used by `0x810C` and push `03`.
+fn anc(d: &[u8]) -> Option<Anc> {
+    Some(match d {
+        [1, 1, v @ ..] if !v.is_empty() => Anc::Mode(le_n(v)),
+        [1, 2, level, ..] => Anc::Level(*level),
+        [2, kind, m @ ..] if !m.is_empty() => Anc::HoldCycle { kind: *kind, mask: le_n(m) },
+        [4, 1, m @ ..] if !m.is_empty() => Anc::Smart(le_n(m)),
+        _ => return None,
+    })
+}
+
+/// `<count> <flag> <min> <max> <id> <nameLen> <name> <bands> [<freq u16 LE> <gain s8>]...` per preset.
+fn presets(p: &[u8]) -> Option<Vec<EqPreset>> {
+    let (&n, mut rest) = p.split_first()?;
+    let mut out = Vec::new();
+    for _ in 0..n {
+        let h = rest.get(..5)?;
+        let k = h[4] as usize;
+        let name = String::from_utf8_lossy(rest.get(5..5 + k)?).into_owned();
+        let bands = *rest.get(5 + k)? as usize;
+        let data = rest.get(6 + k..6 + k + bands * 3)?;
+        out.push(EqPreset {
+            id: h[3], name, selected: h[0] == 1, range: (h[1] as i8, h[2] as i8),
+            bands: data.chunks_exact(3).map(|c| (u16::from_le_bytes([c[0], c[1]]), c[2] as i8)).collect(),
+        });
+        rest = &rest[6 + k + bands * 3..];
+    }
+    Some(out)
 }
 
 /// `00 <count>` then UTF-8 `device,type,version` triples joined by commas.
@@ -170,15 +253,16 @@ fn firmware(p: &[u8]) -> Option<Vec<(u8, u8, String)>> {
 /// `<count>` then `<a> <b>` pairs. `None` when the pairs run past the end.
 fn pairs(p: &[u8]) -> Option<Vec<(u8, u8)>> {
     let (&n, rest) = p.split_first()?;
-    (rest.len() >= n as usize * 2).then(|| rest.chunks_exact(2).take(n as usize).map(|c| (c[0], c[1])).collect())
+    // A count of 0 is no list.
+    (n > 0 && rest.len() >= n as usize * 2).then(|| rest.chunks_exact(2).take(n as usize).map(|c| (c[0], c[1])).collect())
 }
 
-fn battery(p: &[u8]) -> Vec<Cell> {
+fn battery(p: &[u8]) -> Option<Vec<Cell>> {
     // Level 0 means "not known" (a closed case): left out.
-    pairs(p).unwrap_or_default().into_iter()
+    Some(pairs(p)?.into_iter()
         .filter(|c| c.1 & 0x7F != 0)
         .map(|(part, raw)| Cell { part, level: raw & 0x7F, charging: raw & 0x80 != 0 })
-        .collect()
+        .collect())
 }
 
 /// Status bit 3 is a flag; the other bits are the state.
@@ -249,14 +333,9 @@ fn triangle(p: &[u8]) -> Option<Triangle> {
 fn push(p: &[u8]) -> Option<Inbound> {
     let (&code, d) = p.split_first()?;
     Some(match code {
-        0x01 => Inbound::Battery(battery(d)),
+        0x01 => Inbound::Battery(battery(d)?),
         0x02 => Inbound::Wear(wear(d)?),
-        0x03 => Inbound::Anc(match d {
-            [1, 1, v @ ..] if v.len() >= 2 => Anc::Mode(le_n(v)),
-            [2, kind, m @ ..] if !m.is_empty() => Anc::HoldCycle { kind: *kind, mask: le_n(m) },
-            [4, 1, m @ ..] if !m.is_empty() => Anc::Smart(le_n(m)),
-            _ => return None,
-        }),
+        0x03 => Inbound::Anc(anc(d)?),
         0x04 => {
             let r: Vec<(u8, u8)> = d.chunks_exact(2).map(|c| (c[0], c[1])).collect();
             let of = |dev| r.iter().find(|x| x.0 == dev).map(|x| x.1);
@@ -325,6 +404,15 @@ pub fn to_event(m: &Message) -> Option<crate::protocol::Event> {
         Inbound::Anc(Anc::Mode(raw)) => Event::AncRaw(raw),
         Inbound::Anc(Anc::Smart(mask)) => Event::SmartLevel(mask),
         Inbound::Anc(Anc::HoldCycle { kind, mask }) => Event::HoldMask(kind, mask),
+        Inbound::Anc(Anc::Level(_)) => return None,
+        Inbound::Gestures(g) => Event::KeyFunctions(g.iter().map(|b| [b.dev, b.button, b.act, b.func]).collect()),
+        Inbound::Features(f) => Event::Features(f),
+        Inbound::EqCurrent(id) => Event::EqCurrent(id),
+        Inbound::BassLevel(l) => Event::BassLevel(l),
+        Inbound::EqCustom(l) => Event::EqCustom(l.into_iter().map(|p| crate::protocol::Preset {
+            id: p.id, name: p.name, selected: p.selected, tag: [p.range.0 as u8, p.range.1 as u8],
+            freqs: p.bands.iter().map(|b| b.0).collect(), gains: p.bands.iter().map(|b| b.1).collect(),
+        }).collect()),
         Inbound::FitTest { left, right } => Event::FitResult(left.unwrap_or(0xFF), right.unwrap_or(0xFF)),
         Inbound::GameMode { at1, at3 } => Event::GameMode(
             [&[5, at1.unwrap_or(0)][..], &at3.map_or(vec![], |s| vec![0, s])].concat()),
@@ -497,5 +585,91 @@ mod tests {
         assert_eq!(t(&[0x04, 0, 5]), Triangle { wear: Some(5), ..Default::default() });
         // Flags set, bytes missing: what is present stays.
         assert_eq!(t(&[0x03, 0, 2]), Triangle { capability: Some(2), ..Default::default() });
+    }
+    #[test]
+    fn battery_and_wear_replies() {
+        let Some(Inbound::Battery(c)) = decode(&m(0x8106, 1, &[0, 3, 1, 0x64, 2, 0x64, 3, 0x50])) else { panic!() };
+        assert_eq!(c.iter().map(|c| (c.part, c.level)).collect::<Vec<_>>(), [(1, 100), (2, 100), (3, 80)]);
+        // Lid closed: only the bud outside answers.
+        let Some(Inbound::Battery(c)) = decode(&m(0x8106, 1, &[0, 1, 1, 0x5A])) else { panic!() };
+        assert_eq!(c, [Cell { part: 1, level: 90, charging: false }]);
+        assert_eq!(decode(&m(0x8106, 1, &[1, 1, 1, 0x5A])), None);
+        assert_eq!(decode(&push_msg(&[1, 0])), None);
+        // Wearing: with and without a leading status byte.
+        assert_eq!(decode(&m(0x8109, 1, &[3, 1, 7, 2, 7, 3, 4])), Some(Inbound::Wear(vec![(1, 7), (2, 7), (3, 4)])));
+        assert_eq!(decode(&m(0x8109, 1, &[0, 3, 1, 3, 2, 3, 3, 4])), Some(Inbound::Wear(vec![(1, 3), (2, 3), (3, 4)])));
+        assert_eq!(decode(&m(0x8109, 1, &[3, 9, 7, 2, 7, 3, 4])), None);
+        // Same bytes through the shipping decoder.
+        for p in [&[3u8, 1, 7, 2, 7, 3, 4][..], &[0, 3, 1, 3, 2, 3, 3, 4]] {
+            let Some(old::Event::Wear(o)) = old::decode(&old::build_packet(0x8109, 1, p)) else { panic!() };
+            assert_eq!(decode(&m(0x8109, 1, p)), Some(Inbound::Wear(o)));
+        }
+    }
+
+    #[test]
+    fn anc_replies_and_pushes() {
+        assert_eq!(decode(&m(0x810C, 1, &[0, 1, 1, 0x08, 0x00])), Some(Inbound::Anc(Anc::Mode(8))));
+        assert_eq!(decode(&m(0x810C, 1, &[0, 1, 1, 0x00, 0x08])), Some(Inbound::Anc(Anc::Mode(0x0800))));
+        assert_eq!(decode(&m(0x810C, 1, &[0, 4, 1, 0x40])), Some(Inbound::Anc(Anc::Smart(0x40))));
+        assert_eq!(decode(&m(0x810C, 1, &[0, 2, 1, 0x07, 0x08])), Some(Inbound::Anc(Anc::HoldCycle { kind: 1, mask: 0x0807 })));
+        assert_eq!(decode(&m(0x810C, 1, &[0, 1, 2, 3])), Some(Inbound::Anc(Anc::Level(3))));
+        assert_eq!(decode(&m(0x810C, 1, &[0xE, 1, 1, 8, 0])), None);
+        for p in [&[0u8, 1, 1, 0x80, 0][..], &[0, 4, 1, 0x20], &[0, 2, 3, 1]] {
+            let o = match old::decode(&old::build_packet(0x810C, 1, p)) {
+                Some(old::Event::AncRaw(v)) => (0, 0, v),
+                Some(old::Event::SmartLevel(v)) => (1, 0, v),
+                Some(old::Event::HoldMask(k, v)) => (2, k, v),
+                x => panic!("{p:02X?} {}", x.is_some()),
+            };
+            let n = match decode(&m(0x810C, 1, p)) {
+                Some(Inbound::Anc(Anc::Mode(v))) => (0, 0, v),
+                Some(Inbound::Anc(Anc::Smart(v))) => (1, 0, v),
+                Some(Inbound::Anc(Anc::HoldCycle { kind, mask })) => (2, kind, mask),
+                x => panic!("{x:?}"),
+            };
+            assert_eq!(o, n, "{p:02X?}");
+        }
+        // A write refused with no bud in an ear: status 14.
+        assert_eq!(decode(&m(0x8404, 1, &[0x0E])), Some(Inbound::Ack { cmd: 0x0404, status: 14, data: vec![] }));
+        assert_eq!(decode(&m(0x8404, 1, &[0])), Some(Inbound::Ack { cmd: 0x0404, status: 0, data: vec![] }));
+        assert_eq!(decode(&m(0x8427, 1, &[0, 6])), Some(Inbound::Ack { cmd: 0x0427, status: 0, data: vec![6] }));
+    }
+
+    #[test]
+    fn gesture_table_from_the_buds4_capture() {
+        // `dev=01/btn=01[01:00 02:11 03:00 04:08 06:00 05:07]`, the same for dev 02, and the on-call rows.
+        let rows: Vec<[u8; 4]> = [(1u8, 1u8, vec![(1u8, 0u8), (2, 0x11), (3, 0), (4, 8), (6, 0), (5, 7)]), (1, 6, vec![(2, 0), (3, 0), (6, 0)]),
+            (2, 1, vec![(1, 0), (2, 0), (3, 0), (4, 8), (6, 0), (5, 7)]), (2, 6, vec![(2, 0), (3, 0), (6, 0)])]
+            .into_iter().flat_map(|(d, b, acts)| acts.into_iter().map(move |(a, f)| [d, b, a, f])).collect();
+        assert_eq!(rows.len(), 18);
+        let payload: Vec<u8> = [0u8, 18].into_iter().chain(rows.iter().flatten().copied()).collect();
+        let Some(Inbound::Gestures(g)) = decode(&m(0x8108, 1, &payload)) else { panic!() };
+        assert_eq!(g.len(), 18);
+        let Some(old::Event::KeyFunctions(o)) = old::decode(&old::build_packet(0x8108, 1, &payload)) else { panic!() };
+        assert_eq!(g.iter().map(|b| [b.dev, b.button, b.act, b.func]).collect::<Vec<_>>(), o);
+        assert_eq!(decode(&m(0x8108, 1, &[0, 0])), None);
+        // The count wins over trailing bytes.
+        let Some(Inbound::Gestures(g)) = decode(&m(0x8108, 1, &[0, 1, 1, 1, 1, 0, 9, 9, 9, 9])) else { panic!() };
+        assert_eq!(g.len(), 1);
+    }
+
+    #[test]
+    fn feature_and_eq_replies() {
+        let reply = [0, 8, 5, 0, 4, 0, 0x0B, 1, 0x11, 1, 0x18, 1, 6, 0, 0x1B, 0, 0x1D, 1];
+        let Some(Inbound::Features(f)) = decode(&m(0x810D, 1, &reply)) else { panic!() };
+        assert_eq!(f.len(), 8);
+        assert_eq!(f[1], (4, 0));
+        assert_eq!(decode(&m(0x810F, 1, &[0, 2])), Some(Inbound::EqCurrent(2)));
+        assert_eq!(decode(&m(0x0504, 0xFF, &[1])), Some(Inbound::EqCurrent(1)));
+        assert_eq!(decode(&m(0x8124, 1, &[0, 0xFB, 5, 0xFE])), Some(Inbound::BassLevel(-2)));
+        let p = crate::protocol::Preset { id: 4, name: "Rock".into(), freqs: vec![62, 250], gains: vec![3, -1], selected: true, tag: [0xFA, 6] };
+        let body = [&[0u8, 1, 1, 0xFA, 6, 4, 4][..], b"Rock", &[2, 62, 0, 3, 0xFA, 0, 0xFF]].concat();
+        let Some(Inbound::EqCustom(n)) = decode(&m(0x8122, 1, &body)) else { panic!() };
+        let Some(old::Event::EqCustom(o)) = old::decode(&old::build_packet(0x8122, 1, &body)) else { panic!() };
+        assert_eq!((n[0].id, n[0].selected, n[0].bands.len()), (o[0].id, o[0].selected, o[0].freqs.len()));
+        assert_eq!(n[0].bands, [(62, 3), (250, -1)]);
+        let _ = p;
+        // A bad preset list is dropped.
+        assert_eq!(decode(&m(0x8122, 1, &[0, 2, 0, 0xFA, 6, 1, 1, b'a', 0])), None);
     }
 }
