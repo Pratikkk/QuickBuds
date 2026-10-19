@@ -16,6 +16,8 @@ mod report;
 mod session;
 mod theme;
 mod update;
+#[allow(dead_code)] // the new protocol layer: wired in step by step
+mod wire;
 
 mod icons { include!(concat!(env!("OUT_DIR"), "/icons.rs")); }
 mod strings { include!(concat!(env!("OUT_DIR"), "/strings.rs")); }
