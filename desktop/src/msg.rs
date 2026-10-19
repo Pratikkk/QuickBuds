@@ -77,6 +77,27 @@ pub enum Anc {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Binding { pub dev: u8, pub button: u8, pub act: u8, pub func: u8 }
 
+/// Both ears' biquad filters of a Golden Sound result: sample rate, left, right.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Curves { pub rate: u32, pub left: Vec<f32>, pub right: Vec<f32> }
+
+/// A request from the buds, which they expect to be answered (section 15).
+#[derive(Debug, Clone, PartialEq)]
+pub enum Request {
+    /// `0x0500`: the phone's clock.
+    Time,
+    /// `0x050C`: is the foreground app on a list the buds hold.
+    AppList,
+    /// `0x051C`: the app's capabilities.
+    Capabilities,
+    /// `0x051D`: the phone's spatial mode.
+    SpatialMode,
+    /// `0x0501` and `0x0502`: camera state and shutter. Not answered.
+    Camera(u16),
+    /// A command outside the known groups.
+    Unknown(u16),
+}
+
 /// One custom equaliser preset.
 #[derive(Debug, Clone, PartialEq)]
 pub struct EqPreset {
@@ -143,6 +164,27 @@ pub enum Inbound {
     EqCurrent(u8),
     EqCustom(Vec<EqPreset>),
     BassLevel(i8),
+    AlertVolume(u8),
+    /// `default` is absent in a push.
+    TapLevel { level: u8, default: Option<u8> },
+    /// `0x812A` and push `0x0510`: 0 off, 1 fixed, 2 head tracking.
+    Spatial(u8),
+    Codec(u8),
+    /// Bit k of the mask is codec k + 1.
+    CodecMask(u16),
+    GameSound { selected: u8, offered: Vec<u8> },
+    PersonalAncStored(bool),
+    /// `None`: the buds choose.
+    Preferred(Option<[u8; 6]>),
+    /// `0x8115`: the Golden Sound record on the buds. `values`: left ears 1-6, then right ears 1-6.
+    GoldenRecord { id: u32, name: String, values: [i8; 12] },
+    /// `0x811E`: its ear-scan data.
+    GoldenScan { id: u32, data: Vec<u8> },
+    /// `0x8116`: the hearing filters of a result and its enhance type.
+    GoldenFilter { id: u32, enhance: u8, curves: Option<Curves> },
+    /// `0x811F`: the ear-scan filters of a record.
+    GoldenScanFilter { id: u32, curves: Curves },
+    Request(Request),
     // Pushes (§5); the same facts also arrive as replies to a query
     Battery(Vec<Cell>),
     Wear(Vec<(u8, u8)>),
@@ -200,12 +242,77 @@ pub fn decode(m: &Message) -> Option<Inbound> {
         0x8122 => Inbound::EqCustom(presets(ok(p)?)?),
         0x8124 => match ok(p)? { [_, _, level, ..] => Inbound::BassLevel(*level as i8), _ => return None },
         0x0504 => Inbound::EqCurrent(*p.first()?),
+        0x8130 => Inbound::AlertVolume(*ok(p)?.first()?),
+        0x8133 => match ok(p)? { [level, default, ..] => Inbound::TapLevel { level: *level, default: Some(*default) }, _ => return None },
+        0x812A => Inbound::Spatial(*ok(p)?.first()?),
+        0x0510 => Inbound::Spatial(*p.first()?),
+        0x8134 => Inbound::HeadGesture(*ok(p)?.first()?),
+        0x8114 => Inbound::Codec(*ok(p)?.first()?),
+        0x8123 => Inbound::CodecMask(le16(ok(p)?, 0)?),
+        0x812B => match ok(p)? {
+            [selected, n, rest @ ..] => Inbound::GameSound { selected: *selected, offered: rest[..rest.len().min(*n as usize)].to_vec() },
+            _ => return None,
+        },
+        0x811A => Inbound::PersonalAncStored(*ok(p)?.first()? != 0),
+        0x8112 => Inbound::Devices(devices(ok(p)?)?),
+        0x8132 => match p { [0, 2, 0, ..] => Inbound::Preferred(None), [0, 2, _, ..] => Inbound::Preferred(Some(p.get(3..9)?.try_into().ok()?)), _ => return None },
+        0x8115 => golden_record(ok(p)?)?,
+        0x811E => { let (id, data) = ear_scan_body(ok(p)?, 0)?; Inbound::GoldenScan { id, data } }
+        0x8116 => match ok(p)? {
+            d if d.len() >= 9 => Inbound::GoldenFilter { id: be32(d, 0)?, enhance: d[8], curves: curves(d, false) },
+            _ => return None,
+        },
+        0x811F => Inbound::GoldenScanFilter { id: be32(ok(p)?, 0)?, curves: curves(ok(p)?, true)? },
+        c if c & 0x8000 == 0 && c != PUSH => Inbound::Request(request(c)?),
         c if c & 0xFF00 == 0x8400 => {
             let (&status, data) = p.split_first()?;
             Inbound::Ack { cmd: c & 0x7FFF, status, data: data.to_vec() }
         }
         _ => return None,
     })
+}
+
+/// What a request from the buds is. `None`: the command is in a known group and not a request.
+fn request(cmd: u16) -> Option<Request> {
+    Some(match cmd {
+        0x0500 => Request::Time,
+        0x050C => Request::AppList,
+        0x051C => Request::Capabilities,
+        0x051D => Request::SpatialMode,
+        0x0501 | 0x0502 => Request::Camera(cmd),
+        c if ![0x01, 0x02, 0x03, 0x04, 0x05, 0x0F].contains(&(c >> 8)) => Request::Unknown(c),
+        _ => return None,
+    })
+}
+
+/// `<kind> <len u16 LE> <data> <id u32 BE>`, from `from`.
+fn ear_scan_body(p: &[u8], from: usize) -> Option<(u32, Vec<u8>)> {
+    let len = le16(p, from + 1)? as usize;
+    if len == 0 { return None; }
+    Some((be32(p, from + 3 + len)?, p.get(from + 3..from + 3 + len)?.to_vec()))
+}
+
+/// `03 0C <12 x (side freq value)> <id u32 BE> <name>`.
+fn golden_record(d: &[u8]) -> Option<Inbound> {
+    if d.len() < 2 || d[1] != 12 { return None; }
+    let end = 2 + 36;
+    let id = be32(d, end)?;
+    let mut values = [0i8; 12];
+    for c in d[2..end].chunks_exact(3) {
+        if !(1..=2).contains(&c[0]) || !(1..=6).contains(&c[1]) { return None; }
+        values[(c[0] as usize - 1) * 6 + c[1] as usize - 1] = c[2] as i8;
+    }
+    Some(Inbound::GoldenRecord { id, name: String::from_utf8_lossy(&d[end + 4..]).into_owned(), values })
+}
+
+/// Filter floats, little endian, left ear then right. `0x8116`: `<id> 04 <count LE> <packet> <type> <floats>`.
+/// `0x811F`: `<id> 04 <rate LE> <count LE> <packet> <floats>`. `d` starts at the id; a count is a multiple of 12.
+fn curves(d: &[u8], scan: bool) -> Option<Curves> {
+    if d.len() < 10 || d[4] != 4 { return None; }
+    let (rate, count, start) = if scan { (le16(d, 5)? as u32, le16(d, 7)? as usize, 10) } else { (44100, le16(d, 5)? as usize, 9) };
+    if count == 0 || count % 12 != 0 { return None; }
+    let f: Vec<f32> = d.get(start..start + count * 4)?.chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect();
+    Some(Curves { rate, left: f[..count / 2].to_vec(), right: f[count / 2..].to_vec() })
 }
 
 /// The bytes after a `00` status byte. A reply with another status carries no data.
@@ -370,6 +477,41 @@ fn push(p: &[u8]) -> Option<Inbound> {
 
 const NAMED: &[u8] = &[1, 2, 3, 4, 5, 6, 8, 0x0A, 0x0B, 0x0D, 0x0E, 0x0F, 0xF1, 0xF2, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8];
 
+// --- Requests from the buds (section 15) ---
+
+/// The answer to a message the buds sent on their own, or `None` (no answer is due). `unix`: the phone's clock.
+pub fn answer(m: &Message, unix: u32) -> Option<Message> {
+    if m.cmd & 0x8000 != 0 { return None; }
+    let payload = match decode(m) {
+        Some(Inbound::Request(r)) => match r {
+            Request::Time => [&[0u8][..], &unix.to_le_bytes()].concat(),
+            Request::AppList => vec![0, 1, 0],
+            Request::Capabilities => vec![0, 0, 0],
+            // Always "invalid": the phone's spatial mode is not known here.
+            Request::SpatialMode => vec![1],
+            Request::Camera(_) => return None,
+            Request::Unknown(_) => vec![1],
+        },
+        // Answered whether or not the list parses: the buds wait for it.
+        _ if m.cmd == PUSH && m.payload.first() == Some(&0xF2) => vec![0, 0xF2],
+        _ if m.cmd == PUSH && m.payload.first() == Some(&0xF4) => json_ack(&m.payload[1..]),
+        _ => return None,
+    };
+    Some(Message { cmd: m.cmd | REPLY, seq: m.seq, payload })
+}
+
+/// `F4` JSON: `00 F4 {"cmd":<its cmd>}`; `01 F4` when it does not parse.
+fn json_ack(json: &[u8]) -> Vec<u8> {
+    if json.is_empty() { return vec![0, 0xF4]; }
+    match serde_json::from_slice::<serde_json::Value>(json) {
+        Ok(v) => {
+            let echo = match v["cmd"].as_str() { Some(c) => serde_json::json!({ "cmd": c }), None => serde_json::json!({}) };
+            [&[0u8, 0xF4][..], echo.to_string().as_bytes()].concat()
+        }
+        Err(_) => vec![1, 0xF4],
+    }
+}
+
 // --- Batch (§4) ---
 
 /// `0x812F`: `00 <count>`, then `<cmd LE> <len LE> <reply payload>` per answer. Each answer is the reply
@@ -424,6 +566,23 @@ pub fn to_event(m: &Message) -> Option<crate::protocol::Event> {
         Inbound::HeadGesture(t) => Event::HeadMotion(t),
         Inbound::Public(Public::TapLevel(l)) => Event::TapPush(l),
         Inbound::Public(Public::AlertVolume(l)) => Event::AlertVolume(l),
+        Inbound::AlertVolume(l) => Event::AlertVolume(l),
+        Inbound::TapLevel { level, default: Some(d) } => Event::TapLevel(level, d),
+        Inbound::TapLevel { level, default: None } => Event::TapPush(level),
+        Inbound::Spatial(t) => Event::SpatialType(t),
+        Inbound::Codec(c) => Event::Codec(c),
+        Inbound::CodecMask(mask) => Event::Codecs(crate::protocol::codecs_of(mask)),
+        Inbound::GameSound { selected, offered } => Event::GameSound(selected, offered),
+        Inbound::PersonalAncStored(e) => Event::PncStored(e),
+        Inbound::Preferred(m) => Event::Preferred(m),
+        Inbound::GoldenRecord { id, name, values } => Event::Hearing(HearingEv::Active(id, name, values)),
+        Inbound::GoldenScan { id, data } => Event::Hearing(HearingEv::ActiveScan(id, data)),
+        Inbound::GoldenFilter { id, enhance, curves } => Event::Hearing(HearingEv::Filter(id, enhance, curves.map(|c| (c.rate, c.left, c.right)))),
+        Inbound::GoldenScanFilter { id, curves } => Event::Hearing(HearingEv::ScanCurves(id, (curves.rate, curves.left, curves.right))),
+        // Write replies the session reads: the alert volume echo, the personalised-ANC ack, a refused Golden Sound write.
+        Inbound::Ack { cmd: 0x0427, status: 0, data } if !data.is_empty() => Event::AlertVolume(data[0]),
+        Inbound::Ack { cmd: 0x0412, status, .. } => Event::PncAck(status),
+        Inbound::Ack { cmd: 0x040D | 0x040E, status, .. } if status != 0 => Event::Hearing(HearingEv::Refused(status)),
         _ => return None,
     })
 }
@@ -671,5 +830,84 @@ mod tests {
         let _ = p;
         // A bad preset list is dropped.
         assert_eq!(decode(&m(0x8122, 1, &[0, 2, 0, 0xFA, 6, 1, 1, b'a', 0])), None);
+    }
+    #[test]
+    fn setting_replies_match_the_shipping_decoder() {
+        let old_of = |cmd: u16, p: &[u8]| old::decode(&old::build_packet(cmd, 1, p));
+        assert_eq!(decode(&m(0x8130, 1, &[0, 6])), Some(Inbound::AlertVolume(6)));
+        assert!(matches!(old_of(0x8130, &[0, 6]), Some(old::Event::AlertVolume(6))));
+        assert_eq!(decode(&m(0x8130, 1, &[1, 6])), None);
+        assert_eq!(decode(&m(0x8133, 1, &[0, 2, 3])), Some(Inbound::TapLevel { level: 2, default: Some(3) }));
+        assert_eq!(decode(&m(0x812A, 1, &[0, 2])), Some(Inbound::Spatial(2)));
+        assert_eq!(decode(&m(0x0510, 0xFF, &[1])), Some(Inbound::Spatial(1)));
+        assert_eq!(decode(&m(0x8134, 1, &[0, 1])), Some(Inbound::HeadGesture(1)));
+        // Buds 4 capture: codec LHDC V5, and the mask the table misreads.
+        assert_eq!(decode(&m(0x8114, 1, &[0, 8])), Some(Inbound::Codec(8)));
+        assert_eq!(decode(&m(0x8123, 1, &[0, 0x46, 0x01])), Some(Inbound::CodecMask(0x0146)));
+        assert_eq!(decode(&m(0x812B, 1, &[0, 3, 2, 0, 3])), Some(Inbound::GameSound { selected: 3, offered: vec![0, 3] }));
+        assert_eq!(decode(&m(0x811A, 1, &[0, 1])), Some(Inbound::PersonalAncStored(true)));
+        assert_eq!(decode(&m(0x8132, 1, &[0, 2, 0])), Some(Inbound::Preferred(None)));
+        assert_eq!(decode(&m(0x8132, 1, &[0, 2, 1, 1, 2, 3, 4, 5, 6])), Some(Inbound::Preferred(Some([1, 2, 3, 4, 5, 6]))));
+        assert!(matches!(old_of(0x8132, &[0, 2, 1, 1, 2, 3, 4, 5, 6]), Some(old::Event::Preferred(Some([1, 2, 3, 4, 5, 6])))));
+        // The device list as a reply.
+        let list = [&[1u8][..], &[6, 5, 4, 3, 2, 1], &[8, 2, 1, 5], b"Phone"].concat();
+        let Some(Inbound::Devices(d)) = decode(&m(0x8112, 1, &[&[0u8][..], &list].concat())) else { panic!() };
+        assert_eq!((d[0].mac, d[0].name.as_str(), d[0].connected), ([1, 2, 3, 4, 5, 6], "Phone", true));
+        // The bridge gives the shipping session the events it reads from write replies.
+        let ev = |msg: &Message| to_event(msg);
+        assert!(matches!(ev(&m(0x8427, 1, &[0, 3])), Some(old::Event::AlertVolume(3))));
+        assert!(matches!(ev(&m(0x8412, 1, &[15])), Some(old::Event::PncAck(15))));
+        assert!(matches!(ev(&m(0x840E, 1, &[3])), Some(old::Event::Hearing(old::HearingEv::Refused(3)))));
+        assert!(ev(&m(0x840D, 1, &[0])).is_none());
+    }
+
+    #[test]
+    fn golden_sound_replies_match_the_shipping_decoder() {
+        let v: [i8; 12] = [-55, -49, -41, -35, -25, -19, -11, -5, 3, 7, 13, 17];
+        // `0x0115`: the record the apply frames write, read back.
+        let apply = crate::cmd::golden_apply(0x01020304, "2026/09/29 01:53", &v, &[9; 168], 11);
+        let rec = &apply[1].1;
+        let reply = [&[0u8][..], rec].concat();
+        assert_eq!(decode(&m(0x8115, 1, &reply)), Some(Inbound::GoldenRecord { id: 0x01020304, name: "2026/09/29 01:53".into(), values: v }));
+        let Some(old::Event::Hearing(old::HearingEv::Active(id, name, vals))) = old::decode(&old::build_packet(0x8115, 1, &reply)) else { panic!() };
+        assert_eq!((id, name.as_str(), vals), (0x01020304, "2026/09/29 01:53", v));
+        // `0x011E`: `00 03 A8 00 <168> <id>`.
+        let scan = [&[0u8, 3][..], &168u16.to_le_bytes(), &[9; 168], &7u32.to_be_bytes()].concat();
+        assert_eq!(decode(&m(0x811E, 1, &scan)), Some(Inbound::GoldenScan { id: 7, data: vec![9; 168] }));
+        // Filters: 12 floats, six per ear (one biquad of six numbers each side).
+        let floats: Vec<u8> = (0..12).flat_map(|i| (i as f32).to_le_bytes()).collect();
+        let hf = [&[0u8][..], &9u32.to_be_bytes(), &[4], &12u16.to_le_bytes(), &[0, 2], &floats].concat();
+        let Some(Inbound::GoldenFilter { id, enhance, curves }) = decode(&m(0x8116, 1, &hf)) else { panic!() };
+        assert_eq!((id, enhance), (9, 2));
+        let c = curves.unwrap();
+        assert_eq!((c.rate, c.left.len(), c.right.len(), c.right[0]), (44100, 6, 6, 6.0));
+        let Some(old::Event::Hearing(old::HearingEv::Filter(oid, oen, Some(oc)))) = old::decode(&old::build_packet(0x8116, 1, &hf)) else { panic!() };
+        assert_eq!((oid, oen, oc.0, oc.1, oc.2), (9, 2, 44100, c.left, c.right));
+        let sf = [&[0u8][..], &9u32.to_be_bytes(), &[4], &44100u16.to_le_bytes(), &12u16.to_le_bytes(), &[0], &floats].concat();
+        let Some(Inbound::GoldenScanFilter { id, curves }) = decode(&m(0x811F, 1, &sf)) else { panic!() };
+        assert_eq!((id, curves.rate, curves.left.len()), (9, 44100, 6));
+        let Some(old::Event::Hearing(old::HearingEv::ScanCurves(oid, oc))) = old::decode(&old::build_packet(0x811F, 1, &sf)) else { panic!() };
+        assert_eq!((oid, oc.0, oc.1), (9, 44100, curves.left));
+        assert_eq!(decode(&m(0x811F, 1, &[0, 0, 0, 0, 9, 3, 0, 0, 0, 0, 0])), None);
+    }
+
+    #[test]
+    fn requests_from_the_buds_are_answered_like_the_shipping_code() {
+        let old_answer = |cmd: u16, seq: u8, p: &[u8]| old::answer_for(&old::build_packet(cmd, seq, p), 0x6700_1234);
+        let cases: Vec<(u16, Vec<u8>)> = vec![
+            (0x0500, vec![0, 0, 0, 0]), (0x0500, vec![]), (0x050C, vec![]), (0x051C, vec![]), (0x051D, vec![]),
+            (0x0204, vec![0xF2, 1]),
+            (PUSH, [&[0xF4u8][..], br#"{"cmd":"a2dp_caton","ver":"1"}"#].concat()), (PUSH, [&[0xF4u8][..], b"not json"].concat()), (PUSH, vec![0xF4]),
+            (PUSH, vec![3, 2, 3, 1, 3]), (0x0501, vec![]), (0x0502, vec![]), (0x0504, vec![1]), (0x0600, vec![]), (0x0900, vec![9]),
+            (0x8105, vec![0]), (0x0F00, vec![]),
+        ];
+        for (cmd, p) in cases {
+            let new = answer(&m(cmd, 0x14, &p), 0x6700_1234).map(|a| (a.cmd, a.payload));
+            assert_eq!(new, old_answer(cmd, 0x14, &p), "{cmd:04X} {p:02X?}");
+        }
+        let a = answer(&m(0x0500, 0x14, &[0, 0, 0, 0]), 0x6700_1234).unwrap();
+        assert_eq!((a.cmd, a.seq, a.payload), (0x8500, 0x14, vec![0, 0x34, 0x12, 0x00, 0x67]));
+        // Nord Buds 3 Pro: the request has a real Seq and a payload; the answer repeats the Seq.
+        assert_eq!(answer(&m(0x0500, 0x21, &[0, 0, 0, 0]), 0).unwrap().seq, 0x21);
     }
 }

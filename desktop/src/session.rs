@@ -287,7 +287,10 @@ impl<'a> Conn<'a> {
                 let human = e.as_ref().map(describe).or_else(|| describe_other(&p));
                 // Some buds drop the link a few seconds after an unanswered request (issue #2: the time request).
                 let now = SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs() as u32);
-                let answer = answer_for(&p, now).map(|a| (a, seq_of(&p)));
+                let answer = if self.next.is_some() {
+                    crate::msg::answer(&crate::wire::Message { cmd: cmd_of(&p), seq: seq_of(&p), payload: payload_of(&p).to_vec() }, now)
+                        .map(|a| ((a.cmd, a.payload), a.seq))
+                } else { answer_for(&p, now).map(|a| (a, seq_of(&p))) };
                 // A refused ANC write (status 14 with no bud in an ear): read the real mode back (§5).
                 let refused = cmd_of(&p) == CMD_SET_ANC | 0x8000 && payload_of(&p).first().is_some_and(|&st| st != 0);
                 let need_ear = refused && payload_of(&p).first() == Some(&0x0E);

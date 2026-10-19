@@ -1219,8 +1219,13 @@ class BudsConnectionManager(private val context: Context) {
         val payload = payloadOf(packet)
 
         // Some buds drop the link a few seconds after an unanswered request (issue #2: the time request).
-        OpoProtocol.answerFor(cmd, packet[6].toInt() and 0xFF, payload, System.currentTimeMillis() / 1000)
-            ?.let { sendRaw(it, "answer %04X".format(cmd)) }
+        val seq = packet[6].toInt() and 0xFF
+        val now = System.currentTimeMillis() / 1000
+        val answer = if (ProtocolNext.enabled(context)) {
+            // The "new protocol" setting: the rebuilt answers (docs/PROTOCOL-NEXT.md section 15).
+            Decode.answer(Wire.Message(cmd, seq, payload), now)?.let { OpoProtocol.buildPacket(it.cmd, it.seq, it.payload) }
+        } else OpoProtocol.answerFor(cmd, seq, payload, now)
+        answer?.let { sendRaw(it, "answer %04X".format(cmd)) }
         if (cmd == OpoProtocol.REQ_TIME) return
 
         if (cmd == 0x8200) { offeredEvents = OpoProtocol.offeredEvents(payload); return }

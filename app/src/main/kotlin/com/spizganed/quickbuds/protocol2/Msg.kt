@@ -51,6 +51,25 @@ data class Triangle(
     val status: Int? = null, val relatedName: String? = null,
 )
 
+/** Both ears' biquad filters of a Golden Sound result: sample rate, left, right. */
+data class Curves(val rate: Int, val left: List<Float>, val right: List<Float>)
+
+/** A request from the buds, which they expect to be answered (section 15). */
+sealed class Request {
+    /** `0x0500`: the phone's clock. */
+    object Time : Request()
+    /** `0x050C`: is the foreground app on a list the buds hold. */
+    object AppList : Request()
+    /** `0x051C`: the app's capabilities. */
+    object Capabilities : Request()
+    /** `0x051D`: the phone's spatial mode. */
+    object SpatialMode : Request()
+    /** `0x0501` and `0x0502`: camera state and shutter. Not answered. */
+    data class Camera(val cmd: Int) : Request()
+    /** A command outside the known groups. */
+    data class Unknown(val cmd: Int) : Request()
+}
+
 /** The commands the buds accept. Before the reply, every command is allowed. */
 class Bitmap private constructor(private val cmds: Set<Int>?) {
     fun allows(cmd: Int) = cmds?.contains(cmd) ?: true
@@ -108,6 +127,27 @@ sealed class Msg {
     data class EqCurrent(val id: Int) : Msg()
     data class EqCustom(val list: List<EqPreset>) : Msg()
     data class BassLevel(val level: Int) : Msg()
+    data class AlertVolume(val level: Int) : Msg()
+    /** [default] is absent in a push. */
+    data class TapLevel(val level: Int, val default: Int?) : Msg()
+    /** `0x812A` and push `0x0510`: 0 off, 1 fixed, 2 head tracking. */
+    data class Spatial(val type: Int) : Msg()
+    data class Codec(val codec: Int) : Msg()
+    /** Bit k of the mask is codec k + 1. */
+    data class CodecMask(val mask: Int) : Msg()
+    data class GameSound(val selected: Int, val offered: List<Int>) : Msg()
+    data class PersonalAncStored(val stored: Boolean) : Msg()
+    /** null: the buds choose. */
+    data class Preferred(val mac: Mac?) : Msg()
+    /** `0x8115`: the Golden Sound record on the buds. [values]: left ears 1-6, then right ears 1-6. */
+    data class GoldenRecord(val id: Int, val name: String, val values: List<Int>) : Msg()
+    /** `0x811E`: its ear-scan data. */
+    data class GoldenScan(val id: Int, val data: List<Int>) : Msg()
+    /** `0x8116`: the hearing filters of a result and its enhance type. */
+    data class GoldenFilter(val id: Int, val enhance: Int, val curves: Curves?) : Msg()
+    /** `0x811F`: the ear-scan filters of a record. */
+    data class GoldenScanFilter(val id: Int, val curves: Curves) : Msg()
+    data class Ask(val request: Request) : Msg()
 
     // Pushes (section 5); the same facts also arrive as replies to a query
     data class Battery(val cells: List<Cell>) : Msg()
@@ -180,8 +220,106 @@ object Decode {
             0x8122 -> ok(p)?.let { presets(it) }?.let { Msg.EqCustom(it) }
             0x8124 -> ok(p)?.takeIf { it.size >= 3 }?.let { Msg.BassLevel(it[2].toInt()) }
             0x0504 -> if (p.isNotEmpty()) Msg.EqCurrent(u(p, 0)) else null
-            else -> if (m.cmd and 0xFF00 == 0x8400 && p.isNotEmpty()) Msg.Ack(m.cmd and 0x7FFF, u(p, 0), ints(p, 1)) else null
+            0x8130 -> ok(p)?.firstOrNull()?.let { Msg.AlertVolume(it.toInt() and 0xFF) }
+            0x8133 -> ok(p)?.takeIf { it.size >= 2 }?.let { Msg.TapLevel(u(it, 0), u(it, 1)) }
+            0x812A -> ok(p)?.firstOrNull()?.let { Msg.Spatial(it.toInt() and 0xFF) }
+            0x0510 -> if (p.isNotEmpty()) Msg.Spatial(u(p, 0)) else null
+            0x8134 -> ok(p)?.firstOrNull()?.let { Msg.HeadGesture(it.toInt() and 0xFF) }
+            0x8114 -> ok(p)?.firstOrNull()?.let { Msg.Codec(it.toInt() and 0xFF) }
+            0x8123 -> ok(p)?.let { le16(it, 0) }?.let { Msg.CodecMask(it) }
+            0x812B -> ok(p)?.takeIf { it.size >= 2 }?.let { Msg.GameSound(u(it, 0), ints(it, 2).take(u(it, 1))) }
+            0x811A -> ok(p)?.firstOrNull()?.let { Msg.PersonalAncStored(it.toInt() != 0) }
+            0x8112 -> ok(p)?.let { devices(it) }?.let { Msg.Devices(it) }
+            0x8132 -> when {
+                p.size >= 3 && p[0].toInt() == 0 && p[1].toInt() == 2 && p[2].toInt() == 0 -> Msg.Preferred(null)
+                p.size >= 9 && p[0].toInt() == 0 && p[1].toInt() == 2 -> Msg.Preferred(ints(p.copyOfRange(3, 9)))
+                else -> null
+            }
+            0x8115 -> ok(p)?.let { goldenRecord(it) }
+            0x811E -> ok(p)?.let { earScanBody(it, 0) }?.let { Msg.GoldenScan(it.first, it.second) }
+            0x8116 -> ok(p)?.takeIf { it.size >= 9 }?.let { Msg.GoldenFilter(be32(it, 0)!!, u(it, 8), curves(it, false)) }
+            0x811F -> ok(p)?.let { d -> be32(d, 0)?.let { id -> curves(d, true)?.let { Msg.GoldenScanFilter(id, it) } } }
+            else -> when {
+                m.cmd and 0x8000 == 0 -> request(m.cmd)?.let { Msg.Ask(it) }
+                m.cmd and 0xFF00 == 0x8400 && p.isNotEmpty() -> Msg.Ack(m.cmd and 0x7FFF, u(p, 0), ints(p, 1))
+                else -> null
+            }
         }
+    }
+
+    /** What a request from the buds is. null: the command is in a known group and not a request. */
+    private fun request(cmd: Int): Request? = when (cmd) {
+        0x0500 -> Request.Time
+        0x050C -> Request.AppList
+        0x051C -> Request.Capabilities
+        0x051D -> Request.SpatialMode
+        0x0501, 0x0502 -> Request.Camera(cmd)
+        else -> if ((cmd shr 8) !in listOf(0x01, 0x02, 0x03, 0x04, 0x05, 0x0F)) Request.Unknown(cmd) else null
+    }
+
+    /** `<kind> <len u16 LE> <data> <id u32 BE>`, from [from]. */
+    private fun earScanBody(p: ByteArray, from: Int): Pair<Int, List<Int>>? {
+        val len = le16(p, from + 1) ?: return null
+        val id = be32(p, from + 3 + len)
+        return if (len == 0 || id == null) null else id to ints(p, from + 3).take(len)
+    }
+
+    /** `03 0C <12 x (side freq value)> <id u32 BE> <name>`. */
+    private fun goldenRecord(d: ByteArray): Msg? {
+        if (d.size < 2 || u(d, 1) != 12) return null
+        val end = 2 + 36
+        val id = be32(d, end) ?: return null
+        val values = IntArray(12)
+        for (i in 0 until 12) {
+            val side = u(d, 2 + i * 3); val freq = u(d, 3 + i * 3)
+            if (side !in 1..2 || freq !in 1..6) return null
+            values[(side - 1) * 6 + freq - 1] = d[4 + i * 3].toInt()
+        }
+        return Msg.GoldenRecord(id, String(d, end + 4, d.size - end - 4, Charsets.UTF_8), values.toList())
+    }
+
+    /**
+     * Filter floats, little endian, left ear then right. `0x8116`: `<id> 04 <count LE> <packet> <type> <floats>`.
+     * `0x811F`: `<id> 04 <rate LE> <count LE> <packet> <floats>`. [d] starts at the id; a count is a multiple of 12.
+     */
+    private fun curves(d: ByteArray, scan: Boolean): Curves? {
+        if (d.size < 10 || d[4].toInt() != 4) return null
+        val rate = if (scan) le16(d, 5)!! else 44100
+        val count = if (scan) le16(d, 7)!! else le16(d, 5)!!
+        val start = if (scan) 10 else 9
+        if (count == 0 || count % 12 != 0 || start + count * 4 > d.size) return null
+        val f = (0 until count).map { java.lang.Float.intBitsToFloat(u(d, start + it * 4) or (u(d, start + it * 4 + 1) shl 8) or (u(d, start + it * 4 + 2) shl 16) or (u(d, start + it * 4 + 3) shl 24)) }
+        return Curves(rate, f.subList(0, count / 2), f.subList(count / 2, count))
+    }
+
+    /** The answer to a message the buds sent on their own, or null (no answer is due). [unix]: the phone's clock. */
+    fun answer(m: Message, unix: Long): Message? {
+        if (m.cmd and 0x8000 != 0) return null
+        val p = m.payload
+        val body: ByteArray = when {
+            m.cmd == PUSH && p.firstOrNull()?.toInt()?.and(0xFF) == 0xF2 -> byteArrayOf(0, 0xF2.toByte())
+            m.cmd == PUSH && p.firstOrNull()?.toInt()?.and(0xFF) == 0xF4 -> jsonAck(p.copyOfRange(1, p.size))
+            m.cmd == PUSH -> return null
+            else -> when ((decode(m) as? Msg.Ask)?.request ?: return null) {
+                Request.Time -> byteArrayOf(0, unix.toByte(), (unix shr 8).toByte(), (unix shr 16).toByte(), (unix shr 24).toByte())
+                Request.AppList -> byteArrayOf(0, 1, 0)
+                Request.Capabilities -> byteArrayOf(0, 0, 0)
+                // Always "invalid": the phone's spatial mode is not known here.
+                Request.SpatialMode -> byteArrayOf(1)
+                is Request.Camera -> return null
+                is Request.Unknown -> byteArrayOf(1)
+            }
+        }
+        return Message(m.cmd or 0x8000, m.seq, body)
+    }
+
+    /** `F4` JSON: `00 F4 {"cmd":<its cmd>}`; `01 F4` when it does not parse. */
+    private fun jsonAck(json: ByteArray): ByteArray {
+        val head = byteArrayOf(0, 0xF4.toByte())
+        if (json.isEmpty()) return head
+        val obj = MiniJson.parseObject(String(json, Charsets.UTF_8)) ?: return byteArrayOf(1, 0xF4.toByte())
+        val cmd = obj["cmd"] as? String
+        return head + (if (cmd == null) "{}" else "{\"cmd\":${MiniJson.quote(cmd)}}").toByteArray()
     }
 
     /** The bytes after a `00` status byte. A reply with another status carries no data. */
@@ -362,5 +500,89 @@ object Decode {
             i += 4 + len
         }
         return out
+    }
+}
+
+/**
+ * Just enough JSON for the diagnostic push: is it an object, and what are its top-level strings.
+ * ponytail: strict RFC 8259 objects only, nested values are skipped; the vendor parser is more lenient.
+ */
+internal object MiniJson {
+    fun quote(s: String) = buildString {
+        append('"')
+        for (c in s) when {
+            c == '"' -> append("\\\"")
+            c == '\\' -> append("\\\\")
+            c < ' ' -> append("\\u%04x".format(c.code))
+            else -> append(c)
+        }
+        append('"')
+    }
+
+    /** The object's top-level string values (other values map to Unit), or null when [text] is not a JSON object. */
+    fun parseObject(text: String): Map<String, Any>? = try {
+        val r = Reader(text)
+        r.ws()
+        val v = r.value()
+        v as? Map<String, Any>
+    } catch (e: IllegalStateException) {
+        null
+    }
+
+    private class Reader(val s: String) {
+        var i = 0
+        fun ws() { while (i < s.length && s[i] in " \t\r\n") i++ }
+        fun peek() = if (i < s.length) s[i] else error("end")
+        fun expect(c: Char) { ws(); if (peek() != c) error("expected $c"); i++ }
+
+        fun value(): Any {
+            ws()
+            return when (val c = peek()) {
+                '{' -> obj()
+                '[' -> { i++; ws(); if (peek() == ']') i++ else do { value(); ws(); val d = peek(); i++; if (d != ',' && d != ']') error("array") } while (s[i - 1] == ','); Unit }
+                '"' -> str()
+                't' -> lit("true")
+                'f' -> lit("false")
+                'n' -> lit("null")
+                else -> if (c == '-' || c.isDigit()) num() else error("value")
+            }
+        }
+
+        fun obj(): Map<String, Any> {
+            val out = HashMap<String, Any>()
+            i++; ws()
+            if (peek() == '}') { i++; return out }
+            while (true) {
+                ws(); val k = str(); expect(':'); out[k] = value(); ws()
+                val d = peek(); i++
+                if (d == '}') return out
+                if (d != ',') error("object")
+            }
+        }
+
+        fun str(): String {
+            if (peek() != '"') error("string")
+            i++
+            val b = StringBuilder()
+            while (true) {
+                val c = peek(); i++
+                when (c) {
+                    '"' -> return b.toString()
+                    '\\' -> {
+                        val e = peek(); i++
+                        when (e) {
+                            'n' -> b.append('\n'); 't' -> b.append('\t'); 'r' -> b.append('\r'); 'b' -> b.append('\b'); 'f' -> b.append('\u000c')
+                            'u' -> { if (i + 4 > s.length) error("u"); b.append(s.substring(i, i + 4).toInt(16).toChar()); i += 4 }
+                            '"', '\\', '/' -> b.append(e)
+                            else -> error("escape")
+                        }
+                    }
+                    else -> if (c < ' ') error("control") else b.append(c)
+                }
+            }
+        }
+
+        fun lit(w: String): Any { if (!s.startsWith(w, i)) error("literal"); i += w.length; return Unit }
+        fun num(): Any { val st = i; while (i < s.length && (s[i].isDigit() || s[i] in "+-.eE")) i++; s.substring(st, i).toDoubleOrNull() ?: error("number"); return Unit }
     }
 }

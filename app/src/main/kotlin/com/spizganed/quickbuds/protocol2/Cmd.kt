@@ -127,4 +127,98 @@ object Cmd {
 
     /** `0x041B FB 05 <level>`: BassWave level, -5 to 5. The BassWave switch is feature `1D`. */
     fun bassSet(level: Int) = f(0x041B, 0xFB, 0x05, level and 0xFF)
+
+    // --- Sound and device settings (section 13) ---
+
+    fun alertVolumeRead() = f(0x0130)
+    /** `0x0427 <level>`, 1..10. Each write plays a prompt: send on slider release only. */
+    fun alertVolume(level: Int) = f(0x0427, level)
+    fun tapLevelRead() = f(0x0133)
+    /** `0x042D <level>`, 1..5. A lower level triggers more easily. */
+    fun tapLevel(level: Int) = f(0x042D, level)
+    fun headGestureRead() = f(0x0134)
+    /** `0x0431 <type>`: 0 nod answers and shake declines, 1 the reverse. */
+    fun headGesture(type: Int) = f(0x0431, type)
+    fun spatialRead() = f(0x012A)
+    /** `0x0422 <type>`: 0 off, 1 fixed, 2 head tracking. */
+    fun spatial(type: Int) = f(0x0422, type)
+    /** `0x041E <source>`: 0 the buds render 3D audio, 1 the phone does. */
+    fun spatialSource(source: Int) = f(0x041E, source)
+    fun codecRead() = f(0x0114)
+    fun codecListRead() = f(0x0123)
+    /** `0x041A <codec> <hiRes> 00`. The Hi-Res byte is set only with LDAC (3) or LHDC V5 (8). */
+    fun codec(codec: Int, hiRes: Boolean) = f(0x041A, codec, if (hiRes && (codec == 3 || codec == 8)) 1 else 0, 0)
+    fun gameSoundRead() = f(0x012B)
+    /** `0x0423 <type> 01`; type 0 is off. */
+    fun gameSound(type: Int) = f(0x0423, type, 1)
+    /** `0x0420 01 <state>`: a game app is in the foreground. Applies only while feature `21` is on. */
+    fun gameEq(inGame: Boolean) = f(0x0420, 1, if (inGame) 1 else 0)
+
+    /** The codecs in a mask, as the app offers them: LHDC (7) is dropped when LHDC V5 (8) is offered too. */
+    fun codecsOf(mask: Int): List<Int> {
+        val all = (1..8).filter { mask and (1 shl (it - 1)) != 0 }
+        return if (8 in all) all.filter { it != 7 } else all
+    }
+
+    /** `0x0400 <01|00>`: ring both buds. */
+    fun find(on: Boolean) = f(0x0400, if (on) 1 else 0)
+    /** `0x0405 <01|00>`: fit test. The result is push `04`. */
+    fun fitTest(on: Boolean) = f(0x0405, if (on) 1 else 0)
+    /** `0x0412 <action>`: 1 test, 2 use the stored result, 3 cancel. */
+    fun personalAnc(action: Int) = f(0x0412, action)
+    fun personalAncStored() = f(0x011A)
+
+    // --- Dual connection (section 14) ---
+
+    fun devicesRead() = f(0x0112)
+    /** `0x0429 01|02 <MAC>`: connect or disconnect a device. The MAC is in written order. */
+    fun deviceConnect(mac: Mac, on: Boolean) = f(0x0429, if (on) 1 else 2, *mac.toIntArray())
+    /** `0x0429 04 00` automatic, `04 01 <MAC>` a chosen device. */
+    fun preferredSet(mac: Mac?) = if (mac == null) f(0x0429, 4, 0) else f(0x0429, 4, 1, *mac.toIntArray())
+    fun preferredRead() = f(0x0132, 2)
+
+    /** The phone's state for switching between devices. A null field is left out. */
+    data class PhoneState(val version: Int? = null, val screenOn: Boolean? = null, val held: Boolean? = null, val autoSwitch: Boolean? = null, val music: Boolean? = null)
+
+    /** `0x0413 <flags> 00 <values>`: flag bit 0 protocol version, 1 screen on, 2 held by hand, 3 auto switch on, 4 music playing. */
+    fun phoneState(s: PhoneState): Frame {
+        val fields = listOf(s.version, s.screenOn?.let { if (it) 1 else 0 }, s.held?.let { if (it) 1 else 0 },
+            s.autoSwitch?.let { if (it) 1 else 0 }, s.music?.let { if (it) 1 else 0 })
+        val flags = fields.withIndex().fold(0) { acc, (i, v) -> if (v != null) acc or (1 shl i) else acc }
+        return f(0x0413, flags, 0, *fields.filterNotNull().toIntArray())
+    }
+
+    // --- Golden Sound (section 16) ---
+
+    private fun be32(v: Int) = byteArrayOf((v ushr 24).toByte(), (v ushr 16).toByte(), (v ushr 8).toByte(), v.toByte())
+    private fun le16(v: Int) = byteArrayOf(v.toByte(), (v ushr 8).toByte())
+    /** 12 hearing values, left ears 1-6 then right ears 1-6, as `<side> <freq> <value>`. */
+    private fun hearingInfo(values: List<Int>) = ByteArray(36) { i ->
+        val n = i / 3
+        when (i % 3) { 0 -> (n / 6 + 1).toByte(); 1 -> (n % 6 + 1).toByte(); else -> values[n].toByte() }
+    }
+
+    fun goldenRecordRead() = f(0x0115)
+    fun goldenScanRead() = f(0x011E)
+    /** `0x040D 04 <01|00> <id u32 BE>`: ear scan. The result is push `0E`. */
+    fun earScan(on: Boolean, id: Int) = Frame(0x040D, byteArrayOf(4, if (on) 1 else 0) + be32(id))
+    /** `0x040D 02 <01|00>`: hearing test. */
+    fun hearingTest(on: Boolean) = f(0x040D, 2, if (on) 1 else 0)
+    /** `0x040E 03 01 <side> <freq> <value>`: a tone on one bud. Send [toneStop] before each new level. */
+    fun tone(side: Int, freq: Int, value: Int) = f(0x040E, 3, 1, side, freq, value and 0xFF)
+    fun toneStop() = f(0x040E, 4)
+    /** `0x0116 0C <12 values> <id>`: the hearing filters of a result. */
+    fun goldenFilter(id: Int, values: List<Int>) = Frame(0x0116, byteArrayOf(0x0C) + hearingInfo(values) + be32(id))
+    /** `0x011F <len u16 LE> <scan> <id>`: the ear-scan filters. */
+    fun goldenScanFilter(id: Int, scan: ByteArray) = Frame(0x011F, le16(scan.size) + scan + be32(id))
+
+    /** Applies a record: the description id, the record, the ear scan when there is one, then the switch on. [desc]: 0 for none. */
+    fun goldenApply(id: Int, name: String, values: List<Int>, scan: ByteArray, desc: Int): List<Frame> {
+        val out = ArrayList<Frame>()
+        if (desc > 0) out += f(0x0411, 1, 1, 1, 0, desc)
+        out += Frame(0x040E, byteArrayOf(3, 0x0C) + hearingInfo(values) + be32(id) + name.toByteArray(Charsets.UTF_8))
+        if (scan.isNotEmpty()) out += Frame(0x0415, byteArrayOf(3) + le16(scan.size) + scan + be32(id))
+        out += feature(0x0B, true)
+        return out
+    }
 }

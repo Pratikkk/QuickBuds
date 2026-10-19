@@ -127,6 +127,106 @@ pub fn eq_preset(action: EqAction, p: &EqPreset) -> Frame {
 /// `0x041B FB 05 <level>`: BassWave level, -5..+5. The BassWave switch is feature `1D`.
 pub fn bass_set(level: i8) -> Frame { (0x041B, vec![0xFB, 0x05, level as u8]) }
 
+// --- Sound and device settings (section 13) ---
+
+pub fn alert_volume_read() -> Frame { (0x0130, vec![]) }
+/// `0x0427 <level>`, 1..10. Each write plays a prompt: send on slider release only.
+pub fn alert_volume(level: u8) -> Frame { (0x0427, vec![level]) }
+pub fn tap_level_read() -> Frame { (0x0133, vec![]) }
+/// `0x042D <level>`, 1..5. A lower level triggers more easily.
+pub fn tap_level(level: u8) -> Frame { (0x042D, vec![level]) }
+pub fn head_gesture_read() -> Frame { (0x0134, vec![]) }
+/// `0x0431 <type>`: `00` nod answers and shake declines, `01` the reverse.
+pub fn head_gesture(kind: u8) -> Frame { (0x0431, vec![kind]) }
+pub fn spatial_read() -> Frame { (0x012A, vec![]) }
+/// `0x0422 <type>`: 0 off, 1 fixed, 2 head tracking.
+pub fn spatial(kind: u8) -> Frame { (0x0422, vec![kind]) }
+/// `0x041E <source>`: `00` the buds render 3D audio, `01` the phone does.
+pub fn spatial_source(source: u8) -> Frame { (0x041E, vec![source]) }
+pub fn codec_read() -> Frame { (0x0114, vec![]) }
+pub fn codec_list_read() -> Frame { (0x0123, vec![]) }
+/// `0x041A <codec> <hiRes> 00`. The Hi-Res byte is set only with LDAC (3) or LHDC V5 (8).
+pub fn codec(codec: u8, hires: bool) -> Frame { (0x041A, vec![codec, (hires && (codec == 3 || codec == 8)) as u8, 0]) }
+pub fn game_sound_read() -> Frame { (0x012B, vec![]) }
+/// `0x0423 <type> 01`; type 0 is off.
+pub fn game_sound(kind: u8) -> Frame { (0x0423, vec![kind, 1]) }
+/// `0x0420 01 <state>`: a game app is in the foreground. Applies only while feature `21` is on.
+pub fn game_eq(in_game: bool) -> Frame { (0x0420, vec![1, in_game as u8]) }
+/// The codecs in a mask, as the app offers them: LHDC (7) is dropped when LHDC V5 (8) is offered too.
+pub fn codecs_of(mask: u16) -> Vec<u8> {
+    let all: Vec<u8> = (1..=8).filter(|c| mask & (1 << (c - 1)) != 0).collect();
+    if all.contains(&8) { all.into_iter().filter(|&c| c != 7).collect() } else { all }
+}
+
+/// `0x0400 <01|00>`: ring both buds.
+pub fn find(on: bool) -> Frame { (0x0400, vec![on as u8]) }
+/// `0x0405 <01|00>`: fit test. The result is push `04`.
+pub fn fit_test(on: bool) -> Frame { (0x0405, vec![on as u8]) }
+/// `0x0412 <action>`: 1 test, 2 use the stored result, 3 cancel.
+pub fn personal_anc(action: u8) -> Frame { (0x0412, vec![action]) }
+pub fn personal_anc_stored() -> Frame { (0x011A, vec![]) }
+
+// --- Dual connection (section 14) ---
+
+pub fn devices_read() -> Frame { (0x0112, vec![]) }
+/// `0x0429 01|02 <MAC>`: connect or disconnect a device. The MAC is in written order.
+pub fn device_connect(mac: [u8; 6], on: bool) -> Frame { (0x0429, [&[if on { 1 } else { 2 }][..], &mac].concat()) }
+/// `0x0429 04 00` automatic, `04 01 <MAC>` a chosen device.
+pub fn preferred_set(mac: Option<[u8; 6]>) -> Frame {
+    (0x0429, match mac { None => vec![4, 0], Some(m) => [&[4, 1][..], &m].concat() })
+}
+pub fn preferred_read() -> Frame { (0x0132, vec![2]) }
+
+/// The phone's state for switching between devices: `<flags> 00`, then one byte per set flag in bit order.
+#[derive(Clone, Copy, Default, PartialEq, Debug)]
+pub struct PhoneState {
+    pub version: Option<u8>,
+    pub screen_on: Option<bool>,
+    pub held: Option<bool>,
+    pub auto_switch: Option<bool>,
+    pub music: Option<bool>,
+}
+
+/// `0x0413 <flags> 00 <values>`: flag bit 0 protocol version, 1 screen on, 2 held by hand, 3 auto switch on, 4 music playing.
+pub fn phone_state(s: PhoneState) -> Frame {
+    let fields = [s.version, s.screen_on.map(u8::from), s.held.map(u8::from), s.auto_switch.map(u8::from), s.music.map(u8::from)];
+    let flags = fields.iter().enumerate().fold(0u8, |f, (i, v)| f | (v.is_some() as u8) << i);
+    (0x0413, [&[flags, 0][..], &fields.iter().flatten().copied().collect::<Vec<_>>()].concat())
+}
+
+// --- Golden Sound (section 16) ---
+
+/// 12 hearing values, left ears 1-6 then right ears 1-6, as `<side> <freq> <value>`.
+fn hearing_info(values: &[i8; 12]) -> Vec<u8> { (0..12).flat_map(|i| [i as u8 / 6 + 1, i as u8 % 6 + 1, values[i] as u8]).collect() }
+
+pub fn golden_record_read() -> Frame { (0x0115, vec![]) }
+pub fn golden_scan_read() -> Frame { (0x011E, vec![]) }
+/// `0x040D 04 <01|00> <id u32 BE>`: ear scan. The result is push `0E`.
+pub fn ear_scan(on: bool, id: u32) -> Frame { (0x040D, [&[4, on as u8][..], &id.to_be_bytes()].concat()) }
+/// `0x040D 02 <01|00>`: hearing test.
+pub fn hearing_test(on: bool) -> Frame { (0x040D, vec![2, on as u8]) }
+/// `0x040E 03 01 <side> <freq> <value>`: a tone on one bud. Send [tone_stop] before each new level.
+pub fn tone(side: u8, freq: u8, value: i8) -> Frame { (0x040E, vec![3, 1, side, freq, value as u8]) }
+pub fn tone_stop() -> Frame { (0x040E, vec![4]) }
+/// `0x0116 0C <12 values> <id>`: the hearing filters of a result.
+pub fn golden_filter(id: u32, values: &[i8; 12]) -> Frame { (0x0116, [vec![0x0C], hearing_info(values), id.to_be_bytes().to_vec()].concat()) }
+/// `0x011F <len u16 LE> <scan> <id>`: the ear-scan filters.
+pub fn golden_scan_filter(id: u32, scan: &[u8]) -> Frame {
+    (0x011F, [&(scan.len() as u16).to_le_bytes()[..], scan, &id.to_be_bytes()].concat())
+}
+/// Applies a record: the description id, the record, the ear scan when there is one, then the switch on.
+/// `desc` is the description id, 0 for none.
+pub fn golden_apply(id: u32, name: &str, values: &[i8; 12], scan: &[u8], desc: u8) -> Vec<Frame> {
+    let mut out = Vec::new();
+    if desc > 0 { out.push((0x0411, vec![1, 1, 1, 0, desc])); }
+    out.push((0x040E, [vec![3, 0x0C], hearing_info(values), id.to_be_bytes().to_vec(), name.as_bytes().to_vec()].concat()));
+    if !scan.is_empty() {
+        out.push((0x0415, [&[3][..], &(scan.len() as u16).to_le_bytes(), scan, &id.to_be_bytes()].concat()));
+    }
+    out.push(feature(0x0B, true));
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -196,5 +296,54 @@ mod tests {
             assert_eq!(eq_preset(a, &p).1, o.encode(b));
         }
         assert_eq!(&eq_preset(EqAction::Save, &p).1[..5], [2, 0xFA, 6, 5, 4]);
+    }
+    #[test]
+    fn settings_match_the_shipping_builders() {
+        assert_eq!(codec(8, true).1, old::codec_payload(8, true));
+        assert_eq!(codec(2, true).1, old::codec_payload(2, true));
+        assert_eq!(codec(3, false).1, [3, 0, 0]);
+        for mask in [0x0146u16, 0x00FF, 0x0040, 0x0080, 0] { assert_eq!(codecs_of(mask), old::codecs_of(mask)); }
+        assert_eq!(alert_volume(6), (0x0427, vec![6]));
+        assert_eq!(tap_level(3), (0x042D, vec![3]));
+        assert_eq!(game_sound(3), (0x0423, vec![3, 1]));
+        assert_eq!(game_eq(true), (0x0420, vec![1, 1]));
+        assert_eq!(spatial(2), (0x0422, vec![2]));
+        assert_eq!(spatial_source(0), (0x041E, vec![0]));
+        assert_eq!(head_gesture(1), (0x0431, vec![1]));
+        assert_eq!(find(true), (0x0400, vec![1]));
+        assert_eq!(fit_test(false), (0x0405, vec![0]));
+        assert_eq!(personal_anc(2), (0x0412, vec![2]));
+        assert_eq!(preferred_read(), (0x0132, vec![2]));
+        let mac = [1, 2, 3, 4, 5, 6];
+        assert_eq!(device_connect(mac, true).1, [1, 1, 2, 3, 4, 5, 6]);
+        assert_eq!(device_connect(mac, false).1[0], 2);
+        assert_eq!(preferred_set(None).1, [4, 0]);
+        assert_eq!(preferred_set(Some(mac)).1, [4, 1, 1, 2, 3, 4, 5, 6]);
+    }
+
+    #[test]
+    fn phone_state_flags_follow_the_spec() {
+        // Dual connection toggle: `08 00 01` after off, `08 00 00` after on, replayed from the capture.
+        assert_eq!(phone_state(PhoneState { auto_switch: Some(true), ..Default::default() }), (0x0413, vec![0x08, 0, 1]));
+        assert_eq!(phone_state(PhoneState { auto_switch: Some(false), ..Default::default() }).1, [0x08, 0, 0]);
+        let all = PhoneState { version: Some(1), screen_on: Some(true), held: Some(false), auto_switch: Some(true), music: Some(true) };
+        assert_eq!(phone_state(all).1, [0x1F, 0, 1, 1, 0, 1, 1]);
+        assert_eq!(phone_state(PhoneState::default()).1, [0, 0]);
+    }
+
+    #[test]
+    fn golden_sound_frames_match_the_shipping_builders() {
+        let v: [i8; 12] = [-55, -49, -41, -35, -25, -19, -11, -5, 3, 7, 13, 17];
+        assert_eq!(ear_scan(true, 0x01020304), old::ear_scan(true, 0x01020304));
+        assert_eq!(hearing_test(false), old::hearing_test(false));
+        assert_eq!(tone(2, 3, -30), old::hearing_tone(2, 3, -30));
+        assert_eq!(tone_stop(), old::hearing_tone_stop());
+        assert_eq!(golden_filter(7, &v), old::hearing_filter(7, &v));
+        assert_eq!(golden_scan_filter(7, &[9; 168]), old::hearing_scan_filter(7, &[9; 168]));
+        assert_eq!(golden_apply(0x01020304, "2026/09/29 01:53", &v, &[9; 168], 11), old::hearing_apply(0x01020304, "2026/09/29 01:53", &v, &[9; 168], 11));
+        assert_eq!(golden_apply(1, "x", &v, &[], 0), old::hearing_apply(1, "x", &v, &[], 0));
+        // The capture's apply order: restore `01 01 01 00 0B`, record, scan, switch on.
+        assert_eq!(golden_apply(1, "x", &v, &[9; 168], 11).iter().map(|f| f.0).collect::<Vec<_>>(), [0x0411, 0x040E, 0x0415, 0x0403]);
+        assert_eq!(golden_apply(1, "x", &v, &[], 0).last(), Some(&(0x0403, vec![0x0B, 1])));
     }
 }
