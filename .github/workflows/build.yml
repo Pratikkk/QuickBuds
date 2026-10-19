@@ -46,7 +46,7 @@ jobs:
           mkdir out
           cp app/build/outputs/apk/release/app-release.apk "out/QuickBuds$ver.apk"
           cp app/build/outputs/bundle/release/app-release.aab "out/QuickBuds$ver.aab"
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: android
           path: out/*
@@ -81,7 +81,7 @@ jobs:
         run: |
           ver=$(sed -n 's/^version = "\(.*\)"/\1/p' desktop/Cargo.toml | head -1)
           QB_NATIVE=1 scripts/desktop-dist.sh "$ver"
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: desktop
           path: desktop/dist/*
