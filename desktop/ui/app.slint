@@ -20,6 +20,9 @@ export global Palette {
     out property <color> thumb-off: light ? card : text.mix(card, 0.9);
     // Background of an expanded row.
     out property <color> expanded: card.mix(text, 0.95);
+    // Material: the phone's tonal card (card tinted by the accent) and a picked element's fill (`Palette.container`, `tonal`).
+    out property <color> container: card.mix(accent, light ? 0.95 : 0.92);
+    out property <color> tonal: container.mix(accent, light ? 0.82 : 0.72);
     // An outline that stands out a little more: lighter on a dark theme, darker on a light one.
     out property <color> outline-strong: light ? outline.darker(0.15) : outline.brighter(0.3);
 
@@ -392,10 +395,10 @@ export global Buds {
 component Card inherits Rectangle {
     // App settings, not the buds': never dimmed.
     in property <bool> live;
-    background: Dots.on ? transparent : Palette.card;
+    background: Dots.on ? transparent : Dots.material ? Palette.container : Palette.card;
     border-width: Dots.on || Dots.material ? 0 : 1px;
     border-color: Palette.outline;
-    border-radius: Dots.material ? 28px : 16px;
+    border-radius: 16px;
     opacity: Buds.on || live ? 1 : 0.35;
     animate opacity { duration: Motion.base; easing: ease-out; }
     if Dots.on: DotBox { width: 100%; height: 100%; radius: root.border-radius; }
@@ -522,7 +525,7 @@ component Segment inherits Rectangle {
     init => { marked(selected); }
     changed selected => { marked(selected); }
     property <color> lit: Dots.on ? Palette.accent : Palette.on-accent;
-    background: Dots.on || selected ? transparent : ta.has-hover ? Palette.outline : transparent;
+    background: Dots.on || Dots.material || selected ? transparent : ta.has-hover ? Palette.outline : transparent;
     animate background { duration: Motion.fast; }
     if Dots.on && !selected && ta.has-hover: DotBox {
         width: 100%; height: 100%;
@@ -530,7 +533,36 @@ component Segment inherits Rectangle {
         fill: Palette.card;
         stroke: Palette.outline;
     }
-    VerticalLayout {
+    // Material, as the phone: with an icon a round button (accent when picked) and the label under it;
+    // text only, a 12 px tile. The fill fades between options.
+    property <length> btn: compact ? 36px : 52px;
+    if Dots.material && icon.width > 0: Rectangle {
+        y: compact ? (root.height - btn) / 2 : 0; width: btn; height: btn; border-radius: btn / 2;
+        x: (root.width - btn) / 2;
+        background: selected ? Palette.accent : Palette.container.mix(Palette.text, 0.92);
+        animate background { duration: Motion.slide; }
+        Image {
+            source: icon; width: 24px; height: 24px; x: (parent.width - 24px) / 2; y: (parent.height - 24px) / 2;
+            colorize: selected ? Palette.on-accent : Palette.text2;
+            animate colorize { duration: Motion.slide; }
+        }
+    }
+    if Dots.material && icon.width > 0 && !compact: Text {
+        y: btn + 6px; width: 100%; text: label; horizontal-alignment: center; font-size: 12px; overflow: elide;
+        color: selected ? Palette.text : Palette.text2;
+        animate color { duration: Motion.slide; }
+    }
+    if Dots.material && icon.width <= 0: Rectangle {
+        border-radius: 12px;
+        background: selected ? Palette.accent : Palette.container.mix(Palette.text, 0.92);
+        animate background { duration: Motion.slide; }
+        Text {
+            text: label; horizontal-alignment: center; vertical-alignment: center; font-size: 13px; overflow: elide;
+            color: selected ? Palette.on-accent : Palette.text2;
+            animate color { duration: Motion.slide; }
+        }
+    }
+    if !Dots.material: VerticalLayout {
         alignment: center;
         spacing: 4px;
         padding-top: 6px;
@@ -572,9 +604,7 @@ component SegmentTrack inherits Rectangle {
     changed index => { if index >= 0 { at = index; } }
     property <length> pill-x: pad + at * (seg + gap);
     animate pill-x { duration: Motion.slide; easing: ease-out; }
-    // Material 3: the whole control sits on a tinted pill; the picked segment is a lighter accent pill.
-    if Dots.material: Rectangle { border-radius: min(root.height, root.width) / 2; background: Palette.card.mix(Palette.text, 0.94); }
-    if index >= 0 && !Dots.on: Rectangle {
+    if index >= 0 && !Dots.on && !Dots.material: Rectangle {
         x: pill-x; y: pad; width: seg; height: root.height - 2 * pad;
         border-radius: min(self.height, self.width) / 2;
         background: Palette.accent;
@@ -680,7 +710,7 @@ component Toggle inherits Rectangle {
     // Material 3: a 52 x 32 pill; off is an outlined track with a small thumb, on is an accent track with a large one.
     if Dots.material: Rectangle {
         border-radius: 16px;
-        background: root.checked ? Palette.accent : Palette.outline;
+        background: root.checked ? Palette.accent : Palette.container;
         border-width: root.checked ? 0 : 2px;
         border-color: Palette.text2;
         animate background { duration: Motion.fast; }
@@ -851,7 +881,7 @@ component DialogCard inherits Rectangle {
     opacity: t;
     transform-scale: 0.96 + 0.04 * t;
     // Solid behind the dots: the page must not show through the gaps.
-    background: Dots.on ? Palette.bg : Palette.card;
+    background: Dots.on ? Palette.bg : Dots.material ? Palette.container : Palette.card;
     border-radius: Dots.material ? 28px : 14px;
     border-width: Dots.on || Dots.material ? 0 : 1px;
     border-color: Palette.outline;
@@ -860,7 +890,7 @@ component DialogCard inherits Rectangle {
 }
 
 component SectionTitle inherits Text {
-    color: Palette.text2;
+    color: Dots.material ? Palette.accent : Palette.text2;
     font-size: 12px;
     font-weight: 600;
 }
@@ -916,8 +946,9 @@ component NavRow inherits Rectangle {
 
 // A row divider inside a card.
 component Divider inherits Rectangle {
-    height: Dots.on ? Dots.pitch / Dots.scale * 1px : 1px;
-    background: Dots.on ? transparent : Palette.outline;
+    // Material: the phone's 2dp gap between list tiles.
+    height: Dots.on ? Dots.pitch / Dots.scale * 1px : Dots.material ? 2px : 1px;
+    background: Dots.on ? transparent : Dots.material ? Palette.bg : Palette.outline;
     if Dots.on: DotBox { width: 100%; height: 100%; radius: 0; fill: Palette.outline; stroke: Palette.outline; }
 }
 
@@ -1117,7 +1148,7 @@ component HSlider inherits Rectangle {
         image-fit: ImageFit.fill; image-rendering: pixelated;
     }
     // Material 3: a thick rounded track split by a 4 px handle pill with a gap on both sides.
-    if Dots.material: Rectangle { y: track-y - 8px; height: 16px; border-radius: 8px; background: Palette.outline; }
+    if Dots.material: Rectangle { y: track-y - 8px; height: 16px; border-radius: 8px; background: Palette.tonal; }
     if Dots.material: Rectangle {
         x: 0; y: track-y - 8px; height: 16px; border-radius: 8px;
         width: max(16px, frac * (parent.width - 12px) + 2px);
@@ -1125,7 +1156,7 @@ component HSlider inherits Rectangle {
     }
     if Dots.material: Rectangle {
         x: frac * (parent.width - 8px); y: track-y - 13px; width: 8px; height: 26px; border-radius: 4px;
-        background: Palette.card;
+        background: Palette.container;
         Rectangle { x: 2px; width: 4px; border-radius: 2px; background: Palette.accent; }
     }
     if !Dots.on && !Dots.material: Rectangle {
@@ -1221,7 +1252,7 @@ component EqEditor inherits Rectangle {
 component EqPage inherits VerticalLayout {
     padding: 28px;
     spacing: 16px;
-    Text { text: Tr.eq-title; color: Palette.text; font-size: 26px; font-weight: 700; }
+    Text { text: Tr.eq-title; color: Palette.text; font-size: Dots.material ? 28px : 26px; font-weight: Dots.material ? 400 : 700; }
     if !Buds.on: Text { text: Tr.eq-not-connected; color: Palette.text2; font-size: 13px; }
 
     HorizontalLayout {
@@ -1703,7 +1734,7 @@ component EarbudsPage inherits Rectangle {
             padding: 28px;
             spacing: 16px;
             alignment: start;
-            Text { text: Tr.earbuds-title; color: Palette.text; font-size: 26px; font-weight: 700; }
+            Text { text: Tr.earbuds-title; color: Palette.text; font-size: Dots.material ? 28px : 26px; font-weight: Dots.material ? 400 : 700; }
             if !Buds.on: Text { text: Tr.not-connected; color: Palette.text2; font-size: 13px; }
             // Not a Card: the model list works while disconnected too.
             Rectangle {
@@ -1867,7 +1898,7 @@ component ModelsPage inherits Rectangle {
             HorizontalLayout {
                 spacing: 12px;
                 Chip { text: "‹"; width: 40px; clicked => { root.back(); } }
-                Text { text: Tr.model-title; color: Palette.text; font-size: 26px; font-weight: 700; vertical-alignment: center; horizontal-stretch: 1; }
+                Text { text: Tr.model-title; color: Palette.text; font-size: Dots.material ? 28px : 26px; font-weight: Dots.material ? 400 : 700; vertical-alignment: center; horizontal-stretch: 1; }
             }
             Card {
                 live: true;
@@ -1962,7 +1993,7 @@ component ControlsPage inherits Rectangle {
             padding: 28px;
             spacing: 16px;
             alignment: start;
-            Text { text: Tr.gesture-title; color: Palette.text; font-size: 26px; font-weight: 700; }
+            Text { text: Tr.gesture-title; color: Palette.text; font-size: Dots.material ? 28px : 26px; font-weight: Dots.material ? 400 : 700; }
             if !Buds.on: Text { text: Tr.not-connected; color: Palette.text2; font-size: 13px; }
             if !Controls.one-button: HorizontalLayout {
                 alignment: start;
@@ -2109,7 +2140,7 @@ component HearingPage inherits Rectangle {
             padding: 28px;
             spacing: 16px;
             alignment: start;
-            Text { text: Tr.hearing-title; color: Palette.text; font-size: 26px; font-weight: 700; }
+            Text { text: Tr.hearing-title; color: Palette.text; font-size: Dots.material ? 28px : 26px; font-weight: Dots.material ? 400 : 700; }
             if !Buds.on: Text { text: Tr.not-connected; color: Palette.text2; font-size: 13px; }
             Card {
                 border-radius: 24px;
@@ -2252,7 +2283,7 @@ component DualPage inherits Rectangle {
             padding: 28px;
             spacing: 16px;
             alignment: start;
-            Text { text: Tr.dual-title; color: Palette.text; font-size: 26px; font-weight: 700; }
+            Text { text: Tr.dual-title; color: Palette.text; font-size: Dots.material ? 28px : 26px; font-weight: Dots.material ? 400 : 700; }
             if !Buds.on: Text { text: Tr.not-connected; color: Palette.text2; font-size: 13px; }
             Card {
                 border-radius: 24px;
@@ -2390,7 +2421,7 @@ component ReportPage inherits Rectangle {
             HorizontalLayout {
                 spacing: 12px;
                 Chip { text: "‹"; width: 40px; clicked => { root.back(); } }
-                Text { text: Tr.problem-title; color: Palette.text; font-size: 26px; font-weight: 700; vertical-alignment: center; horizontal-stretch: 1; }
+                Text { text: Tr.problem-title; color: Palette.text; font-size: Dots.material ? 28px : 26px; font-weight: Dots.material ? 400 : 700; vertical-alignment: center; horizontal-stretch: 1; }
             }
             Text { text: Tr.problem-intro; color: Palette.text2; font-size: 13px; wrap: word-wrap; }
             SectionTitle { text: Tr.problem-model; font-size: 13px; font-weight: 400; }
@@ -2486,7 +2517,7 @@ component TestPage inherits Rectangle {
             HorizontalLayout {
                 spacing: 12px;
                 Chip { text: "‹"; width: 40px; clicked => { root.back(); } }
-                Text { text: Tr.test-title; color: Palette.text; font-size: 26px; font-weight: 700; vertical-alignment: center; horizontal-stretch: 1; }
+                Text { text: Tr.test-title; color: Palette.text; font-size: Dots.material ? 28px : 26px; font-weight: Dots.material ? 400 : 700; vertical-alignment: center; horizontal-stretch: 1; }
             }
             Text { text: Tr.test-intro; color: Palette.text2; font-size: 13px; wrap: word-wrap; }
             HorizontalLayout {
@@ -2935,7 +2966,7 @@ component ThemePage inherits Rectangle {
             HorizontalLayout {
                 spacing: 12px;
                 Chip { text: "‹"; width: 40px; clicked => { root.back(); } }
-                Text { text: Tr.theme-title; color: Palette.text; font-size: 26px; font-weight: 700; vertical-alignment: center; horizontal-stretch: 1; }
+                Text { text: Tr.theme-title; color: Palette.text; font-size: Dots.material ? 28px : 26px; font-weight: Dots.material ? 400 : 700; vertical-alignment: center; horizontal-stretch: 1; }
             }
             SectionTitle { text: Tr.style-title; font-size: 13px; font-weight: 400; }
             Rectangle {
@@ -3118,7 +3149,7 @@ component PresetPage inherits Rectangle {
             HorizontalLayout {
                 spacing: 12px;
                 Chip { text: "‹"; width: 40px; clicked => { root.back(); } }
-                Text { text: Tr.preset-title; color: Palette.text; font-size: 26px; font-weight: 700; vertical-alignment: center; horizontal-stretch: 1; }
+                Text { text: Tr.preset-title; color: Palette.text; font-size: Dots.material ? 28px : 26px; font-weight: Dots.material ? 400 : 700; vertical-alignment: center; horizontal-stretch: 1; }
                 IconButton { icon: Buds.icon-copy; enabled: Theme.can-duplicate; clicked => { Theme.duplicate(); } }
                 IconButton { icon: Buds.icon-delete; clicked => { del.show(); } }
             }
@@ -3206,7 +3237,7 @@ component SettingsPage inherits Rectangle {
             padding: 28px;
             spacing: 16px;
             alignment: start;
-            Text { text: Tr.app-settings-title; color: Palette.text; font-size: 26px; font-weight: 700; }
+            Text { text: Tr.app-settings-title; color: Palette.text; font-size: Dots.material ? 28px : 26px; font-weight: Dots.material ? 400 : 700; }
             Card {
                 live: true;
                 border-radius: 24px;
@@ -3455,7 +3486,7 @@ export component MainWindow inherits Window {
                 padding-right: self.padding-left;
                 spacing: 16px;
                 alignment: start;
-                Text { text: root.nav[0].name; color: Palette.text; font-size: 26px; font-weight: 700; }
+                Text { text: root.nav[0].name; color: Palette.text; font-size: Dots.material ? 28px : 26px; font-weight: Dots.material ? 400 : 700; }
                 if Update.available != "": Card {
                     live: true;
                     border-radius: 24px;
@@ -3476,9 +3507,9 @@ export component MainWindow inherits Window {
                     }
                 }
                 if Buds.has-off || Buds.levels.length > 0 || Buds.has-adaptive || Buds.has-transparency: Card {
-                    height: 72px;
-                    border-radius: self.height / 2;
-                    AncSegments { x: 4px; y: 4px; width: parent.width - 8px; height: parent.height - 8px; }
+                    height: Dots.material ? 108px : 72px;
+                    border-radius: Dots.material ? 16px : self.height / 2;
+                    AncSegments { x: 4px; y: Dots.material ? 14px : 4px; width: parent.width - 8px; height: parent.height - (Dots.material ? 28px : 8px); }
                 }
                 if Earbuds.home.length > 0 || Buds.has-eq: Card {
                     border-radius: 24px;
@@ -3606,13 +3637,13 @@ export component QuickPanel inherits Window {
     title: "QuickBuds";
     width: 300px;
     height: 250px;
-    background: Dots.material ? Palette.card : Palette.outline;
+    background: Dots.material ? Palette.container : Palette.outline;
     default-font-family: Dots.font;
 
     Rectangle {
         x: 1px; y: 1px;
         width: parent.width - 2px; height: parent.height - 2px;
-        background: Dots.material ? Palette.card : Palette.bg;
+        background: Dots.material ? Palette.container : Palette.bg;
         VerticalLayout {
             padding: 12px;
             spacing: 8px;
