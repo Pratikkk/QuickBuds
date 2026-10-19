@@ -9,10 +9,9 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
 - **Dual licence.** Add the commercial-on-request licence. `models.json` has our own keys and PROTOCOL.md has no
   `[OSS]` facts. The model values still come from the vendor apps; a licence review must decide if that is enough.
   The desktop app needs Slint's commercial licence first.
-- **Material style on the desktop**, as on the phone: M3 shapes, sliders, switches and segmented
-  lists, with Material as the default style. The desktop has QuickBuds and Pixel art now.
-  The desktop style is one on/off value (`Dots.on` in `ui/app.slint`). Change it to a style choice first.
-  Colours come from the system accent. The first pass covers the main window only.
+- **Material style on the desktop, next passes.** The main window has the style choice (QuickBuds, Pixel art,
+  Material), Material for new installs, the system accent, and M3 cards. Still open: M3 switches, sliders and
+  segmented lists, the tray panel, the dialogs. Tested on Xvfb only: check Windows and a real Linux accent.
 - **Fixes from the 4.12.0 reports** (the rest wait for a retest or for realme Link data):
   - Crash on startup (RMX3890, Android 15): `KeepAliveReceiver` starts `BudsService` from the background and
     ColorOS refuses `startForeground`. The service stops itself now. Test on a device.

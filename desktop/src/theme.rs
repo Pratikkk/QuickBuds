@@ -79,7 +79,9 @@ fn built_in(id: &str, tr: &[String]) -> Pal {
     let style = match id { OLED => "Theme.App.OLED", DARK => "Theme.App.Dark", _ => "Theme.App.Light" };
     let at = THEMES.find(&format!("<style name=\"{style}\"")).expect(style);
     let c = |n| xml_color(THEMES, at, n);
-    let accent = load_settings()["palette_accent"][id].as_str().and_then(parse_hex);
+    // Material: the system accent, unless the user set one for this preset.
+    let sys = if crate::MATERIAL.get() { crate::SYS_ACCENT.get() } else { None };
+    let accent = load_settings()["palette_accent"][id].as_str().and_then(parse_hex).or(sys);
     Pal {
         id: id.into(), name: t(tr, name_key(id)).into(), bg: c("appColorBg"), card: c("appColorCard"),
         accent: accent.unwrap_or(c("appColorAccent")), text: c("appColorTextPrimary"),
@@ -292,7 +294,7 @@ fn show(a: &App, p: &Pal) {
 }
 
 /// [apply], then every drawing that bakes a colour in (dot images, the EQ curve, the hearing chart).
-fn refresh(a: &mut App) {
+pub fn refresh(a: &mut App) {
     apply(a);
     a.set_style(crate::STYLE.get().0, crate::STYLE.get().1);
 }

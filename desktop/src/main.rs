@@ -74,6 +74,12 @@ thread_local! { static APP: RefCell<Option<App>> = const { RefCell::new(None) };
 fn with_app(f: impl FnOnce(&mut App)) { APP.with(|a| a.borrow_mut().as_mut().map(f)); }
 
 thread_local! {
+    /// The Material style is on, and the system accent colour (None until the window reports it).
+    static MATERIAL: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    static SYS_ACCENT: std::cell::Cell<Option<slint::Color>> = const { std::cell::Cell::new(None) };
+}
+
+thread_local! {
     /// The Dot matrix style is on, and the main window's scale factor: icons are drawn for both.
     static STYLE: std::cell::Cell<(bool, f32)> = const { std::cell::Cell::new((false, 1.0)) };
 }
@@ -146,10 +152,24 @@ fn setup_dots(d: &Dots) {
     d.on_knob_px(move |ring, fill| dots::knob(ring, fill, pitch()));
     d.on_disc_px(move |n, c, edge| dots::disc(n.max(1) as u32, c, edge, pitch()));
     d.on_slider_px(move |w, ch, h, s, v| dots::slider(w, ch, h, s, v, pitch()));
-    d.on_set_on(|on| {
-        save_setting("dot_matrix", on.into());
-        with_app(|a| a.set_style(on, STYLE.get().1));
+    d.on_set_style(|i| {
+        save_setting("style", ["quickbuds", "pixel", "material"][i.clamp(0, 2) as usize].into());
+        with_app(|a| { MATERIAL.set(i == 2); a.set_style(i == 1, STYLE.get().1); theme::refresh(a); });
     });
+}
+
+/// The saved style. A start with no saved style is Pixel art if it had Dot matrix on, QuickBuds for an install
+/// that has other settings, Material for a new install.
+fn start_style() -> String {
+    let all = load_settings();
+    let style = match all["style"].as_str() {
+        Some(s) => s,
+        None if all["dot_matrix"].as_bool() == Some(true) => "pixel",
+        None if all.as_object().is_some_and(|o| !o.is_empty()) => "quickbuds",
+        None => "material",
+    };
+    save_setting("style", style.into());
+    style.into()
 }
 
 /// What the last connected buds have, as the phone gates its rows: game mode, equalizer, controls,
@@ -375,6 +395,7 @@ fn set_texts(tr: &Tr, s: &[String]) {
     tr.set_clear_battery_sub(t(s, "settings_clear_battery_sub").into());
     tr.set_style_classic(t(s, "widget_style_classic").into());
     tr.set_style_dots(t(s, "widget_style_nothing").into());
+    tr.set_style_material(t(s, "widget_style_material").into());
     tr.set_earbuds_title(t(s, "earbuds_title").into());
     tr.set_problem_title(t(s, "problem_title").into());
     tr.set_problem_sub(t(s, "problem_sub").into());
@@ -541,6 +562,7 @@ impl App {
             d.set_scale(scale);
             d.set_pitch(dots::pitch_px(scale, dots::PITCH));
             d.set_on(on);
+            d.set_material(MATERIAL.get());
             set_icons(&b);
         }
         self.main.set_nav(nav(self.has, &self.tr));
@@ -819,9 +841,11 @@ fn main() {
     }));
     main.show().expect("show");
     with_app(|a| theme::apply(a));
-    let dot_matrix = load_settings()["dot_matrix"].as_bool().unwrap_or(false);
     let scale = main.window().scale_factor();
-    with_app(|a| a.set_style(dot_matrix, scale));
+    SYS_ACCENT.set(Some(main.global::<Dots>().get_system_accent()));
+    let style = start_style();
+    MATERIAL.set(style == "material");
+    with_app(|a| { theme::apply(a); a.set_style(style == "pixel", scale); });
     update::setup(&main);
     with_app(report::show_crash);
     // Closing the window hides it; the app lives in the tray until Quit.
