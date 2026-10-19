@@ -159,7 +159,7 @@ meaning, not the bytes. All are gated by the handshake bitmap (§4) except `0x04
 | `0x0414` | `<v>` | Unknown |
 | `0x0419` | `<v>` | Unknown. Bitmap bit 35 |
 | `0x041D` | `<v>` | Unknown |
-| `0x0420` | `<type> <state>` | Game equalizer: the phone reports a game app entering or leaving the foreground `[VENDOR]` |
+| `0x0420` | `<type> <state>` | Game equalizer: `01 01` when a game app comes to the foreground, `01 00` when it leaves. Applies only while feature switch `21` (`0x0403 21 <01/00>`) is on `[VENDOR]`. No read command; bitmap bit 44 gates it |
 | `0x0421` | `<state> <step>` | Spine-health range, part of a posture-tracking feature with local history charts `[VENDOR]` |
 | `0x0424` | `<type> <value>` | LE Audio action |
 | `0x0426` | `<v>` | Unknown |
@@ -268,7 +268,7 @@ one `0x012F`. A later status read goes alone.
 | `F5` | Head gesture type `[VENDOR]` | — |
 | `0A` | One state byte `[VENDOR]`; meaning unknown | — |
 | `0D` | Multi-device link info `[GUESS]`; layout unread | — |
-| `0F` | Public event `[VENDOR]`: `<flags u16 LE> <data>`. Flag bit 0: state byte at `payload[3]`; bit 2: handheld-device info; bit 4: tap level setting | — |
+| `0F` | Public event `[VENDOR]`: `<flags u16 LE> <data>`. Flag bit 0: alert-sound volume byte at `payload[3]` `[VENDOR]`; bit 2: handheld-device info; bit 4: tap level setting | — |
 | `10` | One-shot state `[VENDOR]`; layout unread | — |
 | `11` | List of records `[VENDOR]`; layout unread | — |
 | `F6` | Head-motion try result: one byte `[VENDOR]` | — |
