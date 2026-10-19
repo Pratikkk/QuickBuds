@@ -20,14 +20,14 @@ concurrency:
 jobs:
   android:
     if: ${{ !inputs.appimage_only }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
       - name: Release key
         env:
           KEYSTORE: ${{ secrets.RELEASE_KEYSTORE_B64 }}
@@ -46,14 +46,14 @@ jobs:
           mkdir out
           cp app/build/outputs/apk/release/app-release.apk "out/QuickBuds$ver.apk"
           cp app/build/outputs/bundle/release/app-release.aab "out/QuickBuds$ver.aab"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: android
           path: out/*
           retention-days: 14
 
   desktop:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Ubuntu 22.04 (glibc 2.35), so the Linux binary runs on older distros too.
     container: ubuntu:22.04
     env:
@@ -64,7 +64,7 @@ jobs:
           apt-get update -qq
           apt-get install -y -qq curl git zip python3 build-essential pkg-config gcc-mingw-w64-x86-64 \
             libdbus-1-dev libgtk-3-dev libayatana-appindicator3-dev libfontconfig1-dev libxkbcommon-dev libxkbcommon-x11-0 dpkg-dev file
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Rust
         run: |
           curl -sSf https://sh.rustup.rs | sh -s -- -y -q --profile minimal --target x86_64-pc-windows-gnu
@@ -81,7 +81,7 @@ jobs:
         run: |
           ver=$(sed -n 's/^version = "\(.*\)"/\1/p' desktop/Cargo.toml | head -1)
           QB_NATIVE=1 scripts/desktop-dist.sh "$ver"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: desktop
           path: desktop/dist/*
