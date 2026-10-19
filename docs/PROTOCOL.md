@@ -154,13 +154,13 @@ meaning, not the bytes. All are gated by the handshake bitmap (§4) except `0x04
 
 | Cmd | Payload | Meaning |
 |---|---|---|
-| `0x0408` | `<hostType> <host MAC 6> <count> {<type> <MAC 6> <state>}`, count at most 6 | Related-device list for multi-device switching `[GUESS]` |
+| `0x0408` | `<hostType> <host MAC 6> <count> {<type> <MAC 6> <state>}`, count at most 6 | Related-device list. HeyMelody has the sender but nothing calls it `[VENDOR]` |
 | `0x040F` | `<state>` | Camera state `[VENDOR]` |
 | `0x0414` | `<v>` | Unknown |
 | `0x0419` | `<v>` | Unknown. Bitmap bit 35 |
 | `0x041D` | `<v>` | Unknown |
-| `0x0420` | `<type> <state>` | Per-game state `[GUESS]` |
-| `0x0421` | `<state> <step>` | Neck or posture range `[GUESS]` |
+| `0x0420` | `<type> <state>` | Game equalizer: the phone reports a game app entering or leaving the foreground `[VENDOR]` |
+| `0x0421` | `<state> <step>` | Spine-health range, part of a posture-tracking feature with local history charts `[VENDOR]` |
 | `0x0424` | `<type> <value>` | LE Audio action |
 | `0x0426` | `<v>` | Unknown |
 | `0x042B` | `<type> <value>` | Unknown, no bitmap gate |
