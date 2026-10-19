@@ -76,6 +76,10 @@
     <string name="row_vocal_sub">গানে আরও স্পষ্ট কণ্ঠ</string>
     <string name="row_wind_noise_title">বাতাসের শব্দ কমানো</string>
     <string name="row_wind_noise_sub">বাইরে বাতাসের শব্দ কম</string>
+    <string name="row_game_eq_title">গেম ইকুয়ালাইজার</string>
+    <string name="row_game_eq_sub">গেম চলার সময় ইয়ারবাডকে গেম সাউন্ডে নেয়</string>
+    <string name="game_eq_access_title">ব্যবহারের অ্যাক্সেস দরকার</string>
+    <string name="game_eq_access_sub">কোন অ্যাপ খোলা আছে তা দেখতে QuickBuds-কে অনুমতি দিতে ট্যাপ করুন</string>
     <string name="row_game_sound_title">গেম সাউন্ড ইফেক্ট</string>
     <string name="row_game_sound_sub">গেম শুরু হলে উন্নত সাউন্ড</string>
     <string name="spatial_fixed">স্থির</string>

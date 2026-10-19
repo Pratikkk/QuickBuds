@@ -100,6 +100,10 @@
     <string name="row_vocal_sub">Clearer vocals in songs</string>
     <string name="row_wind_noise_title">Wind noise reduction</string>
     <string name="row_wind_noise_sub">Less wind noise outdoors</string>
+    <string name="row_game_eq_title">Game equalizer</string>
+    <string name="row_game_eq_sub">Switches the buds to their game sound while a game is open</string>
+    <string name="game_eq_access_title">Usage access needed</string>
+    <string name="game_eq_access_sub">Tap to allow QuickBuds to see which app is open</string>
     <string name="row_game_sound_title">Game sound effects</string>
     <string name="row_game_sound_sub">Enhanced sound when a game starts</string>
     <string name="spatial_fixed">Fixed</string>

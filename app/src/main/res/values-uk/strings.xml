@@ -76,6 +76,10 @@
     <string name="row_vocal_sub">Чіткіший вокал у піснях</string>
     <string name="row_wind_noise_title">Придушення шуму вітру</string>
     <string name="row_wind_noise_sub">Менше шуму вітру надворі</string>
+    <string name="row_game_eq_title">Еквалайзер для ігор</string>
+    <string name="row_game_eq_sub">Перемикає навушники на ігровий звук, поки відкрито гру</string>
+    <string name="game_eq_access_title">Потрібен доступ до даних про використання</string>
+    <string name="game_eq_access_sub">Торкніться, щоб дозволити QuickBuds бачити, який застосунок відкрито</string>
     <string name="row_game_sound_title">Ігрові звукові ефекти</string>
     <string name="row_game_sound_sub">Кращий звук під час запуску гри</string>
     <string name="spatial_fixed">Фіксований</string>

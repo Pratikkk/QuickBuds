@@ -76,6 +76,10 @@
     <string name="row_vocal_sub">Mas malinaw na boses sa mga kanta</string>
     <string name="row_wind_noise_title">Pagbawas ng ingay ng hangin</string>
     <string name="row_wind_noise_sub">Mas kaunting ingay ng hangin sa labas</string>
+    <string name="row_game_eq_title">Game equalizer</string>
+    <string name="row_game_eq_sub">Inilalagay ang earbuds sa game sound habang bukas ang isang laro</string>
+    <string name="game_eq_access_title">Kailangan ang usage access</string>
+    <string name="game_eq_access_sub">I-tap para payagan ang QuickBuds na makita kung aling app ang bukas</string>
     <string name="row_game_sound_title">Sound effects sa laro</string>
     <string name="row_game_sound_sub">Mas magandang tunog pagsimula ng laro</string>
     <string name="spatial_fixed">Nakapirmi</string>

@@ -76,6 +76,10 @@
     <string name="row_vocal_sub">노래의 보컬을 더 선명하게</string>
     <string name="row_wind_noise_title">바람 소음 감소</string>
     <string name="row_wind_noise_sub">야외에서 바람 소음 줄이기</string>
+    <string name="row_game_eq_title">게임 이퀄라이저</string>
+    <string name="row_game_eq_sub">게임이 열려 있는 동안 이어버드를 게임 사운드로 전환합니다</string>
+    <string name="game_eq_access_title">사용 정보 접근 권한 필요</string>
+    <string name="game_eq_access_sub">탭하여 QuickBuds가 실행 중인 앱을 확인하도록 허용</string>
     <string name="row_game_sound_title">게임 사운드 효과</string>
     <string name="row_game_sound_sub">게임 시작 시 사운드 강화</string>
     <string name="spatial_fixed">고정</string>

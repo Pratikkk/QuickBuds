@@ -76,6 +76,10 @@
     <string name="row_vocal_sub">Voces más claras en las canciones</string>
     <string name="row_wind_noise_title">Reducción de ruido del viento</string>
     <string name="row_wind_noise_sub">Menos ruido del viento al aire libre</string>
+    <string name="row_game_eq_title">Ecualizador de juegos</string>
+    <string name="row_game_eq_sub">Cambia los auriculares a su sonido de juego mientras hay un juego abierto</string>
+    <string name="game_eq_access_title">Se necesita acceso de uso</string>
+    <string name="game_eq_access_sub">Toca para permitir que QuickBuds vea qué app está abierta</string>
     <string name="row_game_sound_title">Efectos de sonido de juegos</string>
     <string name="row_game_sound_sub">Mejor sonido al iniciar un juego</string>
     <string name="spatial_fixed">Fijo</string>

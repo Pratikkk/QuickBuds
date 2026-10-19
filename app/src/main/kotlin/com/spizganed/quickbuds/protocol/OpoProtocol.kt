@@ -150,6 +150,12 @@ object OpoProtocol {
     const val FEATURE_SWIFT_PAIR = 0x37
     const val FEATURE_HEARING_OPTIMIZE = 0x38
     const val FEATURE_HEAD_MOTION = 0x3B
+    /**
+     * Game equalizer (PROTOCOL.md §9), `[VENDOR]`: switch [FEATURE_GAME_EQ] turns it on, and `0x0420 01 <1|0>` tells the buds
+     * a game app came to the foreground or left. No read command for the second one.
+     */
+    const val FEATURE_GAME_EQ = 0x21
+    const val CMD_GAME_EQ_STATE = 0x0420
     /** Head gestures' mapping: `0x0431 <type>`, `0` nod answers / shake declines, `1` the reverse. `[VENDOR]` */
     const val CMD_SET_HEAD_MOTION_TYPE = 0x0431
     /** Read with `0x0134` (empty) → `00 <type>`; a change also comes as the `0x0204` push [EVT_HEAD_MOTION_TYPE]. `[VENDOR]` */
@@ -363,6 +369,7 @@ object OpoProtocol {
 
     fun personalNoise(action: Int): ByteArray = buildPacket(CMD_PERSONAL_NOISE, payload = byteArrayOf(action.toByte()))
     fun queryPersonalNoise(): ByteArray = buildPacket(CMD_QUERY_PERSONAL_NOISE)
+    fun gameEqState(inGame: Boolean): ByteArray = buildPacket(CMD_GAME_EQ_STATE, payload = byteArrayOf(1, if (inGame) 1 else 0))
     fun setTapLevel(level: Int): ByteArray = buildPacket(CMD_SET_TAP_LEVEL, payload = byteArrayOf(level.toByte()))
     fun queryTapLevel(): ByteArray = buildPacket(CMD_QUERY_TAP_LEVEL)
 

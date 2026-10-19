@@ -76,6 +76,10 @@
     <string name="row_vocal_sub">歌曲人声更清晰</string>
     <string name="row_wind_noise_title">风噪抑制</string>
     <string name="row_wind_noise_sub">减少户外风噪</string>
+    <string name="row_game_eq_title">游戏均衡器</string>
+    <string name="row_game_eq_sub">打开游戏时，耳机切换为游戏音效</string>
+    <string name="game_eq_access_title">需要使用情况访问权限</string>
+    <string name="game_eq_access_sub">点按以允许 QuickBuds 查看当前打开的应用</string>
     <string name="row_game_sound_title">游戏音效</string>
     <string name="row_game_sound_sub">进入游戏时增强音效</string>
     <string name="spatial_fixed">固定</string>

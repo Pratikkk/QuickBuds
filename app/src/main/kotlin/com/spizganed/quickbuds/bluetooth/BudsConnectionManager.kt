@@ -739,6 +739,9 @@ class BudsConnectionManager(private val context: Context) {
     /** The default from the last `0x8133` reply; the push carries the level only. */
     private var tapLevelDefault = 0
 
+    /** `0x0420 01 <1|0>`: a game app is in the foreground (PROTOCOL.md §9). */
+    fun setGameEqState(inGame: Boolean) = sendRaw(OpoProtocol.gameEqState(inGame), "Game equalizer in game=$inGame")
+
     fun refreshTapLevel() = sendRaw(OpoProtocol.queryTapLevel(), "query tap level")
 
     /** Write, then read back. */

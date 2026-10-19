@@ -76,6 +76,10 @@
     <string name="row_vocal_sub">Tydligare sång i låtar</string>
     <string name="row_wind_noise_title">Vindbrusreducering</string>
     <string name="row_wind_noise_sub">Mindre vindbrus utomhus</string>
+    <string name="row_game_eq_title">Spelequalizer</string>
+    <string name="row_game_eq_sub">Växlar hörlurarna till spelljud medan ett spel är öppet</string>
+    <string name="game_eq_access_title">Åtkomst till användning krävs</string>
+    <string name="game_eq_access_sub">Tryck för att låta QuickBuds se vilken app som är öppen</string>
     <string name="row_game_sound_title">Ljudeffekter för spel</string>
     <string name="row_game_sound_sub">Bättre ljud när ett spel startar</string>
     <string name="spatial_fixed">Fast</string>

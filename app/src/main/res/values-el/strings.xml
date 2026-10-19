@@ -76,6 +76,10 @@
     <string name="row_vocal_sub">Πιο καθαρά φωνητικά στα τραγούδια</string>
     <string name="row_wind_noise_title">Μείωση θορύβου ανέμου</string>
     <string name="row_wind_noise_sub">Λιγότερος θόρυβος ανέμου σε εξωτερικούς χώρους</string>
+    <string name="row_game_eq_title">Ισοσταθμιστής παιχνιδιών</string>
+    <string name="row_game_eq_sub">Αλλάζει τα ακουστικά σε ήχο παιχνιδιού όσο είναι ανοιχτό ένα παιχνίδι</string>
+    <string name="game_eq_access_title">Απαιτείται πρόσβαση χρήσης</string>
+    <string name="game_eq_access_sub">Πατήστε για να επιτρέψετε στο QuickBuds να βλέπει ποια εφαρμογή είναι ανοιχτή</string>
     <string name="row_game_sound_title">Ηχητικά εφέ παιχνιδιών</string>
     <string name="row_game_sound_sub">Καλύτερος ήχος όταν ξεκινά ένα παιχνίδι</string>
     <string name="spatial_fixed">Σταθερό</string>

@@ -76,6 +76,10 @@
     <string name="row_vocal_sub">Vokal lebih jelas dalam lagu</string>
     <string name="row_wind_noise_title">Pengurangan bunyi angin</string>
     <string name="row_wind_noise_sub">Kurang bunyi angin di luar</string>
+    <string name="row_game_eq_title">Penyama game</string>
+    <string name="row_game_eq_sub">Menukar earbud kepada bunyi game semasa game dibuka</string>
+    <string name="game_eq_access_title">Akses penggunaan diperlukan</string>
+    <string name="game_eq_access_sub">Ketik untuk membenarkan QuickBuds melihat apl yang dibuka</string>
     <string name="row_game_sound_title">Kesan bunyi permainan</string>
     <string name="row_game_sound_sub">Bunyi lebih baik apabila permainan bermula</string>
     <string name="spatial_fixed">Tetap</string>

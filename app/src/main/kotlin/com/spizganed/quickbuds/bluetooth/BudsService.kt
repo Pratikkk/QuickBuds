@@ -30,6 +30,7 @@ class BudsService : Service(), BudsConnectionManager.Listener {
     private val binder = LocalBinder()
     var manager: BudsConnectionManager? = null
         private set
+    private val gameEq = GameEqWatcher(this) { manager }
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -131,6 +132,7 @@ class BudsService : Service(), BudsConnectionManager.Listener {
                     manager?.sendHoldAncModes(mask, intent.getIntExtra(EXTRA_HOLD_TYPE, OpoProtocol.HOLD_TYPE_SHARED))
                 }
             }
+            ACTION_GAME_EQ_UPDATE -> gameEq.update()
             ACTION_MODEL_PICKED -> manager?.modelPicked()
             ACTION_FIND_BUDS -> {
                 val on = intent.getBooleanExtra(EXTRA_FIND_ON, false)
@@ -246,6 +248,7 @@ class BudsService : Service(), BudsConnectionManager.Listener {
     override fun onDestroy() {
         statusLog("[SVC] onDestroy")
         handler.removeCallbacksAndMessages(null)
+        gameEq.stop()
         // Close the RFCOMM link with the service: with the background service switched off,
         // leaving the app stops the service, and a live socket must not outlive it.
         try { manager?.disconnect() } catch (e: Exception) { PacketLogger.error("service stop disconnect", e) }
@@ -279,6 +282,7 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         }
         WidgetStateStore.write(this, st)
         AncWidgetProvider.refreshAll(this)
+        gameEq.update()
     }
 
     override fun onBattery(
@@ -367,6 +371,7 @@ class BudsService : Service(), BudsConnectionManager.Listener {
     private var widgetFeatures: List<Int?>? = null
 
     override fun onFeatureStates(states: Map<Int, Int>) {
+        gameEq.update()
         val now = WidgetSettings.FEATURE_BUTTONS.values.map { states[it] }
         if (now == widgetFeatures) return
         widgetFeatures = now
@@ -413,6 +418,7 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         const val ACTION_FIND_BUDS = "com.spizganed.quickbuds.FIND_BUDS"
         /** The model list changed the model ([BudsConnectionManager.modelPicked]). */
         const val ACTION_MODEL_PICKED = "com.spizganed.quickbuds.MODEL_PICKED"
+        const val ACTION_GAME_EQ_UPDATE = "com.spizganed.quickbuds.GAME_EQ_UPDATE"
         const val PREF_SMART_PAUSE = "smart_auto_pause"
 
         /** Delay for a FORCE_CONNECT, in ms (the ACL fallback in KeepAliveReceiver). */

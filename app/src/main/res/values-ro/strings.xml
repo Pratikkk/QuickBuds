@@ -76,6 +76,10 @@
     <string name="row_vocal_sub">Voce mai clară în melodii</string>
     <string name="row_wind_noise_title">Reducerea zgomotului vântului</string>
     <string name="row_wind_noise_sub">Mai puțin zgomot de vânt afară</string>
+    <string name="row_game_eq_title">Egalizator pentru jocuri</string>
+    <string name="row_game_eq_sub">Trece căștile pe sunetul de joc cât timp un joc este deschis</string>
+    <string name="game_eq_access_title">Este necesar accesul la utilizare</string>
+    <string name="game_eq_access_sub">Atingeți pentru a permite QuickBuds să vadă ce aplicație este deschisă</string>
     <string name="row_game_sound_title">Efecte sonore pentru jocuri</string>
     <string name="row_game_sound_sub">Sunet îmbunătățit la pornirea unui joc</string>
     <string name="spatial_fixed">Fix</string>

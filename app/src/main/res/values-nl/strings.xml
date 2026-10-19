@@ -76,6 +76,10 @@
     <string name="row_vocal_sub">Duidelijkere zang in nummers</string>
     <string name="row_wind_noise_title">Windruisonderdrukking</string>
     <string name="row_wind_noise_sub">Minder windruis buiten</string>
+    <string name="row_game_eq_title">Game-equalizer</string>
+    <string name="row_game_eq_sub">Zet de oordopjes op hun gamegeluid zolang een game open is</string>
+    <string name="game_eq_access_title">Toegang tot gebruik nodig</string>
+    <string name="game_eq_access_sub">Tik om QuickBuds te laten zien welke app open is</string>
     <string name="row_game_sound_title">Game-geluidseffecten</string>
     <string name="row_game_sound_sub">Beter geluid als een game start</string>
     <string name="spatial_fixed">Vast</string>

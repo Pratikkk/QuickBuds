@@ -76,6 +76,10 @@
     <string name="row_vocal_sub">Şarkılarda daha net vokal</string>
     <string name="row_wind_noise_title">Rüzgar gürültüsü azaltma</string>
     <string name="row_wind_noise_sub">Dışarıda daha az rüzgar gürültüsü</string>
+    <string name="row_game_eq_title">Oyun ekolayzırı</string>
+    <string name="row_game_eq_sub">Oyun açıkken kulaklığı oyun sesine geçirir</string>
+    <string name="game_eq_access_title">Kullanım erişimi gerekli</string>
+    <string name="game_eq_access_sub">QuickBuds\'ın hangi uygulamanın açık olduğunu görmesine izin vermek için dokunun</string>
     <string name="row_game_sound_title">Oyun ses efektleri</string>
     <string name="row_game_sound_sub">Oyun başlayınca gelişmiş ses</string>
     <string name="spatial_fixed">Sabit</string>

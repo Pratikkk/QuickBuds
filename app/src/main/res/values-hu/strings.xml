@@ -76,6 +76,10 @@
     <string name="row_vocal_sub">Tisztább ének a dalokban</string>
     <string name="row_wind_noise_title">Szélzajcsökkentés</string>
     <string name="row_wind_noise_sub">Kevesebb szélzaj a szabadban</string>
+    <string name="row_game_eq_title">Játék-hangszínszabályzó</string>
+    <string name="row_game_eq_sub">Játék közben a fülhallgatót játékhangzásra kapcsolja</string>
+    <string name="game_eq_access_title">Használati hozzáférés szükséges</string>
+    <string name="game_eq_access_sub">Koppintson, hogy a QuickBuds láthassa, melyik alkalmazás van nyitva</string>
     <string name="row_game_sound_title">Játék hangeffektek</string>
     <string name="row_game_sound_sub">Jobb hang játék indításakor</string>
     <string name="spatial_fixed">Rögzített</string>

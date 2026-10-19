@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.provider.Settings
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
@@ -16,6 +17,7 @@ import android.widget.TextView
 import com.spizganed.quickbuds.R
 import com.spizganed.quickbuds.bluetooth.BudsConnectionManager
 import com.spizganed.quickbuds.bluetooth.BudsService
+import com.spizganed.quickbuds.bluetooth.GameEqWatcher
 import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
@@ -190,6 +192,18 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
             paintGameSound()
             card.addView(row)
         }
+        // Game equalizer: the switch, and the Usage access it needs to see which app is open (PROTOCOL.md §9).
+        if (Capabilities.supports(this, OpoProtocol.CMD_GAME_EQ_STATE)) {
+            switch(OpoProtocol.FEATURE_GAME_EQ, null, R.drawable.ic_low_latency,
+                R.string.row_game_eq_title, R.string.row_game_eq_sub)
+            if (featureSwitches.containsKey(OpoProtocol.FEATURE_GAME_EQ) && !GameEqWatcher.hasUsageAccess(this)) {
+                card.addView(SettingRowFactory.buildDivider(this))
+                card.addView(SettingRowFactory.build(this, R.drawable.ic_info, R.string.game_eq_access_title,
+                    R.string.game_eq_access_sub, SettingRowFactory.buildChevron(this)) {
+                    startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                })
+            }
+        }
         switch(OpoProtocol.FEATURE_SMART_VOLUME, "autoVolume", R.drawable.ic_volume,
             R.string.row_smart_volume_title, R.string.row_smart_volume_sub)
         switch(OpoProtocol.FEATURE_ADAPTIVE_VOLUME, null, R.drawable.ic_volume,
@@ -363,6 +377,8 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
 
     override fun onStart() {
         super.onStart()
+        // Back from the Usage access setting: let the service look again.
+        startService(Intent(this, BudsService::class.java).setAction(BudsService.ACTION_GAME_EQ_UPDATE))
         bound = bindService(Intent(this, BudsService::class.java), connection, Context.BIND_AUTO_CREATE)
     }
 
