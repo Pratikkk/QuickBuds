@@ -7,7 +7,7 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
 ## Planned
 
 - **Material style on the desktop, next passes.** The main window has the style choice (QuickBuds, Pixel art,
-  Material), Material for new installs, the system accent, and M3 cards. Tested on Xvfb only: check the tray panel (Windows), Windows and a real Linux accent.
+  Material), Material for everyone without a saved style, the system accent, and M3 cards. Tested on Xvfb only: check the tray panel (Windows), Windows and a real Linux accent.
 - **Fixes from the 4.12.0 reports** (the rest wait for a retest or for realme Link data):
   - Crash on startup (RMX3890, Android 15): `KeepAliveReceiver` starts `BudsService` from the background and
     ColorOS refuses `startForeground`. The service stops itself now. Test on a device.

@@ -158,14 +158,12 @@ fn setup_dots(d: &Dots) {
     });
 }
 
-/// The saved style. A start with no saved style is Pixel art if it had Dot matrix on, QuickBuds for an install
-/// that has other settings, Material for a new install.
+/// The saved style. A start with no saved style is Pixel art if it had Dot matrix on, else Material.
 fn start_style() -> String {
     let all = load_settings();
     let style = match all["style"].as_str() {
         Some(s) => s,
         None if all["dot_matrix"].as_bool() == Some(true) => "pixel",
-        None if all.as_object().is_some_and(|o| !o.is_empty()) => "quickbuds",
         None => "material",
     };
     save_setting("style", style.into());
