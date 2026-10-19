@@ -502,7 +502,12 @@ HeyMelody calls "safe remind". Both apps clear bit 3, so only the codes below re
   capture). Enco Buds2: `05 06` `[TESTED]`.
 - **A longer list drops some links.** Was: one fixed 23-id list, which dropped the Enco Buds2 (issue
   #5). Is: the per-model list. `02 05 0D` kept that link up `[CAPTURE]`.
-- A model without `statusQuery` (realme, hand-added) gets the 23 ids, plus `1A` where it has `windNoise`.
+- A model without `statusQuery` (hand-added) gets the 23 ids, plus `1A` where it has `windNoise`.
+- **realme models** `[VENDOR]` (realme Link 5.8.811): its per-model screen lists name the rows a model shows.
+  Our `statusQuery` for 28 realme models asks only for the ids of those rows: `04` smart play/pause, `06` game
+  mode, `0B` hearing profile, `11` dual connection, `18` Hi-Res, `1B` 3D sound. Only the Air8 Pro and Air7 Pro,
+  Air 5 Pro and Air6 Pro list a hearing profile; the T500 Pro does not (report #21), and its buds do not answer
+  the tones. The Air7 Pro keeps its list: its owner confirmed it.
 - A row whose id the model is not asked for does not show (HeyMelody parity: no Power saving or
   Personalised ANC on Buds 4).
 - Parsed into `featureStates`, logged as `FEATURES:`. The buds' list wins over the model list while connected.
