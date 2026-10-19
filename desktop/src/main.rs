@@ -167,6 +167,11 @@ fn start_style() -> String {
         None => "material",
     };
     save_setting("style", style.into());
+    // The phone's defaults: Match system (OLED Black in dark mode, White in light) and the system accent.
+    let all = load_settings();
+    if !["palette_active", "palette_auto", "palette_accent"].iter().any(|k| all.get(k).is_some()) {
+        save_setting("palette_auto", true.into());
+    }
     style.into()
 }
 

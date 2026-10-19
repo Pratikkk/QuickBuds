@@ -21,7 +21,8 @@ export global Palette {
     // Background of an expanded row.
     out property <color> expanded: card.mix(text, 0.95);
     // Material: the phone's tonal card (card tinted by the accent) and a picked element's fill (`Palette.container`, `tonal`).
-    out property <color> container: card.mix(accent, light ? 0.95 : 0.92);
+    // A black card (OLED Black) is lifted toward the text first, or the cards vanish into the page.
+    out property <color> container: (!light && card.to-hsv().value < 0.02 ? card.mix(text, 0.91) : card).mix(accent, light ? 0.95 : 0.92);
     out property <color> tonal: container.mix(accent, light ? 0.82 : 0.72);
     // An outline that stands out a little more: lighter on a dark theme, darker on a light one.
     out property <color> outline-strong: light ? outline.darker(0.15) : outline.brighter(0.3);
@@ -2978,10 +2979,10 @@ component ThemePage inherits Rectangle {
                 if Dots.on: DotBox { width: 100%; height: 100%; radius: 20px; }
                 SegmentTrack {
                     width: 100%; height: 100%;
-                    pad: 4px; count: 3; index: Dots.material ? 2 : Dots.on ? 1 : 0;
+                    pad: 4px; count: 3; index: Dots.material ? 0 : Dots.on ? 2 : 1;
+                    Segment { compact: false; enabled: true; label: Tr.style-material; selected: Dots.material; clicked => { Dots.set-style(2); } }
                     Segment { compact: false; enabled: true; label: Tr.style-classic; selected: !Dots.on && !Dots.material; clicked => { Dots.set-style(0); } }
                     Segment { compact: false; enabled: true; label: Tr.style-dots; selected: Dots.on; clicked => { Dots.set-style(1); } }
-                    Segment { compact: false; enabled: true; label: Tr.style-material; selected: Dots.material; clicked => { Dots.set-style(2); } }
                 }
             }
             SectionTitle { text: Tr.theme-builtin; font-size: 13px; font-weight: 400; }
