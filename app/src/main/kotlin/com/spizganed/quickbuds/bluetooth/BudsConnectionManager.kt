@@ -23,7 +23,11 @@ import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.GoldenSound
 import com.spizganed.quickbuds.protocol.OppoPacketFramer
+import com.spizganed.quickbuds.protocol2.Anc
+import com.spizganed.quickbuds.protocol2.Cmd
 import com.spizganed.quickbuds.protocol2.Decode
+import com.spizganed.quickbuds.protocol2.Msg
+import com.spizganed.quickbuds.protocol2.Public
 import com.spizganed.quickbuds.protocol2.ProtocolNext
 import com.spizganed.quickbuds.protocol2.Wire
 import com.spizganed.quickbuds.protocol.UserInteractionParser
@@ -218,6 +222,11 @@ class BudsConnectionManager(private val context: Context) {
         }
     }
 
+    /** The "new protocol" is on for this connection: set at connect, from [ProtocolNext.enabled]. */
+    @Volatile private var typed = false
+    @Volatile private var gotHandshakeReply = false
+    @Volatile private var typedFailedOnce = false
+
     fun connect(device: BluetoothDevice, withAudio: Boolean = false) {
         if (isConnecting || isConnected()) {
             log("Already connecting/connected, ignoring.")
@@ -225,6 +234,11 @@ class BudsConnectionManager(private val context: Context) {
         }
         isConnecting = true
         lastDevice = device
+        ProtocolNext.device = device.address
+        typed = ProtocolNext.enabled(context)
+        gotHandshakeReply = false
+        typedFailedOnce = false
+        log("Protocol: ${if (typed) "new" else "legacy"}${if (ProtocolNext.fellBack(context)) " (fell back for this device)" else ""}")
         // Only a connect the user asked for (the pill) brings phone audio up. An automatic one —
         // ACL receiver, retries, reconnect after loss — leaves audio to Android: asking for A2DP
         // while the system is auto-connecting raced it and left audio stuck.
@@ -310,6 +324,10 @@ class BudsConnectionManager(private val context: Context) {
         Thread {
             try {
                 delay(300); sendRawBlocking(OpoProtocol.buildHandshake(), "handshake")
+                // The new protocol is the default: buds that stay silent get one reconnect on the legacy path.
+                if (typed) handler.postDelayed({
+                    if (typed && isConnected() && !gotHandshakeReply) typedFailed("no reply to 0x0100 within 6 s")
+                }, HANDSHAKE_WAIT_MS)
                 delay(200); sendRawBlocking(OpoProtocol.buildQueryProductId(), "query product id")
                 delay(200); sendRawBlocking(OpoProtocol.buildQueryBroadcastCodes(), "query broadcast codes")
                 // The handshake reply (0x8100) has landed by now; the reads below go out only if
@@ -1074,7 +1092,7 @@ class BudsConnectionManager(private val context: Context) {
             f.onDiscard = { log("DISCARDED RX bytes (not a frame): ${OpoProtocol.bytesToHex(it)}") }
         }
         /** The "new protocol" setting (docs/PROTOCOL-NEXT.md): the rebuilt link layer, read once per connection. */
-        private val next = ProtocolNext.enabled(context)
+        private val next = typed
         private val wire = Wire.Reassembler { log("DISCARDED RX bytes (not a frame): ${OpoProtocol.bytesToHex(it)}") }
 
         override fun run() {
@@ -1221,7 +1239,7 @@ class BudsConnectionManager(private val context: Context) {
         // Some buds drop the link a few seconds after an unanswered request (issue #2: the time request).
         val seq = packet[6].toInt() and 0xFF
         val now = System.currentTimeMillis() / 1000
-        val answer = if (ProtocolNext.enabled(context)) {
+        val answer = if (typed) {
             // The "new protocol" setting: the rebuilt answers (docs/PROTOCOL-NEXT.md section 15).
             Decode.answer(Wire.Message(cmd, seq, payload), now)?.let { OpoProtocol.buildPacket(it.cmd, it.seq, it.payload) }
         } else OpoProtocol.answerFor(cmd, seq, payload, now)
@@ -1235,8 +1253,19 @@ class BudsConnectionManager(private val context: Context) {
             return
         }
 
+        // The "new protocol": the typed layer first; anything it does not handle, or an exception, goes on to the old handlers below.
+        if (typed) {
+            try {
+                if (handleTyped(Wire.Message(cmd, packet[6].toInt() and 0xFF, payload), packet, payload)) return
+            } catch (e: Exception) {
+                log("NEXT FAILED on %04X: %s".format(cmd, e.toString()))
+                typedFailed("exception on %04X".format(cmd))
+            }
+        }
+
         // --- What these buds are and accept: handshake 0x8100 and product id 0x8103 ---
         if (cmd == 0x8100) {
+            gotHandshakeReply = true
             val commands = Capabilities.parse(payload)
             if (commands != null) {
                 Capabilities.save(context, commands)
@@ -1246,18 +1275,7 @@ class BudsConnectionManager(private val context: Context) {
             return
         }
         if (cmd == 0x8103) {
-            val id = Capabilities.productId(payload)
-            if (id != null) {
-                val prefs = featurePrefs()
-                // Other buds than last time: a model picked by hand was for those.
-                val edit = prefs.edit().putString(Capabilities.KEY_PRODUCT_ID, id)
-                if (prefs.getString(Capabilities.KEY_PRODUCT_ID, null) != id) edit.remove(ModelCatalog.KEY_MANUAL)
-                edit.apply()
-                val anc = AncModes.of(context)
-                log("PRODUCT ID: $id, model: ${ModelCatalog.current(context)?.name ?: "unknown"}, ANC: " + (listOf(AncModes.OFF, AncModes.TRANSPARENCY, AncModes.ADAPTIVE) +
-                    AncModes.LEVELS).filter { anc.supports(it) }.joinToString { "$it=${anc.bit(it)}" }.ifEmpty { "none" })
-                handler.post { listeners.forEach { it.onCapabilities() } }
-            }
+            Capabilities.productId(payload)?.let { onProductId(it) }
             return
         }
 
@@ -1312,29 +1330,7 @@ class BudsConnectionManager(private val context: Context) {
         // without it rather than inventing the other entries.
         if (cmd == OpoProtocol.CMD_RESP_KEY_FUNCTION) {
             log("KEYFN: ${KeyFunctionParser.describe(payload)}")
-
-            // The diff is the whole point of reading this reply: it describes the
-            // CURRENT bindings, so ONE change made in the vendor app names that
-            // function's `fn` value. Printed on its own line, and only when there is a
-            // baseline to compare against, so the ordinary init-sequence reading does
-            // not grow a second line that says nothing.
-            val table = KeyFunctionParser.parse(payload)
-            if (table.entries.isNotEmpty()) {
-                // Only a reply with entries replaces the stored table, for the same
-                // reason the diff baseline is not overwritten by an empty one: a
-                // garbled read must not cost us the table we would write back from.
-                lastKeyFnTable = table
-                log("KEYFN DIFF: ${keyFnDiff(table)}")
-
-                // Repaint the LOCAL record from the buds' own truth, not just our diagnostic
-                // log. This is what makes GestureActivity/on-call show
-                // what the buds actually have bound after a reconnect, even if something other
-                // than this app changed it (HeyMelody, another phone, a PC tool). See
-                // GestureConfigStore.syncFromDevice() / OnCallConfigStore.syncFromDevice().
-                GestureConfigStore.syncFromDevice(context, table)
-                OnCallConfigStore.syncFromDevice(context, table)
-                GestureConfigStore.syncHoldFromDevice(context, table, lastHoldAncMasks)
-            }
+            onKeyFunctions(KeyFunctionParser.parse(payload))
             return
         }
 
@@ -1667,6 +1663,194 @@ class BudsConnectionManager(private val context: Context) {
         }
     }
 
+    // --- The new protocol: typed handlers (docs/PROTOCOL-NEXT.md). Same effects as the legacy handlers in handlePacket. ---
+
+    private fun onProductId(id: String) {
+        val prefs = featurePrefs()
+        // Other buds than last time: a model picked by hand was for those.
+        val edit = prefs.edit().putString(Capabilities.KEY_PRODUCT_ID, id)
+        if (prefs.getString(Capabilities.KEY_PRODUCT_ID, null) != id) edit.remove(ModelCatalog.KEY_MANUAL)
+        edit.apply()
+        val anc = AncModes.of(context)
+        log("PRODUCT ID: $id, model: ${ModelCatalog.current(context)?.name ?: "unknown"}, ANC: " + (listOf(AncModes.OFF, AncModes.TRANSPARENCY, AncModes.ADAPTIVE) +
+            AncModes.LEVELS).filter { anc.supports(it) }.joinToString { "$it=${anc.bit(it)}" }.ifEmpty { "none" })
+        handler.post { listeners.forEach { it.onCapabilities() } }
+    }
+
+    /** A gesture table read: only a reply with entries replaces the stored table (a write is built from it). */
+    private fun onKeyFunctions(table: KeyFunctionParser.Table) {
+        if (table.entries.isEmpty()) return
+        lastKeyFnTable = table
+        log("KEYFN DIFF: ${keyFnDiff(table)}")
+        // Repaint the local record from the buds' own truth (GestureConfigStore / OnCallConfigStore).
+        GestureConfigStore.syncFromDevice(context, table)
+        OnCallConfigStore.syncFromDevice(context, table)
+        GestureConfigStore.syncHoldFromDevice(context, table, lastHoldAncMasks)
+    }
+
+    private fun eqChanged() {
+        log("EQ: current=$eqCurrent bassWave=$bassWaveLevel custom=" +
+            eqCustom.joinToString { "${it.id}:${it.name}${if (it.selected) "*" else ""}${it.gains}" })
+        handler.post { listeners.forEach { it.onEqState() } }
+    }
+
+    private fun onWear(left: Int?, right: Int?, case: Int?, fromEvent: Boolean) {
+        if (left != null) lastLeftStatus = left
+        if (right != null) lastRightStatus = right
+        if (case != null) lastCaseStatus = case
+        caseClosing = fromEvent && case == 0 && left == 0 && right == 0
+        log("WEAR ${if (fromEvent) "EVT" else "QRY"}: L=${wearLabel(lastLeftStatus)} R=${wearLabel(lastRightStatus)} case=${wearLabel(lastCaseStatus)}")
+        handler.post { listeners.forEach { it.onWearState(lastLeftStatus, lastRightStatus, lastCaseStatus) } }
+    }
+
+    /** True when the typed layer handled the message; false sends it on to the legacy handlers. */
+    private fun handleTyped(w: Wire.Message, packet: ByteArray, payload: ByteArray): Boolean {
+        val m = Decode.decode(w) ?: return false
+        val isPush = w.cmd == OpoProtocol.CMD_ACTIVE_REPORT
+        fun later(block: BudsConnectionManager.Listener.() -> Unit) = handler.post { listeners.forEach { it.block() } }
+        fun feat() = later { onFeatureStates(featureStates) }
+        when (m) {
+            is Msg.ProductId -> onProductId(Cmd.productText(m.id))
+            is Msg.Firmware -> {
+                val version = Cmd.firmwareText(m.parts)
+                log("FIRMWARE: $version parts=${m.parts}")
+                if (version != null) featurePrefs().edit().putString(KEY_FIRMWARE, version).apply()
+            }
+            is Msg.Wear -> {
+                val st = m.parts.toMap()
+                onWear(st[1], st[2], st[3], isPush)
+            }
+            is Msg.Gestures -> {
+                log("KEYFN: ${KeyFunctionParser.describe(payload)}")
+                val entries = m.table.map { KeyFunctionParser.Entry(it.dev, it.button, it.act, it.func) }
+                onKeyFunctions(KeyFunctionParser.Table(0, entries.size, entries, ByteArray(0), false))
+            }
+            is Msg.AncMsg -> when (val a = m.anc) {
+                is Anc.Mode -> {
+                    val mode = AncModes.of(context).modeForRaw(a.mask, lastAncLevelSent)
+                    log("${if (isPush) "ANC EVT" else "ANC QUERY"}: raw=0x%04X -> %s".format(a.mask, mode ?: "unknown for this model"))
+                    if (mode != null) later { onAncModeState(mode) }
+                }
+                is Anc.Smart -> onSmartMask(a.mask)
+                is Anc.HoldCycle -> {
+                    lastHoldAncMasks[a.kind] = a.mask
+                    log("HOLD MODES (${a.kind}): mask=0x%04X".format(a.mask))
+                    lastKeyFnTable?.let { GestureConfigStore.syncHoldFromDevice(context, it, lastHoldAncMasks) }
+                }
+                is Anc.Level -> log("ANC LEVEL: ${a.level}")
+            }
+            is Msg.EqCurrent -> { reportedEq(m.id); eqChanged() }
+            is Msg.EqCustom -> {
+                eqCustom = m.list.map { p ->
+                    EqCodec.Preset(p.id, p.name, p.bands.map { it.first }, p.bands.map { it.second }, p.selected,
+                        byteArrayOf(p.range.first.toByte(), p.range.second.toByte()))
+                }
+                eqChanged()
+            }
+            is Msg.BassLevel -> { bassWaveLevel = m.level; eqChanged() }
+            is Msg.Preferred -> {
+                val mac = m.mac?.joinToString(":") { "%02X".format(it) }
+                log("PREFERRED: ${mac ?: "auto"}")
+                later { onPreferred(mac) }
+            }
+            is Msg.Devices -> {
+                val list = m.list.map { PairedDevice(it.mac.joinToString(":") { b -> "%02X".format(b) }, it.name, it.connected, it.thisPhone) }
+                devices = list
+                log("DEVICES: " + list.joinToString { "${it.name} ${it.mac} ${if (it.connected) "on" else "off"}" })
+                later { onDevices(list) }
+            }
+            is Msg.AlertVolume -> { alertVolume = m.level; log("ALERT VOLUME: ${m.level}"); later { onAlertVolume(m.level) } }
+            is Msg.PublicMsg -> when (val e = m.event) {
+                is Public.TapLevel -> {
+                    log("TAP LEVEL push: ${e.level}")
+                    later { onTapLevel(e.level, tapLevelDefault) }
+                }
+                is Public.AlertVolume -> { alertVolume = e.level; log("ALERT VOLUME push: ${e.level}"); later { onAlertVolume(e.level) } }
+                else -> return false
+            }
+            is Msg.TapLevel -> {
+                tapLevelDefault = m.default ?: tapLevelDefault
+                log("TAP LEVEL: ${m.level} default ${m.default}")
+                later { onTapLevel(m.level, tapLevelDefault) }
+            }
+            is Msg.Features -> {
+                val states = m.list.toMap()
+                featureStates = states
+                log("FEATURES: " + states.entries.joinToString(" ") { "%02X=%d".format(java.util.Locale.ROOT, it.key, it.value) })
+                val game = states[Capabilities.gameModeId(context)]
+                later { onFeatureStates(states); if (game != null) onGameModeState(game == 1) }
+            }
+            is Msg.Spatial -> { spatialType = m.type; log("SPATIAL TYPE: ${m.type}"); feat() }
+            is Msg.Codec -> { codec = m.codec; log("CODEC: ${m.codec}"); feat() }
+            is Msg.CodecMask -> { codecs = Cmd.codecsOf(m.mask); log("CODECS: $codecs"); feat() }
+            is Msg.GameSound -> {
+                gameSoundType = m.selected; gameSoundTypes = m.offered
+                log("GAME SOUND: type=$gameSoundType offered=$gameSoundTypes"); feat()
+            }
+            is Msg.HeadGesture -> { headMotionType = m.type; log("HEAD MOTION TYPE: ${m.type}"); feat() }
+            is Msg.GameMode -> {
+                val on = GameModeParser.parseActive(payload, featurePrefs().getString(Capabilities.KEY_PRODUCT_ID, null)) ?: return false
+                log("GAME EVT: ${if (on) "ON" else "OFF"}")
+                later { onGameModeState(on) }
+            }
+            is Msg.Gesture -> log("BTN EVT: ${UserInteractionParser.describe(payload)}")
+            is Msg.FitTest -> { log("FIT: left=${m.left ?: -1} right=${m.right ?: -1}"); later { onFitResult(m.left ?: -1, m.right ?: -1) } }
+            is Msg.PersonalAncStored -> { log("PERSONAL ANC stored=${m.stored}"); later { onPersonalNoiseStored(m.stored) } }
+            is Msg.PersonalAnc -> { log("PERSONAL ANC result=${m.result}"); later { onPersonalNoiseResult(m.result) } }
+            is Msg.Hearing -> { log("GOLDEN STATUS: kind=${m.kind} status=${m.status}"); later { onGoldenStatus(m.kind, m.status) } }
+            is Msg.EarScan -> {
+                log("EAR SCAN: uid=%08X len=%d".format(m.id, m.data.size))
+                val data = ByteArray(m.data.size) { m.data[it].toByte() }
+                later { onEarScan(m.id, data) }
+            }
+            is Msg.GoldenFilter -> {
+                log("GOLDEN FILTER: uid=%08X enhanceType=%d".format(m.id, m.enhance))
+                later {
+                    onGoldenFilter(m.id, m.enhance)
+                    m.curves?.let { onGoldenCurves(m.id, false, it.rate, it.left.toFloatArray(), it.right.toFloatArray()) }
+                }
+            }
+            is Msg.GoldenScanFilter -> {
+                log("GOLDEN SCAN FILTER: uid=%08X fs=%d".format(m.id, m.curves.rate))
+                later { onGoldenCurves(m.id, true, m.curves.rate, m.curves.left.toFloatArray(), m.curves.right.toFloatArray()) }
+            }
+            is Msg.GoldenRecord -> {
+                log("GOLDEN ACTIVE: %08X \"%s\" %s".format(m.id, m.name, m.values.joinToString(",")))
+                later { onGoldenActive(m.id, m.name, m.values.toIntArray()) }
+            }
+            is Msg.GoldenScan -> {
+                log("GOLDEN ACTIVE SCAN: uid=%08X len=%d".format(m.id, m.data.size))
+                val data = ByteArray(m.data.size) { m.data[it].toByte() }
+                later { onGoldenActiveScan(m.id, data) }
+            }
+            is Msg.Battery -> {
+                val clear = BudsService.clearMissingBattery(context)
+                fun info(part: Int) = m.cells.firstOrNull { it.part == part }?.let { BatteryParser.Info(it.level, it.charging) }
+                val (l, r, c) = Triple(info(1), info(2), info(3))
+                if (l != null || clear) lastLeft = l
+                if (r != null || clear) lastRight = r
+                if (c != null || clear) lastCase = c
+                emitBattery()
+            }
+            // Write replies (refusals, EQ ack, alert-volume echo) stay with the legacy handlers.
+            else -> return false
+        }
+        return true
+    }
+
+    /** The typed layer failed (an exception, or silent buds): once per connection, remember it for this device and reconnect on the legacy path. */
+    private fun typedFailed(reason: String) {
+        if (!typed || typedFailedOnce) return
+        typedFailedOnce = true
+        val device = lastDevice ?: return
+        ProtocolNext.markFellBack(context, device.address)
+        log("PROTOCOL FALLBACK: $reason. Reconnecting once on the legacy protocol.")
+        handler.post {
+            disconnect()
+            handler.postDelayed({ if (!isConnected() && !isConnecting) connect(device) }, 1500)
+        }
+    }
+
     private fun emitBattery() {
         handler.post {
             listeners.forEach {
@@ -1679,6 +1863,8 @@ class BudsConnectionManager(private val context: Context) {
             }
         }
     }
+
+    private companion object { const val HANDSHAKE_WAIT_MS = 6000L }
 
     private fun log(msg: String) {
         Log.d("BudsConn", msg)
