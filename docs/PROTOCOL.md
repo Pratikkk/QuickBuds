@@ -529,16 +529,16 @@ speechPerception, `34` meetingAssistant, `35` longPressVolume, `37` swiftPair, `
 | `04` | Auto play/pause (wear detection) | `[CAPTURE]` |
 | `05` | ? | HeyMelody asks it first for every model, ignores the value and never writes it `[VENDOR]` |
 | `06` | Game mode / low latency | `[VENDOR]` all models, **except** `28` where the bitmap has `0x0423` (`gameModeId()`) |
-| `09` | Vocal enhancement | flag `voiceBoost` |
+| `09` | Vocal enhancement | flag `voiceBoost`; realme Link's "enhance voice" row writes it `[VENDOR]` |
 | `0B` | Golden Sound (hearing profile) | see below `[CAPTURE]` |
 | `0C` | Personalised ANC applied | see below |
 | `11` | Dual connection | see below `[CAPTURE]` |
 | `17` | Power saving | restarts the buds, see below `[CAPTURE]` |
 | `18` | Hi-Res | quality switch, drops the link, see below `[CAPTURE]` |
-| `1A` | Wind noise reduction | realme Link `[VENDOR]`; asked in `0x010D` only for models with flag `windMode` (Air7 Pro), unverified |
+| `1A` | Wind noise reduction | realme Link's "anti wind noise" row writes `0x0403 1A <01/00>` `[VENDOR]`; asked in `0x010D` only for models with flag `windMode` (Air7 Pro); no capture `[GUESS]` that every `windMode` model answers |
 | `1B` | Spatial sound | on models without `0x012A` `[CAPTURE]` |
 | `1C` | Smart volume | flag `autoVolume` |
-| `1D` | BassWave | `[CAPTURE]` |
+| `1D` | BassWave | `[CAPTURE]`; realme Link's "dynamic sound mode" row (a switch and three bars) writes the same id `[VENDOR]` |
 | `27` | Game sound effects | flag `gameSoundList` |
 | `30` | Adaptive volume | |
 | `31` | Adaptive left / right ear | |
@@ -639,9 +639,10 @@ the active record; the phone keeps the list. A record: 4-byte id (big-endian, ch
   Link sends `00` on every connect (no realme model prefers the phone). The apps do the same for
   `spatialToggle` models. Issue #9's "`1B` changes nothing" was a false alarm: the buds play no sound
   on the switch.
-- **realme Link's `0x0403` ids** `[VENDOR]`, not used yet: dynamic bass `1D`, vocal enhance `09`, `0C`
-  "enhance voice" (ours: personalised ANC applied; do not assume they match), game mode `06`, wear `04`,
-  dual `11`. It reports power saving as `05` (ours `17` from HeyMelody: unresolved).
+- **realme Link's `0x0403` ids** `[VENDOR]`: dynamic sound mode `1D`, enhance voice `09`, wind noise `1A`, game mode `06`,
+  wear `04`, dual `11`, Hi-Res `18`, 3D sound `1B`. A second "enhance voice" setter writes `0C` (ours: personalised ANC
+  applied; do not assume they match). It reports power saving as `05` (ours `17` from HeyMelody: unresolved). The
+  realme items STRENGTHEN_VOICE, WIND_NOISE and DYNAMIC_SOUND_EFFECT map to `09`, `1A` and `1D`; no device test.
 - **`18` is a quality switch, not a codec switch** `[CAPTURE]`: LHDC V5 either way. On: 44.1-192 kHz,
   400 kbps cap. Off: 44.1 / 48 kHz, 256 kbps. The phone chose 48 kHz / 24-bit both times. No LDAC on
   Buds 4.
