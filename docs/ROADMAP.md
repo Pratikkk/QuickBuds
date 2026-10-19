@@ -51,9 +51,10 @@ These work in code but no owner has confirmed them. They count as working until 
 - **Slide up vs slide down:** the firmware maps the direction itself, as with HeyMelody.
 - **Hearing profile:** the before / after preview (`0x040E 01` / `02`) and renaming (the date labels it).
 - **HeyMelody features that need OPPO software:** voice wakeup (`0x14`, Breeno), voice commands
-  (`0x19`, Chinese only), incoming-call voice control (`0x39`), neck health (`0x22`-`0x24`), meeting
+  (`0x19`, Chinese only), incoming-call voice control (`0x39`), neck health and spine health (`0x22`-`0x24`, `0x0421`), meeting
   assistant (`0x34`), Zen mode and white noise (server sound packs), the tap camera shutter, and
   AI translation, summary and clear call (ColorOS only).
+- **Multi-conversation** (`0x042E`) and the **LE Audio action** (`0x0424`).
 - **HeyMelody features no model uses:** conversation mode (`smartCall`, `0x011D`), Spotify Tap
   (`spyTap`) and fall detection (`deviceLostRemind`, Enco Clip2 only).
 - **HeyMelody pages with no value here:** Earphones Lab, Connection info (the status chip shows it),
