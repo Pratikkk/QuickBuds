@@ -572,6 +572,8 @@ component SegmentTrack inherits Rectangle {
     changed index => { if index >= 0 { at = index; } }
     property <length> pill-x: pad + at * (seg + gap);
     animate pill-x { duration: Motion.slide; easing: ease-out; }
+    // Material 3: the whole control sits on a tinted pill; the picked segment is a lighter accent pill.
+    if Dots.material: Rectangle { border-radius: min(root.height, root.width) / 2; background: Palette.card.mix(Palette.text, 0.94); }
     if index >= 0 && !Dots.on: Rectangle {
         x: pill-x; y: pad; width: seg; height: root.height - 2 * pad;
         border-radius: min(self.height, self.width) / 2;
@@ -673,9 +675,24 @@ component Toggle inherits Rectangle {
     opacity: locked ? 0.4 : 1;
     callback toggled(bool);
     // The phone's switch: a thin track under a thumb as tall as the switch, light grey when off.
-    width: 44px;
-    height: 24px;
-    if !Dots.on: Rectangle {
+    width: Dots.material ? 52px : 44px;
+    height: Dots.material ? 32px : 24px;
+    // Material 3: a 52 x 32 pill; off is an outlined track with a small thumb, on is an accent track with a large one.
+    if Dots.material: Rectangle {
+        border-radius: 16px;
+        background: root.checked ? Palette.accent : Palette.outline;
+        border-width: root.checked ? 0 : 2px;
+        border-color: Palette.text2;
+        animate background { duration: Motion.fast; }
+    }
+    if Dots.material: Rectangle {
+        width: root.checked ? 24px : 16px; height: self.width; border-radius: self.width / 2;
+        y: (root.height - self.height) / 2;
+        x: root.checked ? root.width - 4px - self.width : 8px;
+        background: root.checked ? Palette.on-accent : Palette.text2;
+        animate x, width, background { duration: Motion.fast; }
+    }
+    if !Dots.on && !Dots.material: Rectangle {
         x: 6px; y: 6px; width: parent.width - 12px; height: 12px; border-radius: 6px;
         background: Palette.track;
     }
@@ -694,7 +711,7 @@ component Toggle inherits Rectangle {
         image-fit: ImageFit.fill;
         image-rendering: pixelated;
     }
-    if !Dots.on: Rectangle {
+    if !Dots.on && !Dots.material: Rectangle {
         width: 22px; height: 22px; border-radius: 11px;
         background: root.checked ? Palette.accent : Palette.thumb-off;
         // A light theme's thumb is the card's own colour: the track's shade outlines it.
@@ -1033,7 +1050,17 @@ component RowCard inherits Card {
     property <int> at: max(sel, 0);
     changed sel => { if sel >= 0 { at = sel; } }
     @children
-    Rectangle {
+    // Material 3: a tinted pill over the picked row in place of the bar.
+    if Dots.material: Rectangle {
+        x: 6px; width: parent.width - 12px;
+        height: sel >= 0 ? 40px : 0;
+        y: 6px + at * 42px + (40px - self.height) / 2;
+        border-radius: 20px;
+        background: Palette.accent.transparentize(0.82);
+        animate y { duration: Motion.slide; easing: ease-out; }
+        animate height { duration: Motion.fast; easing: ease-out; }
+    }
+    if !Dots.material: Rectangle {
         x: 12px; width: 3px;
         height: sel >= 0 ? 18px : 0;
         y: 6px + at * 42px + (40px - self.height) / 2;
@@ -1070,8 +1097,8 @@ component HSlider inherits Rectangle {
     property <length> knob: Dots.on ? Dots.knob-size : 20px;
     property <length> track-y: 30px;
     property <float> frac: (value - minimum) / (maximum - minimum);
-    if !Dots.on: Rectangle { y: track-y - 3px; height: 6px; border-radius: 3px; background: Palette.outline; }
-    if !Dots.on: Rectangle {
+    if !Dots.on && !Dots.material: Rectangle { y: track-y - 3px; height: 6px; border-radius: 3px; background: Palette.outline; }
+    if !Dots.on && !Dots.material: Rectangle {
         x: 0; y: track-y - 3px; height: 6px; border-radius: 3px;
         width: frac * (parent.width - knob) + knob / 2;
         background: Palette.accent;
@@ -1087,7 +1114,19 @@ component HSlider inherits Rectangle {
         source: Dots.knob(Palette.accent, Palette.card);
         image-fit: ImageFit.fill; image-rendering: pixelated;
     }
-    if !Dots.on: Rectangle {
+    // Material 3: a thick rounded track split by a 4 px handle pill with a gap on both sides.
+    if Dots.material: Rectangle { y: track-y - 8px; height: 16px; border-radius: 8px; background: Palette.outline; }
+    if Dots.material: Rectangle {
+        x: 0; y: track-y - 8px; height: 16px; border-radius: 8px;
+        width: max(16px, frac * (parent.width - 12px) + 2px);
+        background: Palette.accent;
+    }
+    if Dots.material: Rectangle {
+        x: frac * (parent.width - 8px); y: track-y - 13px; width: 8px; height: 26px; border-radius: 4px;
+        background: Palette.card;
+        Rectangle { x: 2px; width: 4px; border-radius: 2px; background: Palette.accent; }
+    }
+    if !Dots.on && !Dots.material: Rectangle {
         x: frac * (parent.width - knob); y: track-y - knob / 2;
         width: knob; height: knob; border-radius: knob / 2;
         background: Palette.card;
