@@ -42,7 +42,7 @@ AA  <TotalLen>  00 00  <Cmd LE>  <Seq>  <PayLen LE>  <Payload...>
 |---|---|
 | `AA` | Header |
 | TotalLen | Length of everything after this field: `7 + PayLen` |
-| `00 00` | Reserved |
+| `<Slice> 00` | Slice state, `00 00` for a whole message (see Slicing) |
 | Cmd | Command id, little-endian |
 | Seq | `0x01`-`0xFE`; the reply echoes it. **`0xFF` = a push from the buds** `[CAPTURE]` |
 | PayLen | Payload length, little-endian |
@@ -61,6 +61,25 @@ AA 07 00 00 00 01 01 00 00                  handshake 0x0100, PayLen 0
 AA 0A 00 00 04 04 06 03 00 01 01 01         set ANC Off
 AA 0C 00 00 04 02 FF 05 00 03 01 01 08 00   ANC push (Seq FF)
 ```
+
+### Slicing `[VENDOR]`
+
+A message that does not fit the frame budget goes out in slices. QuickBuds neither sends nor joins slices:
+no command it uses is large enough. The framer drops a sliced frame as noise.
+
+```
+AA  <TotalLen>  <Slice> 00  <Fsn>  <part of Cmd/Seq/PayLen/Payload>
+```
+
+- `Slice`: `00` whole message, `01` first slice, `02` middle slice, `03` last slice.
+- `Fsn` (slice counter, from `00`) is present in every slice, never in a whole message.
+  `TotalLen` is then `3 + data`, not `2 + data`.
+- The receiver joins the slice data in order and parses the message when `Slice` is `03`.
+- Frame budget: 660 bytes by default; the reply to `0x0107` can lower it. Buds that report a larger budget
+  allow bigger slices for bulk transfers. Over 129 bytes `TotalLen` takes two LEB128 bytes.
+- A read that starts with `AA` begins a new frame. Any other read continues the frame in progress.
+  A new `AA` before the frame is complete drops the pending bytes.
+- The sender waits for each write to finish (5 s limit) and pauses a model-specific interval between slices.
 
 ---
 
@@ -128,6 +147,31 @@ Details in the sections cited. `—` = empty payload.
 | `0x042D` | Tap sensitivity | `<level>` 1..5 | 9 |
 | `0x0431` | Head gesture mapping | `<type>` | 9 |
 
+### Writes QuickBuds does not send `[VENDOR]`
+
+Payloads are as HeyMelody builds them. Names are inferred from where the vendor app calls them. `[GUESS]` = the
+meaning, not the bytes. All are gated by the handshake bitmap (§4) except `0x042B`, `0x042C`, `0x0430`, `0x0434`.
+
+| Cmd | Payload | Meaning |
+|---|---|---|
+| `0x0408` | `<hostType> <host MAC 6> <count> {<type> <MAC 6> <state>}`, count at most 6 | Related-device list for multi-device switching `[GUESS]` |
+| `0x040F` | `<state>` | Camera state `[VENDOR]` |
+| `0x0414` | `<v>` | Unknown |
+| `0x0419` | `<v>` | Unknown. Bitmap bit 35 |
+| `0x041D` | `<v>` | Unknown |
+| `0x0420` | `<type> <state>` | Per-game state `[GUESS]` |
+| `0x0421` | `<state> <step>` | Neck or posture range `[GUESS]` |
+| `0x0424` | `<type> <value>` | LE Audio action |
+| `0x0426` | `<v>` | Unknown |
+| `0x042B` | `<type> <value>` | Unknown, no bitmap gate |
+| `0x042C` | `<on> 00` | Unknown, no bitmap gate |
+| `0x042E` | `<v>` | Multi-conversation switch `[GUESS]` |
+| `0x0430` | `<v>` | Unknown, no bitmap gate |
+| `0x0432` | `<t>`; the app sends `01`, `02` or `04` for its modes 0, 1, 2 | Unknown. Bitmap bit 67 |
+| `0x0433` | `<on>` | Unknown. Bitmap bit 64 |
+| `0x0434` | `<off>`: the app sends `01` when its switch is off | Unknown, no bitmap gate |
+| `0x0435` | `00` | Trigger, unknown. Bitmap bit 67 |
+
 ### Other pushes
 
 | Cmd | Name |
@@ -161,7 +205,7 @@ keep-alive poll. Is: none; no stale link seen `[TESTED]`.
 
 - **`0x8100` (handshake reply) is a command bitmap** `[VENDOR]`: `00`, then bytes read LSB first; bit n
   enables a fixed list of commands (bit 3 = `0x0108` `0x0401` `0x0416`; bit 8 = `0x010C` `0x0404`;
-  bit 57 = `0x0427` `0x0130`; 67 bits). Always allowed without a bit: `0x0100`-`0x0104`, `0x0106`,
+  bit 57 = `0x0427` `0x0130`; 69 bits; bits 35, 64, 67 and 68 add `0x0419`, `0x0135`, `0x0136`, `0x0432`, `0x0433`, `0x0435`, `0x0117`, payloads unknown). Always allowed without a bit: `0x0100`-`0x0104`, `0x0106`,
   `0x010B`, `0x010D`, `0x0F00`, `0x0F03`, `0x0F04`. HeyMelody sends nothing else, and neither do we
   (`protocol/Capabilities.kt`). Buds 4 `[CAPTURE]`: `00 FF 77 5A EA 67 0E 20 07` — every command the
   app uses, not `0x0422` / `0x012A`.
@@ -222,6 +266,15 @@ one `0x012F`. A later status read goes alone.
 | `F3` | Content unknown. HeyMelody ignores it `[VENDOR]` | in the `0x8200` list |
 | `F4` | Diagnostic JSON `[VENDOR]`, acked (§9) | pushed, not in the list |
 | `F5` | Head gesture type `[VENDOR]` | — |
+| `0A` | One state byte `[VENDOR]`; meaning unknown | — |
+| `0D` | Multi-device link info `[GUESS]`; layout unread | — |
+| `0F` | Public event `[VENDOR]`: `<flags u16 LE> <data>`. Flag bit 0: state byte at `payload[3]`; bit 2: handheld-device info; bit 4: tap level setting | — |
+| `10` | One-shot state `[VENDOR]`; layout unread | — |
+| `11` | List of records `[VENDOR]`; layout unread | — |
+| `F6` | Head-motion try result: one byte `[VENDOR]` | — |
+| `F7` | Voice-assist control type `[VENDOR]`; layout unread | — |
+| `F8` | LE / BR link switch state `[VENDOR]`; layout unread | — |
+| `F9` | AI translation audio focus: one byte `[VENDOR]`; online feature, not built | — |
 
 ### Subscribing — `0x0205`
 
@@ -747,6 +800,14 @@ sends `0x0500` empty and works either way. Both apps answer from one function (`
 - HeyMelody adds `<zone offset seconds s32 LE>` to the time answer for models whose model list flags
   `utcTimeZone`. The model list flags none, so the 4-byte form goes out for every model. A newer list may flag some.
 - Buds 4 `[CAPTURE]`: `0x0500` answered within 5 ms, link unchanged.
+
+### Online features — not built `[VENDOR]`
+
+QuickBuds talks to the network only to check GitHub for updates and to send reports to the Worker. These
+commands exist for features that need the vendor's servers or account, so the app has no UI for them:
+`0x0425` AI summary type, `0x0426` AI prompt sound, `0x0428` AI translation state, `0x041C` account key
+(`01 01 <len> <key>` binds, `02` clears), `0x0410` and `0x0417` tone and zen-mode file checks, and the
+`0x03xx` firmware upgrade. Push `F9` belongs to the same set.
 
 ---
 
