@@ -736,6 +736,9 @@ class BudsConnectionManager(private val context: Context) {
     fun personalNoise(action: Int) = sendRaw(OpoProtocol.personalNoise(action), "Personalized ANC $action")
     fun queryPersonalNoise() = sendRaw(OpoProtocol.queryPersonalNoise(), "query personalized ANC")
 
+    /** The default from the last `0x8133` reply; the push carries the level only. */
+    private var tapLevelDefault = 0
+
     fun refreshTapLevel() = sendRaw(OpoProtocol.queryTapLevel(), "query tap level")
 
     /** Write, then read back. */
@@ -1562,8 +1565,16 @@ class BudsConnectionManager(private val context: Context) {
             return
         }
         if (cmd == 0x8133 && payload.size >= 3 && payload[0].toInt() == 0) {
+            tapLevelDefault = payload[2].toInt()
             log("TAP LEVEL: ${payload[1]} default ${payload[2]}")
             handler.post { listeners.forEach { it.onTapLevel(payload[1].toInt(), payload[2].toInt()) } }
+            return
+        }
+        // The buds report a tap level change as push `0F <flags LE> <level>` (flag bit 4).
+        if (cmd == OpoProtocol.CMD_ACTIVE_REPORT && payload.size >= 4 && payload[0].toInt() == OpoProtocol.EVT_PUBLIC &&
+            (payload[1].toInt() and 0xFF) and OpoProtocol.PUBLIC_FLAG_TAP_LEVEL != 0) {
+            log("TAP LEVEL push: ${payload[3]} RAW=[${OpoProtocol.bytesToHex(payload)}]")
+            handler.post { listeners.forEach { it.onTapLevel(payload[3].toInt(), tapLevelDefault) } }
             return
         }
         if ((cmd == 0x840D || cmd == 0x840E) && payload.isNotEmpty() && payload[0].toInt() != 0) {

@@ -696,6 +696,8 @@ pub enum Event {
     PncResult(u8),
     /// (level, the buds' default)
     TapLevel(u8, u8),
+    /// The level alone, from a push; the default stays from the last read.
+    TapPush(u8),
     Devices(Vec<PairedDevice>),
     Hearing(HearingEv),
     /// `0x8108`: the gesture table, `[dev, btn, act, fn]` each.
@@ -791,6 +793,8 @@ pub fn decode(p: &[u8]) -> Option<Event> {
                 Event::FitResult(of(1), of(2))
             }
             0xF5 if pl.len() >= 2 => Event::HeadMotion(pl[1]),
+            // `0F <flags u16 LE> <level>`, flag bit 4 = tap level; other flags are not decoded.
+            0x0F if pl.len() >= 4 && pl[1] == 0x10 && pl[2] == 0 => Event::TapPush(pl[3]),
             0x0B if pl.len() >= 2 => Event::PncResult(pl[1]),
             0x06 => Event::Devices(parse_devices(&pl[1..])?),
             0x08 if pl.len() >= 3 => Event::Hearing(HearingEv::Status(pl[1], pl[2])),
@@ -828,6 +832,7 @@ pub fn describe(e: &Event) -> String {
         Event::PncAck(st) => format!("Personalized ANC ack {st}"),
         Event::PncResult(r) => format!("Personalized ANC result {r}"),
         Event::TapLevel(l, d) => format!("Tap sensitivity {l} (default {d})"),
+        Event::TapPush(l) => format!("Tap sensitivity {l} (push)"),
         Event::Devices(v) => format!("Devices: {}", v.iter().map(|d| format!("{} {}", d.name, if d.connected { "on" } else { "off" })).collect::<Vec<_>>().join(", ")),
         Event::Hearing(h) => match h {
             HearingEv::Status(k, st) => format!("Hearing {} status {st}", if *k == 4 { "scan" } else { "test" }),
@@ -1165,6 +1170,7 @@ mod tests {
         assert!(matches!(decode(&build_packet(0x8130, 1, &[0, 6])), Some(Event::AlertVolume(6))));
         assert!(matches!(decode(&build_packet(0x8427, 1, &[0, 3])), Some(Event::AlertVolume(3))));
         assert!(matches!(decode(&build_packet(0x8133, 1, &[0, 2, 3])), Some(Event::TapLevel(2, 3))));
+        assert!(matches!(decode(&build_packet(EVT_PUSH, 0xFF, &[0x0F, 0x10, 0, 4])), Some(Event::TapPush(4))));
         // A failed read (status not 0) is no value.
         assert!(decode(&build_packet(0x8130, 1, &[1, 6])).is_none());
         assert!(matches!(decode(&build_packet(0x812B, 1, &[0, 3, 2, 0, 3])), Some(Event::GameSound(3, t)) if t == [0, 3]));

@@ -73,6 +73,7 @@ fn simple_rx(e: &Event) -> Option<String> {
         Event::GameMode(pl) => format!("Low latency mode {}", on_off(game_on(pl, crate::load_settings()["product_id"].as_str())? as u8)),
         Event::AlertVolume(l) => format!("Alert sound volume {l}"),
         Event::TapLevel(l, _) => format!("Tap sensitivity {l}"),
+        Event::TapPush(l) => format!("Tap sensitivity {l}"),
         Event::BassLevel(l) => format!("Bass boost level {l}"),
         Event::EqCurrent(_) => "Equalizer read".into(),
         Event::KeyFunctions(_) => "Gestures read".into(),

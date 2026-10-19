@@ -329,6 +329,7 @@ impl<'a> Conn<'a> {
             },
             Event::AlertVolume(l) => s.alert_volume = Some(l),
             Event::TapLevel(l, d) => s.tap_level = Some((l, d)),
+            Event::TapPush(l) => s.tap_level = Some((l, s.tap_level.map_or(0, |t| t.1))),
             Event::GameSound(t, all) => s.game_sound = Some((t, all)),
             Event::HeadMotion(t) => s.head_motion = Some(t),
             Event::SmartLevel(m) => s.smart_level = (m != 0).then(|| s.modes.level_for_bit(m.trailing_zeros() as u8)).flatten().map(Into::into),

@@ -27,7 +27,7 @@ object LogDecoder {
     private val PUSH_NAMES = mapOf(
         0x06 to "dual connection devices", OpoProtocol.EVT_GOLDEN_STATUS to "hearing test status",
         OpoProtocol.EVT_PERSONAL_NOISE to "personalised ANC result", OpoProtocol.EVT_EAR_SCAN to "ear scan",
-        0xF2 to "request (answered)", 0xF4 to "JSON request (answered)", OpoProtocol.EVT_HEAD_MOTION_TYPE to "head motion type"
+        0xF2 to "request (answered)", 0xF4 to "JSON request (answered)", OpoProtocol.EVT_HEAD_MOTION_TYPE to "head motion type", OpoProtocol.EVT_PUBLIC to "public event"
     )
 
     enum class Direction { TX, RX, STATUS }

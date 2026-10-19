@@ -97,6 +97,8 @@ object OpoProtocol {
     const val EVT_WEARING = 0x02              // 0x0204 subType: wearing status changed
     const val EVT_GAME_MODE = 0x05            // 0x0204 subType: game mode changed
     const val EVT_FIT_TEST = 0x04             // 0x0204 subType: fit test result, [VENDOR]
+    const val EVT_PUBLIC = 0x0F               // 0x0204 subType: `<flags u16 LE> <data>`; flag bit 4 = tap level `<level>`, [VENDOR]
+    const val PUBLIC_FLAG_TAP_LEVEL = 0x10
     const val EVT_GOLDEN_STATUS = 0x08        // 0x0204 subType: Golden Sound test status, [VENDOR]
     const val EVT_EAR_SCAN = 0x0E             // 0x0204 subType: ear scan result, [CAPTURE] (pushed unregistered)
 

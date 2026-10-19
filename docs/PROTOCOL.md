@@ -636,6 +636,8 @@ Both buds in an ear; 5 s timeout for `0x811A`, 15 s for a result; cancel when th
 
 Flag `tapLevel`. `0x042D <level>` 1..5 (lower = taps trigger more easily). Read `0x0133` →
 `00 <level> <default>`. Warn below the default; offer a reset.
+A change on the buds also arrives as push `0F 10 00 <level>` (§4, event `0F`, flag bit 4). It has no default byte;
+the app keeps the default from the last read `[VENDOR]`, wired, unverified.
 
 ### Golden Sound (Hearing profile) `[VENDOR]`+`[CAPTURE]`
 
