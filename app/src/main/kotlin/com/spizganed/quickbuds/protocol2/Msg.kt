@@ -3,7 +3,7 @@ package com.spizganed.quickbuds.protocol2
 import com.spizganed.quickbuds.protocol2.Wire.Message
 
 /**
- * Typed messages of docs/PROTOCOL-NEXT.md: decodes what the buds send. Written from the spec, not from
+ * Typed messages of docs/PROTOCOL.md: decodes what the buds send. Written from the spec, not from
  * the `protocol` package. Input is a [Message] from the link layer; output is [Msg].
  */
 
@@ -78,7 +78,7 @@ class Bitmap private constructor(private val cmds: Set<Int>?) {
     companion object {
         val UNKNOWN = Bitmap(null)
 
-        /** Commands behind each bit of the `0x8100` reply (PROTOCOL-NEXT.md section 4). */
+        /** Commands behind each bit of the `0x8100` reply (PROTOCOL.md section 4). */
         private val BITS: List<List<Int>> = listOf(
             listOf(0x0105), listOf(0x0106), listOf(0x0107), listOf(0x0108, 0x0401, 0x0416), listOf(0x0109), listOf(0x0400),
             listOf(0x0402), listOf(0x0403), listOf(0x010C, 0x0404), listOf(0x0405), listOf(0x0406, 0x010F), listOf(0x0407),

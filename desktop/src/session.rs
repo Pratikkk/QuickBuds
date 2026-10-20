@@ -230,7 +230,7 @@ struct Conn<'a> {
     link: bt::Link,
     /// 0 for the bridge.
     addr: u64,
-    /// The link's protocol (docs/PROTOCOL-NEXT.md), chosen once per connection.
+    /// The link's protocol (docs/PROTOCOL.md), chosen once per connection.
     proto: Proto,
     /// Messages received on this connection: none after the init sequence means the new protocol failed.
     rx: u32,
@@ -259,7 +259,7 @@ impl<'a> Conn<'a> {
         let seq = seq.unwrap_or_else(|| { self.seq = self.seq % 0xFE + 1; self.seq });
         let p = build_packet(cmd, seq, payload);
         log("TX", p.clone(), describe_tx(cmd, payload));
-        // A message too big for one frame goes out in slices (PROTOCOL-NEXT.md §2).
+        // A message too big for one frame goes out in slices (PROTOCOL.md §2).
         for f in self.proto.frames_out(cmd, seq, payload) { self.link.write(&f)?; }
         Ok(())
     }
@@ -389,7 +389,7 @@ impl<'a> Conn<'a> {
         }
     }
 
-    /// PROTOCOL.md "Init sequence": 300 ms before the first frame, then 200 ms apart; reads only if listed.
+    /// PROTOCOL-LEGACY.md "Init sequence": 300 ms before the first frame, then 200 ms apart; reads only if listed.
     fn init(&mut self) -> Result<(), String> {
         self.pump(300)?;
         for f in [cmd::handshake(), cmd::product_id(), cmd::broadcast_codes()] {

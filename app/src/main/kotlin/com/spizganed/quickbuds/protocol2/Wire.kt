@@ -1,7 +1,7 @@
 package com.spizganed.quickbuds.protocol2
 
 /**
- * The link layer of docs/PROTOCOL-NEXT.md §2: frames, slices, reassembly. No Bluetooth, no commands.
+ * The link layer of docs/PROTOCOL.md §2: frames, slices, reassembly. No Bluetooth, no commands.
  * Plain Kotlin, so a JVM test runs it.
  */
 object Wire {

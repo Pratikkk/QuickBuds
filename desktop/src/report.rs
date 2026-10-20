@@ -64,7 +64,7 @@ fn host() -> Option<String> {
     name.filter(|n| n.len() >= 3)
 }
 
-/// Device list and device manager packets (PROTOCOL.md §9) hold addresses and names: only the header stays.
+/// Device list and device manager packets (PROTOCOL-LEGACY.md §9) hold addresses and names: only the header stays.
 fn device_bytes(l: &Line) -> bool {
     if l.bytes.len() < 10 || l.bytes[0] != 0xAA { return false; }
     let pl = payload_of(&l.bytes);

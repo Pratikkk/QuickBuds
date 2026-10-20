@@ -37,7 +37,7 @@ import com.spizganed.quickbuds.widget.WidgetStateStore
  * write (see BudsConnectionManager.writeGestureBinding), then reads the table back
  * and diffs it, because a wrong command number fails in complete silence. The
  * `function` bytes in [GestureAction] are MEASURED, not guessed — see [GestureConfig]
- * and PROTOCOL.md §6. The on-call writes ([OnCallGesture]) are a single small entry
+ * and PROTOCOL-LEGACY.md §6. The on-call writes ([OnCallGesture]) are a single small entry
  * instead of a full-table rewrite — see BudsConnectionManager.sendOnCall().
  */
 class GestureActivity : Activity() {
@@ -104,7 +104,7 @@ class GestureActivity : Activity() {
         //
         // No Left/Right selector reads into this card:
         // these two rows are ONE shared setting for both buds, unlike everything above.
-        // See PROTOCOL.md §6 and [OnCallGesture].
+        // See PROTOCOL-LEGACY.md §6 and [OnCallGesture].
         onCallLabel = SettingRowFactory.sectionLabel(this, R.string.gesture_section_on_call)
         column.addView(onCallLabel)
 
@@ -194,20 +194,20 @@ class GestureActivity : Activity() {
      * gesture actually does. Sending nothing keeps the table honest. The mask write below
      * could in principle be sent with an empty mask, but that value has never been tried on
      * the device — only ADDING a bit to a non-empty mask is `[CAPTURE]`-confirmed
-     * (PROTOCOL.md §5) — so an empty selection sends neither write rather than guessing what
+     * (PROTOCOL-LEGACY.md §5) — so an empty selection sends neither write rather than guessing what
      * an all-zero mask does.
      *
      * THE HOLD'S NON-EMPTY CASE SENDS THREE WRITES, ON PURPOSE. The key-function write binds the
      * gesture to "cycles ANC" at all — sent for BOTH [GestureSide.LEFT] and [GestureSide.RIGHT],
      * unlike every other gesture, because the hold is a SHARED control
-     * (PROTOCOL.md §5.1) and every capture has shown both buds' key-function slots holding the same
+     * (PROTOCOL-LEGACY.md §5.1) and every capture has shown both buds' key-function slots holding the same
      * `fn`. Writing only the currently-selected side would leave the OTHER bud's table entry
      * disagreeing with what the cycle actually does on it. A third write, to
      * [BudsService.ACTION_SET_HOLD_MODES], carries WHICH modes are in the cycle
      * ([GestureModel.holdMask], `setSupportNoiseReduction`, `[CAPTURE]` 2026-09-22) — that
      * command has no per-side concept at all, so there is only ever one of it. Three separate
      * commands, kept separate here too, so a failure in any one is attributable — see
-     * [GestureConfigStore] and PROTOCOL.md §5.
+     * [GestureConfigStore] and PROTOCOL-LEGACY.md §5.
      */
     private fun writeToBuds(gesture: Gesture, actions: List<GestureAction>) {
         if (gesture == Gesture.TAP_HOLD && actions.isEmpty()) {
@@ -329,7 +329,7 @@ class GestureActivity : Activity() {
      * One on-call row. Same [SettingRowFactory] shape as [buildGestureRow] so the section
      * does not look like a second, different screen — but the value shown and the dialog
      * behind it are a plain on/off, not a multi-option picker, because that is all HeyMelody
-     * itself offers here (PROTOCOL.md §6).
+     * itself offers here (PROTOCOL-LEGACY.md §6).
      */
     private fun buildOnCallRow(gesture: OnCallGesture): View {
         val enabled = OnCallConfigStore.isEnabled(this, gesture)

@@ -80,6 +80,7 @@ Per-model data (features, noise control modes, EQ presets, gestures) is in
 Read before changing anything:
 
 - [PROTOCOL.md](./PROTOCOL.md): the wire format. Every claim is tagged with its source.
+- [PROTOCOL-LEGACY.md](./PROTOCOL-LEGACY.md): the frozen old layer (Legacy switch).
 - [ROADMAP.md](./ROADMAP.md): the plan, and the list of features decided against. Please check that
   list before proposing a feature.
 

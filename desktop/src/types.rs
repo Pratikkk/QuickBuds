@@ -166,7 +166,7 @@ pub fn codec_name(codec: u8) -> String {
 }
 
 /// `0x010D`: count, then the feature ids (`OpoProtocol.queryStatus`): the model's `statusQuery` (HeyMelody's
-/// per-model list, PROTOCOL.md §9), else the full list. The `windNoise` flag adds [FEATURE_WIND_NOISE].
+/// per-model list, PROTOCOL-LEGACY.md §9), else the full list. The `windNoise` flag adds [FEATURE_WIND_NOISE].
 pub fn status_query(model: Option<&serde_json::Value>) -> Vec<u8> {
     let mut ids: Vec<u8> = match model.and_then(|m| m["statusQuery"].as_str()) {
         Some(s) => s.split(' ').filter_map(|h| u8::from_str_radix(h, 16).ok()).collect(),
@@ -218,7 +218,7 @@ impl Caps {
     }
 }
 
-// --- Models and ANC modes (`ModelCatalog.kt`, `AncModes.kt`, PROTOCOL.md §5) ---
+// --- Models and ANC modes (`ModelCatalog.kt`, `AncModes.kt`, PROTOCOL-LEGACY.md §5) ---
 
 pub const OFF: &str = "Off";
 
@@ -258,7 +258,7 @@ pub fn find_model(id: Option<&str>, name: Option<&str>) -> Option<&'static Value
     let m = models();
     let by_name = |x: &&Value| name.is_some() && x["name"].as_str() == name;
     let by_id = |x: &&Value| id.is_some_and(|id| x["id"].as_str().is_some_and(|i| i.eq_ignore_ascii_case(id)));
-    // HeyMelody's order (PROTOCOL.md §4): name and id, then name, then id.
+    // HeyMelody's order (PROTOCOL-LEGACY.md §4): name and id, then name, then id.
     m.iter().find(|x| by_name(x) && by_id(x)).or_else(|| m.iter().find(by_name)).or_else(|| m.iter().find(by_id))
 }
 
@@ -341,7 +341,7 @@ impl AncModes {
     }
 }
 
-// --- Equalizer (PROTOCOL.md §9 Equalizer, `EqCodec.kt`) ---
+// --- Equalizer (PROTOCOL-LEGACY.md §9 Equalizer, `EqCodec.kt`) ---
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Preset {
@@ -470,7 +470,7 @@ pub fn eq_builtins(model: Option<&Value>, firmware: Option<&str>) -> Vec<(u8, &'
             34 => "eq_vibrant",
             40 => "eq_dyn_vocal",
             41 => "eq_clear_crisp",
-            // realme Link's four presets; HeyMelody has none, so the types are ours (PROTOCOL.md §9).
+            // realme Link's four presets; HeyMelody has none, so the types are ours (PROTOCOL-LEGACY.md §9).
             101 => "eq_pure_raw",
             102 => "eq_deep_bass",
             103 => "eq_pure_vocals",
@@ -481,7 +481,7 @@ pub fn eq_builtins(model: Option<&Value>, firmware: Option<&str>) -> Vec<(u8, &'
     }).collect()
 }
 
-// --- Hearing profile (PROTOCOL.md §9 Golden Sound) ---
+// --- Hearing profile (PROTOCOL-LEGACY.md §9 Golden Sound) ---
 
 /// On / off; it applies the record stored on the buds.
 pub const FEATURE_HEARING: u8 = 0x0B;
@@ -560,7 +560,7 @@ pub fn hearing_radar(hearing: &[f32], scan: Option<(&[f32], u32)>) -> [f32; 6] {
     })
 }
 
-// --- Gestures (PROTOCOL.md §5, §6) ---
+// --- Gestures (PROTOCOL-LEGACY.md §5, §6) ---
 
 /// The gesture table: read `0x0108` -> `<status> <count>` then `<dev> <btn> <act> <fn>` entries; write `0x0401`
 /// `<count> <entries>`, always the whole table (the entries we do not change come from the last read).

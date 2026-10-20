@@ -1,4 +1,4 @@
-//! Typed messages of docs/PROTOCOL-NEXT.md: builds what the app sends. Each function returns a [`Frame`]
+//! Typed messages of docs/PROTOCOL.md: builds what the app sends. Each function returns a [`Frame`]
 //! (command, payload); the link layer adds the sequence number and the frame. Written from the spec.
 
 use crate::msg::{Binding, Bitmap, EqPreset};

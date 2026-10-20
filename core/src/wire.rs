@@ -1,4 +1,4 @@
-//! The link layer of docs/PROTOCOL-NEXT.md §2: frames, slices, reassembly. No Bluetooth, no commands.
+//! The link layer of docs/PROTOCOL.md §2: frames, slices, reassembly. No Bluetooth, no commands.
 
 /// One message: what a frame, or the slices of one message, carry.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -119,7 +119,7 @@ mod tests {
 
     #[test]
     fn captured_frames() {
-        // PROTOCOL.md §2 examples
+        // PROTOCOL-LEGACY.md §2 examples
         assert_eq!(encode(&Message { cmd: 0x0100, seq: 1, payload: vec![] }, BUDGET), [vec![0xAA, 7, 0, 0, 0, 1, 1, 0, 0]]);
         assert_eq!(encode(&Message { cmd: 0x0404, seq: 6, payload: vec![1, 1, 1] }, BUDGET),
             [vec![0xAA, 0x0A, 0, 0, 4, 4, 6, 3, 0, 1, 1, 1]]);

@@ -18,7 +18,7 @@ import java.util.Locale
 import kotlin.random.Random
 
 /**
- * The Golden Sound hearing test, a bottom sheet (HeyMelody's flow, PROTOCOL.md §9):
+ * The Golden Sound hearing test, a bottom sheet (HeyMelody's flow, PROTOCOL-LEGACY.md §9):
  * ear scan (models with one), then a tone per frequency, left 1..6 then right 1..6, each set with
  * the slider to where it just disappears; then the enhance type is read, the record saved and applied.
  * Music or a bud coming out (status event `0x08`) stops the test; closing the sheet stops it too.

@@ -3,7 +3,7 @@ package com.spizganed.quickbuds.protocol2
 import android.content.Context
 import com.spizganed.quickbuds.ui.ThemeRes
 
-/** The "new protocol" setting: the rebuilt protocol layer (docs/PROTOCOL-NEXT.md). Off unless the user turns it on. */
+/** The "new protocol" setting: the rebuilt protocol layer (docs/PROTOCOL.md). Off unless the user turns it on. */
 object ProtocolNext {
     const val KEY = "protocolNext"
     /** Set once the update dialog has been answered, so it shows once. */

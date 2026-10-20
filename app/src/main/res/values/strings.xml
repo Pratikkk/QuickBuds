@@ -251,7 +251,7 @@
 
     <!--
       On-call gestures (btn 0x06). Shared between both buds, so this section has no
-      Left/Right selector unlike the rest of the screen — see PROTOCOL.md §6.
+      Left/Right selector unlike the rest of the screen — see PROTOCOL-LEGACY.md §6.
     -->
     <string name="gesture_on_call_double_tap">Double tap</string>
     <string name="gesture_on_call_long_hold">Long hold</string>
@@ -301,7 +301,7 @@
       bytes are now measured (see GestureAction) and a change IS written to the buds.
       UPDATED 2026-09-22: the second sentence used to say the buds alone decide which
       modes the hold's ANC cycle contains. That was true only because the mask write
-      was not wired yet — it now is (see GestureAction.holdMaskBit, PROTOCOL.md §5), so
+      was not wired yet — it now is (see GestureAction.holdMaskBit, PROTOCOL-LEGACY.md §5), so
       the sentence would be a lie again if left as it was.
     -->
     <string name="gesture_write_note">Changes are sent to the earbuds, then read back to confirm.</string>

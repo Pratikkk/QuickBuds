@@ -1,4 +1,4 @@
-//! The LEGACY wire format (docs/PROTOCOL.md §2): `AA <TotalLen LEB128> 00 00 <cmd lo> <cmd hi> <seq> <len lo> <len hi> <payload>`.
+//! The LEGACY wire format (docs/PROTOCOL-LEGACY.md §2): `AA <TotalLen LEB128> 00 00 <cmd lo> <cmd hi> <seq> <len lo> <len hi> <payload>`.
 //! TotalLen counts everything after itself: 7 + payload.
 //! Framing, decoders and answers of the old link. `newproto.rs` is the new link. The old builders also stay as the
 //! reference of the core tests; the senders use `buds_core::cmd`. Shared ids and types are in `types.rs`.
@@ -263,7 +263,7 @@ pub fn decode(p: &[u8]) -> Option<Event> {
     })
 }
 
-/// `0x012F` payload (PROTOCOL.md "Batch query"): `<count>`, then `<cmd LE> <len LE> <payload>` per query.
+/// `0x012F` payload (PROTOCOL-LEGACY.md "Batch query"): `<count>`, then `<cmd LE> <len LE> <payload>` per query.
 pub fn batch_payload(queries: &[(u16, Vec<u8>)]) -> Vec<u8> {
     let mut b = vec![queries.len() as u8];
     for (cmd, pl) in queries {
@@ -276,7 +276,7 @@ pub fn batch_payload(queries: &[(u16, Vec<u8>)]) -> Vec<u8> {
 
 
 /// HeyMelody's answer `(cmd, payload)` to a frame the buds send on their own, or `None`
-/// (PROTOCOL.md §9 "Requests from the buds"). `[VENDOR]`
+/// (PROTOCOL-LEGACY.md §9 "Requests from the buds"). `[VENDOR]`
 pub fn answer_for(p: &[u8], unix: u32) -> Option<(u16, Vec<u8>)> {
     let cmd = cmd_of(p);
     let pl = payload_of(p);
@@ -533,7 +533,7 @@ mod tests {
 
     #[test]
     fn codecs() {
-        // Buds 4 `0x8123` = `00 46 01`: AAC, LDAC, LHDC (bit 8 is past the table); PROTOCOL.md trusts it only on `highAudio`.
+        // Buds 4 `0x8123` = `00 46 01`: AAC, LDAC, LHDC (bit 8 is past the table); PROTOCOL-LEGACY.md trusts it only on `highAudio`.
         assert_eq!(codecs_of(0x0146), [2, 3, 7]);
         assert_eq!(codecs_of(0b1100_0000), [8]);
         assert_eq!(codecs_of(0b0100_0001), [1, 7]);

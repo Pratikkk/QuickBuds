@@ -17,7 +17,7 @@ package com.spizganed.quickbuds.protocol
  * with additional framing details from
  * Star-ZER0/Pods-Protocol-Reverse-Engineering.
  *
- * READ docs/PROTOCOL.md BEFORE EDITING THIS FILE. It documents the frame layout,
+ * READ docs/PROTOCOL-LEGACY.md BEFORE EDITING THIS FILE. It documents the frame layout,
  * every known command, the ANC set-vs-notify trap, and the assumptions that were
  * already proven wrong once. Its [OSS] tags and the README's Credits record which
  * source each area came from; tag a new constant there when you add it here.
@@ -33,13 +33,13 @@ object OpoProtocol {
     const val CMD_QUERY_PRODUCT_ID = 0x0103
     const val CMD_QUERY_BROADCAST = 0x0200
     const val CMD_FIND_BUDS = 0x0400
-    /** Earbud fit test, `01` start / `00` stop. `[VENDOR]` `switchCompactnessDetectionStatus` (PROTOCOL.md §9). */
+    /** Earbud fit test, `01` start / `00` stop. `[VENDOR]` `switchCompactnessDetectionStatus` (PROTOCOL-LEGACY.md §9). */
     const val CMD_FIT_TEST = 0x0405
     const val CMD_SET_FEATURE = 0x0403
     const val CMD_SET_ANC = 0x0404
     const val CMD_SET_SPATIAL = 0x0422
     const val CMD_QUERY_BATTERY = 0x0106
-    /** Firmware version, empty payload -> `0x8105`. `[CAPTURE]` 2026-09-27 (PROTOCOL.md §3). */
+    /** Firmware version, empty payload -> `0x8105`. `[CAPTURE]` 2026-09-27 (PROTOCOL-LEGACY.md §3). */
     const val CMD_QUERY_FIRMWARE = 0x0105
     const val CMD_QUERY_ANC = 0x010C
     const val CMD_QUERY_STATUS = 0x010D
@@ -53,14 +53,14 @@ object OpoProtocol {
     const val CMD_SAVE_CUSTOM_EQ = 0x0418
     const val CMD_SET_BASSWAVE_LEVEL = 0x041B
     const val CMD_EQ_CHANGED = 0x0504     // push: `<id>` after any EQ change
-    /** Alert-sound (prompt) volume, `[level]` 1..10. `[CAPTURE]` 2026-09-25, PROTOCOL.md §9. */
+    /** Alert-sound (prompt) volume, `[level]` 1..10. `[CAPTURE]` 2026-09-25, PROTOCOL-LEGACY.md §9. */
     const val CMD_SET_ALERT_VOLUME = 0x0427
     /** -> `0x8130` `00 <level>`. Empty payload, as HeyMelody sends it. */
     const val CMD_QUERY_ALERT_VOLUME = 0x0130
-    /** Paired-device list, empty payload -> `0x8112`. `[CAPTURE]` 2026-09-25, PROTOCOL.md §9. */
+    /** Paired-device list, empty payload -> `0x8112`. `[CAPTURE]` 2026-09-25, PROTOCOL-LEGACY.md §9. */
     const val CMD_QUERY_DEVICES = 0x0112
     /**
-     * Another device on the buds' list, `[VENDOR]` (PROTOCOL.md §9): `0x0429 01 <MAC>` connect, `02 <MAC>`
+     * Another device on the buds' list, `[VENDOR]` (PROTOCOL-LEGACY.md §9): `0x0429 01 <MAC>` connect, `02 <MAC>`
      * disconnect, `04 00` preferred device automatic, `04 01 <MAC>`; the MAC in written order (the list
      * reply carries it reversed). Read the preferred one with `0x0132 02` -> `00 02 <00 auto | 01 <MAC>>`.
      */
@@ -111,16 +111,16 @@ object OpoProtocol {
     const val EVT_EAR_SCAN = 0x0E             // 0x0204 subType: ear scan result, [CAPTURE] (pushed unregistered)
 
     const val CMD_GAME_SOUND = 0x0423
-    /** Game sound type: `0x0423 <type> 01`, read `0x012B` -> `00 <selected> <count> <types>`. `[VENDOR]` (PROTOCOL.md §9). */
+    /** Game sound type: `0x0423 <type> 01`, read `0x012B` -> `00 <selected> <count> <types>`. `[VENDOR]` (PROTOCOL-LEGACY.md §9). */
     const val CMD_QUERY_GAME_SOUND = 0x012B
     /** Spatial type (`0` off, `1` fixed, `2` head tracking): `0x0422 <type>`, read `0x012A` -> `00 <type>`, pushed as `0x0510 <type>`. `[VENDOR]` */
     const val CMD_SET_SPATIAL_TYPE = 0x0422
     const val CMD_QUERY_SPATIAL_TYPE = 0x012A
     const val CMD_SPATIAL_TYPE_PUSH = 0x0510
-    /** Who renders 3D audio: `0x041E 00` the buds, `01` the phone. realme Link sends `00` on connect. `[VENDOR]` (PROTOCOL.md §9). */
+    /** Who renders 3D audio: `0x041E 00` the buds, `01` the phone. realme Link sends `00` on connect. `[VENDOR]` (PROTOCOL-LEGACY.md §9). */
     const val CMD_SPATIAL_SOURCE = 0x041E
     /**
-     * Codec picker on `highAudio` models (PROTOCOL.md §9), `[VENDOR]`, unverified on buds: read the
+     * Codec picker on `highAudio` models (PROTOCOL-LEGACY.md §9), `[VENDOR]`, unverified on buds: read the
      * current codec with `0x0114` -> `00 <codec>`, the offered ones with `0x0123` -> `00 <u16 LE mask>`
      * (bit k = codec k + 1), write `0x041A <codec> <hiRes> 00`. The buds restart after the write.
      */
@@ -152,7 +152,7 @@ object OpoProtocol {
         return seq
     }
 
-    /** `TotalLen` is LEB128: one byte up to 127, more after (PROTOCOL.md §2). */
+    /** `TotalLen` is LEB128: one byte up to 127, more after (PROTOCOL-LEGACY.md §2). */
     @Synchronized
     fun buildPacket(cmd: Int, seq: Int? = null, payload: ByteArray = ByteArray(0)): ByteArray {
         val s = seq ?: nextSeq()
@@ -172,13 +172,13 @@ object OpoProtocol {
         return head + payload
     }
 
-    /** Time request `0x0500` from the buds (PROTOCOL.md §9). */
+    /** Time request `0x0500` from the buds (PROTOCOL-LEGACY.md §9). */
     const val REQ_TIME = 0x0500
     /** Command groups HeyMelody knows; a request from the buds in any other gets `01`. */
     private val KNOWN_GROUPS = setOf(0x0100, 0x0200, 0x0300, 0x0400, 0x0500, 0x0F00)
 
     /**
-     * HeyMelody's answer to a frame the buds send on their own, or null (PROTOCOL.md §9 "Requests
+     * HeyMelody's answer to a frame the buds send on their own, or null (PROTOCOL-LEGACY.md §9 "Requests
      * from the buds"). [cmd], [seq], [payload] are the incoming frame's. `[VENDOR]`
      */
     fun answerFor(cmd: Int, seq: Int, payload: ByteArray, unixSeconds: Long): ByteArray? {
@@ -254,7 +254,7 @@ object OpoProtocol {
      */
     /**
      * The events to subscribe to: ours, kept to those the buds offer in `0x8200` when they sent one,
-     * as HeyMelody subscribes to the offered list only (PROTOCOL.md §4). Some firmwares never ack a
+     * as HeyMelody subscribes to the offered list only (PROTOCOL-LEGACY.md §4). Some firmwares never ack a
      * list with others.
      */
     fun notifyIds(fitTest: Boolean, golden: Boolean, personalNoise: Boolean, offered: Set<Int>?): List<Int> =
@@ -278,7 +278,7 @@ object OpoProtocol {
         return (0 until n).map { payload[2 + it].toInt() and 0xFF }.toSet()
     }
 
-    // --- Golden Sound test (PROTOCOL.md §9), `[CAPTURE]` 2026-09-29 + `[VENDOR]` ---
+    // --- Golden Sound test (PROTOCOL-LEGACY.md §9), `[CAPTURE]` 2026-09-29 + `[VENDOR]` ---
     const val CMD_GOLDEN_DETECT = 0x040D      // q0: ear scan `04 01|00 <uid>`, hearing test `02 01|00`
     const val CMD_GOLDEN_RECORD = 0x040E      // w0 / m1: tone, stop tone, apply record
     const val CMD_GOLDEN_RESTORE = 0x0411     // F0: restore data (the description id)
@@ -346,7 +346,7 @@ object OpoProtocol {
     /**
      * SET_ANC (0x0404): `01 01` then a little-endian bit field with bit [bit] set, `index / 8 + 1`
      * bytes long. The bit is the mode's `protocolIndex` for the connected model ([AncModes],
-     * PROTOCOL.md §5). Buds 4: Off 0 `01 01 01`, Transparency 2 `01 01 04`, Deep 4, Medium 5,
+     * PROTOCOL-LEGACY.md §5). Buds 4: Off 0 `01 01 01`, Transparency 2 `01 01 04`, Deep 4, Medium 5,
      * Light 6, Adaptive 11 `01 01 00 08`.
      *
      * Reports (`0x810C`, `0x0204` subType 3) name the SAME tree's bits, but a mode's child where it
@@ -369,7 +369,7 @@ object OpoProtocol {
     fun findTone(on: Boolean): ByteArray =
         buildPacket(CMD_FIND_BUDS, payload = byteArrayOf(if (on) 0x01 else 0x00))
 
-    /** Any `0x0403` feature switch. Spatial (`0x1B`) and Hi-Res (`0x18`) are `[CAPTURE]` — PROTOCOL.md §9. */
+    /** Any `0x0403` feature switch. Spatial (`0x1B`) and Hi-Res (`0x18`) are `[CAPTURE]` — PROTOCOL-LEGACY.md §9. */
     fun setFeature(featureId: Int, on: Boolean): ByteArray =
         buildPacket(CMD_SET_FEATURE, payload = featurePayload(featureId, on))
 
@@ -436,7 +436,7 @@ object OpoProtocol {
      *
      * THIS CONFIRMS THE MASK REUSES [anc]'S OWN BIT NUMBERING, not a separate scheme —
      * bit 11 (`0x0800`) is exactly Adaptive's bit in the plain SET_ANC table above, and it is
-     * the only bit that moved. PROTOCOL.md §5 previously carried this as `[INFERRED]`; this
+     * the only bit that moved. PROTOCOL-LEGACY.md §5 previously carried this as `[INFERRED]`; this
      * capture settles it. Off = bit 0, Transparency = bit 2 (matching [anc]); bit 1 is
      * some generic "On" that resolves to whichever level was last hand-set, seen set in every
      * capture so far and never independently isolated.
@@ -503,7 +503,7 @@ object OpoProtocol {
     fun setOnCall(act: Int, fn: Int, button: Int = KeyFunctionParser.BUTTON_ON_CALL): ByteArray =
         buildPacket(CMD_SET_KEY_FUNCTION, payload = onCallPayload(act, fn, button))
 
-    // --- Equalizer, all [CAPTURE] 2026-09-23 (PROTOCOL.md §9) ---
+    // --- Equalizer, all [CAPTURE] 2026-09-23 (PROTOCOL-LEGACY.md §9) ---
 
     /** Current EQ -> `0x810F` `00 <id>` (00-02 built-in, 04+ custom). */
     fun queryEq(): ByteArray = buildPacket(CMD_QUERY_EQ)
@@ -554,12 +554,12 @@ object OpoProtocol {
      * READ-ONLY, and deliberately so: it reports what the buds are already doing,
      * so it cannot change state or break a binding. The 0x8108 reply is the cheapest
      * shot at learning the `function` enum, which is the one thing blocking gesture
-     * configuration in our app (PROTOCOL.md §6). It may also hand us the enum straight
+     * configuration in our app (PROTOCOL-LEGACY.md §6). It may also hand us the enum straight
      * from the device, which would remove the need for a HeyMelody capture.
      *
      * Payload is a bare query (no payload), matching the other 0x01xx reads. The buds
      * DO answer it: the reply is `<status> <count> <4-byte entries>...` and its layout
-     * is `[CAPTURE]`-confirmed — see PROTOCOL.md §6 and `KeyFunctionParser`, which
+     * is `[CAPTURE]`-confirmed — see PROTOCOL-LEGACY.md §6 and `KeyFunctionParser`, which
      * logs it RAW and grouped so two readings can be diffed.
      *
      * The `function` VALUES are no longer a mystery either: they were MEASURED by
@@ -604,7 +604,7 @@ object OpoProtocol {
     }
 
     /**
-     * [statusQuery]: the model's `statusQuery` (hex ids, HeyMelody's per-model list, PROTOCOL.md §9); a model
+     * [statusQuery]: the model's `statusQuery` (hex ids, HeyMelody's per-model list, PROTOCOL-LEGACY.md §9); a model
      * without one gets the full list below. [windNoise]: the model's `windNoise` flag adds [Feature.WIND_NOISE].
      */
     fun queryStatus(statusQuery: String? = null, windNoise: Boolean = false): ByteArray {
@@ -620,7 +620,7 @@ object OpoProtocol {
     }
 
     /**
-     * `0x012F` (PROTOCOL.md "Batch query"): built query [packets] in one frame, `<count>` then
+     * `0x012F` (PROTOCOL-LEGACY.md "Batch query"): built query [packets] in one frame, `<count>` then
      * `<cmd LE> <len LE> <payload>` each. Each packet's length fits in one byte (short queries).
      */
     fun batch(packets: List<ByteArray>): ByteArray {
@@ -660,7 +660,7 @@ object OpoProtocol {
  * Handles partial frames, multiple frames in one read, and garbage before headers.
  *
  * `TotalLen` (byte 1) is LEB128, so a frame over 127 bytes has a longer header (Golden Sound's
- * ear-scan data, PROTOCOL.md §9). Every frame comes out [normalise]d, so the rest of the app
+ * ear-scan data, PROTOCOL-LEGACY.md §9). Every frame comes out [normalise]d, so the rest of the app
  * keeps its fixed layout: cmd at 4-5, seq at 6, payload length at 7-8, payload from 9.
  */
 class OppoPacketFramer {
@@ -774,7 +774,7 @@ object AncEventParser {
      * True if this 0x0204 payload is a GENUINE ANC-changed event.
      *
      * `setHoldAncModes()`'s write also raises
-     * a `subType 0x03` frame (PROTOCOL.md §5's `[CAPTURE]` note on this), but its payload is
+     * a `subType 0x03` frame (PROTOCOL-LEGACY.md §5's `[CAPTURE]` note on this), but its payload is
      * `03 02 01 <mask LE>` — the `0x010C` switch-list QUERY's own echo shape, not this event's.
      * The real event is always `03 01 01 <value LE>` (see the class doc). Before this fix,
      * `isAncEvent` only checked `payload[0] == 0x03`, so the mask-write's echo passed as a real
@@ -892,7 +892,7 @@ object BatteryParser {
 
 /**
  * Custom EQ presets — the `0x8122` list and the `0x0418` select/save frame.
- * `[CAPTURE]` 2026-09-23, confirmed against HeyMelody screenshots; see PROTOCOL.md §9.
+ * `[CAPTURE]` 2026-09-23, confirmed against HeyMelody screenshots; see PROTOCOL-LEGACY.md §9.
  *
  * List entry: `<flag> <tag 2B> <id> <nameLen> <name> <bandCount> [freq u16 LE, gain s8]...`
  * `flag` 01 = selected. `tag` is `FA 06` in every frame seen: `[VENDOR]` the gain range, min -6 then
@@ -1061,7 +1061,7 @@ object GameModeParser {
  * Evidence: a 74-byte payload, `00 12 ...`, where 2 + 0x12*4 = 74 EXACTLY. The
  * count is the second byte. `KeyFunctionItem.cs` does not model this: it describes
  * ONE entry's bytes, not the payload around it — which is exactly how the off-by-one
- * got in. See PROTOCOL.md §6.
+ * got in. See PROTOCOL-LEGACY.md §6.
  *
  * THE ENTRY FIELD ORDER IS AS THAT FILE SAYS, and the reply supports it: the third
  * byte is a small value (1..6, one per action this button supports) and the fourth
@@ -1070,7 +1070,7 @@ object GameModeParser {
  * `{1..6}`, which is the less plausible reading.
  *
  * The `function` VALUES were unknown for a long time and are now MEASURED — see
- * `GestureAction.functionByte` and PROTOCOL.md §6. Do not re-derive them.
+ * `GestureAction.functionByte` and PROTOCOL-LEGACY.md §6. Do not re-derive them.
  *
  * WHAT IS STILL UNKNOWN, AND MUST NOT BE NAMED:
  *   - the `buttonAction` NUMBERS: they are NOT the `0x0204` subType `0xF1` action
@@ -1080,7 +1080,7 @@ object GameModeParser {
  *
  * So the `buttonAction` field is still printed as a NUMBER ONLY. A dropdown built on
  * a guessed enum looks finished while sending the wrong thing, and guessing ANC bits
- * already cost this project a regression (PROTOCOL.md §5).
+ * already cost this project a regression (PROTOCOL-LEGACY.md §5).
  *
  * Because the layout is exactly the thing that was once wrong here, the log line
  * still ends with `RAW=[...]`, so a capture stays readable by eye even if a future
@@ -1146,7 +1146,7 @@ object KeyFunctionParser {
      * entries, and the very next `0x8108` read-back always expanded it into identical `fn`
      * values on BOTH `dev=0x01` and `dev=0x02` — never `dev=0x04` itself on a READ.
      *
-     * The hold's ANC-cycle membership (`setSupportNoiseReduction`, PROTOCOL.md §5) is a
+     * The hold's ANC-cycle membership (`setSupportNoiseReduction`, PROTOCOL-LEGACY.md §5) is a
      * DIFFERENT command with no `deviceType` byte in its payload at all — its shared-both-buds
      * behaviour is a property of that command itself, not this alias. Do not assume the two
      * are the same mechanism.
@@ -1385,7 +1385,7 @@ object KeyFunctionParser {
  * changes made on the BUDS raise no 0x0204 subtype event — verified three times".
  * They DO: subType 0x03, mapped in AncEventParser, and the belief survived three
  * captures only because `noteUnattributed` blanket-excludes cmd 0x0204, so an
- * undecoded subType printed nothing at all (PROTOCOL.md §5).
+ * undecoded subType printed nothing at all (PROTOCOL-LEGACY.md §5).
  *
  * WHAT THE F1 FRAME IS FOR: it says WHEN, and which side and action. On a real ANC
  * hold, F1 lands FIRST and the 0x0204 subType 0x03 frame follows 1.3-2.0 s later.
@@ -1400,7 +1400,7 @@ object KeyFunctionParser {
  * binding is one function per (device, button, action) anyway. The observation never
  * supported the conclusion.
  *
- * BYTE2 AND BYTE3 ARE THE KEY-FUNCTION MAPPING. PROTOCOL.md §6.1 asked whether byte3
+ * BYTE2 AND BYTE3 ARE THE KEY-FUNCTION MAPPING. PROTOCOL-LEGACY.md §6.1 asked whether byte3
  * carries the bound function. It does — and byte2 carries the key-function *action*
  * number, so the F1 frame is the key-function entry for the gesture that fired:
  *

@@ -14,7 +14,7 @@ const RECEIVED: i32 = 1;
 const CONNECTION: i32 = 2;
 const PROBLEM: i32 = 3;
 
-/// `0x0403` feature ids (PROTOCOL.md §9) by the name the apps show (the phone's `SimpleLog.FEATURES`).
+/// `0x0403` feature ids (PROTOCOL-LEGACY.md §9) by the name the apps show (the phone's `SimpleLog.FEATURES`).
 fn feature(id: u8) -> Option<&'static str> {
     Some(match id {
         0x04 => "Auto play/pause", 0x06 => "Low latency mode", 0x09 => "Vocal enhancement", 0x0B => "Hearing profile",

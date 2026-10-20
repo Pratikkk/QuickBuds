@@ -67,7 +67,7 @@ object ProblemReport {
     }
 
     /**
-     * A packet line whose bytes hold device addresses and names (PROTOCOL.md §9 device list and device manager:
+     * A packet line whose bytes hold device addresses and names (PROTOCOL-LEGACY.md §9 device list and device manager:
      * `0x8112`, `0x0429`, `0x8132`, push `0x0204` sub `06`) keeps only its 9-byte header.
      */
     private fun dropDeviceBytes(line: String): String {

@@ -1,4 +1,4 @@
-//! The NEW protocol (docs/PROTOCOL-NEXT.md) as the app uses it: the glue between `buds_core` (frames, messages,
+//! The NEW protocol (docs/PROTOCOL.md) as the app uses it: the glue between `buds_core` (frames, messages,
 //! answers) and the app's log-format frames and `Event`. The legacy link is `protocol.rs`; `proto.rs` picks one.
 
 use crate::types::{cmd_of, payload_of, seq_of, Event};

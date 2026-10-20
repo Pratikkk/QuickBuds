@@ -145,7 +145,7 @@ fn load_settings() -> serde_json::Value {
         .and_then(|s| serde_json::from_str(&s).ok()).unwrap_or_else(|| serde_json::json!({}))
 }
 
-/// Settings › Legacy protocol (`protocol_legacy`): the user chose the old link (docs/PROTOCOL-NEXT.md).
+/// Settings › Legacy protocol (`protocol_legacy`): the user chose the old link (docs/PROTOCOL.md).
 fn protocol_legacy() -> bool { load_settings()["protocol_legacy"].as_bool().unwrap_or(false) }
 
 /// `settings.json` "protocol_fell_back": `<address>|<version>` of buds the new protocol failed on in this app version.

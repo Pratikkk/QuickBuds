@@ -32,7 +32,7 @@ object NewProtocol {
     fun answer(cmd: Int, seq: Int, payload: ByteArray, unixSeconds: Long): ByteArray? =
         Decode.answer(Wire.Message(cmd, seq, payload), unixSeconds)?.let { OpoProtocol.buildPacket(it.cmd, it.seq, it.payload) }
 
-    /** The frames that carry a packet: a message too big for one frame goes out in slices (docs/PROTOCOL-NEXT.md §2). */
+    /** The frames that carry a packet: a message too big for one frame goes out in slices (docs/PROTOCOL.md §2). */
     fun frames(packet: ByteArray): List<ByteArray> =
         Wire.Reassembler().push(packet).flatMap { Wire.encode(it) }.ifEmpty { listOf(packet) }
 

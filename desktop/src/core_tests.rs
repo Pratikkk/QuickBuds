@@ -13,7 +13,7 @@ mod wire {
 
     #[test]
     fn captured_frames() {
-        // PROTOCOL.md §2 examples
+        // PROTOCOL-LEGACY.md §2 examples
         assert_eq!(encode(&Message { cmd: 0x0100, seq: 1, payload: vec![] }, BUDGET), [vec![0xAA, 7, 0, 0, 0, 1, 1, 0, 0]]);
         assert_eq!(encode(&Message { cmd: 0x0404, seq: 6, payload: vec![1, 1, 1] }, BUDGET),
             [vec![0xAA, 0x0A, 0, 0, 4, 4, 6, 3, 0, 1, 1, 1]]);
@@ -191,7 +191,7 @@ mod msg {
 
     #[test]
     fn pushes_the_shipping_decoder_ignores() {
-        // Gesture, from the capture in PROTOCOL.md §6: right hold.
+        // Gesture, from the capture in PROTOCOL-LEGACY.md §6: right hold.
         assert_eq!(decode(&push_msg(&[0xF1, 2, 1, 4, 8, 3])), Some(Inbound::Gesture { side: 2, button: 1, act: 4, func: 8, context: 3, options: vec![] }));
         assert_eq!(decode(&push_msg(&[0xF1, 1, 1])), None);
         // Connected devices: one entry.
