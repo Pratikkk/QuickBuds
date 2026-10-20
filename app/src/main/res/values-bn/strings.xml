@@ -76,8 +76,6 @@
     <string name="row_vocal_sub">গানে আরও স্পষ্ট কণ্ঠ</string>
     <string name="row_wind_noise_title">বাতাসের শব্দ কমানো</string>
     <string name="row_wind_noise_sub">বাইরে বাতাসের শব্দ কম</string>
-    <string name="settings_protocol_next_title">নতুন প্রোটোকল (বিটা)</string>
-    <string name="settings_protocol_next_sub">ইয়ারবাডের সাথে নতুন করে তৈরি, আরও নির্ভুল সংযোগ। প্রয়োগ করতে আবার সংযোগ করুন।</string>
     <string name="protocol_next_dialog_title">নতুন প্রোটোকল পাওয়া যাচ্ছে</string>
     <string name="protocol_next_dialog_body">QuickBuds 5.0-এ প্রোটোকল স্তর নতুন করে তৈরি হয়েছে। এটি ইয়ারবাডের সাথে আরও নির্ভুল ও পরিষ্কারভাবে কথা বলে। এটি ডিফল্টভাবে বন্ধ থাকে। সেটিংসে যেকোনো সময় চালু বা বন্ধ করতে পারেন।</string>
     <string name="protocol_next_dialog_try">নতুন প্রোটোকল চেষ্টা করুন</string>
@@ -470,4 +468,6 @@
     <string name="background_setup_off">বন্ধ করুন</string>
     <string name="about_privacy_title">গোপনীয়তা</string>
     <string name="about_privacy_body">সক্রিয় ব্যবহারকারী গণনার জন্য QuickBuds দিনে একবার তার প্ল্যাটফর্ম ও সংস্করণ নম্বর (যেমন \"Android 5.0.0\") পাঠায়। কোনো আইডি, ঠিকানা বা ইয়ারবাডের তথ্য পাঠায় না। রিপোর্ট শুধু আপনি পাঠালেই যায়।</string>
+    <string name="settings_protocol_legacy_title">লেগেসি প্রোটোকল</string>
+    <string name="settings_protocol_legacy_sub">নতুনটি কাজ না করলে ইয়ারবাডের সাথে পুরনো সংযোগ ব্যবহার করুন। প্রয়োগ করতে আবার সংযুক্ত করুন।</string>
 </resources>

@@ -76,8 +76,6 @@
     <string name="row_vocal_sub">歌曲人声更清晰</string>
     <string name="row_wind_noise_title">风噪抑制</string>
     <string name="row_wind_noise_sub">减少户外风噪</string>
-    <string name="settings_protocol_next_title">新协议（测试版）</string>
-    <string name="settings_protocol_next_sub">重新构建、更精确的耳机连接。重新连接后生效。</string>
     <string name="protocol_next_dialog_title">新协议可用</string>
     <string name="protocol_next_dialog_body">QuickBuds 5.0 重新构建了协议层，与耳机的通信更精确、更简洁。默认关闭，您可随时在设置中开启或关闭。</string>
     <string name="protocol_next_dialog_try">试用新协议</string>
@@ -472,4 +470,6 @@
     <string name="background_setup_off">关闭</string>
     <string name="about_privacy_title">隐私</string>
     <string name="about_privacy_body">QuickBuds 每天一次发送其平台和版本号（例如“Android 5.0.0”）来统计活跃用户。它不发送 ID、地址或耳机数据。只有你发送时才会发出报告。</string>
+    <string name="settings_protocol_legacy_title">旧协议</string>
+    <string name="settings_protocol_legacy_sub">新连接失败时使用与耳机的旧连接。重新连接后生效。</string>
 </resources>

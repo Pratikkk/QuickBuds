@@ -76,8 +76,6 @@
     <string name="row_vocal_sub">Mas malinaw na boses sa mga kanta</string>
     <string name="row_wind_noise_title">Pagbawas ng ingay ng hangin</string>
     <string name="row_wind_noise_sub">Mas kaunting ingay ng hangin sa labas</string>
-    <string name="settings_protocol_next_title">Bagong protocol (beta)</string>
-    <string name="settings_protocol_next_sub">Isang muling-ginawa, mas tumpak na koneksyon sa earbuds. Kumonekta ulit para ilapat.</string>
     <string name="protocol_next_dialog_title">May bagong protocol</string>
     <string name="protocol_next_dialog_body">May muling-ginawang protocol layer ang QuickBuds 5.0. Mas tumpak at malinis itong nakikipag-usap sa earbuds. Naka-off ito bilang default. Maaari mo itong i-on o i-off anumang oras sa Settings.</string>
     <string name="protocol_next_dialog_try">Subukan ang bagong protocol</string>
@@ -470,4 +468,6 @@
     <string name="background_setup_off">I-off</string>
     <string name="about_privacy_title">Privacy</string>
     <string name="about_privacy_body">Isang beses kada araw, ipinapadala ng QuickBuds ang platform at version number nito (halimbawa \"Android 5.0.0\") para bilangin ang mga aktibong user. Walang ID, address o data ng earbuds na ipinapadala. Ang mga ulat ay ipinapadala lamang kapag ikaw ang nagpadala.</string>
+    <string name="settings_protocol_legacy_title">Legacy protocol</string>
+    <string name="settings_protocol_legacy_sub">Gamitin ang lumang link sa earbuds kung pumalpak ang bago. Kumonekta ulit para ilapat.</string>
 </resources>

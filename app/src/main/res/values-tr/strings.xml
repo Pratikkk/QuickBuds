@@ -76,8 +76,6 @@
     <string name="row_vocal_sub">Şarkılarda daha net vokal</string>
     <string name="row_wind_noise_title">Rüzgar gürültüsü azaltma</string>
     <string name="row_wind_noise_sub">Dışarıda daha az rüzgar gürültüsü</string>
-    <string name="settings_protocol_next_title">Yeni protokol (beta)</string>
-    <string name="settings_protocol_next_sub">Kulaklıkla yeniden kurulmuş, daha doğru bir bağlantı. Uygulamak için yeniden bağlanın.</string>
     <string name="protocol_next_dialog_title">Yeni protokol kullanılabilir</string>
     <string name="protocol_next_dialog_body">QuickBuds 5.0, yeniden yazılmış bir protokol katmanı içerir. Kulaklıkla daha doğru ve temiz iletişim kurar. Varsayılan olarak kapalıdır. Ayarlar\'dan istediğiniz zaman açıp kapatabilirsiniz.</string>
     <string name="protocol_next_dialog_try">Yeni protokolü dene</string>
@@ -470,4 +468,6 @@
     <string name="background_setup_off">Kapat</string>
     <string name="about_privacy_title">Gizlilik</string>
     <string name="about_privacy_body">QuickBuds, etkin kullanıcıları saymak için günde bir kez platformunu ve sürüm numarasını (örneğin “Android 5.0.0”) gönderir. Kimlik, adres veya kulaklık verisi göndermez. Raporlar yalnızca sen gönderdiğinde gönderilir.</string>
+    <string name="settings_protocol_legacy_title">Eski protokol</string>
+    <string name="settings_protocol_legacy_sub">Yenisi başarısız olursa kulaklıkla eski bağlantıyı kullan. Uygulamak için yeniden bağlan.</string>
 </resources>

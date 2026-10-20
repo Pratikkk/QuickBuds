@@ -76,8 +76,6 @@
     <string name="row_vocal_sub">Tisztább ének a dalokban</string>
     <string name="row_wind_noise_title">Szélzajcsökkentés</string>
     <string name="row_wind_noise_sub">Kevesebb szélzaj a szabadban</string>
-    <string name="settings_protocol_next_title">Új protokoll (béta)</string>
-    <string name="settings_protocol_next_sub">Újraépített, pontosabb kapcsolat a fülhallgatóval. Az alkalmazáshoz csatlakozzon újra.</string>
     <string name="protocol_next_dialog_title">Új protokoll érhető el</string>
     <string name="protocol_next_dialog_body">A QuickBuds 5.0 újraépített protokollréteget tartalmaz. Pontosabban és tisztábban kommunikál a fülhallgatóval. Alapértelmezés szerint ki van kapcsolva. A Beállításokban bármikor be- vagy kikapcsolhatja.</string>
     <string name="protocol_next_dialog_try">Új protokoll kipróbálása</string>
@@ -470,4 +468,6 @@
     <string name="background_setup_off">Kikapcsolás</string>
     <string name="about_privacy_title">Adatvédelem</string>
     <string name="about_privacy_body">A QuickBuds naponta egyszer elküldi a platformját és a verziószámát (például „Android 5.0.0”) az aktív felhasználók megszámlálásához. Nem küld azonosítót, címet vagy fülhallgatóadatot. A jelentések csak akkor mennek el, ha te elküldöd őket.</string>
+    <string name="settings_protocol_legacy_title">Régi protokoll</string>
+    <string name="settings_protocol_legacy_sub">A régi kapcsolat használata a fülhallgatóval, ha az új nem működik. Alkalmazáshoz csatlakozz újra.</string>
 </resources>

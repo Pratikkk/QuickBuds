@@ -76,8 +76,6 @@
     <string name="row_vocal_sub">गानों में साफ़ आवाज़</string>
     <string name="row_wind_noise_title">हवा का शोर कम करें</string>
     <string name="row_wind_noise_sub">बाहर हवा का शोर कम</string>
-    <string name="settings_protocol_next_title">नया प्रोटोकॉल (बीटा)</string>
-    <string name="settings_protocol_next_sub">ईयरबड्स से नया बना, ज़्यादा सटीक कनेक्शन। लागू करने के लिए दोबारा कनेक्ट करें।</string>
     <string name="protocol_next_dialog_title">नया प्रोटोकॉल उपलब्ध है</string>
     <string name="protocol_next_dialog_body">QuickBuds 5.0 में प्रोटोकॉल लेयर नए सिरे से बनी है। यह ईयरबड्स से ज़्यादा सटीक और साफ़ तरीके से बात करती है। यह डिफ़ॉल्ट रूप से बंद है। आप सेटिंग में कभी भी इसे चालू या बंद कर सकते हैं।</string>
     <string name="protocol_next_dialog_try">नया प्रोटोकॉल आज़माएँ</string>
@@ -472,4 +470,6 @@
     <string name="background_setup_off">बंद करें</string>
     <string name="about_privacy_title">गोपनीयता</string>
     <string name="about_privacy_body">सक्रिय उपयोगकर्ताओं को गिनने के लिए QuickBuds दिन में एक बार अपना प्लेटफ़ॉर्म और वर्ज़न नंबर (जैसे \"Android 5.0.0\") भेजता है। यह कोई आईडी, पता या ईयरबड डेटा नहीं भेजता। रिपोर्ट तभी भेजी जाती हैं जब आप भेजें।</string>
+    <string name="settings_protocol_legacy_title">पुराना प्रोटोकॉल</string>
+    <string name="settings_protocol_legacy_sub">नया काम न करे तो ईयरबड से पुराना लिंक इस्तेमाल करें। लागू करने के लिए दोबारा कनेक्ट करें।</string>
 </resources>

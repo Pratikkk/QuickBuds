@@ -76,8 +76,6 @@
     <string name="row_vocal_sub">Voix plus claires dans les morceaux</string>
     <string name="row_wind_noise_title">Réduction du bruit du vent</string>
     <string name="row_wind_noise_sub">Moins de bruit de vent en extérieur</string>
-    <string name="settings_protocol_next_title">Nouveau protocole (bêta)</string>
-    <string name="settings_protocol_next_sub">Une liaison refaite et plus précise avec les écouteurs. Reconnectez-vous pour l\'appliquer.</string>
     <string name="protocol_next_dialog_title">Nouveau protocole disponible</string>
     <string name="protocol_next_dialog_body">QuickBuds 5.0 a une couche de protocole refaite. Elle dialogue avec les écouteurs de façon plus précise et plus propre. Elle est désactivée par défaut. Vous pouvez l\'activer ou la désactiver à tout moment dans les Paramètres.</string>
     <string name="protocol_next_dialog_try">Essayer le nouveau protocole</string>
@@ -470,4 +468,6 @@
     <string name="background_setup_off">Désactiver</string>
     <string name="about_privacy_title">Confidentialité</string>
     <string name="about_privacy_body">Une fois par jour, QuickBuds envoie sa plateforme et son numéro de version (par exemple « Android 5.0.0 ») pour compter les utilisateurs actifs. Il n’envoie ni identifiant, ni adresse, ni données des écouteurs. Les rapports ne partent que lorsque vous les envoyez.</string>
+    <string name="settings_protocol_legacy_title">Ancien protocole</string>
+    <string name="settings_protocol_legacy_sub">Utiliser l’ancienne liaison avec les écouteurs si la nouvelle échoue. Reconnectez pour appliquer.</string>
 </resources>

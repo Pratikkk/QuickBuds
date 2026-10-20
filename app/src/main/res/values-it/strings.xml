@@ -76,8 +76,6 @@
     <string name="row_vocal_sub">Voci più chiare nei brani</string>
     <string name="row_wind_noise_title">Riduzione del rumore del vento</string>
     <string name="row_wind_noise_sub">Meno rumore del vento all\'aperto</string>
-    <string name="settings_protocol_next_title">Nuovo protocollo (beta)</string>
-    <string name="settings_protocol_next_sub">Un collegamento rifatto e più preciso con gli auricolari. Riconnetti per applicarlo.</string>
     <string name="protocol_next_dialog_title">Nuovo protocollo disponibile</string>
     <string name="protocol_next_dialog_body">QuickBuds 5.0 ha un livello di protocollo rifatto. Parla con gli auricolari in modo più preciso e pulito. È disattivato per impostazione predefinita. Puoi attivarlo o disattivarlo in qualsiasi momento nelle Impostazioni.</string>
     <string name="protocol_next_dialog_try">Prova il nuovo protocollo</string>
@@ -470,4 +468,6 @@
     <string name="background_setup_off">Disattiva</string>
     <string name="about_privacy_title">Privacy</string>
     <string name="about_privacy_body">Una volta al giorno QuickBuds invia la propria piattaforma e il numero di versione (per esempio «Android 5.0.0») per contare gli utenti attivi. Non invia ID, indirizzi né dati degli auricolari. Le segnalazioni partono solo quando le invii tu.</string>
+    <string name="settings_protocol_legacy_title">Protocollo precedente</string>
+    <string name="settings_protocol_legacy_sub">Usa il vecchio collegamento con gli auricolari se il nuovo non funziona. Riconnetti per applicare.</string>
 </resources>

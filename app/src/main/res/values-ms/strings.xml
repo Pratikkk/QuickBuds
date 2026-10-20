@@ -76,8 +76,6 @@
     <string name="row_vocal_sub">Vokal lebih jelas dalam lagu</string>
     <string name="row_wind_noise_title">Pengurangan bunyi angin</string>
     <string name="row_wind_noise_sub">Kurang bunyi angin di luar</string>
-    <string name="settings_protocol_next_title">Protokol baharu (beta)</string>
-    <string name="settings_protocol_next_sub">Sambungan yang dibina semula dan lebih tepat ke earbud. Sambung semula untuk menggunakannya.</string>
     <string name="protocol_next_dialog_title">Protokol baharu tersedia</string>
     <string name="protocol_next_dialog_body">QuickBuds 5.0 mempunyai lapisan protokol yang dibina semula. Ia berkomunikasi dengan earbud dengan lebih tepat dan bersih. Ia dimatikan secara lalai. Anda boleh menghidupkan atau mematikannya bila-bila masa dalam Tetapan.</string>
     <string name="protocol_next_dialog_try">Cuba protokol baharu</string>
@@ -470,4 +468,6 @@
     <string name="background_setup_off">Matikan</string>
     <string name="about_privacy_title">Privasi</string>
     <string name="about_privacy_body">Sekali sehari QuickBuds menghantar platform dan nombor versinya (contohnya \"Android 5.0.0\") untuk mengira pengguna aktif. Ia tidak menghantar ID, alamat atau data earbud. Laporan hanya dihantar apabila anda menghantarnya.</string>
+    <string name="settings_protocol_legacy_title">Protokol lama</string>
+    <string name="settings_protocol_legacy_sub">Guna pautan lama ke earbud jika yang baharu gagal. Sambung semula untuk menggunakan.</string>
 </resources>

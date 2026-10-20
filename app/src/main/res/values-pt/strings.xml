@@ -76,8 +76,6 @@
     <string name="row_vocal_sub">Vozes mais nítidas nas músicas</string>
     <string name="row_wind_noise_title">Redução de ruído do vento</string>
     <string name="row_wind_noise_sub">Menos ruído do vento ao ar livre</string>
-    <string name="settings_protocol_next_title">Novo protocolo (beta)</string>
-    <string name="settings_protocol_next_sub">Uma ligação refeita e mais precisa com os fones. Reconecte para aplicar.</string>
     <string name="protocol_next_dialog_title">Novo protocolo disponível</string>
     <string name="protocol_next_dialog_body">O QuickBuds 5.0 tem uma camada de protocolo refeita. Ela conversa com os fones de forma mais precisa e limpa. Vem desativada por padrão. Você pode ativá-la ou desativá-la a qualquer momento em Configurações.</string>
     <string name="protocol_next_dialog_try">Testar o novo protocolo</string>
@@ -470,4 +468,6 @@
     <string name="background_setup_off">Desativar</string>
     <string name="about_privacy_title">Privacidade</string>
     <string name="about_privacy_body">Uma vez por dia o QuickBuds envia sua plataforma e número de versão (por exemplo, \"Android 5.0.0\") para contar os usuários ativos. Ele não envia ID, endereço nem dados dos fones. Os relatórios só são enviados quando você os envia.</string>
+    <string name="settings_protocol_legacy_title">Protocolo antigo</string>
+    <string name="settings_protocol_legacy_sub">Usar o link antigo com os fones se o novo falhar. Reconecte para aplicar.</string>
 </resources>

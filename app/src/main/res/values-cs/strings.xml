@@ -76,8 +76,6 @@
     <string name="row_vocal_sub">Čistší zpěv ve skladbách</string>
     <string name="row_wind_noise_title">Potlačení hluku větru</string>
     <string name="row_wind_noise_sub">Méně hluku větru venku</string>
-    <string name="settings_protocol_next_title">Nový protokol (beta)</string>
-    <string name="settings_protocol_next_sub">Přestavěné, přesnější spojení se sluchátky. Použijete ho po opětovném připojení.</string>
     <string name="protocol_next_dialog_title">Je dostupný nový protokol</string>
     <string name="protocol_next_dialog_body">QuickBuds 5.0 má přestavěnou vrstvu protokolu. Se sluchátky komunikuje přesněji a čistěji. Ve výchozím stavu je vypnutá. V Nastavení ji můžete kdykoli zapnout nebo vypnout.</string>
     <string name="protocol_next_dialog_try">Vyzkoušet nový protokol</string>
@@ -470,4 +468,6 @@
     <string name="background_setup_off">Vypnout</string>
     <string name="about_privacy_title">Soukromí</string>
     <string name="about_privacy_body">QuickBuds jednou denně odešle svou platformu a číslo verze (například „Android 5.0.0“), aby spočítal aktivní uživatele. Neodesílá žádné ID, adresu ani data sluchátek. Hlášení se odesílají jen na vaši žádost.</string>
+    <string name="settings_protocol_legacy_title">Starší protokol</string>
+    <string name="settings_protocol_legacy_sub">Použít starý spoj se sluchátky, když nový selže. Pro použití se znovu připojte.</string>
 </resources>

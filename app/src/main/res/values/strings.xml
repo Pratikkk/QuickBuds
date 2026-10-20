@@ -100,8 +100,6 @@
     <string name="row_vocal_sub">Clearer vocals in songs</string>
     <string name="row_wind_noise_title">Wind noise reduction</string>
     <string name="row_wind_noise_sub">Less wind noise outdoors</string>
-    <string name="settings_protocol_next_title">New protocol (beta)</string>
-    <string name="settings_protocol_next_sub">A rebuilt, more accurate link to the earbuds. Reconnect to apply.</string>
     <string name="protocol_next_dialog_title">New protocol available</string>
     <string name="protocol_next_dialog_body">QuickBuds 5.0 has a rebuilt protocol layer. It talks to the earbuds more accurately and cleanly. It is off by default. You can switch it on or off at any time in Settings.</string>
     <string name="protocol_next_dialog_try">Try new protocol</string>
@@ -558,4 +556,6 @@
     <string name="background_setup_off">Turn off</string>
     <string name="about_privacy_title">Privacy</string>
     <string name="about_privacy_body">Once a day QuickBuds sends its platform and version number (for example \"Android 5.0.0\") to count active users. It sends no ID, no address and no earbud data. Reports are sent only when you send them.</string>
+    <string name="settings_protocol_legacy_title">Legacy protocol</string>
+    <string name="settings_protocol_legacy_sub">Use the old link to the earbuds if the new one fails. Reconnect to apply.</string>
 </resources>

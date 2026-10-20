@@ -76,8 +76,6 @@
     <string name="row_vocal_sub">Более чёткий вокал в песнях</string>
     <string name="row_wind_noise_title">Подавление шума ветра</string>
     <string name="row_wind_noise_sub">Меньше шума ветра на улице</string>
-    <string name="settings_protocol_next_title">Новый протокол (бета)</string>
-    <string name="settings_protocol_next_sub">Переработанное, более точное соединение с наушниками. Подключитесь заново, чтобы применить.</string>
     <string name="protocol_next_dialog_title">Доступен новый протокол</string>
     <string name="protocol_next_dialog_body">В QuickBuds 5.0 переработан уровень протокола. Он обменивается данными с наушниками точнее и чище. По умолчанию он выключен. Включить или выключить его можно в любой момент в настройках.</string>
     <string name="protocol_next_dialog_try">Попробовать новый протокол</string>
@@ -470,4 +468,6 @@
     <string name="background_setup_off">Выключить</string>
     <string name="about_privacy_title">Конфиденциальность</string>
     <string name="about_privacy_body">Раз в день QuickBuds отправляет свою платформу и номер версии (например, «Android 5.0.0»), чтобы считать активных пользователей. Он не отправляет ни идентификатор, ни адрес, ни данные наушников. Отчёты отправляются только по вашей команде.</string>
+    <string name="settings_protocol_legacy_title">Старый протокол</string>
+    <string name="settings_protocol_legacy_sub">Использовать старое соединение с наушниками, если новое не работает. Подключитесь заново, чтобы применить.</string>
 </resources>
