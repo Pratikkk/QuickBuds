@@ -225,13 +225,28 @@ fn post(url: &str, body: &str) -> (u16, String) {
     (code.trim().parse().unwrap_or(0), text.to_string())
 }
 
-/// Counts this install once a day: platform and version only, no ID (README, Privacy). Network thread only.
+/// The install ID: a random UUID made on the first start and kept in `settings.json` ("app_id"). It ties to no device,
+/// account or address. Sent with the daily ping and with a problem report.
+pub(crate) fn app_id() -> String {
+    if let Some(id) = crate::load_settings()["app_id"].as_str() { return id.to_string(); }
+    use std::hash::{BuildHasher, Hasher};
+    // `RandomState` is seeded by the system's random source: two of them give 128 random bits, with no extra crate.
+    let r = |_: u8| std::collections::hash_map::RandomState::new().build_hasher().finish();
+    let (a, b) = (r(0), r(1));
+    let id = format!("{:08x}-{:04x}-4{:03x}-{:04x}-{:012x}", (a >> 32) as u32, (a >> 16) as u16, (a & 0xfff) as u16,
+        0x8000 | (b >> 48) as u16 & 0x3fff, b & 0xffff_ffff_ffff);
+    crate::save_setting("app_id", id.clone().into());
+    id
+}
+
+/// Counts this install once a day: platform, version and the install ID (README, Privacy). Network thread only.
 pub(crate) fn ping() {
     let today = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs() / 86_400).unwrap_or(0);
     if crate::load_settings()["usage_ping_day"].as_u64() == Some(today) { return; }
     let body = serde_json::json!({
         "platform": if cfg!(windows) { "Windows" } else { "Linux" },
         "version": env!("CARGO_PKG_VERSION"),
+        "id": app_id(),
     });
     let (code, _) = post(&WORKER.replace("/report", "/ping"), &body.to_string());
     if code == 200 { crate::save_setting("usage_ping_day", today.into()); }

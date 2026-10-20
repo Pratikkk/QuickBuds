@@ -21,3 +21,19 @@ CREATE TABLE IF NOT EXISTS daily_use (
   n INTEGER NOT NULL,
   PRIMARY KEY (day, platform, version)
 );
+
+-- Install IDs (the /ping route). The ID is a random UUID the app made itself; it ties to no device, account or address.
+CREATE TABLE IF NOT EXISTS installs (
+  id TEXT PRIMARY KEY,
+  platform TEXT NOT NULL,
+  version TEXT NOT NULL,
+  first_day TEXT NOT NULL,
+  last_day TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS activity (
+  day TEXT NOT NULL,
+  id TEXT NOT NULL,
+  PRIMARY KEY (day, id)
+);
+-- Run once on a database made before the install IDs (it fails when the column exists, which is fine):
+-- ALTER TABLE reports ADD COLUMN app_id TEXT;

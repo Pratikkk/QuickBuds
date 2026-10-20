@@ -110,6 +110,7 @@ object ProblemReport {
             .put("description", r.description)
             .put("log", r.log ?: JSONObject.NULL)
             .put("crash", r.crash)
+            .put("id", UsagePing.appId(c))
         return try {
             val (code, text) = post(WORKER, json.toString())
             if (code != 200) PacketLogger.log("REPORT: worker answered $code")
