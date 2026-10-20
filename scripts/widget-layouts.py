@@ -197,12 +197,12 @@ def grid(icon, sp, shape="grid"):
 
 def chip():
     # The Connect chip over the battery page while disconnected (the renderer shows it and hides it again on connect).
-    return f'''<FrameLayout android:id="@+id/w_conn" android:layout_width="wrap_content" android:layout_height="44dp" android:layout_gravity="center" android:visibility="gone" {PRESS}>
+    return f'''<FrameLayout android:id="@+id/w_conn" android:layout_width="wrap_content" android:layout_height="56dp" android:layout_gravity="center" android:visibility="gone" {PRESS}>
 <ImageView android:id="@+id/w_conn_bg" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/widget_panel" {IMG} />
 <ImageView android:id="@+id/w_conn_stroke" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/widget_panel_stroke" {IMG} />
-<LinearLayout android:layout_width="wrap_content" android:layout_height="match_parent" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp">
-<ImageView android:id="@+id/w_conn_dot" android:layout_width="10dp" android:layout_height="10dp" android:src="@drawable/ic_status_dot_empty" android:scaleType="fitCenter" android:importantForAccessibility="no" />
-{text("w_conn_text", 14, extra='android:layout_marginStart="8dp" ')}
+<LinearLayout android:layout_width="wrap_content" android:layout_height="match_parent" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="24dp" android:paddingEnd="24dp">
+<ImageView android:id="@+id/w_conn_dot" android:layout_width="12dp" android:layout_height="12dp" android:src="@drawable/ic_status_dot_empty" android:scaleType="fitCenter" android:importantForAccessibility="no" />
+{text("w_conn_text", 18, extra='android:layout_marginStart="10dp" ')}
 </LinearLayout>
 </FrameLayout>'''
 

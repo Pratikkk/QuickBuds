@@ -226,7 +226,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 // Material: the chip is the widget's only control, so it keeps its fill (with or without the box).
                 val filled = WidgetSettings.materialStyle(context)
                 paint(context, v, CONN, p, filled)
-                content(context, v, CONN, p, filled, R.drawable.ic_status_dot_empty, context.getString(R.string.conn_action_connect), 10f, 10f / 5)
+                content(context, v, CONN, p, filled, R.drawable.ic_status_dot_empty, context.getString(R.string.conn_action_connect), 12f, 12f / 5)
                 v.setContentDescription(CONN.root, context.getString(R.string.conn_off) + ". " + context.getString(R.string.conn_action_connect))
                 v.setOnClickPendingIntent(CONN.root, connectPI(context))
             } else {
