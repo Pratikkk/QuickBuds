@@ -153,7 +153,7 @@ class BudsStatusView(context: Context) : View(context) {
             val cx = colW * i + colW / 2
             if (nothing) {
                 // One bitmap per animation step (whole percents), so an animation redraws at most 100 of them.
-                val level = if (connected && s.level >= 0) Math.round(s.shown * 100) else -1
+                val level = if (s.shown > 0f || s.level >= 0) Math.round(s.shown * 100) else -1
                 val tint = androidx.core.graphics.ColorUtils.blendARGB(p.disabled, QuickBudsWidget.nothingTint(p, i == 1, s.status), conn)
                 val key = "$level/$tint/${ring.toInt()}"
                 if (s.dotsKey != key) {
@@ -165,7 +165,7 @@ class BudsStatusView(context: Context) : View(context) {
                 val r = ring / 2 - trackPaint.strokeWidth / 2
                 arcBox.set(cx - r, cy - r, cx + r, cy + r)
                 canvas.drawOval(arcBox, trackPaint)
-                if (connected && s.shown > 0f) canvas.drawArc(arcBox, -90f, 360f * s.shown, false, arcPaint)
+                if (s.shown > 0f) canvas.drawArc(arcBox, -90f, 360f * s.shown, false, arcPaint)
 
                 // Glyph: fit the SPEC box, keeping the SVG's own ratio.
                 val bw = dp(s.boxW) * scale
