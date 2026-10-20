@@ -1,7 +1,7 @@
 //! Dual connection (`DualDeviceActivity`): the switch, the devices the buds list and, on models with
 //! HeyMelody's device manager, connect / disconnect and the preferred device.
 
-use crate::protocol::*;
+use crate::types::*;
 use crate::session::{Cmd, Snapshot};
 use crate::{t, with_app, App, Choice, Dual, DualDevice, MainWindow};
 use slint::{ComponentHandle, ModelRc, VecModel};

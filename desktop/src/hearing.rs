@@ -3,7 +3,7 @@
 //! The buds hold only the active record; it is read when the page opens and added to the list.
 
 use crate::cmd;
-use crate::protocol::*;
+use crate::types::*;
 use crate::session::{Cmd, HEARING};
 use crate::{load_settings, save_setting, t, with_app, App, EqRow, Hearing, MainWindow, RadarLabel};
 use serde_json::{json, Value};

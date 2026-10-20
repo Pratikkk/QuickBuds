@@ -2,7 +2,7 @@
 //! same feature keys and the same report text. Start clears the log and reconnects; the automatic check notes which
 //! reads the buds answered; the person marks each feature; Send posts one "Test" report, always with the log.
 
-use crate::protocol::*;
+use crate::types::*;
 use crate::session::{Cmd, Status, LOG};
 use crate::{load_settings, save_setting, t, with_app, App, MainWindow, ModelTest as G, TestCheck, TestRow};
 use slint::{ComponentHandle, Model, ModelRc, VecModel};

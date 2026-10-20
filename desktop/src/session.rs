@@ -3,7 +3,8 @@
 
 use crate::bt;
 use crate::cmd;
-use crate::protocol::*;
+use crate::types::*;
+use crate::proto::Proto;
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, Sender};
 use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -229,9 +230,8 @@ struct Conn<'a> {
     link: bt::Link,
     /// 0 for the bridge.
     addr: u64,
-    framer: Framer,
-    /// The "new protocol" setting (docs/PROTOCOL-NEXT.md): the rebuilt link layer, read once per connection.
-    next: Option<crate::wire::Reassembler>,
+    /// The link's protocol (docs/PROTOCOL-NEXT.md), chosen once per connection.
+    proto: Proto,
     /// Messages received on this connection: none after the init sequence means the new protocol failed.
     rx: u32,
     seq: u8,
@@ -248,7 +248,7 @@ impl<'a> Conn<'a> {
         pick_model(&mut s);
         let next = crate::protocol_next(addr);
         log("NOTE", Vec::new(), Some(format!("Protocol: {}{}", if next { "new" } else { "legacy" }, if crate::fell_back(addr) { " (fell back for these buds)" } else { "" })));
-        Conn { link, addr, framer: Framer::default(), next: next.then(Default::default), rx: 0, seq: 0, level: None, s, emit }
+        Conn { link, addr, proto: Proto::new(next), rx: 0, seq: 0, level: None, s, emit }
     }
 
     /// Sends a frame built by `buds_core::cmd`.
@@ -258,14 +258,9 @@ impl<'a> Conn<'a> {
         let seq = seq.unwrap_or_else(|| { self.seq = self.seq % 0xFE + 1; self.seq });
         let p = build_packet(cmd, seq, payload);
         log("TX", p.clone(), describe_tx(cmd, payload));
-        if self.next.is_some() {
-            // A message too big for one frame goes out in slices (PROTOCOL-NEXT.md §2).
-            for f in crate::wire::encode(&crate::wire::Message { cmd, seq, payload: payload.to_vec() }, crate::wire::BUDGET) {
-                self.link.write(&f)?;
-            }
-            return Ok(());
-        }
-        self.link.write(&p)
+        // A message too big for one frame goes out in slices (PROTOCOL-NEXT.md §2).
+        for f in self.proto.frames_out(cmd, seq, payload) { self.link.write(&f)?; }
+        Ok(())
     }
 
     /// Reads and applies packets for `ms`.
@@ -275,11 +270,7 @@ impl<'a> Conn<'a> {
         loop {
             let n = self.link.read(&mut buf)?;
             let mut changed = false;
-            let frames: Vec<Vec<u8>> = match &mut self.next {
-                // The handlers still read whole frames, so each message goes in as one.
-                Some(w) => w.push(&buf[..n]).iter().map(|m| build_packet(m.cmd, m.seq, &m.payload)).collect(),
-                None => self.framer.push(&buf[..n]),
-            };
+            let frames = self.proto.frames_in(&buf[..n]);
             self.rx += frames.len() as u32;
             for p in frames.into_iter().flat_map(|p| {
                 // A batch reply is logged as it came, then handled as the replies it carries.
@@ -288,17 +279,11 @@ impl<'a> Conn<'a> {
                 log("RX", p, Some(format!("batch reply, {} answers", parts.len())));
                 parts
             }) {
-                // The "new protocol" setting decodes with `msg` first; what it does not know yet goes to the shipping decoder.
-                let e = if self.next.is_some() {
-                    crate::event::to_event(&crate::wire::Message { cmd: cmd_of(&p), seq: seq_of(&p), payload: payload_of(&p).to_vec() }).or_else(|| decode(&p))
-                } else { decode(&p) };
+                let e = self.proto.decode(&p);
                 let human = e.as_ref().map(describe).or_else(|| describe_other(&p));
                 // Some buds drop the link a few seconds after an unanswered request (issue #2: the time request).
                 let now = SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs() as u32);
-                let answer = if self.next.is_some() {
-                    crate::msg::answer(&crate::wire::Message { cmd: cmd_of(&p), seq: seq_of(&p), payload: payload_of(&p).to_vec() }, now)
-                        .map(|a| ((a.cmd, a.payload), a.seq))
-                } else { answer_for(&p, now).map(|a| (a, seq_of(&p))) };
+                let answer = self.proto.answer(&p, now);
                 // A refused ANC write (status 14 with no bud in an ear): read the real mode back (§5).
                 let refused = cmd_of(&p) == CMD_SET_ANC | 0x8000 && payload_of(&p).first().is_some_and(|&st| st != 0);
                 let need_ear = refused && payload_of(&p).first() == Some(&0x0E);
@@ -308,8 +293,8 @@ impl<'a> Conn<'a> {
                 if need_ear { self.s.anc_refused += 1; changed = true; }
                 if let Some(e) = e { changed |= self.apply(e); }
             }
-            if !self.framer.discarded.is_empty() { log("DISCARDED RX", std::mem::take(&mut self.framer.discarded), None); }
-            if let Some(w) = self.next.as_mut().filter(|w| !w.discarded.is_empty()) { log("DISCARDED RX", std::mem::take(&mut w.discarded), None); }
+            let skipped = self.proto.take_discarded();
+            if !skipped.is_empty() { log("DISCARDED RX", skipped, None); }
             if changed { (self.emit)(self.s.clone()); }
             if Instant::now() >= end { return Ok(()); }
         }
@@ -392,7 +377,7 @@ impl<'a> Conn<'a> {
         // Buds that named their model are remembered, renamed or not.
         if init.is_ok() && self.s.model.is_some() { remember(self.addr); }
         // The new protocol got no answer at all: these buds use the old link from the next connect on (Android does the same).
-        if self.next.is_some() && self.rx == 0 {
+        if self.proto.is_new() && self.rx == 0 {
             crate::mark_fell_back(self.addr);
             log("NOTE", Vec::new(), Some("PROTOCOL FALLBACK: no answer. Reconnecting on the legacy protocol.".into()));
             return End::Lost;

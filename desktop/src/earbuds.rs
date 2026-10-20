@@ -1,6 +1,6 @@
 //! The Earbud settings page (`EarbudSettingsActivity`): the feature switches the buds list, and the firmware.
 
-use crate::protocol::*;
+use crate::types::*;
 use crate::session::{Cmd, Snapshot};
 use crate::{icons, svg, t, with_app, App, Choice, Earbuds, FeatureItem, MainWindow};
 use slint::{ComponentHandle, ModelRc, VecModel};

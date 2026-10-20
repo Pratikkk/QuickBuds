@@ -1,7 +1,7 @@
 //! The model list (`ModelActivity`): Automatic, then every model in HeyMelody's list by brand. A pick
 //! overrides detection until Automatic is picked again or buds with another product id connect.
 
-use crate::protocol::models;
+use crate::types::models;
 use crate::session::Cmd;
 use crate::{load_settings, save_setting, t, with_app, App, MainWindow, ModelRow, ModelSection, Models};
 use slint::{ComponentHandle, ModelRc, VecModel};

@@ -1,7 +1,7 @@
 //! The Equalizer page (`EqActivity`): built-in and custom presets, the band editor, BassWave.
 //! The page shows the buds' state; every write is re-read by the session.
 
-use crate::protocol::*;
+use crate::types::*;
 use crate::session::{Cmd, Snapshot, Status};
 use crate::{t, with_app, App, Eq, EqRow, MainWindow};
 use slint::{ComponentHandle, Model, ModelRc, VecModel};
