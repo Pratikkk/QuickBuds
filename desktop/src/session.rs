@@ -2,6 +2,7 @@
 //! sends the UI's commands. Mirrors `BudsConnectionManager`: nothing is polled after connect.
 
 use crate::bt;
+use crate::cmd;
 use crate::protocol::*;
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, Sender};
 use std::sync::Mutex;
@@ -203,8 +204,7 @@ fn run(rx: Receiver<Cmd>, emit: Emit) {
                 emit(Snapshot { status: Status::Connecting, name: d.name.clone(), ..Default::default() });
                 let Ok(link) = bt::connect(d.addr) else { continue };
                 log("NOTE", Vec::new(), Some(format!("Connected to {}", d.name)));
-                let mut c = Conn::new(link, d.name, &emit);
-                c.addr = d.addr;
+                let mut c = Conn::new(link, d.name, d.addr, &emit);
                 match c.serve(&rx) {
                     End::Lost => log("NOTE", Vec::new(), Some("Connection lost".into())),
                     End::UserDisconnect => { log("NOTE", Vec::new(), Some("Disconnected".into())); paused = true }
@@ -232,6 +232,8 @@ struct Conn<'a> {
     framer: Framer,
     /// The "new protocol" setting (docs/PROTOCOL-NEXT.md): the rebuilt link layer, read once per connection.
     next: Option<crate::wire::Reassembler>,
+    /// Messages received on this connection: none after the init sequence means the new protocol failed.
+    rx: u32,
     seq: u8,
     /// The last ANC level sent, to name a report that says only "noise cancelling".
     level: Option<String>,
@@ -240,12 +242,17 @@ struct Conn<'a> {
 }
 
 impl<'a> Conn<'a> {
-    fn new(link: bt::Link, name: String, emit: &'a Emit) -> Self {
+    fn new(link: bt::Link, name: String, addr: u64, emit: &'a Emit) -> Self {
         let model = find_model(None, Some(&name));
         let mut s = Snapshot { status: Status::On, name, detected: model, ..Default::default() };
         pick_model(&mut s);
-        Conn { link, addr: 0, framer: Framer::default(), next: crate::protocol_next().then(Default::default), seq: 0, level: None, s, emit }
+        let next = crate::protocol_next(addr);
+        log("NOTE", Vec::new(), Some(format!("Protocol: {}{}", if next { "new" } else { "legacy" }, if crate::fell_back(addr) { " (fell back for these buds)" } else { "" })));
+        Conn { link, addr, framer: Framer::default(), next: next.then(Default::default), rx: 0, seq: 0, level: None, s, emit }
     }
+
+    /// Sends a frame built by `buds_core::cmd`.
+    fn tx(&mut self, f: Frame) -> Result<(), String> { self.send(f.0, None, &f.1) }
 
     fn send(&mut self, cmd: u16, seq: Option<u8>, payload: &[u8]) -> Result<(), String> {
         let seq = seq.unwrap_or_else(|| { self.seq = self.seq % 0xFE + 1; self.seq });
@@ -273,6 +280,7 @@ impl<'a> Conn<'a> {
                 Some(w) => w.push(&buf[..n]).iter().map(|m| build_packet(m.cmd, m.seq, &m.payload)).collect(),
                 None => self.framer.push(&buf[..n]),
             };
+            self.rx += frames.len() as u32;
             for p in frames.into_iter().flat_map(|p| {
                 // A batch reply is logged as it came, then handled as the replies it carries.
                 if cmd_of(&p) != CMD_BATCH_REPLY { return vec![p]; }
@@ -296,7 +304,7 @@ impl<'a> Conn<'a> {
                 let need_ear = refused && payload_of(&p).first() == Some(&0x0E);
                 log("RX", p, human);
                 if let Some(((cmd, pl), seq)) = answer { self.send(cmd, Some(seq), &pl)?; }
-                if refused { self.send(CMD_QUERY_ANC, None, &[1, 1])?; }
+                if refused { self.tx(cmd::anc_read(1, 1))?; }
                 if need_ear { self.s.anc_refused += 1; changed = true; }
                 if let Some(e) = e { changed |= self.apply(e); }
             }
@@ -383,6 +391,12 @@ impl<'a> Conn<'a> {
         let init = self.init();
         // Buds that named their model are remembered, renamed or not.
         if init.is_ok() && self.s.model.is_some() { remember(self.addr); }
+        // The new protocol got no answer at all: these buds use the old link from the next connect on (Android does the same).
+        if self.next.is_some() && self.rx == 0 {
+            crate::mark_fell_back(self.addr);
+            log("NOTE", Vec::new(), Some("PROTOCOL FALLBACK: no answer. Reconnecting on the legacy protocol.".into()));
+            return End::Lost;
+        }
         match init.and_then(|_| self.run(rx)) {
             Ok(end) => end,
             Err(_) => End::Lost,
@@ -392,22 +406,22 @@ impl<'a> Conn<'a> {
     /// PROTOCOL.md "Init sequence": 300 ms before the first frame, then 200 ms apart; reads only if listed.
     fn init(&mut self) -> Result<(), String> {
         self.pump(300)?;
-        for cmd in [CMD_HANDSHAKE, CMD_QUERY_PRODUCT_ID, CMD_QUERY_BROADCAST] {
-            self.send(cmd, None, &[])?;
+        for f in [cmd::handshake(), cmd::product_id(), cmd::broadcast_codes()] {
+            self.tx(f)?;
             self.pump(200)?;
         }
         let ids = notify_ids(&self.s.caps, self.s.offered.as_deref());
         if !self.s.caps.supports(CMD_REGISTER_NOTIFY) {
-            for &id in &ids { self.send(CMD_REGISTER_ONE, None, &[id])?; }
+            for &id in &ids { self.tx(cmd::register_one(id))?; }
             self.pump(200)?;
         }
         let smart = self.s.modes.supports("ANC-Smart");
         let queries: [(u16, Option<u8>, Vec<u8>); 7] = [
-            (CMD_REGISTER_NOTIFY, None, register_payload(&ids)),
+            (CMD_REGISTER_NOTIFY, None, cmd::register(&ids).1),
             (CMD_QUERY_STATUS, Some(0x00), status_query(self.s.model)),
-            (CMD_QUERY_ANC, None, vec![1, 1]),
+            (CMD_QUERY_ANC, None, cmd::anc_read(1, 1).1),
             // The level Smart chose, §5.
-            (CMD_QUERY_ANC, None, if smart { vec![4, 1] } else { vec![] }),
+            (CMD_QUERY_ANC, None, if smart { cmd::anc_read(4, 1).1 } else { vec![] }),
             (CMD_QUERY_BATTERY, Some(0xF0), vec![]),
             (CMD_QUERY_WEARING, Some(0xF2), vec![]),
             (CMD_QUERY_FIRMWARE, None, vec![]),
@@ -424,7 +438,7 @@ impl<'a> Conn<'a> {
         if batch {
             reads.extend([CMD_QUERY_EQ, CMD_QUERY_EQ_ALL, CMD_QUERY_BASSWAVE].into_iter()
                 .filter(|&c| self.s.caps.supports(c)).map(|c| (c, vec![])));
-            if !reads.is_empty() { self.send(CMD_BATCH, None, &batch_payload(&reads))?; self.pump(200)?; }
+            if !reads.is_empty() { self.tx(cmd::batch(&reads))?; self.pump(200)?; }
         } else {
             self.eq_reads()?;
         }
@@ -436,7 +450,7 @@ impl<'a> Conn<'a> {
         }
         // realme Link hands 3D audio to the buds on every connect; else the `1B` switch can do nothing (issue #9).
         if self.s.model.is_some_and(|m| m["spatialToggle"] == 1) && self.s.caps.supports(CMD_SPATIAL_SOURCE) {
-            self.send(CMD_SPATIAL_SOURCE, None, &[0])?;
+            self.tx(cmd::spatial_source(0))?;
             self.pump(120)?;
         }
         Ok(())
@@ -463,9 +477,9 @@ impl<'a> Conn<'a> {
         }
     }
 
-    fn eq_write(&mut self, cmd: u16, payload: &[u8]) -> Result<(), String> {
+    fn eq_write(&mut self, f: Frame) -> Result<(), String> {
         (self.emit)(self.s.clone());
-        self.send(cmd, None, payload)?;
+        self.tx(f)?;
         self.pump(250)?;
         self.eq_reads()
     }
@@ -491,34 +505,34 @@ impl<'a> Conn<'a> {
                         // A mode this model does not list is never sent: its bit would be another mode's.
                         let Some(bit) = self.s.modes.bit(&mode) else { continue };
                         if LEVELS.contains(&mode.as_str()) { self.level = Some(mode.clone()); }
-                        self.send(CMD_SET_ANC, None, &anc_payload(bit))?;
+                        self.tx(cmd::anc_set(bit))?;
                         self.s.anc = Some(mode);
                     }
                     Cmd::LowLatency(on) => {
-                        self.send(CMD_SET_FEATURE, None, &[self.s.caps.game_mode_id(), on as u8])?;
+                        self.tx(cmd::feature(self.s.caps.game_mode_id(), on))?;
                         self.s.low_latency = Some(on);
                     }
                     // Each EQ write updates the state first, so the replies before the new values
                     // do not snap the UI back.
                     Cmd::EqBuiltIn(id) => {
                         self.s.eq_current = Some(id);
-                        self.eq_write(CMD_SET_EQ, &[id])?;
+                        self.eq_write(cmd::eq_select(id))?;
                     }
                     Cmd::EqSave(p) => {
                         self.s.eq_current = Some(p.id);
                         if let Some(x) = self.s.eq_custom.iter_mut().find(|x| x.id == p.id) { *x = p.clone(); }
-                        self.eq_write(CMD_SAVE_CUSTOM_EQ, &p.encode(EQ_SAVE))?;
+                        self.eq_write((CMD_SAVE_CUSTOM_EQ, p.encode(EQ_SAVE)))?;
                     }
                     // No local update: the buds assign and renumber ids.
-                    Cmd::EqCreate(p) => self.eq_write(CMD_SAVE_CUSTOM_EQ, &p.encode(EQ_CREATE))?,
-                    Cmd::EqDelete(p) => self.eq_write(CMD_SAVE_CUSTOM_EQ, &p.encode(EQ_DELETE))?,
+                    Cmd::EqCreate(p) => self.eq_write((CMD_SAVE_CUSTOM_EQ, p.encode(EQ_CREATE)))?,
+                    Cmd::EqDelete(p) => self.eq_write((CMD_SAVE_CUSTOM_EQ, p.encode(EQ_DELETE)))?,
                     Cmd::BassWave(on) => {
                         self.s.bass_on = Some(on);
-                        self.send(CMD_SET_FEATURE, None, &[FEATURE_BASSWAVE, on as u8])?;
+                        self.tx(cmd::feature(FEATURE_BASSWAVE, on))?;
                     }
                     Cmd::BassLevel(l) => {
                         self.s.bass_level = Some(l);
-                        self.eq_write(CMD_SET_BASSWAVE, &[0xFB, 0x05, l as u8])?;
+                        self.eq_write(cmd::bass_set(l))?;
                     }
                     // As `setFeatures`: the write, then the status read that shows what the buds kept.
                     // Power saving restarts the buds: the link drops and the idle rescan reconnects.
@@ -528,17 +542,17 @@ impl<'a> Conn<'a> {
                         }
                         (self.emit)(self.s.clone());
                         for (id, on) in changes {
-                            self.send(CMD_SET_FEATURE, None, &[id, on as u8])?;
+                            self.tx(cmd::feature(id, on))?;
                             self.pump(100)?;
                         }
                         self.pump(300)?;
                         self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?;
                     }
-                    Cmd::Find(on) => self.send(CMD_FIND_BUDS, None, &[on as u8])?,
-                    Cmd::FitTest(on) => self.send(CMD_FIT_TEST, None, &[on as u8])?,
-                    Cmd::PncQuery => self.send(CMD_QUERY_PERSONAL_NOISE, None, &[])?,
+                    Cmd::Find(on) => self.tx(cmd::find(on))?,
+                    Cmd::FitTest(on) => self.tx(cmd::fit_test(on))?,
+                    Cmd::PncQuery => self.tx(cmd::personal_anc_stored())?,
                     Cmd::Pnc(action) => {
-                        self.send(CMD_PERSONAL_NOISE, None, &[action])?;
+                        self.tx(cmd::personal_anc(action))?;
                         if action == 2 { self.pump(600)?; self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?; }
                     }
                     Cmd::StatusRead => self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?,
@@ -546,54 +560,51 @@ impl<'a> Conn<'a> {
                     Cmd::Dual(on) => {
                         if let Some(x) = self.s.features.iter_mut().find(|x| x.0 == FEATURE_DUAL) { x.1 = on as u8; }
                         (self.emit)(self.s.clone());
-                        self.send(CMD_SET_FEATURE, None, &[FEATURE_DUAL, on as u8])?;
+                        self.tx(cmd::feature(FEATURE_DUAL, on))?;
                         self.pump(250)?;
                         self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?;
                         self.pump(250)?;
-                        self.send(CMD_DUAL_FOLLOWUP, None, &[0x08, 0x00, !on as u8])?;
+                        self.tx(cmd::phone_state(cmd::PhoneState { auto_switch: Some(!on), ..Default::default() }))?;
                     }
                     Cmd::DualReads(preferred) => {
-                        self.send(CMD_QUERY_DEVICES, None, &[])?;
+                        self.tx(cmd::devices_read())?;
                         self.pump(120)?;
                         self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?;
                         if preferred && self.s.caps.supports(CMD_QUERY_PREFERRED) {
                             self.pump(120)?;
-                            self.send(CMD_QUERY_PREFERRED, None, &[0x02])?;
+                            self.tx(cmd::preferred_read())?;
                         }
                     }
                     Cmd::ConnectDevice(mac, on) => {
-                        let mut p = vec![if on { 1 } else { 2 }];
-                        p.extend_from_slice(&mac);
-                        self.send(CMD_MULTI_CONNECT, None, &p)?;
+                        self.tx(cmd::device_connect(mac, on))?;
                     }
                     Cmd::Preferred(mac) => {
-                        let p: Vec<u8> = match mac { None => vec![4, 0], Some(m) => [&[4, 1][..], &m].concat() };
-                        self.send(CMD_MULTI_CONNECT, None, &p)?;
+                        self.tx(cmd::preferred_set(mac))?;
                         self.pump(250)?;
-                        self.send(CMD_QUERY_PREFERRED, None, &[0x02])?;
+                        self.tx(cmd::preferred_read())?;
                     }
                     // As `writeThenRead`: shown at once, then read back.
                     Cmd::GameSoundType(t) => {
                         if let Some(g) = self.s.game_sound.as_mut() { g.0 = t; }
                         (self.emit)(self.s.clone());
-                        self.send(CMD_GAME_SOUND, None, &[t, 1])?;
+                        self.tx(cmd::game_sound(t))?;
                         self.pump(400)?;
-                        self.send(CMD_QUERY_GAME_SOUND, None, &[])?;
+                        self.tx(cmd::game_sound_read())?;
                     }
                     Cmd::SpatialType(t) => {
                         self.s.spatial_type = Some(t);
                         (self.emit)(self.s.clone());
-                        self.send(CMD_SET_SPATIAL_TYPE, None, &[t])?;
+                        self.tx(cmd::spatial(t))?;
                         self.pump(400)?;
-                        self.send(CMD_QUERY_SPATIAL_TYPE, None, &[])?;
+                        self.tx(cmd::spatial_read())?;
                     }
-                    Cmd::Codec(c, hires) => self.send(CMD_SET_CODEC, None, &codec_payload(c, hires))?,
+                    Cmd::Codec(c, hires) => self.tx(cmd::codec(c, hires))?,
                     Cmd::HeadMotion(t) => {
                         self.s.head_motion = Some(t);
                         (self.emit)(self.s.clone());
-                        self.send(CMD_SET_HEAD_MOTION, None, &[t])?;
+                        self.tx(cmd::head_gesture(t))?;
                         self.pump(400)?;
-                        self.send(CMD_QUERY_HEAD_MOTION, None, &[])?;
+                        self.tx(cmd::head_gesture_read())?;
                     }
                     Cmd::ModelPicked => pick_model(&mut self.s),
                     Cmd::EarbudReads => for cmd in [CMD_QUERY_ALERT_VOLUME, CMD_QUERY_TAP_LEVEL, CMD_QUERY_GAME_SOUND, CMD_QUERY_HEAD_MOTION] {
@@ -604,19 +615,19 @@ impl<'a> Conn<'a> {
                     // Sent on release only, so the buds play one prompt per change; the ack carries the level.
                     Cmd::AlertVolume(l) => {
                         self.s.alert_volume = Some(l);
-                        self.send(CMD_SET_ALERT_VOLUME, None, &[l.clamp(1, 10)])?;
+                        self.tx(cmd::alert_volume(l.clamp(1, 10)))?;
                     }
                     // Unverified on hardware: read back, so the slider shows what the buds kept.
                     Cmd::TapLevel(l) => {
                         if let Some(t) = self.s.tap_level.as_mut() { t.0 = l; }
-                        self.send(CMD_SET_TAP_LEVEL, None, &[l.clamp(1, 5)])?;
+                        self.tx(cmd::tap_level(l.clamp(1, 5)))?;
                         self.pump(250)?;
-                        self.send(CMD_QUERY_TAP_LEVEL, None, &[])?;
+                        self.tx(cmd::tap_level_read())?;
                     }
                     Cmd::ControlsReads(types) => {
                         if !self.s.caps.supports(CMD_QUERY_KEY_FUNCTION) { continue; }
                         self.send(CMD_QUERY_KEY_FUNCTION, None, &[])?;
-                        for t in types { self.pump(120)?; self.send(CMD_QUERY_ANC, None, &[2, t])?; }
+                        for t in types { self.pump(120)?; self.tx(cmd::anc_read(2, t))?; }
                     }
                     // The whole table goes back with this bud's slots changed; adopted at once so a second
                     // write before the read-back does not undo the first. No table read: nothing is sent.
@@ -625,19 +636,19 @@ impl<'a> Conn<'a> {
                         let mut hit = false;
                         for e in table.iter_mut().filter(|e| e[0] == dev && e[2] == act && e[1] != BUTTON_ON_CALL) { e[3] = f; hit = true; }
                         if !hit { continue; }
-                        let p = key_function_payload(table);
+                        let p = cmd::gesture_table(&table.iter().map(|e| crate::msg::Binding { dev: e[0], button: e[1], act: e[2], func: e[3] }).collect::<Vec<_>>());
                         (self.emit)(self.s.clone());
-                        self.send(CMD_SET_KEY_FUNCTION, None, &p)?;
+                        self.tx(p)?;
                         self.pump(600)?;
                         self.send(CMD_QUERY_KEY_FUNCTION, None, &[])?;
                     }
                     Cmd::HoldModes(mask, t) => {
-                        self.send(CMD_SET_ANC, None, &hold_modes_payload(mask, t))?;
+                        self.tx(cmd::hold_cycle(t, mask))?;
                         self.pump(400)?;
-                        self.send(CMD_QUERY_ANC, None, &[2, t])?;
+                        self.tx(cmd::anc_read(2, t))?;
                     }
                     Cmd::OnCall(btn, act, f) => {
-                        self.send(CMD_SET_KEY_FUNCTION, None, &[1, 4, btn, act, f])?;
+                        self.tx(cmd::gesture_table(&[crate::msg::Binding { dev: 4, button: btn, act, func: f }]))?;
                         self.pump(400)?;
                         self.send(CMD_QUERY_KEY_FUNCTION, None, &[])?;
                     }

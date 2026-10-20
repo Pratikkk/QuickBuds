@@ -2,6 +2,7 @@
 //! applies one, the one on the buds has the outline), the radar of the active one, and the hearing test.
 //! The buds hold only the active record; it is read when the page opens and added to the list.
 
+use crate::cmd;
 use crate::protocol::*;
 use crate::session::{Cmd, HEARING};
 use crate::{load_settings, save_setting, t, with_app, App, EqRow, Hearing, MainWindow, RadarLabel};
@@ -146,12 +147,12 @@ fn start(a: &App) {
     if scan {
         st(|s| s.step = Step::Scan);
         show(a, "golden_scanning", Some("golden_scan_hint"), Button::None, false);
-        send(a, vec![ear_scan(true, uid)]);
+        send(a, vec![cmd::ear_scan(true, uid)]);
         st(|s| s.timeout.start(TimerMode::SingleShot, Duration::from_secs(15), || with_app(|a| {
             if st(|s| s.step) == Step::Scan { stop(a, "golden_scan_failed"); }
         })));
     } else {
-        send(a, vec![hearing_test(true)]);
+        send(a, vec![cmd::hearing_test(true)]);
         begin(a, 0);
     }
 }
@@ -172,7 +173,7 @@ fn next(a: &App) {
     if i < 11 { return begin(a, i + 1); }
     let (uid, values) = st(|s| { s.step = Step::Finish; s.tone.stop(); (s.uid, s.values) });
     show(a, "golden_creating", Some(""), Button::None, false);
-    send(a, vec![hearing_tone_stop(), hearing_test(false), hearing_filter(uid, &values)]);
+    send(a, vec![cmd::tone_stop(), cmd::hearing_test(false), cmd::golden_filter(uid, &values)]);
     st(|s| s.timeout.start(TimerMode::SingleShot, Duration::from_secs(3), || with_app(|a| {
         if st(|s| s.step) == Step::Finish { save(a, 0); }
     })));
@@ -213,7 +214,7 @@ fn play_tone(a: &App) {
         (s.index, warn)
     });
     if warn { a.main.global::<Hearing>().set_test_message(t(&a.tr, "golden_loud").into()); }
-    send(a, vec![hearing_tone_stop(), hearing_tone(i as u8 / 6 + 1, i as u8 % 6 + 1, HEARING_STOPS[stop])]);
+    send(a, vec![cmd::tone_stop(), cmd::tone(i as u8 / 6 + 1, i as u8 % 6 + 1, HEARING_STOPS[stop])]);
 }
 
 fn stop(a: &App, reason: &str) {
@@ -225,8 +226,8 @@ fn stop(a: &App, reason: &str) {
 fn abort(a: &App) {
     let (step, uid) = st(|s| { s.tone.stop(); s.timeout.stop(); (s.step, s.uid) });
     match step {
-        Step::Scan => send(a, vec![ear_scan(false, uid)]),
-        Step::Test => send(a, vec![hearing_tone_stop(), hearing_test(false)]),
+        Step::Scan => send(a, vec![cmd::ear_scan(false, uid)]),
+        Step::Test => send(a, vec![cmd::tone_stop(), cmd::hearing_test(false)]),
         _ => {}
     }
     if step != Step::Done { st(|s| s.step = Step::Idle); }
@@ -234,7 +235,7 @@ fn abort(a: &App) {
 
 /// Applies a record as HeyMelody does (description id, record, ear scan, switch on) and shows its radar.
 fn apply_record(a: &App, r: Record) {
-    send(a, hearing_apply(r.uid, &r.name, &r.values, &r.scan, r.desc));
+    send(a, cmd::golden_apply(r.uid, &r.name, &r.values, &r.scan, r.desc));
     st(|s| s.active = r.uid);
     paint(a);
     request_curves(a);
@@ -245,8 +246,8 @@ fn request_curves(a: &App) {
     let uid = st(|s| s.active);
     let Some(r) = records().into_iter().find(|r| r.uid == uid) else { return };
     if st(|s| s.hearing.contains_key(&uid)) { return redraw(a); }
-    let mut frames = vec![hearing_filter(r.uid, &r.values)];
-    if !r.scan.is_empty() { frames.push(hearing_scan_filter(r.uid, &r.scan)); }
+    let mut frames = vec![cmd::golden_filter(r.uid, &r.values)];
+    if !r.scan.is_empty() { frames.push(cmd::golden_scan_filter(r.uid, &r.scan)); }
     send(a, frames);
 }
 
@@ -268,7 +269,7 @@ fn event(a: &App, e: HearingEv) {
         HearingEv::EarScan(uid, data) => {
             if st(|s| s.step != Step::Scan || s.uid != uid) { return; }
             st(|s| { s.timeout.stop(); s.scan_data = data; });
-            send(a, vec![ear_scan(false, uid), hearing_test(true)]);
+            send(a, vec![cmd::ear_scan(false, uid), cmd::hearing_test(true)]);
             begin(a, 0);
         }
         HearingEv::Filter(uid, enhance, curves) => {

@@ -506,4 +506,33 @@ mod cmd {
         assert_eq!(golden_apply(1, "x", &v, &[9; 168], 11).iter().map(|f| f.0).collect::<Vec<_>>(), [0x0411, 0x040E, 0x0415, 0x0403]);
         assert_eq!(golden_apply(1, "x", &v, &[], 0).last(), Some(&(0x0403, vec![0x0B, 1])));
     }
+
+    #[test]
+    fn session_senders_match_the_old_constants() {
+        // Every frame session.rs builds through core: command and payload as the old inline code sent them.
+        assert_eq!((handshake().0, product_id().0, broadcast_codes().0), (old::CMD_HANDSHAKE, old::CMD_QUERY_PRODUCT_ID, old::CMD_QUERY_BROADCAST));
+        assert_eq!(register_one(5), (old::CMD_REGISTER_ONE, vec![5]));
+        assert_eq!(batch(&[]).0, old::CMD_BATCH);
+        assert_eq!(anc_read(2, 3), (old::CMD_QUERY_ANC, vec![2, 3]));
+        assert_eq!(feature(0x1D, false), (old::CMD_SET_FEATURE, vec![0x1D, 0]));
+        assert_eq!(eq_select(4), (old::CMD_SET_EQ, vec![4]));
+        assert_eq!(bass_set(5), (old::CMD_SET_BASSWAVE, vec![0xFB, 5, 5]));
+        assert_eq!(find(true).0, old::CMD_FIND_BUDS);
+        assert_eq!(fit_test(true).0, old::CMD_FIT_TEST);
+        assert_eq!(personal_anc_stored(), (old::CMD_QUERY_PERSONAL_NOISE, vec![]));
+        assert_eq!(personal_anc(1).0, old::CMD_PERSONAL_NOISE);
+        // Dual connection follow-up: `08 00 <!on>`.
+        for on in [true, false] {
+            assert_eq!(phone_state(PhoneState { auto_switch: Some(!on), ..Default::default() }), (old::CMD_DUAL_FOLLOWUP, vec![8, 0, !on as u8]));
+        }
+        assert_eq!((devices_read().0, preferred_read().0), (old::CMD_QUERY_DEVICES, old::CMD_QUERY_PREFERRED));
+        assert_eq!(device_connect([0; 6], true).0, old::CMD_MULTI_CONNECT);
+        assert_eq!((game_sound(1).0, game_sound_read().0), (old::CMD_GAME_SOUND, old::CMD_QUERY_GAME_SOUND));
+        assert_eq!((spatial(1).0, spatial_read().0, spatial_source(0).0), (old::CMD_SET_SPATIAL_TYPE, old::CMD_QUERY_SPATIAL_TYPE, old::CMD_SPATIAL_SOURCE));
+        assert_eq!((head_gesture(1).0, head_gesture_read().0), (old::CMD_SET_HEAD_MOTION, old::CMD_QUERY_HEAD_MOTION));
+        assert_eq!((alert_volume(3).0, tap_level(3).0, tap_level_read().0), (old::CMD_SET_ALERT_VOLUME, old::CMD_SET_TAP_LEVEL, old::CMD_QUERY_TAP_LEVEL));
+        assert_eq!(codec(1, false).0, old::CMD_SET_CODEC);
+        // On-call row: one entry for both buds, as the old inline `01 04 <btn> <act> <fn>`.
+        assert_eq!(gesture_table(&[Binding { dev: 4, button: 6, act: 6, func: 0x1C }]), (old::CMD_SET_KEY_FUNCTION, vec![1, 4, 6, 6, 0x1C]));
+    }
 }
