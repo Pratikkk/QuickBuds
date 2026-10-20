@@ -2,25 +2,27 @@
 #![windows_subsystem = "windows"]
 
 mod bt;
-#[allow(dead_code)]
-mod cmd;
+#[cfg(test)]
+mod core_tests;
 mod controls;
 mod devtools;
 mod dots;
 mod dual;
 mod earbuds;
+mod event;
 mod eq;
 mod hearing;
 mod models;
 mod modeltest;
-#[allow(dead_code)]
-mod msg;
 mod protocol;
 mod report;
 mod session;
 mod theme;
 mod update;
-mod wire;
+
+// The core crate owns the wire format, the typed messages and the commands.
+#[allow(unused_imports)]
+pub use buds_core::{cmd, msg, wire};
 
 mod icons { include!(concat!(env!("OUT_DIR"), "/icons.rs")); }
 mod strings { include!(concat!(env!("OUT_DIR"), "/strings.rs")); }
