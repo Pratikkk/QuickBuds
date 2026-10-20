@@ -21,6 +21,7 @@ import com.spizganed.quickbuds.bluetooth.GameEqWatcher
 import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Feature
 
 /**
  * Earbud settings — the hub for everything about the buds themselves rather than the sound
@@ -94,9 +95,9 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
             card.addView(SettingRowFactory.build(this, icon, title, sub, SettingRowFactory.buildChevron(this)) { open() })
         }
         sheetRow(R.drawable.ic_earbud, R.string.row_wear_title, R.string.row_wear_sub,
-            Capabilities.hasFeature(this, OpoProtocol.FEATURE_AUTO_PLAY_PAUSE)) {
-            wearSheet = WearSheet(this, { manager?.setFeatures(OpoProtocol.FEATURE_AUTO_PLAY_PAUSE to it) },
-                manager?.featureStates?.get(OpoProtocol.FEATURE_AUTO_PLAY_PAUSE)).also { it.show() }
+            Capabilities.hasFeature(this, Feature.AUTO_PLAY_PAUSE)) {
+            wearSheet = WearSheet(this, { manager?.setFeatures(Feature.AUTO_PLAY_PAUSE to it) },
+                manager?.featureStates?.get(Feature.AUTO_PLAY_PAUSE)).also { it.show() }
         }
         sheetRow(R.drawable.ic_find_buds, R.string.row_find_title, R.string.row_find_sub,
             Capabilities.supports(this, OpoProtocol.CMD_FIND_BUDS)) {
@@ -149,7 +150,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
                 if (syncing) return@setOnCheckedChangeListener
                 // Power saving restarts the buds (asks both ways); adaptive sound costs battery (asks only to
                 // turn on). As HeyMelody does.
-                if (confirm == 0 || (!on && id == OpoProtocol.FEATURE_HEARING_OPTIMIZE))
+                if (confirm == 0 || (!on && id == Feature.HEARING_OPTIMIZE))
                     return@setOnCheckedChangeListener manager?.setFeatures(id to on) ?: Unit
                 quiet { sw.isChecked = !on }
                 ConfirmDialog.show(this, getString(title), getString(confirm), getString(R.string.dual_add_ok)) {
@@ -163,9 +164,9 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
         // Personalized ANC: off is a plain switch write, on runs HeyMelody's test flow (PROTOCOL.md §9).
         // The model's flag too: HeyMelody gates on it alone, and Buds 4 list 0x0C without having the feature.
         if ((ModelCatalog.current(this)?.json?.optInt("personalAnc") ?: 1) == 1 &&
-            Capabilities.offered(this, OpoProtocol.FEATURE_PERSONAL_NOISE, "personalAnc") &&
+            Capabilities.offered(this, Feature.PERSONAL_NOISE, "personalAnc") &&
             (Capabilities.supports(this, OpoProtocol.CMD_PERSONAL_NOISE) || ModelCatalog.manual(this) != null)) {
-            val id = OpoProtocol.FEATURE_PERSONAL_NOISE
+            val id = Feature.PERSONAL_NOISE
             val sw = SettingRowFactory.buildSwitch(this, manager?.featureStates?.get(id) == 1)
             featureSwitches[id] = sw
             sw.setOnCheckedChangeListener { _, on ->
@@ -178,12 +179,12 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
                 sw.performClick()
             })
         }
-        switch(OpoProtocol.FEATURE_VOCAL_ENHANCE, "voiceBoost", R.drawable.ic_equalizer,
+        switch(Feature.VOCAL_ENHANCE, "voiceBoost", R.drawable.ic_equalizer,
             R.string.row_vocal_title, R.string.row_vocal_sub)
-        switch(OpoProtocol.FEATURE_GAME_SOUND, "gameSoundFx", R.drawable.ic_low_latency,
+        switch(Feature.GAME_SOUND, "gameSoundFx", R.drawable.ic_low_latency,
             R.string.row_game_sound_title, R.string.row_game_sound_sub)
         // Which effect it applies: `0x0423 <type> 01`, HeyMelody's radio list (PROTOCOL.md §9).
-        if (featureSwitches.containsKey(OpoProtocol.FEATURE_GAME_SOUND) &&
+        if (featureSwitches.containsKey(Feature.GAME_SOUND) &&
             (Capabilities.supports(this, OpoProtocol.CMD_GAME_SOUND) || ModelCatalog.manual(this) != null)) {
             card.addView(SettingRowFactory.buildDivider(this))
             val row = SettingRowFactory.build(this, R.drawable.ic_low_latency, R.string.game_sound_type_title,
@@ -194,9 +195,9 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
         }
         // Game equalizer: the switch, and the Usage access it needs to see which app is open (PROTOCOL.md §9).
         if (Capabilities.supports(this, OpoProtocol.CMD_GAME_EQ_STATE)) {
-            switch(OpoProtocol.FEATURE_GAME_EQ, null, R.drawable.ic_low_latency,
+            switch(Feature.GAME_EQ, null, R.drawable.ic_low_latency,
                 R.string.row_game_eq_title, R.string.row_game_eq_sub)
-            if (featureSwitches.containsKey(OpoProtocol.FEATURE_GAME_EQ) && !GameEqWatcher.hasUsageAccess(this)) {
+            if (featureSwitches.containsKey(Feature.GAME_EQ) && !GameEqWatcher.hasUsageAccess(this)) {
                 card.addView(SettingRowFactory.buildDivider(this))
                 card.addView(SettingRowFactory.build(this, R.drawable.ic_info, R.string.game_eq_access_title,
                     R.string.game_eq_access_sub, SettingRowFactory.buildChevron(this)) {
@@ -204,24 +205,24 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
                 })
             }
         }
-        switch(OpoProtocol.FEATURE_SMART_VOLUME, "autoVolume", R.drawable.ic_volume,
+        switch(Feature.SMART_VOLUME, "autoVolume", R.drawable.ic_volume,
             R.string.row_smart_volume_title, R.string.row_smart_volume_sub)
-        switch(OpoProtocol.FEATURE_ADAPTIVE_VOLUME, null, R.drawable.ic_volume,
+        switch(Feature.ADAPTIVE_VOLUME, null, R.drawable.ic_volume,
             R.string.row_adaptive_volume_title, R.string.row_adaptive_volume_sub)
-        switch(OpoProtocol.FEATURE_ADAPTIVE_EAR, null, R.drawable.ic_earbud,
+        switch(Feature.ADAPTIVE_EAR, null, R.drawable.ic_earbud,
             R.string.row_adaptive_ear_title, R.string.row_adaptive_ear_sub)
-        switch(OpoProtocol.FEATURE_SLEEP_PAUSE, null, R.drawable.ic_earbud,
+        switch(Feature.SLEEP_PAUSE, null, R.drawable.ic_earbud,
             R.string.row_sleep_title, R.string.row_sleep_sub)
-        switch(OpoProtocol.FEATURE_SPEECH_PERCEPTION, null, R.drawable.ic_transparency,
+        switch(Feature.SPEECH_PERCEPTION, null, R.drawable.ic_transparency,
             R.string.row_speech_title, R.string.row_speech_sub)
-        switch(OpoProtocol.FEATURE_HEARING_OPTIMIZE, null, R.drawable.ic_hearing,
+        switch(Feature.HEARING_OPTIMIZE, null, R.drawable.ic_hearing,
             R.string.row_hearing_optimize_title, R.string.row_hearing_optimize_sub, R.string.hearing_optimize_confirm)
-        switch(OpoProtocol.FEATURE_LONG_PRESS_VOLUME, "holdVolume", R.drawable.ic_volume,
+        switch(Feature.LONG_PRESS_VOLUME, "holdVolume", R.drawable.ic_volume,
             R.string.row_long_press_volume_title, R.string.row_long_press_volume_sub)
-        switch(OpoProtocol.FEATURE_HEAD_MOTION, null, R.drawable.ic_gesture,
+        switch(Feature.HEAD_MOTION, null, R.drawable.ic_gesture,
             R.string.row_head_motion_title, R.string.row_head_motion_sub)
         // Which gesture answers: `0x0431 <type>`, HeyMelody's nod / shake choice (PROTOCOL.md §9).
-        if (featureSwitches.containsKey(OpoProtocol.FEATURE_HEAD_MOTION) &&
+        if (featureSwitches.containsKey(Feature.HEAD_MOTION) &&
             Capabilities.supports(this, OpoProtocol.CMD_SET_HEAD_MOTION_TYPE)) {
             card.addView(SettingRowFactory.buildDivider(this))
             val row = SettingRowFactory.build(this, R.drawable.ic_gesture, R.string.head_motion_type_title,
@@ -230,9 +231,9 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
             paintHeadMotion()
             card.addView(row)
         }
-        switch(OpoProtocol.FEATURE_SWIFT_PAIR, "fastPair", R.drawable.ic_devices,
+        switch(Feature.SWIFT_PAIR, "fastPair", R.drawable.ic_devices,
             R.string.row_swift_pair_title, R.string.row_swift_pair_sub)
-        switch(OpoProtocol.FEATURE_POWER_SAVING, null, R.drawable.ic_power,
+        switch(Feature.POWER_SAVING, null, R.drawable.ic_power,
             R.string.row_power_saving_title, R.string.row_power_saving_sub, R.string.power_saving_confirm)
         if (card.childCount == 0) return
         root.addView(SettingRowFactory.sectionLabel(this, R.string.earbuds_section_features))

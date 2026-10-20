@@ -30,6 +30,7 @@ import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Feature
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -233,7 +234,7 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         val bassCard = card()
         bassSwitch = SettingRowFactory.buildSwitch(this, false)
         bassSwitch.setOnCheckedChangeListener { _, on ->
-            if (!syncing) manager?.setFeatures(OpoProtocol.FEATURE_BASSWAVE to on)
+            if (!syncing) manager?.setFeatures(Feature.BASSWAVE to on)
             if (on != (bassSlider.visibility == View.VISIBLE)) {
                 // A user toggle unfolds the slider; a re-read syncing the state just places it.
                 if (syncing) bassSlider.visibility = if (on) View.VISIBLE else View.GONE
@@ -305,7 +306,7 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         val current = m?.eqCurrent
 
         syncing = true
-        val bassOn = m?.featureStates?.get(OpoProtocol.FEATURE_BASSWAVE) == 1
+        val bassOn = m?.featureStates?.get(Feature.BASSWAVE) == 1
         bassSwitch.isChecked = bassOn
         m?.bassWaveLevel?.let { bassSlider.value = it }
         syncing = false

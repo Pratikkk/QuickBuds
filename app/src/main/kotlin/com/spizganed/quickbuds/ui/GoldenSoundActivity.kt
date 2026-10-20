@@ -18,7 +18,8 @@ import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.GoldenSound
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
-import com.spizganed.quickbuds.protocol2.Outbound
+import com.spizganed.quickbuds.protocol.Feature
+import com.spizganed.quickbuds.protocol2.ProtocolSelect
 import com.spizganed.quickbuds.protocol2.ProtocolNext
 
 /**
@@ -66,7 +67,7 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
 
         toggle = SettingRowFactory.buildSwitch(this, false)
         toggle.setOnCheckedChangeListener { _, on ->
-            if (!syncing) manager?.setFeatures(OpoProtocol.FEATURE_GOLDEN_SOUND to on)
+            if (!syncing) manager?.setFeatures(Feature.GOLDEN_SOUND to on)
         }
         root.addView(SettingRowFactory.card(this).apply {
             addView(SettingRowFactory.build(this@GoldenSoundActivity, R.drawable.ic_hearing,
@@ -115,10 +116,10 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
     private fun requestCurves() {
         val r = GoldenSound.records(this).firstOrNull { it.uid == activeUid } ?: return
         if (hearingCurves.containsKey(r.uid)) { paintRadar(); return }
-        val typed = ProtocolNext.enabled(this)
+        val proto = ProtocolSelect.of(this)
         manager?.golden(*listOfNotNull(
-            Outbound.hearingFilter(typed, r.uid, r.values),
-            if (r.scan.isNotEmpty()) Outbound.scanFilter(typed, r.uid, r.scan) else null
+            proto.hearingFilter(r.uid, r.values),
+            if (r.scan.isNotEmpty()) proto.scanFilter(r.uid, r.scan) else null
         ).toTypedArray())
     }
 
@@ -156,7 +157,7 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
 
     /** Applies a record as HeyMelody does: description id, record, ear scan, then the switch on. */
     private fun apply(r: GoldenSound.Record) {
-        manager?.golden(*Outbound.goldenApply(ProtocolNext.enabled(this), r.uid, r.name, r.values, r.scan, r.descId).toTypedArray())
+        manager?.golden(*ProtocolSelect.of(this).goldenApply(r.uid, r.name, r.values, r.scan, r.descId).toTypedArray())
         activeUid = r.uid
         paintList()
         paintRadar()
@@ -203,7 +204,7 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
     }
 
     override fun onFeatureStates(states: Map<Int, Int>) {
-        val v = states[OpoProtocol.FEATURE_GOLDEN_SOUND] ?: return
+        val v = states[Feature.GOLDEN_SOUND] ?: return
         syncing = true
         toggle.isChecked = v == 1
         syncing = false

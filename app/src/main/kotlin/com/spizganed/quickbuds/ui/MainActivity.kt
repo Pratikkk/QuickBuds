@@ -33,6 +33,7 @@ import com.spizganed.quickbuds.protocol.AncModes
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Feature
 import com.spizganed.quickbuds.widget.AncWidgetProvider
 import com.spizganed.quickbuds.widget.WidgetSettings
 import com.spizganed.quickbuds.widget.WidgetStateStore
@@ -882,7 +883,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         windSwitch = wind
         wind.setOnCheckedChangeListener { _, isChecked ->
             if (syncingFeatures) return@setOnCheckedChangeListener
-            manager.setFeatures(OpoProtocol.FEATURE_WIND_NOISE to isChecked)
+            manager.setFeatures(Feature.WIND_NOISE to isChecked)
         }
         addRow("wind",
             SettingRowFactory.build(
@@ -933,11 +934,11 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
                 if (dropSpatial && spatialByType()) {
                     manager.setSpatialType(0)
                     paintSpatial()
-                    hires.postDelayed({ manager.setFeatures(OpoProtocol.FEATURE_HIRES_CODEC to true) }, 300)
+                    hires.postDelayed({ manager.setFeatures(Feature.HIRES_CODEC to true) }, 300)
                 } else if (dropSpatial) manager.setFeatures(
-                    OpoProtocol.FEATURE_SPATIAL_SOUND to false, OpoProtocol.FEATURE_HIRES_CODEC to true
+                    Feature.SPATIAL_SOUND to false, Feature.HIRES_CODEC to true
                 )
-                else manager.setFeatures(OpoProtocol.FEATURE_HIRES_CODEC to isChecked)
+                else manager.setFeatures(Feature.HIRES_CODEC to isChecked)
             }
         }
         val hiresRow = SettingRowFactory.build(
@@ -964,7 +965,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         goldenSwitch = golden
         golden.setOnCheckedChangeListener { _, isChecked ->
             if (syncingFeatures) return@setOnCheckedChangeListener
-            manager.setFeatures(OpoProtocol.FEATURE_GOLDEN_SOUND to isChecked)
+            manager.setFeatures(Feature.GOLDEN_SOUND to isChecked)
         }
         addRow("golden",
             SettingRowFactory.build(
@@ -1018,21 +1019,21 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     private fun spatialHeadTracking() = MainActivity.spatialHeadTracking(this)
 
     private fun spatialOn() = if (spatialByType()) (manager.spatialType ?: 0) != 0
-        else featureOn(OpoProtocol.FEATURE_SPATIAL_SOUND)
+        else featureOn(Feature.SPATIAL_SOUND)
 
     /** Spatial and Hi-Res never coexist: turning spatial on with Hi-Res on asks first, then drops Hi-Res. */
     private fun setSpatial(type: Int) {
-        val dropHires = type != 0 && featureOn(OpoProtocol.FEATURE_HIRES_CODEC) && !spatialSwitchOnly()
+        val dropHires = type != 0 && featureOn(Feature.HIRES_CODEC) && !spatialSwitchOnly()
         val write = {
             spatialSwitch?.let { setSwitchQuiet(it, type != 0) }
-            val hiresOff = OpoProtocol.FEATURE_HIRES_CODEC to false
+            val hiresOff = Feature.HIRES_CODEC to false
             if (spatialByType()) {
                 manager.setSpatialType(type)
                 paintSpatial()
                 // Spatial first, then the codec, as HeyMelody sends them.
                 if (dropHires) spatialSwitch?.postDelayed({ manager.setFeatures(hiresOff) }, 300)
-            } else if (dropHires) manager.setFeatures(OpoProtocol.FEATURE_SPATIAL_SOUND to true, hiresOff)
-            else manager.setFeatures(OpoProtocol.FEATURE_SPATIAL_SOUND to (type != 0))
+            } else if (dropHires) manager.setFeatures(Feature.SPATIAL_SOUND to true, hiresOff)
+            else manager.setFeatures(Feature.SPATIAL_SOUND to (type != 0))
         }
         if (!dropHires) return write()
         spatialSwitch?.let { setSwitchQuiet(it, spatialOn()) }
@@ -1053,7 +1054,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
             .items(codecs.map { codec ->
                 BottomSheetDialog.Item(codecName(codec), codec == current) {
                     if (codec != current) confirmReconnect(R.string.codec_msg_reconnect) {
-                        manager.setCodec(codec, featureOn(OpoProtocol.FEATURE_HIRES_CODEC))
+                        manager.setCodec(codec, featureOn(Feature.HIRES_CODEC))
                     }
                 }
             })
@@ -1098,7 +1099,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         scheduleAskTest()
         // Disconnected, the switches stay neutral (SPEC 3.2); setConnectedUi repaints on connect.
         if (connectedUi == false) return
-        states[OpoProtocol.FEATURE_HIRES_CODEC]?.let { v ->
+        states[Feature.HIRES_CODEC]?.let { v ->
             hiresSwitch?.let { setSwitchQuiet(it, v == 1) }
             hiresSubtitle?.setText(if (v == 1) R.string.row_hires_sub else R.string.row_hires_sub_off)
         }
@@ -1106,10 +1107,10 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         if (codec != null) hiresSubtitle?.text = codecName(codec)
         hiresSwitch?.isEnabled = codec == null || codec == 3 || codec == 8
         paintSpatial()
-        states[OpoProtocol.FEATURE_GOLDEN_SOUND]?.let { v ->
+        states[Feature.GOLDEN_SOUND]?.let { v ->
             goldenSwitch?.let { setSwitchQuiet(it, v == 1) }
         }
-        states[OpoProtocol.FEATURE_WIND_NOISE]?.let { v ->
+        states[Feature.WIND_NOISE]?.let { v ->
             windSwitch?.let { setSwitchQuiet(it, v == 1) }
         }
     }
@@ -1320,13 +1321,13 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
          * yet = shown. Earbud settings gates its own rows. [ModelTest] lists the same rows.
          */
         fun rowSupported(c: Context, key: String): Boolean = when (key) {
-            "wind" -> Capabilities.offered(c, OpoProtocol.FEATURE_WIND_NOISE, "windMode")
+            "wind" -> Capabilities.offered(c, Feature.WIND_NOISE, "windMode")
             "game" -> Capabilities.hasFeature(c, Capabilities.gameModeId(c))
-            "hires" -> Capabilities.hasFeature(c, OpoProtocol.FEATURE_HIRES_CODEC) || codecPicker(c)
-            "spatial" -> Capabilities.hasFeature(c, OpoProtocol.FEATURE_SPATIAL_SOUND) || spatialByType(c)
-            "golden" -> Capabilities.hasFeature(c, OpoProtocol.FEATURE_GOLDEN_SOUND)
+            "hires" -> Capabilities.hasFeature(c, Feature.HIRES_CODEC) || codecPicker(c)
+            "spatial" -> Capabilities.hasFeature(c, Feature.SPATIAL_SOUND) || spatialByType(c)
+            "golden" -> Capabilities.hasFeature(c, Feature.GOLDEN_SOUND)
             "eq" -> EqActivity.hasEq(c)
-            "dual" -> Capabilities.hasFeature(c, OpoProtocol.FEATURE_DUAL_DEVICE)
+            "dual" -> Capabilities.hasFeature(c, Feature.DUAL_DEVICE)
             else -> true
         }
 

@@ -36,7 +36,7 @@ object ModelTest {
             Capabilities.supports(it, OpoProtocol.CMD_SET_KEY_FUNCTION) && !GestureModel.of(it).isEmpty
         },
         Feature("wear", R.string.row_wear_title, "Wear detection") {
-            Capabilities.hasFeature(it, OpoProtocol.FEATURE_AUTO_PLAY_PAUSE)
+            Capabilities.hasFeature(it, com.spizganed.quickbuds.protocol.Feature.AUTO_PLAY_PAUSE)
         },
         Feature("find", R.string.row_find_title, "Find my earbuds") { Capabilities.supports(it, OpoProtocol.CMD_FIND_BUDS) },
     )

@@ -8,10 +8,10 @@ import android.content.pm.ApplicationInfo
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
-import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Feature
 
 /**
- * Game equalizer (PROTOCOL.md §9): while the buds' switch [OpoProtocol.FEATURE_GAME_EQ] is on, tells them when a game
+ * Game equalizer (PROTOCOL.md §9): while the buds' switch [Feature.GAME_EQ] is on, tells them when a game
  * comes to the foreground and when it leaves. Needs "Usage access"; without it, nothing is sent.
  * A game is an app Android marks as one (`ApplicationInfo.CATEGORY_GAME`).
  */
@@ -30,7 +30,7 @@ class GameEqWatcher(private val context: Context, private val manager: () -> Bud
     /** Call when the link or the switch changes. Starts or stops the polling. */
     fun update() {
         val m = manager()
-        val active = m != null && m.isConnected() && m.featureStates[OpoProtocol.FEATURE_GAME_EQ] == 1 && hasUsageAccess(context)
+        val active = m != null && m.isConnected() && m.featureStates[Feature.GAME_EQ] == 1 && hasUsageAccess(context)
         handler.removeCallbacks(tick)
         if (active) {
             handler.post(tick)

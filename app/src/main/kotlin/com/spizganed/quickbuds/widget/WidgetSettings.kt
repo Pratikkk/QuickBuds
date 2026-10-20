@@ -4,7 +4,7 @@ import android.content.Context
 import com.spizganed.quickbuds.R
 import com.spizganed.quickbuds.protocol.AncModes
 import com.spizganed.quickbuds.protocol.Capabilities
-import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Feature
 import com.spizganed.quickbuds.ui.ThemeRes
 
 /**
@@ -42,7 +42,7 @@ object WidgetSettings {
      */
     val BUTTONS = listOf("anc", "trans", "adapt", "off", "ll", "wind")
     /** Feature buttons: key -> `0x0403` id. */
-    val FEATURE_BUTTONS = mapOf("wind" to OpoProtocol.FEATURE_WIND_NOISE)
+    val FEATURE_BUTTONS = mapOf("wind" to Feature.WIND_NOISE)
     /** Buttons a widget shows before its setup screen saves a choice. */
     val DEFAULT_BUTTONS = listOf("anc", "trans", "adapt", "ll")
     /** Slots on the controls page. */
@@ -139,7 +139,7 @@ object WidgetSettings {
             "trans", "adapt" -> anc.supports(MODES.first { it.key == key }.store)
             "off" -> !anc.isEmpty
             "ll" -> true
-            "wind" -> Capabilities.offered(c, OpoProtocol.FEATURE_WIND_NOISE, "windMode")
+            "wind" -> Capabilities.offered(c, Feature.WIND_NOISE, "windMode")
             else -> false
         }
     }
