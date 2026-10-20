@@ -25,7 +25,8 @@ class AboutActivity : Activity() {
         val root = SettingRowFactory.screen(this)
 
         root.addView(ImageView(this).apply {
-            setImageResource(R.mipmap.ic_launcher)
+            setImageDrawable(ThemeRes.tint(this@AboutActivity, R.drawable.ic_launcher_monochrome, ThemeRes.palette(this@AboutActivity).accent))
+            background = ThemeRes.pill(this@AboutActivity, ThemeRes.palette(this@AboutActivity).card, 48f)
             layoutParams = LinearLayout.LayoutParams(dp(88f), dp(88f)).apply {
                 gravity = Gravity.CENTER_HORIZONTAL
                 topMargin = dp(12f)

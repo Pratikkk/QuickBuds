@@ -107,7 +107,8 @@ class SetupActivity : Activity() {
     }
 
     private fun icon() = body.addView(ImageView(this).apply {
-        setImageResource(R.mipmap.ic_launcher)
+        setImageDrawable(ThemeRes.tint(this@SetupActivity, R.drawable.ic_launcher_monochrome, p.accent))
+        background = ThemeRes.pill(this@SetupActivity, p.card, 48f)
         layoutParams = LinearLayout.LayoutParams(dp(96f), dp(96f)).apply { gravity = Gravity.CENTER_HORIZONTAL; topMargin = dp(40f) }
     })
 
