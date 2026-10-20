@@ -72,14 +72,20 @@ class SetupActivity : Activity() {
             addView(next, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(44f)))
         })
         setContentView(root)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT) { goBack() }
+        }
         show(page)
     }
 
     override fun onSaveInstanceState(out: Bundle) { super.onSaveInstanceState(out); out.putInt("page", page) }
 
     /** Back goes to the previous page, then leaves the app from the first one. */
+    private fun goBack() { if (page > 0) show(page - 1) else finish() }
+
+    @Suppress("DEPRECATION", "GestureBackNavigation") // Android 12 and older call this; 13 and newer use the callback in onCreate.
     @Deprecated("Deprecated in Java")
-    override fun onBackPressed() { if (page > 0) show(page - 1) else super.onBackPressed() }
+    override fun onBackPressed() = goBack()
 
     private fun show(i: Int) {
         page = i.coerceIn(0, total - 1)
@@ -165,7 +171,17 @@ class SetupActivity : Activity() {
                 }
                 layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(36f))
             }
-            return SettingRowFactory.build(this, R.drawable.ic_earbud, title, 0, action)
+            return LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(dp(16f), dp(12f), dp(16f), dp(12f))
+                addView(TextView(this@SetupActivity).apply {
+                    setText(title)
+                    textSize = 16f
+                    setTextColor(p.text)
+                }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+                addView(action)
+            }
         }
         body.addView(SettingRowFactory.card(this).apply {
             addView(row(R.string.setup_perm_bt, bluetoothPermissions(), 1))
