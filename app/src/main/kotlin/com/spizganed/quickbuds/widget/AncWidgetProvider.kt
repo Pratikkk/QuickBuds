@@ -196,13 +196,14 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         /** The views and the flipper child to show (-1: the disconnected layout, no flippers); [update] decides whether to send the child. */
         private fun build(context: Context, state: WidgetStateStore.State, provider: Kind, id: Int, fit: Fit): Pair<RemoteViews, Int> {
             val p = WidgetSettings.palette(context)
-            if (!state.connected) return disconnected(context, p, provider, id) to -1
+            val live = state.connected
+            // [k]: how connected the battery page looks, 0 ghost rings, 1 full. Between 0 and 1 a connect or disconnect sweeps ([animate]).
+            val k = if (sweepK >= 0f) sweepK else if (live) 1f else 0f
+            val ghost = !live && sweepK < 0f
+            val shown = if (live) state else sweepState ?: state.also { it.leftStatus = -1; it.rightStatus = -1 }
 
-            val paged = fit.shape.paged
-            // The sized shapes show battery and controls at once: the battery counts as the page shown.
-            val page = if (paged) provider.page ?: WidgetSettings.page(context, id, Kind.BATTERY) else Kind.BATTERY
-            val hasControls = if (paged) page == Kind.CONTROLS else fit.tiles > 0
-            val list = hasControls && WidgetSettings.listOpen(context, id)
+            val page = if (!live) Kind.BATTERY else provider.page ?: WidgetSettings.page(context, id, Kind.BATTERY)
+            val list = live && page == Kind.CONTROLS && WidgetSettings.listOpen(context, id)
             val v = RemoteViews(context.packageName, fit.shape.layout(context))
             // The host reapplies an update with the same layout onto the views it has, so switching
             // a flipper's child animates. The flip side: every state set here must be set both ways
@@ -211,22 +212,32 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             boxBg(context, v, p, id)
             // Every tap on a two-page widget carries the other page, so a second tap swaps.
             val other = if (page == Kind.BATTERY) Kind.CONTROLS else Kind.BATTERY
-            val swap = if (!list && paged && provider.page == null) other else null
+            val swap = if (live && !list && provider.page == null) other else null
             v.setOnClickPendingIntent(R.id.w_root, swap?.let { receiverPI(context, WidgetActions.ACTION_OPEN_APP, id, swap = it) })
-            if (paged) {
-                // The two-page widgets' dots: the shown page in the accent.
-                val two = provider.page == null
-                v.setViewVisibility(R.id.w_dots, if (two) View.VISIBLE else View.GONE)
-                v.setInt(R.id.w_dot0, "setColorFilter", if (page == Kind.BATTERY) p.accent else dim(p))
-                v.setInt(R.id.w_dot1, "setColorFilter", if (page == Kind.CONTROLS) p.accent else dim(p))
+            // The two-page widgets' dots: the shown page in the accent.
+            v.setViewVisibility(R.id.w_dots, if (live && provider.page == null) View.VISIBLE else View.GONE)
+            v.setInt(R.id.w_dot0, "setColorFilter", if (page == Kind.BATTERY) p.accent else dim(p))
+            v.setInt(R.id.w_dot1, "setColorFilter", if (page == Kind.CONTROLS) p.accent else dim(p))
+
+            // Disconnected: the Connect chip over the dimmed battery page. Both ways, see above.
+            val chip = ghost
+            v.setViewVisibility(CONN.root, if (chip) View.VISIBLE else View.GONE)
+            if (chip) {
+                // Material: the chip is the widget's only control, so it keeps its fill (with or without the box).
+                val filled = WidgetSettings.materialStyle(context)
+                paint(context, v, CONN, p, filled)
+                content(context, v, CONN, p, filled, R.drawable.ic_status_dot_empty, context.getString(R.string.conn_action_connect), 10f, 10f / 5)
+                v.setContentDescription(CONN.root, context.getString(R.string.conn_off) + ". " + context.getString(R.string.conn_action_connect))
+                v.setOnClickPendingIntent(CONN.root, connectPI(context))
+            } else {
+                v.setOnClickPendingIntent(CONN.root, null)
             }
 
             // Both pages and the list are filled every time, so the one sliding or fading out still
             // shows current values (a pick's highlight while the list closes).
-            grid(context, v, p, state, fit, id)
-            battery(context, v, p, state, fit, id)
-            // LIST and STACK (battery only) have no tiles.
-            if (!list && fit.shape != Shape.LIST && fit.shape != Shape.STACK) controls(context, v, p, state, fit, id, swap)
+            if (live) grid(context, v, p, state, fit, id)
+            battery(context, v, p, shown, fit, id, k)
+            if (live && !list) controls(context, v, p, state, fit, id, swap)
             return v to child
         }
 
@@ -332,23 +343,11 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             }
         }
 
-        private fun disconnected(context: Context, p: Palette, kind: Kind, id: Int): RemoteViews {
-            val v = RemoteViews(context.packageName, if (WidgetSettings.nothingStyle(context)) R.layout.widget_disconnected_n
-                else if (WidgetSettings.materialStyle(context)) R.layout.widget_disconnected_md else R.layout.widget_disconnected)
-            boxBg(context, v, p, id)
-            // Material: the chip is the widget's only control, so it keeps its fill (with or without the box).
-            val chip = WidgetSettings.materialStyle(context)
-            paint(context, v, CONN, p, chip)
-            content(context, v, CONN, p, chip, R.drawable.ic_status_dot_empty, context.getString(R.string.conn_action_connect), 10f, 10f / 5)
-            v.setContentDescription(CONN.root, context.getString(R.string.conn_off) + ". " + context.getString(R.string.conn_action_connect))
-            v.setOnClickPendingIntent(CONN.root, connectPI(context))
-            return v
-        }
-
-        private fun battery(context: Context, v: RemoteViews, p: Palette, state: WidgetStateStore.State, fit: Fit, id: Int) {
+        private fun battery(context: Context, v: RemoteViews, p: Palette, state: WidgetStateStore.State, fit: Fit, id: Int, k: Float) {
             val paged = fit.shape.paged
             val ringDp = if (paged) ringDp(context, fit.shape, id) else fit.ring
-            val levels = intArrayOf(state.leftBattery, state.caseBattery, state.rightBattery)
+            // k < 1: rings drawn to k of their level and the glyphs part-way to their ghost colour.
+            val levels = intArrayOf(state.leftBattery, state.caseBattery, state.rightBattery).map { if (it < 0) -1 else Math.round(it * k) }.toIntArray()
             val statuses = intArrayOf(state.leftStatus, -1, state.rightStatus)
             val names = intArrayOf(R.string.status_left, R.string.status_case, R.string.status_right)
             // 2x2 and TALL show the case as a bar under the two bud panels; the others have a case panel.
@@ -360,7 +359,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 val (bgId, ringId, pct, label, strokeId) = PANELS[slot].toList()
                 panelBg(context, v, bgId, p)
                 panelOutline(context, v, strokeId, p)
-                v.setImageViewBitmap(ringId, ring(context, p, levels[slot], slot, statuses[slot], ringDp))
+                v.setImageViewBitmap(ringId, ring(context, p, levels[slot], slot, statuses[slot], ringDp, k))
                 pctText(context, v, pct, p, levels[slot], if (paged) null else fit.font)
                 val inEar = statuses[slot] == 3 || statuses[slot] == 7
                 val text = if (slot == 1) context.getString(names[slot]) else wearLabel(context, statuses[slot]) ?: context.getString(names[slot])
@@ -377,11 +376,11 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 // rings' dot pitch, so the big icon keeps the app's case details (lid cut, LED).
                 val caseDp = if (paged) caseRowDp(context, id) else 32f - 2 * geo(context).row
                 icon(context, v, R.id.w_case_icon, R.drawable.ic_case, caseDp, if (paged) ringCellDp(context, id) else fit.ring / RING_CELLS)
-                v.setInt(R.id.w_case_icon, "setColorFilter", if (WidgetSettings.materialStyle(context)) BudsStatusView.wearTint(p, true, -1, true) else p.text)
-                v.setImageViewBitmap(R.id.w_case_bar, bar(context, p, state.caseBattery, id, caseDp))
+                v.setInt(R.id.w_case_icon, "setColorFilter", glyphTint(context, p, 1, -1, k))
+                v.setImageViewBitmap(R.id.w_case_bar, bar(context, p, levels[1], id, caseDp))
                 // The level is drawn into the bar ([bar]); the bar reads it out.
                 v.setViewVisibility(R.id.w_pct_case, View.GONE)
-                v.setContentDescription(R.id.w_case_bar, context.getString(R.string.status_case) + ", " + pctLabel(context, state.caseBattery))
+                v.setContentDescription(R.id.w_case_bar, context.getString(R.string.status_case) + ", " + pctLabel(context, levels[1]))
             }
         }
 
@@ -571,12 +570,62 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
          * its true ratio, tinted by wear (BudsStatusView.wearTint). Small on purpose: RemoteViews
          * bitmaps count against the host's memory limit.
          */
-        private fun ring(context: Context, p: Palette, level: Int, slot: Int, status: Int, sizeDp: Float): Bitmap {
+        private fun ring(context: Context, p: Palette, level: Int, slot: Int, status: Int, sizeDp: Float, k: Float = 1f): Bitmap {
             val px = ThemeRes.dp(context, sizeDp).coerceAtLeast(1)
-            if (WidgetSettings.nothingStyle(context)) return dotRing(context, p, level, slot, nothingTint(p, slot == 1, status), px)
+            val tint = glyphTint(context, p, slot, status, k)
+            if (WidgetSettings.nothingStyle(context)) return dotRing(context, p, level, slot, tint, px)
             val bmp = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
-            drawRing(context, Canvas(bmp), px.toFloat(), p, level, slot, BudsStatusView.wearTint(p, slot == 1, status, com.spizganed.quickbuds.ui.ThemeRes.material(context)))
+            drawRing(context, Canvas(bmp), px.toFloat(), p, level, slot, tint)
             return bmp
+        }
+
+        /** A bud's or the case's glyph colour by wear, [k] of the way from the disconnected (ghost) colour. */
+        private fun glyphTint(context: Context, p: Palette, slot: Int, status: Int, k: Float): Int {
+            val nothing = WidgetSettings.nothingStyle(context)
+            val live = if (nothing) nothingTint(p, slot == 1, status)
+                else BudsStatusView.wearTint(p, slot == 1, status, ThemeRes.material(context))
+            if (k >= 1f) return live
+            val ghost = if (nothing) nothingTint(p, false, 4) else Palette.withAlpha(p.textSecondary, 0.45f)
+            return androidx.core.graphics.ColorUtils.blendARGB(ghost, live, k)
+        }
+
+        /** The battery page's look while a connect or disconnect sweeps (0..1, -1 none) and the levels it fades from. */
+        @Volatile private var sweepK = -1f
+        @Volatile private var sweepState: WidgetStateStore.State? = null
+        private var sweepRun: Runnable? = null
+        private val sweepHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        private const val SWEEP_STEPS = 8
+        private const val SWEEP_STEP_MS = 70L
+
+        /**
+         * Connect: the rings fill from 0 to their level and the glyphs take their colour. Disconnect: the reverse, from
+         * [last] (the levels before the link dropped). A widget cannot animate by itself, so this is a few timed updates, only
+         * while the screen is on, and the chip shows when it ends. The launcher's own update rate may thin the steps.
+         */
+        fun animate(context: Context, connecting: Boolean, last: WidgetStateStore.State?) {
+            val app = context.applicationContext
+            sweepRun?.let { sweepHandler.removeCallbacks(it) }
+            val screenOn = app.getSystemService(android.os.PowerManager::class.java).isInteractive
+            val scale = android.provider.Settings.Global.getFloat(app.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
+            if (!screenOn || scale == 0f || (!connecting && last == null)) {
+                sweepK = -1f; sweepState = null
+                return refreshAll(app)
+            }
+            sweepState = last
+            var step = 0
+            val r = object : Runnable {
+                override fun run() {
+                    step++
+                    val t = step / SWEEP_STEPS.toFloat()
+                    val eased = 1f - (1f - t) * (1f - t)
+                    if (step >= SWEEP_STEPS) { sweepK = -1f; sweepState = null }
+                    else sweepK = if (connecting) eased else 1f - eased
+                    refreshAll(app)
+                    if (step < SWEEP_STEPS) sweepHandler.postDelayed(this, SWEEP_STEP_MS)
+                }
+            }
+            sweepRun = r
+            r.run()
         }
 
         /**
@@ -1042,6 +1091,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
 class AncWidgetProvider : QuickBudsWidget(Kind.COMBINED) {
     companion object {
         fun refreshAll(context: Context) = QuickBudsWidget.refreshAll(context)
+        fun animate(context: Context, connecting: Boolean, last: WidgetStateStore.State?) = QuickBudsWidget.animate(context, connecting, last)
     }
 }
 

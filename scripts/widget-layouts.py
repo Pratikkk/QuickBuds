@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Generates the two widget page layouts (2x2 widget_pages, 4x2 widget_pages_m) as one
 # family. Edit here, run `python3 scripts/widget-layouts.py` from the repo root, commit the XML with it.
-# Also the level picker grids (widget_grid) and widget_disconnected.
+# Also the level picker grids (widget_grid).
 # Classic, Nothing and Material share one structure; they differ in fonts, spacing (GEO), text sizes and, at runtime, boxes.
 import os
 RES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app", "src", "main", "res", "layout") + os.sep
@@ -195,24 +195,16 @@ def grid(icon, sp, shape="grid"):
 </LinearLayout>
 '''
 
-def disconnected():
-    return f'''<?xml version="1.0" encoding="utf-8"?>
-<!-- Every widget while disconnected: only the main screen's Connect chip (2026-09-27). Generated
-     by scripts/widget-layouts.py: colours, icons and texts are set at runtime by widget/AncWidgetProvider.kt; a view added here
-     needs its line in the renderer. -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/w_root" android:layout_width="match_parent" android:layout_height="match_parent">
-<ImageView android:id="@+id/w_bg" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/widget_bg" {IMG} />
-<FrameLayout android:id="@+id/w_conn" android:layout_width="wrap_content" android:layout_height="44dp" android:layout_gravity="center" {PRESS}>
+def chip():
+    # The Connect chip over the battery page while disconnected (the renderer shows it and hides it again on connect).
+    return f'''<FrameLayout android:id="@+id/w_conn" android:layout_width="wrap_content" android:layout_height="44dp" android:layout_gravity="center" android:visibility="gone" {PRESS}>
 <ImageView android:id="@+id/w_conn_bg" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/widget_panel" {IMG} />
 <ImageView android:id="@+id/w_conn_stroke" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/widget_panel_stroke" {IMG} />
 <LinearLayout android:layout_width="wrap_content" android:layout_height="match_parent" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp">
 <ImageView android:id="@+id/w_conn_dot" android:layout_width="10dp" android:layout_height="10dp" android:src="@drawable/ic_status_dot_empty" android:scaleType="fitCenter" android:importantForAccessibility="no" />
 {text("w_conn_text", 14, extra='android:layout_marginStart="8dp" ')}
 </LinearLayout>
-</FrameLayout>
-</FrameLayout>
-'''
+</FrameLayout>'''
 
 # Resizable shapes (QuickBudsWidget.Shape): the layouts a widget takes at sizes other than the 2x2 and 4x2 pages.
 # The renderer sizes the rings, numbers and tiles from the widget's real size (QuickBudsWidget.fit), so these only
@@ -332,7 +324,6 @@ for S in ("c", "n", "md"):
     N = S == "n"
     sfx = {"c": "", "n": "_n", "md": "_md"}[S]
     open(RES + f"widget_grid{sfx}.xml", "w").write(grid(26, 12.5))
-    open(RES + f"widget_disconnected{sfx}.xml", "w").write(disconnected())
     open(RES + f"widget_grid_row{sfx}.xml", "w").write(grid(26, 12.5, "row"))
     open(RES + f"widget_grid_col{sfx}.xml", "w").write(grid(26, 12.5, "col"))
     for name in SHAPES:
@@ -366,6 +357,7 @@ for S in ("c", "n", "md"):
 <include layout="@layout/widget_grid{sfx}" />
 </FrameLayout>
 </ViewFlipper>
+{chip()}
 </FrameLayout>
 '''
         out = "\n".join(l.replace("  />", " />").replace(" >", ">") if l.startswith("<") else l for l in out.split("\n"))

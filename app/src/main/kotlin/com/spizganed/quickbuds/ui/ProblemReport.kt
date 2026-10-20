@@ -85,6 +85,7 @@ object ProblemReport {
     private val MAC = Regex("(?i)\\b([0-9a-f]{2}[:-]){5}[0-9a-f]{2}\\b")
 
     /** This phone's own names: the device name and the Bluetooth name (null without the permission). */
+    @android.annotation.SuppressLint("MissingPermission") // runCatching below handles the SecurityException
     private fun phoneNames(c: Context): List<String> = listOfNotNull(
         runCatching { Settings.Global.getString(c.contentResolver, Settings.Global.DEVICE_NAME) }.getOrNull(),
         runCatching { c.getSystemService(BluetoothManager::class.java)?.adapter?.name }.getOrNull()

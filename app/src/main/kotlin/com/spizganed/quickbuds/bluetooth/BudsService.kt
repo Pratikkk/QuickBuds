@@ -310,12 +310,13 @@ class BudsService : Service(), BudsConnectionManager.Listener {
     }
 
     override fun onConnected(connected: Boolean) {
+        val before = WidgetStateStore.read(this)
         val st = WidgetStateStore.read(this)
         st.connected = connected
         if (!connected && asleep) {
             // Our own sleep, not a lid event: show disconnected, keep the lid state.
             WidgetStateStore.write(this, st)
-            AncWidgetProvider.refreshAll(this)
+            AncWidgetProvider.animate(this, false, before.takeIf { it.connected })
             return
         }
         if (connected) {
@@ -338,7 +339,8 @@ class BudsService : Service(), BudsConnectionManager.Listener {
             }
         }
         WidgetStateStore.write(this, st)
-        AncWidgetProvider.refreshAll(this)
+        if (before.connected != connected) AncWidgetProvider.animate(this, connected, before.takeIf { it.connected })
+        else AncWidgetProvider.refreshAll(this)
         gameEq.update()
     }
 
