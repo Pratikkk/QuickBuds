@@ -88,7 +88,7 @@ class WidgetActionReceiver : BroadcastReceiver() {
 
         val finalShort = shortAction ?: return
 
-        val localIntent = Intent(BudsService.ACTION_WIDGET_COMMAND).apply {
+        val localIntent = Intent(BudsService.ACTION_WIDGET_COMMAND).setPackage(context.packageName).apply {
             putExtra(BudsService.EXTRA_WIDGET_ACTION, finalShort)
             putExtra(BudsService.EXTRA_WIDGET_ANC_MODE, sendAncMode)
             putExtra(BudsService.EXTRA_WIDGET_GAME_MODE, state.gameMode)
