@@ -351,10 +351,10 @@ object LogDecoder {
         val fid = payload[0].toInt() and 0xFF
         val on = (payload[1].toInt() and 0xFF) != 0
         val name = when (fid) {
-            OpoProtocol.FEATURE_GAME_MODE -> "Game Mode"
-            OpoProtocol.FEATURE_AUTO_PLAY_PAUSE -> "Auto Play/Pause"
-            OpoProtocol.FEATURE_DUAL_DEVICE -> "Dual Device"
-            OpoProtocol.FEATURE_SPATIAL_SOUND -> "Spatial Sound"
+            Feature.GAME_MODE -> "Game Mode"
+            Feature.AUTO_PLAY_PAUSE -> "Auto Play/Pause"
+            Feature.DUAL_DEVICE -> "Dual Device"
+            Feature.SPATIAL_SOUND -> "Spatial Sound"
             else -> "Feature 0x${"%02X".format(fid)}"
         }
         return "$name ${if (on) "ON" else "OFF"}"

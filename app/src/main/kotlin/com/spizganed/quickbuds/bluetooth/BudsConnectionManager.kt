@@ -21,6 +21,7 @@ import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.GameModeParser
 import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Feature
 import com.spizganed.quickbuds.protocol.GoldenSound
 import com.spizganed.quickbuds.protocol.OppoPacketFramer
 import com.spizganed.quickbuds.protocol2.Anc
@@ -469,7 +470,7 @@ class BudsConnectionManager(private val context: Context) {
     fun setDualDevice(on: Boolean) {
         Thread {
             try {
-                sendRawBlocking(Outbound.feature(typed, OpoProtocol.FEATURE_DUAL_DEVICE, on), "Dual device -> $on")
+                sendRawBlocking(Outbound.feature(typed, Feature.DUAL_DEVICE, on), "Dual device -> $on")
                 sendRawBlocking(statusQuery(), "verify features")
                 sendRawBlocking(Outbound.dualFollowup(typed, on),"Dual follow-up")
             } catch (e: Exception) {
@@ -666,7 +667,7 @@ class BudsConnectionManager(private val context: Context) {
         Thread {
             try {
                 for ((id, on) in changes) {
-                    if (id == OpoProtocol.FEATURE_POWER_SAVING) audioAfterRestart = true
+                    if (id == Feature.POWER_SAVING) audioAfterRestart = true
                     sendRawBlocking(Outbound.feature(typed, id, on), "Feature 0x%02X -> %s".format(id, on))
                 }
                 Thread.sleep(400)

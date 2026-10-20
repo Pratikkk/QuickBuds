@@ -102,23 +102,6 @@ object OpoProtocol {
     const val EVT_GOLDEN_STATUS = 0x08        // 0x0204 subType: Golden Sound test status, [VENDOR]
     const val EVT_EAR_SCAN = 0x0E             // 0x0204 subType: ear scan result, [CAPTURE] (pushed unregistered)
 
-    const val FEATURE_GAME_MODE = 0x06
-    /** Firmware auto play/pause on wear. `04 01` / `04 00`, `[CAPTURE]` 2026-09-25. */
-    const val FEATURE_AUTO_PLAY_PAUSE = 0x04
-    const val FEATURE_DUAL_DEVICE = 0x11
-    const val FEATURE_SPATIAL_SOUND = 0x1B
-    /** Hi-Res (LHDC) codec. Switching it makes the buds drop and reconnect. `[CAPTURE]` 2026-09-23. */
-    const val FEATURE_HIRES_CODEC = 0x18
-    /** BassWave on/off. Level is its own command, [setBassWaveLevel]. `[CAPTURE]` 2026-09-23. */
-    const val FEATURE_BASSWAVE = 0x1D
-    /** Golden Sound (hearing enhancement) on/off. `[VENDOR]` `setSwitchFeature(11)` (PROTOCOL.md §9). */
-    const val FEATURE_GOLDEN_SOUND = 0x0B
-    /**
-     * Game mode's switch on buds whose `0x8100` bitmap has [CMD_GAME_SOUND]: HeyMelody writes and reads
-     * `0x28` there instead of [FEATURE_GAME_MODE], and `0x27` is its game sound effects. `[VENDOR]` (PROTOCOL.md §9).
-     */
-    const val FEATURE_GAME_MODE_MAIN = 0x28
-    const val FEATURE_GAME_SOUND = 0x27
     const val CMD_GAME_SOUND = 0x0423
     /** Game sound type: `0x0423 <type> 01`, read `0x012B` -> `00 <selected> <count> <types>`. `[VENDOR]` (PROTOCOL.md §9). */
     const val CMD_QUERY_GAME_SOUND = 0x012B
@@ -136,37 +119,12 @@ object OpoProtocol {
     const val CMD_QUERY_CODEC = 0x0114
     const val CMD_QUERY_CODEC_LIST = 0x0123
     const val CMD_SET_CODEC = 0x041A
-    /** Plain on/off switches from HeyMelody, `[VENDOR]`, unverified on buds (PROTOCOL.md §9). */
-    const val FEATURE_VOCAL_ENHANCE = 0x09
-    /** realme Link's wind noise switch; asked only for models with the `windNoise` flag. */
-    const val FEATURE_WIND_NOISE = 0x1A
-    const val FEATURE_POWER_SAVING = 0x17
-    const val FEATURE_SMART_VOLUME = 0x1C
-    const val FEATURE_ADAPTIVE_VOLUME = 0x30
-    const val FEATURE_ADAPTIVE_EAR = 0x31
-    const val FEATURE_SLEEP_PAUSE = 0x3A
-    const val FEATURE_SPEECH_PERCEPTION = 0x32
-    const val FEATURE_LONG_PRESS_VOLUME = 0x35
-    const val FEATURE_SWIFT_PAIR = 0x37
-    const val FEATURE_HEARING_OPTIMIZE = 0x38
-    const val FEATURE_HEAD_MOTION = 0x3B
-    /**
-     * Game equalizer (PROTOCOL.md §9), `[VENDOR]`: switch [FEATURE_GAME_EQ] turns it on, and `0x0420 01 <1|0>` tells the buds
-     * a game app came to the foreground or left. No read command for the second one.
-     */
-    const val FEATURE_GAME_EQ = 0x21
     const val CMD_GAME_EQ_STATE = 0x0420
     /** Head gestures' mapping: `0x0431 <type>`, `0` nod answers / shake declines, `1` the reverse. `[VENDOR]` */
     const val CMD_SET_HEAD_MOTION_TYPE = 0x0431
     /** Read with `0x0134` (empty) → `00 <type>`; a change also comes as the `0x0204` push [EVT_HEAD_MOTION_TYPE]. `[VENDOR]` */
     const val CMD_QUERY_HEAD_MOTION_TYPE = 0x0134
     const val EVT_HEAD_MOTION_TYPE = 0xF5
-    /**
-     * Personalized noise cancellation (PROTOCOL.md §9), `[VENDOR]`: switch [FEATURE_PERSONAL_NOISE] (off only;
-     * the buds turn it on themselves), `0x0412 <action>`, a stored result read with `0x011A` -> `00 <exist>`,
-     * the test's result pushed as [EVT_PERSONAL_NOISE] `0B <result>` (0 done, 1-5 a reason it failed).
-     */
-    const val FEATURE_PERSONAL_NOISE = 0x0C
     const val CMD_PERSONAL_NOISE = 0x0412
     const val CMD_QUERY_PERSONAL_NOISE = 0x011A
     const val EVT_PERSONAL_NOISE = 0x0B
@@ -639,7 +597,7 @@ object OpoProtocol {
 
     /**
      * [statusQuery]: the model's `statusQuery` (hex ids, HeyMelody's per-model list, PROTOCOL.md §9); a model
-     * without one gets the full list below. [windNoise]: the model's `windNoise` flag adds [FEATURE_WIND_NOISE].
+     * without one gets the full list below. [windNoise]: the model's `windNoise` flag adds [Feature.WIND_NOISE].
      */
     fun queryStatus(statusQuery: String? = null, windNoise: Boolean = false): ByteArray {
         val ids = (statusQuery?.split(' ')?.map { it.toInt(16).toByte() }?.toByteArray() ?: byteArrayOf(
@@ -649,7 +607,7 @@ object OpoProtocol {
             0x05, 0x04, 0x0B, 0x11, 0x13, 0x18, 0x06, 0x1B, 0x1C, 0x27, 0x28, 0x1D,
             0x09, 0x17, 0x30, 0x31, 0x3A,
             0x32, 0x35, 0x37, 0x38, 0x3B, 0x0C
-        )) + if (windNoise) byteArrayOf(FEATURE_WIND_NOISE.toByte()) else byteArrayOf()
+        )) + if (windNoise) byteArrayOf(Feature.WIND_NOISE.toByte()) else byteArrayOf()
         return buildPacket(CMD_QUERY_STATUS, seq = 0x00, payload = byteArrayOf(ids.size.toByte()) + ids)
     }
 

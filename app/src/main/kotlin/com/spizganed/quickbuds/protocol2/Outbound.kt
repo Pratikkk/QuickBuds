@@ -3,6 +3,7 @@ package com.spizganed.quickbuds.protocol2
 import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Feature
 
 /**
  * The packets the app sends. [typed] true builds the frame with [Cmd]; false builds the legacy packet, byte for byte
@@ -77,6 +78,6 @@ object Outbound {
             if (desc > 0) OpoProtocol.hearingRestore(desc) else null,
             OpoProtocol.hearingRecord(id, name, values),
             if (scan.isNotEmpty()) OpoProtocol.earScanData(id, scan) else null,
-            OpoProtocol.setFeature(OpoProtocol.FEATURE_GOLDEN_SOUND, true)
+            OpoProtocol.setFeature(Feature.GOLDEN_SOUND, true)
         )
 }

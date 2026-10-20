@@ -5,7 +5,7 @@ import android.widget.LinearLayout
 import android.widget.Switch
 import com.spizganed.quickbuds.R
 import com.spizganed.quickbuds.bluetooth.BudsService
-import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Feature
 
 /**
  * Wear detection, a bottom sheet: the buds' own auto play/pause (`0x0403` feature `0x04`, `[CAPTURE]`)
@@ -42,7 +42,7 @@ class WearSheet(private val activity: Activity, private val setFirmware: (Boolea
 
     /** The buds' own switch changed (a re-read); shown quietly so no write goes out. */
     fun onFeatureStates(states: Map<Int, Int>) {
-        val v = states[OpoProtocol.FEATURE_AUTO_PLAY_PAUSE] ?: return
+        val v = states[Feature.AUTO_PLAY_PAUSE] ?: return
         syncing = true
         firmwareSwitch.isChecked = v == 1
         syncing = false

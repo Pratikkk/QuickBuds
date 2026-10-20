@@ -3,6 +3,7 @@ package com.spizganed.quickbuds.protocol2
 import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Feature
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -90,7 +91,7 @@ class OutboundTest {
                 if (d > 0) OpoProtocol.hearingRestore(d) else null,
                 OpoProtocol.hearingRecord(0x01020304, "2026/09/29 01:53", v),
                 if (s.isNotEmpty()) OpoProtocol.earScanData(0x01020304, s) else null,
-                OpoProtocol.setFeature(OpoProtocol.FEATURE_GOLDEN_SOUND, true)
+                OpoProtocol.setFeature(Feature.GOLDEN_SOUND, true)
             ).map { msg(it) }
             for (t in listOf(true, false))
                 assertEquals("apply $t ${s.size} $d", legacy, Outbound.goldenApply(t, 0x01020304, "2026/09/29 01:53", v, s, d).map { msg(it) })

@@ -18,6 +18,7 @@ import com.spizganed.quickbuds.bluetooth.BudsService
 import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Feature
 
 /**
  * Dual connection, as HeyMelody has it (`[CAPTURE]` 2026-09-25, PROTOCOL.md §9): one switch
@@ -211,7 +212,7 @@ class DualDeviceActivity : Activity(), BudsConnectionManager.Listener {
     }
 
     override fun onFeatureStates(states: Map<Int, Int>) {
-        val v = states[OpoProtocol.FEATURE_DUAL_DEVICE] ?: return
+        val v = states[Feature.DUAL_DEVICE] ?: return
         syncing = true
         dualSwitch.isChecked = v == 1
         syncing = false
