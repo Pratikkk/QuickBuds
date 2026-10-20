@@ -451,6 +451,8 @@ class BudsConnectionManager(private val context: Context) {
         Thread {
             try {
                 sendRawBlocking(Outbound.feature(typed, Capabilities.gameModeId(context), on),"GameMode")
+                // The buds apply the switch a moment after the ack: an immediate read returns the old value and the switch jumps back.
+                Thread.sleep(400)
                 sendRawBlocking(statusQuery(), "verify features")
             } catch (e: Exception) {
                 log("GAME MODE write failed: ${e.message}")
