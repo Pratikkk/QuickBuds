@@ -1,5 +1,8 @@
 //! Wire format (docs/PROTOCOL.md §2): `AA <TotalLen LEB128> 00 00 <cmd lo> <cmd hi> <seq> <len lo> <len hi> <payload>`.
 //! TotalLen counts everything after itself: 7 + payload.
+// The old builders stay for the legacy path and as the reference of the core tests; the senders use `buds_core::cmd`.
+#![allow(dead_code)]
+
 
 use serde_json::Value;
 
