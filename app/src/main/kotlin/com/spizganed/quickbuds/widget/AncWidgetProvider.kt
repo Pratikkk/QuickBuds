@@ -236,9 +236,17 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 // Material: the chip is the widget's only control, so it keeps its fill (with or without the box).
                 val filled = WidgetSettings.materialStyle(context)
                 paint(context, v, CONN, p, filled)
-                content(context, v, CONN, p, filled, R.drawable.ic_status_dot_empty, context.getString(R.string.conn_action_connect), 12f, 12f / 5)
-                v.setContentDescription(CONN.root, context.getString(R.string.conn_off) + ". " + context.getString(R.string.conn_action_connect))
-                v.setOnClickPendingIntent(CONN.root, connectPI(context))
+                if (connecting) {
+                    // Loading: the dot pulses and the chip says Connecting until the link is up (or 15 s pass).
+                    content(context, v, CONN, p, filled, if (connectTick % 2 == 0) R.drawable.ic_status_dot_filled else R.drawable.ic_status_dot_empty,
+                        context.getString(R.string.conn_connecting), 12f, 12f / 5)
+                    v.setContentDescription(CONN.root, context.getString(R.string.conn_connecting))
+                    v.setOnClickPendingIntent(CONN.root, null)
+                } else {
+                    content(context, v, CONN, p, filled, R.drawable.ic_status_dot_empty, context.getString(R.string.conn_action_connect), 12f, 12f / 5)
+                    v.setContentDescription(CONN.root, context.getString(R.string.conn_off) + ". " + context.getString(R.string.conn_action_connect))
+                    v.setOnClickPendingIntent(CONN.root, connectPI(context))
+                }
             } else {
                 v.setOnClickPendingIntent(CONN.root, null)
             }
@@ -389,7 +397,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 // rings' dot pitch, so the big icon keeps the app's case details (lid cut, LED).
                 val caseDp = if (paged) caseRowDp(context, id) else 32f - 2 * geo(context).row
                 icon(context, v, R.id.w_case_icon, R.drawable.ic_case, caseDp, if (paged) ringCellDp(context, id) else fit.ring / RING_CELLS)
-                v.setInt(R.id.w_case_icon, "setColorFilter", if (WidgetSettings.nothingStyle(context)) p.text else glyphTint(context, p, 1, -1, k))
+                v.setInt(R.id.w_case_icon, "setColorFilter", glyphTint(context, p, 1, -1, k))
                 v.setImageViewBitmap(R.id.w_case_bar, bar(context, p, levels[1], id, caseDp))
                 // The level is drawn into the bar ([bar]); the bar reads it out.
                 v.setViewVisibility(R.id.w_pct_case, View.GONE)
@@ -605,6 +613,33 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         /** The battery page's look while a connect or disconnect sweeps (0..1, -1 none) and the levels it fades from. */
         @Volatile private var sweepK = -1f
         @Volatile private var sweepState: WidgetStateStore.State? = null
+        /** The Connect chip's loading state: set while a connect from the widget (or the app) is under way. */
+        @Volatile private var connecting = false
+        @Volatile private var connectTick = 0
+        private val connectHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        private var connectTicker: Runnable? = null
+
+        /** Starts or ends the chip's loading state. It ends by itself after 15 s. */
+        fun setConnecting(context: Context, on: Boolean) {
+            val app = context.applicationContext
+            connectTicker?.let { connectHandler.removeCallbacks(it) }
+            connecting = on
+            connectTick = 0
+            refreshAll(app)
+            if (!on) return
+            val started = System.currentTimeMillis()
+            val r = object : Runnable {
+                override fun run() {
+                    if (System.currentTimeMillis() - started > 15_000) return setConnecting(app, false)
+                    connectTick++
+                    refreshAll(app)
+                    connectHandler.postDelayed(this, 450)
+                }
+            }
+            connectTicker = r
+            connectHandler.postDelayed(r, 450)
+        }
+
         /** True for the frames between the first and the last of a sweep; those are partial updates. */
         @Volatile private var sweepPartial = false
         private var sweepRun: Runnable? = null
@@ -814,11 +849,10 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
          * mistaken for them. Opaque, since a dot is either there or not. The case glyph is always `text`.
          */
         fun nothingTint(p: Palette, isCase: Boolean, status: Int): Int = when {
-            isCase || status == 3 || status == 7 -> p.text
-            // Almost invisible: 0.3 sat too close to out of ear, 0.12 a touch too dark.
-            status == 4 || status == 0 -> Palette.blend(boxColor(p), p.textSecondary, 0.17f)
-            // Plain `textSecondary` read too close to white.
-            else -> Palette.blend(boxColor(p), p.textSecondary, 0.65f)
+            // The accent for a bud in the ear and the case; darker out of the ear, darkest in the case (as in the other styles).
+            isCase || status == 3 || status == 7 -> p.accent
+            status == 4 || status == 0 -> Palette.blend(boxColor(p), p.accent, 0.3f)
+            else -> Palette.blend(boxColor(p), p.accent, 0.6f)
         }
 
         /** Unlit dots (a ring's or the case bar's empty part): halfway to the secondary text, the outline was too faint. */
@@ -1108,6 +1142,7 @@ class AncWidgetProvider : QuickBudsWidget(Kind.COMBINED) {
     companion object {
         fun refreshAll(context: Context) = QuickBudsWidget.refreshAll(context)
         fun animate(context: Context, connecting: Boolean, last: WidgetStateStore.State?) = QuickBudsWidget.animate(context, connecting, last)
+        fun setConnecting(context: Context, on: Boolean) = QuickBudsWidget.setConnecting(context, on)
     }
 }
 

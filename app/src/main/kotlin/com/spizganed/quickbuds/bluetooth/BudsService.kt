@@ -214,10 +214,11 @@ class BudsService : Service(), BudsConnectionManager.Listener {
             return
         }
         statusLog("[SVC] FORCE_CONNECT: connecting...")
+        AncWidgetProvider.setConnecting(this, true)
         try {
             val device = BudsDevice.find(this)
             if (device != null) manager?.connect(device, withAudio)
-            else statusLog("[SVC] No paired OPPO / OnePlus / realme buds found")
+            else { statusLog("[SVC] No paired OPPO / OnePlus / realme buds found"); AncWidgetProvider.setConnecting(this, false) }
         } catch (e: Exception) {
             statusLog("[SVC] Force connect failed: ${e.message}")
         }
@@ -317,6 +318,7 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         val before = WidgetStateStore.read(this)
         val st = WidgetStateStore.read(this)
         st.connected = connected
+        if (connected) AncWidgetProvider.setConnecting(this, false)
         if (connected) {
             statusLog("[SVC] Connected")
             st.caseLidClosed = false

@@ -425,7 +425,8 @@ component Ring {
     in property <int> wear;
     // The drawn level slides to the reported one (from 0 at connect).
     property <float> shown: max(0, min(level, 99.9));
-    animate shown { duration: Motion.slow; easing: ease-out; }
+    // A disconnect counts down slowly (the numbers and the arc together); a connect or a change is quicker.
+    animate shown { duration: level < 0 ? 1000ms : 700ms; easing: ease-out; }
     property <float> frac: shown / 100;
     property <float> r: 45;
     // Dot matrix: no label line (the glyph's shade shows wear, as on the phone).
@@ -435,7 +436,7 @@ component Ring {
 
     if Dots.on: Image {
         x: 0; y: 0; width: size; height: size;
-        source: Dots.ring-px(round(size / 1px * Dots.scale), Buds.on && level > 0 ? round(shown) : Buds.on ? level : -1, slot,
+        source: Dots.ring-px(round(size / 1px * Dots.scale), shown > 0.5 ? round(shown) : Buds.on ? level : -1, slot,
             !Buds.on ? Palette.outline : slot == 1 ? Palette.text : Palette.dot-tint(wear),
             Palette.accent, Palette.card.mix(Palette.text2, 0.5));
         image-fit: ImageFit.fill;
@@ -449,7 +450,7 @@ component Ring {
         MoveTo { x: 50; y: 5; }
         ArcTo { x: 49.99; y: 5; radius-x: r; radius-y: r; large-arc: true; sweep: true; }
     }
-    if level > 0 && !Dots.on: Path {
+    if shown > 0.4 && !Dots.on: Path {
         x: 0; y: 0; width: size; height: size;
         viewbox-width: 100; viewbox-height: 100;
         stroke: Palette.accent;
@@ -471,7 +472,7 @@ component Ring {
     Text {
         y: size + 4px; width: size;
         horizontal-alignment: center;
-        text: level < 0 ? "–" : level + (Dots.on ? "" : "%") + (charging ? " ⚡" : "");
+        text: level < 0 && shown < 0.5 ? "–" : round(shown) + (Dots.on ? "" : "%") + (charging && level >= 0 ? " ⚡" : "");
         color: Palette.text;
         font-size: size > 60px ? 22px : 12px;
         font-weight: 600;
