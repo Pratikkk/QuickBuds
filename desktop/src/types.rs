@@ -233,14 +233,24 @@ const NC: &str = "ANC";
 
 /// The phone app's own file, embedded at build time: one list for both apps.
 static MODELS_JSON: &str = include_str!("../../app/src/main/assets/models.json");
+static MODELS_LEGACY_JSON: &str = include_str!("../../app/src/main/assets/models-legacy.json");
+
+/// Which model database is in use: false = `models.json` (new protocol, the default), true = `models-legacy.json`
+/// (Legacy switch, or a device where the new protocol failed). The session sets it at connect.
+static LEGACY_DB: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+pub fn use_legacy_db(on: bool) { LEGACY_DB.store(on, std::sync::atomic::Ordering::Relaxed); }
 
 pub fn models() -> &'static [Value] {
     use std::sync::OnceLock;
-    static M: OnceLock<Vec<Value>> = OnceLock::new();
-    M.get_or_init(|| {
-        let v: Value = serde_json::from_str(MODELS_JSON).expect("models.json");
+    static NEW: OnceLock<Vec<Value>> = OnceLock::new();
+    static OLD: OnceLock<Vec<Value>> = OnceLock::new();
+    let load = |json: &str| {
+        let v: Value = serde_json::from_str(json).expect("models json");
         v["whiteList"].as_array().cloned().unwrap_or_default()
-    })
+    };
+    if LEGACY_DB.load(std::sync::atomic::Ordering::Relaxed) { OLD.get_or_init(|| load(MODELS_LEGACY_JSON)) }
+    else { NEW.get_or_init(|| load(MODELS_JSON)) }
 }
 
 /// `ModelCatalog.find`: the product id (unique in the list), else the device name (a renamed device has none).

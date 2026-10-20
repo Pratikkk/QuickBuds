@@ -243,10 +243,11 @@ struct Conn<'a> {
 
 impl<'a> Conn<'a> {
     fn new(link: bt::Link, name: String, addr: u64, emit: &'a Emit) -> Self {
+        let next = crate::protocol_next(addr);
+        crate::types::use_legacy_db(!next);
         let model = find_model(None, Some(&name));
         let mut s = Snapshot { status: Status::On, name, detected: model, ..Default::default() };
         pick_model(&mut s);
-        let next = crate::protocol_next(addr);
         log("NOTE", Vec::new(), Some(format!("Protocol: {}{}", if next { "new" } else { "legacy" }, if crate::fell_back(addr) { " (fell back for these buds)" } else { "" })));
         Conn { link, addr, proto: Proto::new(next), rx: 0, seq: 0, level: None, s, emit }
     }
