@@ -10,11 +10,9 @@
 [![Release](https://img.shields.io/badge/Release-latest-blue.svg)](https://github.com/spizganed/QuickBuds/releases/latest)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/spizganed)
 
-QuickBuds does everything the vendor app does for your earbuds, in a fast, clean app: on the phone,
-with real home screen widgets, and on the PC, with a tray icon. One release has both.
-
-QuickBuds is purely a passion and hobby project. If you like it and want to help out, feel free to
-donate on [Ko-fi](https://ko-fi.com/spizganed).
+QuickBuds does everything the vendor app does for your earbuds, in a fast, clean app: on the phone
+with real home screen widgets, and on the PC with a tray icon. It is a hobby project; you can
+support it on [Ko-fi](https://ko-fi.com/spizganed).
 
 ## Screenshots
 
@@ -28,34 +26,17 @@ donate on [Ko-fi](https://ko-fi.com/spizganed).
 
 ## Features
 
-- **Knows your earbuds:** reads the model from the earbuds and matches it against HeyMelody's and realme
-  Link's lists of OnePlus, OPPO and realme models, then shows only what that model supports. You can also
-  pick the model yourself.
 - **Battery and wear status** for each bud and the case, live.
-- **Noise control:** Off, Noise cancelling (Low / Medium / High / Smart), Adaptive and Transparency. Changes
-  made on the earbuds show up instantly.
-- **Equalizer:** built-in presets, up to 3 custom presets you draw on a curve, and bass boost.
-  Saved on the earbuds.
-- **High-quality audio (LHDC), 3D audio and Low latency mode.**
-- **Hearing profile:** a hearing test (ear scan, then 6 tones per ear) that tunes the sound to your
-  ears, run in the app. Profiles are kept in the app, one tap applies one, and a graph per ear shows
-  what it does. Profiles made in HeyMelody show up too.
-- **Earbud fit test:** checks that the ear tips seal well.
-- **Gestures** per bud: taps, slide and hold, plus the on-call gestures.
-- **Wear detection**, **Dual connection**, **Find my earbuds**, the earbuds' prompt volume and their
-  firmware version.
-- **Whatever else your model has:** 3D audio with head tracking, game sound effects, vocal enhancement,
-  smart / adaptive volume, power saving and more, each shown only where the earbuds support it.
-- **Home screen widgets** (Android), in your theme's colours: battery, controls, or both on two pages
-  (2×2 or 4×2; a double tap switches the page). You pick up to 4 controls: noise modes, Low latency,
-  wind noise.
-- **Tray icon** (PC): on Windows it opens quick controls, on Linux its menu shows the battery.
-- **Two styles:** Classic, or a dot-matrix look (a dot font, no cards, dot-matrix graphics).
-- **Themes:** OLED Black, Classic Dark and White, or match the system's light / dark setting. Your own
-  accent colour and up to 3 custom colour presets. Reorder or hide the home screen rows.
-- **27 languages**, switchable inside the app.
-- **Updates** from inside the app, straight from GitHub releases. The PC app updates itself.
-- **With Dual connection on**, the phone app and the PC app work at the same time.
+- **Noise control:** Off, Noise cancelling (Low / Medium / High / Smart), Adaptive, Transparency.
+- **Sound:** equalizer with presets, custom curves and bass boost, high-quality audio, 3D audio, low latency mode.
+- **Hearing profile and fit test:** a hearing test that tunes the sound to your ears, and a check of the ear-tip seal.
+- **Controls:** gestures per bud, wear detection, dual connection, find my earbuds, prompt volume, firmware version.
+- **Each model's own features:** QuickBuds reads the model and shows only what that model supports.
+- **Android:** home screen widgets (battery, controls, 2×2 or 4×2; a double tap switches the page) and a first-run setup.
+- **PC:** tray icon with quick controls (Windows) or a battery menu (Linux).
+- **Looks:** Material, QuickBuds (classic) and Pixel art (dot matrix) styles, OLED Black / Classic Dark / White themes,
+  your own accent colour and presets. The same styles and colours on the phone, the widgets and the PC.
+- **27 languages**, switchable in the app. **Updates** from GitHub releases; the PC app updates itself.
 
 ## Install
 
@@ -165,25 +146,15 @@ project stops, anyone can fork it and publish their own signed build.
 
 ## Credits
 
-The earbud protocol was never publicly documented. These projects gave the first hints:
+The first hints about the earbud protocol came from
+[OppoPodsManager](https://github.com/Zhaoyi-ya/OppoPodsManager),
+[Pods-Protocol-Reverse-Engineering](https://github.com/Star-ZER0/Pods-Protocol-Reverse-Engineering) and
+[OppoPods](https://github.com/Leaf-lsgtky/OppoPods). Today every fact in [PROTOCOL.md](./docs/PROTOCOL.md) rests on a
+capture from real hardware, on a test on a device, or on the HeyMelody and realme Link apps (studied for interoperability).
 
-- [Zhaoyi-ya/OppoPodsManager](https://github.com/Zhaoyi-ya/OppoPodsManager)
-- [Star-ZER0/Pods-Protocol-Reverse-Engineering](https://github.com/Star-ZER0/Pods-Protocol-Reverse-Engineering)
-- [Leaf-lsgtky/OppoPods](https://github.com/Leaf-lsgtky/OppoPods)
-- [Zhaoyi-ya/OPPO-Pods-Win](https://github.com/Zhaoyi-ya/OPPO-Pods-Win)
-- [ORION2809/DevPods](https://github.com/ORION2809/DevPods)
-
-Every fact in PROTOCOL.md now rests on a capture from real hardware, on the HeyMelody or realme Link apps
-(studied for interoperability), or on a test on the device.
-
-The desktop app is built with [Slint](https://slint.dev) (used under the GPLv3) and
-[tray-icon](https://github.com/tauri-apps/tray-icon).
-
-The Pixel art style's font is [Doto](https://github.com/oliverlalan/Doto) (SIL Open Font License 1.1,
-bundled with its license in `app/src/main/assets/Doto-OFL.txt`).
-The Material style's widget font is [Google Sans Flex](https://github.com/googlefonts/googlesans-flex) (SIL Open
-Font License 1.1, a medium and a semibold instance with Latin, Greek and Cyrillic, bundled with its license in
-`app/src/main/assets/GoogleSansFlex-OFL.txt`).
+Built with [Slint](https://slint.dev) (GPLv3) and [tray-icon](https://github.com/tauri-apps/tray-icon) on the PC.
+Fonts: [Doto](https://github.com/oliverlalan/Doto) and [Google Sans Flex](https://github.com/googlefonts/googlesans-flex),
+both SIL Open Font License 1.1, licenses bundled in `app/src/main/assets/`.
 
 ## Privacy
 
@@ -196,8 +167,7 @@ The Worker code is in [report-worker/](./report-worker).
 Copyright (C) 2026 spizganed
 
 QuickBuds is free software under the GNU General Public License v3.0 or later, distributed without
-any warranty; see [LICENSE](./LICENSE). The protocol sources above were used as documentation; check
-each one's license before copying text from it.
+any warranty; see [LICENSE](./LICENSE).
 
 QuickBuds is an independent project, not affiliated with, endorsed by or sponsored by OnePlus, OPPO,
 realme, HeyTap or any of their affiliates. OnePlus, OPPO, realme, HeyMelody and the earbud model names
