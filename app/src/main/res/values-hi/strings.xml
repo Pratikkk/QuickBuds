@@ -467,4 +467,16 @@
     <string name="welcome_title">QuickBuds में आपका स्वागत है</string>
     <string name="welcome_body">QuickBuds डिफ़ॉल्ट रूप से अपना नया प्रोटोकॉल इस्तेमाल करता है। किसी मॉडल में दिक्कत हो तो सेटिंग में पुराने प्रोटोकॉल पर जाएँ। ये विकल्प कभी भी बदले जा सकते हैं।</string>
     <string name="welcome_done">हो गया</string>
+    <string name="setup_perm_title">अनुमतियाँ</string>
+    <string name="setup_perm_body">ईयरबड से बात करने के लिए QuickBuds को ब्लूटूथ चाहिए। सूचनाएँ बैकग्राउंड सर्विस दिखाती हैं।</string>
+    <string name="setup_perm_bt">ब्लूटूथ</string>
+    <string name="setup_perm_notif">सूचनाएँ</string>
+    <string name="setup_allow">अनुमति दें</string>
+    <string name="setup_allowed">अनुमत</string>
+    <string name="setup_next">आगे</string>
+    <string name="setup_back">पीछे</string>
+    <string name="setup_bg_title">जुड़े रहें</string>
+    <string name="setup_bg_body">बैकग्राउंड सर्विस विजेट चालू रखती है और ईयरबड दोबारा जोड़ती है। फ़ोन लॉक होने पर यह सो जाती है।</string>
+    <string name="setup_ready_title">आप तैयार हैं</string>
+    <string name="setup_ready_body">अपने ईयरबड जोड़ें और QuickBuds खोलें। यहाँ के सभी विकल्प सेटिंग में रहते हैं।</string>
 </resources>

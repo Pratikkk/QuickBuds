@@ -465,4 +465,16 @@
     <string name="welcome_title">Vítejte v QuickBuds</string>
     <string name="welcome_body">QuickBuds ve výchozím stavu používá přepracovaný protokol. Když model nefunguje správně, přepněte v Nastavení na starší protokol. Volby můžete kdykoli změnit.</string>
     <string name="welcome_done">Hotovo</string>
+    <string name="setup_perm_title">Oprávnění</string>
+    <string name="setup_perm_body">QuickBuds potřebuje Bluetooth ke komunikaci se sluchátky. Oznámení zobrazují službu na pozadí.</string>
+    <string name="setup_perm_bt">Bluetooth</string>
+    <string name="setup_perm_notif">Oznámení</string>
+    <string name="setup_allow">Povolit</string>
+    <string name="setup_allowed">Povoleno</string>
+    <string name="setup_next">Další</string>
+    <string name="setup_back">Zpět</string>
+    <string name="setup_bg_title">Zůstaňte připojeni</string>
+    <string name="setup_bg_body">Služba na pozadí udržuje widgety v chodu a znovu připojuje sluchátka. Při zamčeném telefonu spí.</string>
+    <string name="setup_ready_title">Hotovo</string>
+    <string name="setup_ready_body">Připojte sluchátka a otevřete QuickBuds. Každá volba zůstává v Nastavení.</string>
 </resources>

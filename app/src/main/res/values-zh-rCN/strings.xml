@@ -467,4 +467,16 @@
     <string name="welcome_title">欢迎使用 QuickBuds</string>
     <string name="welcome_body">QuickBuds 默认使用重建的协议。如果某个型号出问题，请在设置中切换到旧协议。这些选择可随时更改。</string>
     <string name="welcome_done">完成</string>
+    <string name="setup_perm_title">权限</string>
+    <string name="setup_perm_body">QuickBuds 需要蓝牙才能与耳机通信。通知用于显示后台服务。</string>
+    <string name="setup_perm_bt">蓝牙</string>
+    <string name="setup_perm_notif">通知</string>
+    <string name="setup_allow">允许</string>
+    <string name="setup_allowed">已允许</string>
+    <string name="setup_next">下一步</string>
+    <string name="setup_back">返回</string>
+    <string name="setup_bg_title">保持连接</string>
+    <string name="setup_bg_body">后台服务让小组件正常工作并重新连接耳机。手机锁定时它会休眠。</string>
+    <string name="setup_ready_title">一切就绪</string>
+    <string name="setup_ready_body">连接耳机并打开 QuickBuds。这里的所有选择都保留在设置中。</string>
 </resources>

@@ -312,6 +312,13 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
 
         super.onCreate(savedInstanceState)
 
+        // First start: the setup runs first and opens this screen when it ends.
+        if (!SetupActivity.done(this)) {
+            startActivity(Intent(this, SetupActivity::class.java))
+            finish()
+            return
+        }
+
         // Crash report FIRST, before anything that could throw. If the layout or
         // the service binding below is what is crashing on this build, the user
         // must still be able to see the previous crash's report — otherwise the
@@ -321,8 +328,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         UsagePing.send(this)
 
         setContentView(R.layout.activity_main)
-        window.decorView.post { if (!isFinishing && WelcomeSheet.shouldShow(this)) WelcomeSheet.show(this) }
-
+        
         mainLayout = findViewById<LinearLayout>(R.id.mainLayout)
         featureList = findViewById<LinearLayout>(R.id.featureList)
         deviceNameText = findViewById<TextView>(R.id.deviceNameText)
@@ -549,6 +555,8 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     }
 
     override fun onDestroy() {
+        // Left in onCreate for the first-run setup: nothing was built.
+        if (!::featureList.isInitialized) return super.onDestroy()
         WidgetStateStore.removeListener(storeListener)
         featureList.removeCallbacks(askTest)
         unbind()

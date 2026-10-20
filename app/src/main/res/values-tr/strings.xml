@@ -465,4 +465,16 @@
     <string name="welcome_title">QuickBuds\'a hoş geldin</string>
     <string name="welcome_body">QuickBuds varsayılan olarak yeniden yazılan protokolünü kullanır. Bir model sorun çıkarırsa Ayarlar\'dan eski protokole geç. Bu seçimleri istediğin zaman değiştirebilirsin.</string>
     <string name="welcome_done">Tamam</string>
+    <string name="setup_perm_title">İzinler</string>
+    <string name="setup_perm_body">QuickBuds\'ın kulaklıklarınla konuşması için Bluetooth gerekir. Bildirimler arka plan hizmetini gösterir.</string>
+    <string name="setup_perm_bt">Bluetooth</string>
+    <string name="setup_perm_notif">Bildirimler</string>
+    <string name="setup_allow">İzin ver</string>
+    <string name="setup_allowed">İzin verildi</string>
+    <string name="setup_next">İleri</string>
+    <string name="setup_back">Geri</string>
+    <string name="setup_bg_title">Bağlı kal</string>
+    <string name="setup_bg_body">Arka plan hizmeti widget\'ları çalışır tutar ve kulaklıkları yeniden bağlar. Telefon kilitliyken uyur.</string>
+    <string name="setup_ready_title">Hazırsın</string>
+    <string name="setup_ready_body">Kulaklıklarını bağla ve QuickBuds\'ı aç. Her seçim Ayarlar\'da kalır.</string>
 </resources>

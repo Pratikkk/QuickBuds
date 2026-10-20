@@ -465,4 +465,16 @@
     <string name="welcome_title">Bun venit în QuickBuds</string>
     <string name="welcome_body">QuickBuds folosește implicit protocolul reconstruit. Dacă un model are probleme, treci la protocolul vechi din Setări. Poți schimba aceste opțiuni oricând.</string>
     <string name="welcome_done">Gata</string>
+    <string name="setup_perm_title">Permisiuni</string>
+    <string name="setup_perm_body">QuickBuds are nevoie de Bluetooth ca să vorbească cu căștile. Notificările arată serviciul din fundal.</string>
+    <string name="setup_perm_bt">Bluetooth</string>
+    <string name="setup_perm_notif">Notificări</string>
+    <string name="setup_allow">Permite</string>
+    <string name="setup_allowed">Permis</string>
+    <string name="setup_next">Înainte</string>
+    <string name="setup_back">Înapoi</string>
+    <string name="setup_bg_title">Rămâi conectat</string>
+    <string name="setup_bg_body">Serviciul din fundal ține widgeturile active și reconectează căștile. Doarme cât timp telefonul e blocat.</string>
+    <string name="setup_ready_title">Totul e gata</string>
+    <string name="setup_ready_body">Conectează căștile și deschide QuickBuds. Fiecare alegere rămâne în Setări.</string>
 </resources>

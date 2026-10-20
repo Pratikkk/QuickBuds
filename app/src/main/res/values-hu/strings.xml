@@ -465,4 +465,16 @@
     <string name="welcome_title">Üdvözöl a QuickBuds</string>
     <string name="welcome_body">A QuickBuds alapból az újjáépített protokollt használja. Ha egy modell hibázik, válts a régi protokollra a Beállításokban. Ezeket bármikor módosíthatod.</string>
     <string name="welcome_done">Kész</string>
+    <string name="setup_perm_title">Engedélyek</string>
+    <string name="setup_perm_body">A QuickBudsnak Bluetooth kell a fülhallgatóval való beszélgetéshez. Az értesítések mutatják a háttérszolgáltatást.</string>
+    <string name="setup_perm_bt">Bluetooth</string>
+    <string name="setup_perm_notif">Értesítések</string>
+    <string name="setup_allow">Engedélyez</string>
+    <string name="setup_allowed">Engedélyezve</string>
+    <string name="setup_next">Tovább</string>
+    <string name="setup_back">Vissza</string>
+    <string name="setup_bg_title">Maradj csatlakozva</string>
+    <string name="setup_bg_body">A háttérszolgáltatás működteti a widgeteket és újracsatlakoztatja a fülhallgatót. Zárolt telefonnál alszik.</string>
+    <string name="setup_ready_title">Minden kész</string>
+    <string name="setup_ready_body">Csatlakoztasd a fülhallgatót, és nyisd meg a QuickBudsot. Minden választás a Beállításokban marad.</string>
 </resources>

@@ -465,4 +465,16 @@
     <string name="welcome_title">QuickBuds へようこそ</string>
     <string name="welcome_body">QuickBuds は標準で再構築したプロトコルを使います。機種に不具合があれば、設定で旧プロトコルに切り替えてください。これらの選択はいつでも変更できます。</string>
     <string name="welcome_done">完了</string>
+    <string name="setup_perm_title">権限</string>
+    <string name="setup_perm_body">QuickBuds はイヤホンと通信するために Bluetooth が必要です。通知はバックグラウンドサービスを表示します。</string>
+    <string name="setup_perm_bt">Bluetooth</string>
+    <string name="setup_perm_notif">通知</string>
+    <string name="setup_allow">許可</string>
+    <string name="setup_allowed">許可済み</string>
+    <string name="setup_next">次へ</string>
+    <string name="setup_back">戻る</string>
+    <string name="setup_bg_title">接続を維持</string>
+    <string name="setup_bg_body">バックグラウンドサービスはウィジェットを動かし、イヤホンを再接続します。スマートフォンのロック中は停止します。</string>
+    <string name="setup_ready_title">準備完了</string>
+    <string name="setup_ready_body">イヤホンを接続して QuickBuds を開いてください。ここでの選択はすべて設定に残ります。</string>
 </resources>

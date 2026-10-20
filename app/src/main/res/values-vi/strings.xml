@@ -467,4 +467,16 @@
     <string name="welcome_title">Chào mừng đến với QuickBuds</string>
     <string name="welcome_body">QuickBuds mặc định dùng giao thức được xây dựng lại. Nếu một mẫu lỗi, hãy chuyển sang giao thức cũ trong Cài đặt. Bạn có thể đổi các lựa chọn này bất cứ lúc nào.</string>
     <string name="welcome_done">Xong</string>
+    <string name="setup_perm_title">Quyền</string>
+    <string name="setup_perm_body">QuickBuds cần Bluetooth để trò chuyện với tai nghe của bạn. Thông báo hiển thị dịch vụ nền.</string>
+    <string name="setup_perm_bt">Bluetooth</string>
+    <string name="setup_perm_notif">Thông báo</string>
+    <string name="setup_allow">Cho phép</string>
+    <string name="setup_allowed">Đã cho phép</string>
+    <string name="setup_next">Tiếp</string>
+    <string name="setup_back">Quay lại</string>
+    <string name="setup_bg_title">Luôn kết nối</string>
+    <string name="setup_bg_body">Dịch vụ nền giữ cho widget hoạt động và kết nối lại tai nghe. Dịch vụ ngủ khi điện thoại bị khóa.</string>
+    <string name="setup_ready_title">Sẵn sàng</string>
+    <string name="setup_ready_body">Kết nối tai nghe và mở QuickBuds. Mọi lựa chọn vẫn nằm trong Cài đặt.</string>
 </resources>

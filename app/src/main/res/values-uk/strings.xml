@@ -465,4 +465,16 @@
     <string name="welcome_title">Ласкаво просимо до QuickBuds</string>
     <string name="welcome_body">За замовчуванням QuickBuds використовує перебудований протокол. Якщо модель працює некоректно, перемкніться на старий протокол у налаштуваннях. Ці вибори можна змінити будь-коли.</string>
     <string name="welcome_done">Готово</string>
+    <string name="setup_perm_title">Дозволи</string>
+    <string name="setup_perm_body">QuickBuds потрібен Bluetooth для зв’язку з навушниками. Сповіщення показують фонову службу.</string>
+    <string name="setup_perm_bt">Bluetooth</string>
+    <string name="setup_perm_notif">Сповіщення</string>
+    <string name="setup_allow">Дозволити</string>
+    <string name="setup_allowed">Дозволено</string>
+    <string name="setup_next">Далі</string>
+    <string name="setup_back">Назад</string>
+    <string name="setup_bg_title">Залишайтеся на зв’язку</string>
+    <string name="setup_bg_body">Фонова служба підтримує віджети й заново підключає навушники. Поки телефон заблоковано, вона спить.</string>
+    <string name="setup_ready_title">Усе готово</string>
+    <string name="setup_ready_body">Підключіть навушники й відкрийте QuickBuds. Усі вибори залишаються в налаштуваннях.</string>
 </resources>

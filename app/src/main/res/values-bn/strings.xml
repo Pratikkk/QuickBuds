@@ -465,4 +465,16 @@
     <string name="welcome_title">QuickBuds-এ স্বাগতম</string>
     <string name="welcome_body">QuickBuds ডিফল্টভাবে তার নতুন প্রোটোকল ব্যবহার করে। কোনো মডেলে সমস্যা হলে সেটিংসে লেগেসি প্রোটোকলে যান। এই পছন্দগুলো যেকোনো সময় বদলানো যায়।</string>
     <string name="welcome_done">শেষ</string>
+    <string name="setup_perm_title">অনুমতি</string>
+    <string name="setup_perm_body">ইয়ারবাডের সাথে কথা বলতে QuickBuds-এর ব্লুটুথ লাগে। ব্যাকগ্রাউন্ড সার্ভিস দেখাতে বিজ্ঞপ্তি লাগে।</string>
+    <string name="setup_perm_bt">ব্লুটুথ</string>
+    <string name="setup_perm_notif">বিজ্ঞপ্তি</string>
+    <string name="setup_allow">অনুমতি দিন</string>
+    <string name="setup_allowed">অনুমোদিত</string>
+    <string name="setup_next">পরবর্তী</string>
+    <string name="setup_back">পেছনে</string>
+    <string name="setup_bg_title">সংযুক্ত থাকুন</string>
+    <string name="setup_bg_body">ব্যাকগ্রাউন্ড সার্ভিস উইজেট চালু রাখে এবং ইয়ারবাড আবার সংযুক্ত করে। ফোন লক থাকলে এটি ঘুমায়।</string>
+    <string name="setup_ready_title">আপনি প্রস্তুত</string>
+    <string name="setup_ready_body">আপনার ইয়ারবাড সংযুক্ত করে QuickBuds খুলুন। এখানকার সব পছন্দ সেটিংসে থাকে।</string>
 </resources>

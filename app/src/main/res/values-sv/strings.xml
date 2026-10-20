@@ -465,4 +465,16 @@
     <string name="welcome_title">Välkommen till QuickBuds</string>
     <string name="welcome_body">QuickBuds använder som standard det ombyggda protokollet. Om en modell krånglar, byt till det äldre protokollet i Inställningar. Du kan ändra dessa val när som helst.</string>
     <string name="welcome_done">Klar</string>
+    <string name="setup_perm_title">Behörigheter</string>
+    <string name="setup_perm_body">QuickBuds behöver Bluetooth för att prata med dina hörlurar. Aviseringar visar bakgrundstjänsten.</string>
+    <string name="setup_perm_bt">Bluetooth</string>
+    <string name="setup_perm_notif">Aviseringar</string>
+    <string name="setup_allow">Tillåt</string>
+    <string name="setup_allowed">Tillåtet</string>
+    <string name="setup_next">Nästa</string>
+    <string name="setup_back">Tillbaka</string>
+    <string name="setup_bg_title">Håll dig ansluten</string>
+    <string name="setup_bg_body">Bakgrundstjänsten håller widgetarna igång och ansluter hörlurarna igen. Den sover när telefonen är låst.</string>
+    <string name="setup_ready_title">Klart</string>
+    <string name="setup_ready_body">Anslut hörlurarna och öppna QuickBuds. Varje val finns kvar i Inställningar.</string>
 </resources>

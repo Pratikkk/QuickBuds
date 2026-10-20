@@ -467,4 +467,16 @@
     <string name="welcome_title">ยินดีต้อนรับสู่ QuickBuds</string>
     <string name="welcome_body">QuickBuds ใช้โปรโตคอลที่สร้างใหม่เป็นค่าเริ่มต้น หากบางรุ่นมีปัญหา ให้สลับไปใช้โปรโตคอลเดิมในการตั้งค่า คุณเปลี่ยนตัวเลือกเหล่านี้ได้ทุกเมื่อ</string>
     <string name="welcome_done">เสร็จสิ้น</string>
+    <string name="setup_perm_title">สิทธิ์</string>
+    <string name="setup_perm_body">QuickBuds ต้องใช้บลูทูธเพื่อสื่อสารกับหูฟังของคุณ การแจ้งเตือนแสดงบริการเบื้องหลัง</string>
+    <string name="setup_perm_bt">บลูทูธ</string>
+    <string name="setup_perm_notif">การแจ้งเตือน</string>
+    <string name="setup_allow">อนุญาต</string>
+    <string name="setup_allowed">อนุญาตแล้ว</string>
+    <string name="setup_next">ถัดไป</string>
+    <string name="setup_back">ย้อนกลับ</string>
+    <string name="setup_bg_title">เชื่อมต่อต่อเนื่อง</string>
+    <string name="setup_bg_body">บริการเบื้องหลังทำให้วิดเจ็ตทำงานและเชื่อมต่อหูฟังใหม่ บริการจะพักเมื่อล็อกโทรศัพท์</string>
+    <string name="setup_ready_title">พร้อมแล้ว</string>
+    <string name="setup_ready_body">เชื่อมต่อหูฟังแล้วเปิด QuickBuds ทุกตัวเลือกอยู่ในการตั้งค่า</string>
 </resources>

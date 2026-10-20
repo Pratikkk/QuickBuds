@@ -465,4 +465,16 @@
     <string name="welcome_title">Benvenuto in QuickBuds</string>
     <string name="welcome_body">QuickBuds usa per impostazione predefinita il protocollo ricostruito. Se un modello dà problemi, passa al protocollo precedente nelle Impostazioni. Puoi cambiare queste scelte quando vuoi.</string>
     <string name="welcome_done">Fatto</string>
+    <string name="setup_perm_title">Autorizzazioni</string>
+    <string name="setup_perm_body">QuickBuds ha bisogno del Bluetooth per parlare con i tuoi auricolari. Le notifiche mostrano il servizio in background.</string>
+    <string name="setup_perm_bt">Bluetooth</string>
+    <string name="setup_perm_notif">Notifiche</string>
+    <string name="setup_allow">Consenti</string>
+    <string name="setup_allowed">Consentito</string>
+    <string name="setup_next">Avanti</string>
+    <string name="setup_back">Indietro</string>
+    <string name="setup_bg_title">Resta connesso</string>
+    <string name="setup_bg_body">Il servizio in background mantiene attivi i widget e riconnette gli auricolari. Va in pausa con il telefono bloccato.</string>
+    <string name="setup_ready_title">Tutto pronto</string>
+    <string name="setup_ready_body">Collega gli auricolari e apri QuickBuds. Ogni scelta resta nelle Impostazioni.</string>
 </resources>

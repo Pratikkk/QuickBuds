@@ -553,4 +553,16 @@
     <string name="welcome_title">Welcome to QuickBuds</string>
     <string name="welcome_body">QuickBuds uses its rebuilt protocol by default. If a model misbehaves, switch to Legacy protocol in Settings. Change these choices any time.</string>
     <string name="welcome_done">Done</string>
+    <string name="setup_perm_title">Permissions</string>
+    <string name="setup_perm_body">QuickBuds needs Bluetooth to talk to your earbuds. Notifications show the background service.</string>
+    <string name="setup_perm_bt">Bluetooth</string>
+    <string name="setup_perm_notif">Notifications</string>
+    <string name="setup_allow">Allow</string>
+    <string name="setup_allowed">Allowed</string>
+    <string name="setup_next">Next</string>
+    <string name="setup_back">Back</string>
+    <string name="setup_bg_title">Stay connected</string>
+    <string name="setup_bg_body">The background service keeps the widgets working and reconnects the earbuds. It sleeps while the phone is locked.</string>
+    <string name="setup_ready_title">You are ready</string>
+    <string name="setup_ready_body">Connect your earbuds and open QuickBuds. Every choice here stays in Settings.</string>
 </resources>

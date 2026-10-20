@@ -467,4 +467,16 @@
     <string name="welcome_title">Selamat datang di QuickBuds</string>
     <string name="welcome_body">QuickBuds memakai protokol barunya secara bawaan. Jika suatu model bermasalah, beralih ke protokol lama di Pengaturan. Pilihan ini dapat diubah kapan saja.</string>
     <string name="welcome_done">Selesai</string>
+    <string name="setup_perm_title">Izin</string>
+    <string name="setup_perm_body">QuickBuds memerlukan Bluetooth untuk berbicara dengan earbud Anda. Notifikasi menampilkan layanan latar belakang.</string>
+    <string name="setup_perm_bt">Bluetooth</string>
+    <string name="setup_perm_notif">Notifikasi</string>
+    <string name="setup_allow">Izinkan</string>
+    <string name="setup_allowed">Diizinkan</string>
+    <string name="setup_next">Lanjut</string>
+    <string name="setup_back">Kembali</string>
+    <string name="setup_bg_title">Tetap terhubung</string>
+    <string name="setup_bg_body">Layanan latar belakang menjaga widget berfungsi dan menyambungkan ulang earbud. Layanan tidur saat ponsel terkunci.</string>
+    <string name="setup_ready_title">Siap</string>
+    <string name="setup_ready_body">Sambungkan earbud dan buka QuickBuds. Setiap pilihan tetap ada di Pengaturan.</string>
 </resources>
