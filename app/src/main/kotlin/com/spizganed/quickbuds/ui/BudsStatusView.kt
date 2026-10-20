@@ -45,7 +45,25 @@ class BudsStatusView(context: Context) : View(context) {
 
     /** False draws the disconnected state (SPEC 3.2). */
     var connected = true
-        set(v) { if (field != v) { field = v; invalidate() } }
+        set(v) {
+            if (field == v) return
+            field = v
+            connAnim?.cancel()
+            val to = if (v) 1f else 0f
+            val scale = android.provider.Settings.Global.getFloat(context.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
+            // Before the first draw nobody saw the old state: no transition.
+            if (!drawn || scale == 0f) { conn = to; invalidate(); return }
+            connAnim = ValueAnimator.ofFloat(conn, to).apply {
+                duration = 350
+                addUpdateListener { conn = it.animatedValue as Float; postInvalidateOnAnimation() }
+                start()
+            }
+        }
+
+    /** 1 connected, 0 disconnected; the glyph colours blend between the two so a disconnect fades like a connect. */
+    private var conn = 1f
+    private var connAnim: ValueAnimator? = null
+    private var drawn = false
 
     // Glyphs keep their SVG's true ratio (buds 176x272, case 496x400), fitted inside the SPEC's
     // boxes (bud 42x56, case 58x42). The right bud is its own mirrored drawable.
@@ -119,6 +137,7 @@ class BudsStatusView(context: Context) : View(context) {
     }
 
     override fun onDraw(canvas: Canvas) {
+        drawn = true
         val ring = ringSize
         val cy = ring / 2
         val colW = width / 3f
@@ -128,7 +147,7 @@ class BudsStatusView(context: Context) : View(context) {
             if (nothing) {
                 // One bitmap per animation step (whole percents), so an animation redraws at most 100 of them.
                 val level = if (connected && s.level >= 0) Math.round(s.shown * 100) else -1
-                val tint = if (connected) QuickBudsWidget.nothingTint(p, i == 1, s.status) else p.disabled
+                val tint = androidx.core.graphics.ColorUtils.blendARGB(p.disabled, QuickBudsWidget.nothingTint(p, i == 1, s.status), conn)
                 val key = "$level/$tint/${ring.toInt()}"
                 if (s.dotsKey != key) {
                     s.dots = QuickBudsWidget.dotRing(context, p, level, i, tint, ring.toInt().coerceAtLeast(1))
@@ -145,7 +164,7 @@ class BudsStatusView(context: Context) : View(context) {
                 val bw = dp(s.boxW) * scale
                 val bh = dp(s.boxH) * scale
                 val (iw, ih) = if (s.iconRatio < bw / bh) bh * s.iconRatio to bh else bw to bw / s.iconRatio
-                s.icon.setTint(if (connected) wearTint(p, i == 1, s.status, ThemeRes.material(context)) else p.disabled)
+                s.icon.setTint(androidx.core.graphics.ColorUtils.blendARGB(p.disabled, wearTint(p, i == 1, s.status, ThemeRes.material(context)), conn))
                 s.icon.setBounds((cx - iw / 2).toInt(), (cy - ih / 2).toInt(), (cx + iw / 2).toInt(), (cy + ih / 2).toInt())
                 s.icon.draw(canvas)
             }
@@ -171,10 +190,10 @@ class BudsStatusView(context: Context) : View(context) {
     companion object {
         /**
          * Glyph colour by wear (WIDGETS.md 1); the case is always `text`. Shared with the widgets.
-         * Material style: a bud in the ear takes the accent (M3 primary), so the three states read by colour.
+         * Material style: a bud in the ear and the case take the accent (M3 primary), so the three states read by colour.
          */
         fun wearTint(p: Palette, isCase: Boolean, status: Int, material: Boolean = false): Int = when {
-            material && !isCase && (status == 3 || status == 7) -> p.accent
+            material && (isCase || status == 3 || status == 7) -> p.accent
             isCase || status == 3 || status == 7 -> p.text
             status == 4 || status == 0 -> Palette.withAlpha(p.textSecondary, 0.45f)
             else -> p.textSecondary

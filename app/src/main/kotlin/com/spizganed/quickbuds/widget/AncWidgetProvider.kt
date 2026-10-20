@@ -241,9 +241,6 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             val o = AppWidgetManager.getInstance(c).getAppWidgetOptions(id)
             val w = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH).toFloat()
             val h = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT).toFloat()
-            val battery = kind != Kind.CONTROLS
-            val controls = kind != Kind.BATTERY_ONLY
-            val keys = if (controls) WidgetSettings.buttons(c, id).size.coerceAtLeast(1) else 0
             val g = geo(c)
             // The 2x2 and 4x2 pages; their tile size is only for the label choice ([controls]).
             fun pages(wide: Boolean): Fit {
@@ -252,63 +249,8 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 return Fit(if (wide) Shape.PAGES_M else Shape.PAGES_S, tileW = tw)
             }
             if (w <= 0 || h <= 0) return pages(kind == Kind.COMBINED)
-            // Mirrors scripts/widget-layouts.py: PP the panel padding, GAP between panels and tiles.
-            val pp = if (WidgetSettings.materialStyle(c)) 2f else if (WidgetSettings.nothingStyle(c)) 4f else 6f
-            val gap = 5f
-            val iw = w - 2 * g.side
-            val ih = h - 2 * g.vert
-            fun num(d: Float) = (d * 0.3f).coerceIn(13f, 36f)
-            // A battery panel's height: ring, number line, paddings.
-            fun unitH(d: Float) = d + 2f + num(d) * 1.3f + 2 * pp
-            // The largest ring whose panel fits [avail] high.
-            fun byH(avail: Float): Float { var d = avail; while (d > 16f && unitH(d) > avail) d -= 1f; return d }
-            val wide = w >= 250f
-            if (h < 120f) {
-                if (!battery) return Fit(Shape.STRIP, tiles = keys, units = 0, tileW = (iw - gap * (keys - 1)) / keys, tileH = ih)
-                // Units and tiles share the row equally. Up to 4 tiles, while each is 44dp or wider and the
-                // rings shrink by 8dp at most.
-                fun slot(n: Int) = (iw - gap * (2 + n)) / (3 + n)
-                fun ring(n: Int) = minOf(slot(n) - 2 * pp, byH(ih), 60f)
-                val n = (keys downTo 0).first { it == 0 || (slot(it) >= 44f && ring(it) >= ring(0) - 8f) }
-                return Fit(Shape.STRIP, ring(n), num(ring(n)), n, 3, slot(n), ih)
-            }
-            if (w < 130f) {
-                if (!battery) return Fit(Shape.COLUMN, tiles = keys, units = 0, tileW = iw, tileH = (ih - gap * (keys - 1)) / keys)
-                // The case needs about 3 rows.
-                val k = if (h >= 250f) 3 else 2
-                fun slot(n: Int) = (ih - gap * (k + n - 1)) / (k + n)
-                fun ring(n: Int) = minOf(iw - 2 * pp, byH(slot(n)), 56f)
-                val n = (keys downTo 0).first { it == 0 || (slot(it) >= 44f && ring(it) >= ring(0) - 8f) }
-                return Fit(Shape.COLUMN, ring(n), num(ring(n)), n, k, iw, slot(n))
-            }
-            // Controls only: the 2x2 grid page at every bigger size.
-            if (!battery) return pages(false)
-            if (!controls) {
-                if (h < 280f) return pages(wide)
-                if (wide) {
-                    val d = minOf((iw - gap) / 2 - 2 * pp, byH((ih - gap) / 2), 120f)
-                    return Fit(Shape.STACK, d, num(d), 0)
-                }
-                // One row per unit, the number beside the ring ("100" is about 1.7 em wide).
-                val rowH = (ih - 2 * gap) / 3
-                val font = minOf(rowH * 0.45f, 40f)
-                val d = minOf(rowH - 2 * pp, iw - 2 * pp - 8f - font * 1.7f, 100f)
-                return Fit(Shape.LIST, d, font, 0)
-            }
-            if (!wide) {
-                // The 2x2 battery page (two panels, a 32dp case row), the tiles as a 2x2 grid under it.
-                val d = minOf((iw - gap) / 2 - 2 * pp, 100f)
-                val rest = ih - unitH(d) - gap - 32f - gap
-                if (rest < 94f) return pages(false)
-                return Fit(Shape.TALL, d, num(d), keys, 3, (iw - gap) / 2, (rest - gap) / 2)
-            }
-            // Three panels in a row; the rings shrink by up to 10dp to make room for a row of tiles.
-            var d = minOf((iw - 2 * gap) / 3 - 2 * pp, byH(ih), 120f)
-            if (ih - unitH(d) - gap < 44f && ih - unitH(d - 10f) - gap >= 44f) d -= 10f
-            val rest = ih - unitH(d) - gap
-            if (rest >= 94f) return Fit(Shape.TALL_M2, d, num(d), keys, 3, (iw - gap) / 2, (rest - gap) / 2)
-            if (rest >= 44f) return Fit(Shape.TALL_M1, d, num(d), keys, 3, (iw - 3 * gap) / 4, rest)
-            return pages(true)
+            // Every size has two screens: battery, then the modes on a double tap. 4x2 and wider lay the pages out wide.
+            return pages(w >= 250f)
         }
 
         /** The widget box: Nothing's own widgets' radius in the Nothing style, else per size. */
@@ -435,7 +377,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 // rings' dot pitch, so the big icon keeps the app's case details (lid cut, LED).
                 val caseDp = if (paged) caseRowDp(context, id) else 32f - 2 * geo(context).row
                 icon(context, v, R.id.w_case_icon, R.drawable.ic_case, caseDp, if (paged) ringCellDp(context, id) else fit.ring / RING_CELLS)
-                v.setInt(R.id.w_case_icon, "setColorFilter", p.text)
+                v.setInt(R.id.w_case_icon, "setColorFilter", if (WidgetSettings.materialStyle(context)) BudsStatusView.wearTint(p, true, -1, true) else p.text)
                 v.setImageViewBitmap(R.id.w_case_bar, bar(context, p, state.caseBattery, id, caseDp))
                 // The level is drawn into the bar ([bar]); the bar reads it out.
                 v.setViewVisibility(R.id.w_pct_case, View.GONE)

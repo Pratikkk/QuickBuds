@@ -196,7 +196,14 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         connectedUi = connected
         statusView.connected = connected
         // INVISIBLE, not GONE: the battery tile keeps its height, so nothing jumps on connect.
-        deviceNameText.visibility = if (connected) View.VISIBLE else View.INVISIBLE
+        if (first || animatorScale() == 0f) {
+            deviceNameText.visibility = if (connected) View.VISIBLE else View.INVISIBLE
+            deviceNameText.alpha = 1f
+        } else {
+            deviceNameText.visibility = View.VISIBLE
+            deviceNameText.animate().alpha(if (connected) 1f else 0f).setDuration(CARD_ANIM_MS)
+                .withEndAction { if (!connected) deviceNameText.visibility = View.INVISIBLE }.start()
+        }
 
         val alpha = if (connected) 1f else DISABLED_ALPHA
         for (i in 0 until tiles.childCount) {
