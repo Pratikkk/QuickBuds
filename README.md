@@ -190,7 +190,7 @@ Font License 1.1, a medium and a semibold instance with Latin, Greek and Cyrilli
 Copyright (C) 2026 spizganed
 
 QuickBuds is free software under the GNU General Public License v3.0 or later, distributed without
-any warranty; see [LICENSE](./LICENSE). A commercial licence is available on request; see [LICENSING.md](./LICENSING.md). The protocol sources above were used as documentation; check
+any warranty; see [LICENSE](./LICENSE). The protocol sources above were used as documentation; check
 each one's license before copying text from it.
 
 QuickBuds is an independent project, not affiliated with, endorsed by or sponsored by OnePlus, OPPO,
