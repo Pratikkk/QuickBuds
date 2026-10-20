@@ -470,4 +470,6 @@
     <string name="background_setup_body">QuickBuds 會執行一個小型背景服務，讓小工具正常運作，並讓耳機自動重新連線。手機鎖定時它會休眠，解鎖後喚醒。你可以在設定中變更。</string>
     <string name="background_setup_keep">保持開啟</string>
     <string name="background_setup_off">關閉</string>
+    <string name="about_privacy_title">隱私</string>
+    <string name="about_privacy_body">QuickBuds 每天一次傳送其平台與版本號（例如「Android 5.0.0」）來統計活躍使用者。它不傳送 ID、位址或耳機資料。只有你傳送時才會送出回報。</string>
 </resources>

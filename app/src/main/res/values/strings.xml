@@ -556,4 +556,6 @@
     <string name="background_setup_body">QuickBuds keeps a small background service running so the widgets work and the earbuds reconnect by themselves. It sleeps while the phone is locked and wakes when you unlock it. You can change this in Settings.</string>
     <string name="background_setup_keep">Keep on</string>
     <string name="background_setup_off">Turn off</string>
+    <string name="about_privacy_title">Privacy</string>
+    <string name="about_privacy_body">Once a day QuickBuds sends its platform and version number (for example \"Android 5.0.0\") to count active users. It sends no ID, no address and no earbud data. Reports are sent only when you send them.</string>
 </resources>

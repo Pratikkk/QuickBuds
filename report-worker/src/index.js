@@ -15,6 +15,7 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (req.method === "POST" && url.pathname === "/report") return report(req, env);
+    if (req.method === "POST" && url.pathname === "/ping") return ping(req, env);
     if (req.method === "GET" && url.pathname === "/") return list(url, env);
     return new Response("Not found", { status: 404 });
   },
@@ -61,6 +62,7 @@ async function report(req, env) {
  */
 async function list(url, env) {
   if (!env.READ_KEY || url.searchParams.get("key") !== env.READ_KEY) return new Response("Not found", { status: 404 });
+  if (url.searchParams.has("stats")) return stats(url, env);
   const after = Number(url.searchParams.get("after") ?? 0) || 0;
   const limit = Math.min(Number(url.searchParams.get("limit") ?? 20) || 20, 100);
   const { results } = await env.DB.prepare(
@@ -89,4 +91,40 @@ function answer(status, message) {
 async function hash(s) {
   const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+const PLATFORMS = new Set(["Android", "Windows", "Linux"]);
+
+/**
+ * One app start per platform and day: the app sends {platform, version} at most once a day. The Worker adds 1 to the
+ * day's counter. It stores no ID, no address and no time of day, so the counter is the day's active installs.
+ */
+async function ping(req, env) {
+  let r;
+  try {
+    r = await req.json();
+  } catch {
+    return answer(400, "Not valid JSON.");
+  }
+  const platform = str(r.platform, 20);
+  const version = str(r.version, 20);
+  if (!PLATFORMS.has(platform) || !/^\d+(\.\d+){1,3}$/.test(version)) return answer(422, "Unknown platform or version.");
+  const day = new Date().toISOString().slice(0, 10);
+  await env.DB.prepare(
+    "INSERT INTO daily_use (day, platform, version, n) VALUES (?, ?, ?, 1) ON CONFLICT (day, platform, version) DO UPDATE SET n = n + 1",
+  ).bind(day, platform, version).run();
+  return answer(200, "ok");
+}
+
+/** The developer's counts: GET /?key=<READ_KEY>&stats=1[&days=30], active installs per day and platform. */
+async function stats(url, env) {
+  const days = Math.min(Number(url.searchParams.get("days") ?? 30) || 30, 365);
+  const since = new Date(Date.now() - days * 86400_000).toISOString().slice(0, 10);
+  const { results } = await env.DB.prepare(
+    "SELECT day, platform, SUM(n) AS n FROM daily_use WHERE day >= ? GROUP BY day, platform ORDER BY day DESC, platform",
+  ).bind(since).all();
+  if (url.searchParams.get("format") === "json") return Response.json(results);
+  return new Response(results.map((r) => `${r.day}  ${r.platform.padEnd(8)} ${r.n}`).join("\n") + "\n", {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
 }

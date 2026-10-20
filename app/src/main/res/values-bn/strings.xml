@@ -468,4 +468,6 @@
     <string name="background_setup_body">উইজেট কাজ করার জন্য এবং ইয়ারবাড নিজে থেকে সংযুক্ত হওয়ার জন্য QuickBuds একটি ছোট ব্যাকগ্রাউন্ড সার্ভিস চালু রাখে। ফোন লক থাকলে এটি ঘুমিয়ে থাকে, আনলক করলে জাগে। আপনি সেটিংসে এটি বদলাতে পারেন।</string>
     <string name="background_setup_keep">চালু রাখুন</string>
     <string name="background_setup_off">বন্ধ করুন</string>
+    <string name="about_privacy_title">গোপনীয়তা</string>
+    <string name="about_privacy_body">সক্রিয় ব্যবহারকারী গণনার জন্য QuickBuds দিনে একবার তার প্ল্যাটফর্ম ও সংস্করণ নম্বর (যেমন \"Android 5.0.0\") পাঠায়। কোনো আইডি, ঠিকানা বা ইয়ারবাডের তথ্য পাঠায় না। রিপোর্ট শুধু আপনি পাঠালেই যায়।</string>
 </resources>

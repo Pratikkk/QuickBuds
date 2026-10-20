@@ -470,4 +470,6 @@
     <string name="background_setup_body">QuickBuds chạy một dịch vụ nền nhỏ để widget hoạt động và tai nghe tự kết nối lại. Dịch vụ ngủ khi điện thoại bị khóa và thức dậy khi bạn mở khóa. Bạn có thể đổi điều này trong Cài đặt.</string>
     <string name="background_setup_keep">Giữ bật</string>
     <string name="background_setup_off">Tắt</string>
+    <string name="about_privacy_title">Quyền riêng tư</string>
+    <string name="about_privacy_body">Mỗi ngày một lần, QuickBuds gửi nền tảng và số phiên bản của nó (ví dụ \"Android 5.0.0\") để đếm người dùng hoạt động. Ứng dụng không gửi ID, địa chỉ hay dữ liệu tai nghe. Báo cáo chỉ được gửi khi bạn gửi.</string>
 </resources>

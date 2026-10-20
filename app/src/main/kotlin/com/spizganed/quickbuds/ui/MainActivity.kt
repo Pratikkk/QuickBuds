@@ -341,6 +341,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         // report is unreachable forever. This is the only reason it is not shown
         // after the UI is built.
         maybeShowCrashReport()
+        UsagePing.send(this)
 
         setContentView(R.layout.activity_main)
         window.decorView.post { if (!maybeAskProtocolNext()) maybeAskBackground() }

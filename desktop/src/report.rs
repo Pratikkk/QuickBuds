@@ -225,6 +225,18 @@ fn post(url: &str, body: &str) -> (u16, String) {
     (code.trim().parse().unwrap_or(0), text.to_string())
 }
 
+/// Counts this install once a day: platform and version only, no ID (README, Privacy). Network thread only.
+pub(crate) fn ping() {
+    let today = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs() / 86_400).unwrap_or(0);
+    if crate::load_settings()["usage_ping_day"].as_u64() == Some(today) { return; }
+    let body = serde_json::json!({
+        "platform": if cfg!(windows) { "Windows" } else { "Linux" },
+        "version": env!("CARGO_PKG_VERSION"),
+    });
+    let (code, _) = post(&WORKER.replace("/report", "/ping"), &body.to_string());
+    if code == 200 { crate::save_setting("usage_ping_day", today.into()); }
+}
+
 /// Posts [d] to the Worker.
 /// Returns (sent, the Worker's answer text when it refused the report).
 pub(crate) fn send(d: Draft) -> (bool, Option<String>) {

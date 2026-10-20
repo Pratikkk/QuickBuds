@@ -864,6 +864,7 @@ fn main() {
     MATERIAL.set(style == "material");
     with_app(|a| { theme::apply(a); a.set_style(style == "pixel", scale); });
     update::setup(&main);
+    std::thread::spawn(report::ping);
     with_app(report::show_crash);
     // Closing the window hides it; the app lives in the tray until Quit.
     slint::run_event_loop_until_quit().expect("event loop");

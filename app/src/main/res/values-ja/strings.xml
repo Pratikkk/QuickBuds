@@ -468,4 +468,6 @@
     <string name="background_setup_body">ウィジェットを動かし、イヤホンを自動で再接続するため、QuickBuds は小さなバックグラウンドサービスを実行します。スマートフォンのロック中は停止し、ロック解除で再開します。設定で変更できます。</string>
     <string name="background_setup_keep">オンのまま</string>
     <string name="background_setup_off">オフにする</string>
+    <string name="about_privacy_title">プライバシー</string>
+    <string name="about_privacy_body">アクティブユーザー数を数えるため、QuickBuds は 1 日 1 回、プラットフォームとバージョン番号（例：「Android 5.0.0」）を送信します。ID、アドレス、イヤホンのデータは送信しません。レポートはあなたが送信したときだけ送られます。</string>
 </resources>

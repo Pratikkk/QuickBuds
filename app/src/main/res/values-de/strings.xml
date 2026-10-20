@@ -468,4 +468,6 @@
     <string name="background_setup_body">QuickBuds hält einen kleinen Hintergrunddienst am Laufen, damit die Widgets funktionieren und sich die Ohrhörer selbst verbinden. Er schläft bei gesperrtem Telefon und wacht beim Entsperren auf. Du kannst das in den Einstellungen ändern.</string>
     <string name="background_setup_keep">Eingeschaltet lassen</string>
     <string name="background_setup_off">Ausschalten</string>
+    <string name="about_privacy_title">Datenschutz</string>
+    <string name="about_privacy_body">QuickBuds sendet einmal am Tag seine Plattform und Versionsnummer (zum Beispiel „Android 5.0.0“), um aktive Nutzer zu zählen. Es sendet keine ID, keine Adresse und keine Ohrhörer-Daten. Berichte gehen nur raus, wenn du sie sendest.</string>
 </resources>

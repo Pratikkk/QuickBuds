@@ -468,4 +468,6 @@
     <string name="background_setup_body">QuickBuds houdt een kleine achtergrondservice actief zodat de widgets werken en de oortjes zelf opnieuw verbinden. De service slaapt als de telefoon vergrendeld is en wordt wakker bij het ontgrendelen. Je kunt dit wijzigen in Instellingen.</string>
     <string name="background_setup_keep">Aan laten</string>
     <string name="background_setup_off">Uitzetten</string>
+    <string name="about_privacy_title">Privacy</string>
+    <string name="about_privacy_body">Eén keer per dag stuurt QuickBuds zijn platform en versienummer (bijvoorbeeld „Android 5.0.0”) om actieve gebruikers te tellen. Er gaat geen ID, adres of oortjesdata mee. Meldingen worden alleen verstuurd als jij ze verstuurt.</string>
 </resources>

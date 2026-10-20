@@ -468,4 +468,6 @@
     <string name="background_setup_body">Nagpapatakbo ang QuickBuds ng maliit na background service para gumana ang mga widget at kusang kumonekta ang earbuds. Natutulog ito kapag naka-lock ang telepono at gumigising kapag in-unlock mo ito. Mababago mo ito sa Settings.</string>
     <string name="background_setup_keep">Panatilihing naka-on</string>
     <string name="background_setup_off">I-off</string>
+    <string name="about_privacy_title">Privacy</string>
+    <string name="about_privacy_body">Isang beses kada araw, ipinapadala ng QuickBuds ang platform at version number nito (halimbawa \"Android 5.0.0\") para bilangin ang mga aktibong user. Walang ID, address o data ng earbuds na ipinapadala. Ang mga ulat ay ipinapadala lamang kapag ikaw ang nagpadala.</string>
 </resources>

@@ -468,4 +468,6 @@
     <string name="background_setup_body">QuickBuds garde un petit service en arrière-plan pour que les widgets fonctionnent et que les écouteurs se reconnectent seuls. Il dort quand le téléphone est verrouillé et se réveille au déverrouillage. Vous pouvez le modifier dans les Réglages.</string>
     <string name="background_setup_keep">Laisser activé</string>
     <string name="background_setup_off">Désactiver</string>
+    <string name="about_privacy_title">Confidentialité</string>
+    <string name="about_privacy_body">Une fois par jour, QuickBuds envoie sa plateforme et son numéro de version (par exemple « Android 5.0.0 ») pour compter les utilisateurs actifs. Il n’envoie ni identifiant, ni adresse, ni données des écouteurs. Les rapports ne partent que lorsque vous les envoyez.</string>
 </resources>

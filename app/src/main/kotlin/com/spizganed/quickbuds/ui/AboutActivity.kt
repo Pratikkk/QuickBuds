@@ -94,6 +94,17 @@ class AboutActivity : Activity() {
             })
         })
 
+        root.addView(SettingRowFactory.sectionLabel(this, R.string.about_privacy_title))
+        root.addView(SettingRowFactory.card(this).apply {
+            setPadding(dp(16f), dp(14f), dp(16f), dp(14f))
+            addView(TextView(this@AboutActivity).apply {
+                setText(R.string.about_privacy_body)
+                textSize = 14f
+                setTextColor(p.textSecondary)
+                setLineSpacing(0f, 1.15f)
+            })
+        })
+
         setContentView(ScrollView(this).apply {
             setBackgroundColor(p.background)
             addView(root)

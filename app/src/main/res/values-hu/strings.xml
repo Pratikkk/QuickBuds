@@ -468,4 +468,6 @@
     <string name="background_setup_body">A QuickBuds egy kis háttérszolgáltatást futtat, hogy a widgetek működjenek, és a fülhallgató magától újracsatlakozzon. Zárolt telefonnál alszik, feloldáskor felébred. Ezt a Beállításokban módosíthatod.</string>
     <string name="background_setup_keep">Bekapcsolva marad</string>
     <string name="background_setup_off">Kikapcsolás</string>
+    <string name="about_privacy_title">Adatvédelem</string>
+    <string name="about_privacy_body">A QuickBuds naponta egyszer elküldi a platformját és a verziószámát (például „Android 5.0.0”) az aktív felhasználók megszámlálásához. Nem küld azonosítót, címet vagy fülhallgatóadatot. A jelentések csak akkor mennek el, ha te elküldöd őket.</string>
 </resources>

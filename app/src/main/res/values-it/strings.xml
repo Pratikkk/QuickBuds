@@ -468,4 +468,6 @@
     <string name="background_setup_body">QuickBuds mantiene attivo un piccolo servizio in background per far funzionare i widget e riconnettere da soli gli auricolari. Va in pausa con il telefono bloccato e si riattiva allo sblocco. Puoi cambiarlo nelle Impostazioni.</string>
     <string name="background_setup_keep">Mantieni attivo</string>
     <string name="background_setup_off">Disattiva</string>
+    <string name="about_privacy_title">Privacy</string>
+    <string name="about_privacy_body">Una volta al giorno QuickBuds invia la propria piattaforma e il numero di versione (per esempio «Android 5.0.0») per contare gli utenti attivi. Non invia ID, indirizzi né dati degli auricolari. Le segnalazioni partono solo quando le invii tu.</string>
 </resources>

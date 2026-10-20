@@ -470,4 +470,6 @@
     <string name="background_setup_body">QuickBuds 会运行一个小型后台服务，让小组件正常工作，并让耳机自动重新连接。手机锁定时它会休眠，解锁后唤醒。你可以在设置中更改。</string>
     <string name="background_setup_keep">保持开启</string>
     <string name="background_setup_off">关闭</string>
+    <string name="about_privacy_title">隐私</string>
+    <string name="about_privacy_body">QuickBuds 每天一次发送其平台和版本号（例如“Android 5.0.0”）来统计活跃用户。它不发送 ID、地址或耳机数据。只有你发送时才会发出报告。</string>
 </resources>

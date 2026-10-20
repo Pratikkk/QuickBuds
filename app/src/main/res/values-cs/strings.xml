@@ -468,4 +468,6 @@
     <string name="background_setup_body">QuickBuds nechává běžet malou službu na pozadí, aby fungovaly widgety a sluchátka se připojovala sama. Když je telefon zamčený, služba spí, a po odemknutí se probudí. Můžete to změnit v Nastavení.</string>
     <string name="background_setup_keep">Nechat zapnuté</string>
     <string name="background_setup_off">Vypnout</string>
+    <string name="about_privacy_title">Soukromí</string>
+    <string name="about_privacy_body">QuickBuds jednou denně odešle svou platformu a číslo verze (například „Android 5.0.0“), aby spočítal aktivní uživatele. Neodesílá žádné ID, adresu ani data sluchátek. Hlášení se odesílají jen na vaši žádost.</string>
 </resources>

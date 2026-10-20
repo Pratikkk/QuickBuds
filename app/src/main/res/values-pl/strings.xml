@@ -468,4 +468,6 @@
     <string name="background_setup_body">QuickBuds utrzymuje małą usługę w tle, aby widżety działały, a słuchawki łączyły się same. Gdy telefon jest zablokowany, usługa śpi, a po odblokowaniu się budzi. Możesz to zmienić w Ustawieniach.</string>
     <string name="background_setup_keep">Zostaw włączoną</string>
     <string name="background_setup_off">Wyłącz</string>
+    <string name="about_privacy_title">Prywatność</string>
+    <string name="about_privacy_body">Raz dziennie QuickBuds wysyła swoją platformę i numer wersji (na przykład „Android 5.0.0”), aby liczyć aktywnych użytkowników. Nie wysyła identyfikatora, adresu ani danych słuchawek. Zgłoszenia są wysyłane tylko wtedy, gdy je wyślesz.</string>
 </resources>

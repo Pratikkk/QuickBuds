@@ -468,4 +468,6 @@
     <string name="background_setup_body">QuickBuds mantiene un pequeño servicio en segundo plano para que funcionen los widgets y los auriculares se reconecten solos. Se duerme con el teléfono bloqueado y despierta al desbloquearlo. Puedes cambiarlo en Ajustes.</string>
     <string name="background_setup_keep">Mantener activado</string>
     <string name="background_setup_off">Desactivar</string>
+    <string name="about_privacy_title">Privacidad</string>
+    <string name="about_privacy_body">Una vez al día QuickBuds envía su plataforma y número de versión (por ejemplo «Android 5.0.0») para contar los usuarios activos. No envía ningún ID, dirección ni datos de los auriculares. Los informes solo se envían cuando tú los envías.</string>
 </resources>

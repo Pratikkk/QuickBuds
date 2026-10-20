@@ -468,4 +468,6 @@
     <string name="background_setup_body">QuickBuds тримає невелику фонову службу, щоб працювали віджети, а навушники підключалися самі. Поки телефон заблоковано, служба спить, а після розблокування прокидається. Це можна змінити в налаштуваннях.</string>
     <string name="background_setup_keep">Залишити ввімкненою</string>
     <string name="background_setup_off">Вимкнути</string>
+    <string name="about_privacy_title">Конфіденційність</string>
+    <string name="about_privacy_body">Раз на день QuickBuds надсилає свою платформу та номер версії (наприклад, «Android 5.0.0»), щоб рахувати активних користувачів. Він не надсилає ні ідентифікатор, ні адресу, ні дані навушників. Звіти надсилаються лише за вашою командою.</string>
 </resources>

@@ -468,4 +468,6 @@
     <string name="background_setup_body">O QuickBuds mantém um pequeno serviço em segundo plano para os widgets funcionarem e os fones se reconectarem sozinhos. Ele dorme com o telefone bloqueado e acorda ao desbloquear. Você pode mudar isso nas Configurações.</string>
     <string name="background_setup_keep">Manter ativado</string>
     <string name="background_setup_off">Desativar</string>
+    <string name="about_privacy_title">Privacidade</string>
+    <string name="about_privacy_body">Uma vez por dia o QuickBuds envia sua plataforma e número de versão (por exemplo, \"Android 5.0.0\") para contar os usuários ativos. Ele não envia ID, endereço nem dados dos fones. Os relatórios só são enviados quando você os envia.</string>
 </resources>

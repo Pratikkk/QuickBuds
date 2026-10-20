@@ -468,4 +468,6 @@
     <string name="background_setup_body">QuickBuds păstrează un mic serviciu în fundal ca widgeturile să funcționeze, iar căștile să se reconecteze singure. Serviciul doarme cât timp telefonul este blocat și se trezește la deblocare. Poți schimba acest lucru în Setări.</string>
     <string name="background_setup_keep">Păstrează pornit</string>
     <string name="background_setup_off">Dezactivează</string>
+    <string name="about_privacy_title">Confidențialitate</string>
+    <string name="about_privacy_body">O dată pe zi QuickBuds trimite platforma și numărul versiunii (de exemplu „Android 5.0.0”) pentru a număra utilizatorii activi. Nu trimite ID, adresă sau date ale căștilor. Rapoartele se trimit doar când le trimiți tu.</string>
 </resources>

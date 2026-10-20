@@ -470,4 +470,6 @@
     <string name="background_setup_body">QuickBuds menjalankan layanan latar belakang kecil agar widget berfungsi dan earbud tersambung kembali sendiri. Layanan tidur saat ponsel terkunci dan bangun saat dibuka. Anda dapat mengubahnya di Pengaturan.</string>
     <string name="background_setup_keep">Tetap aktif</string>
     <string name="background_setup_off">Matikan</string>
+    <string name="about_privacy_title">Privasi</string>
+    <string name="about_privacy_body">Sekali sehari QuickBuds mengirim platform dan nomor versinya (misalnya \"Android 5.0.0\") untuk menghitung pengguna aktif. Tidak ada ID, alamat, atau data earbud yang dikirim. Laporan hanya dikirim saat Anda mengirimnya.</string>
 </resources>

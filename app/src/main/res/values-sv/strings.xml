@@ -468,4 +468,6 @@
     <string name="background_setup_body">QuickBuds kör en liten bakgrundstjänst så att widgetarna fungerar och hörlurarna ansluter själva. Tjänsten sover när telefonen är låst och vaknar när du låser upp. Du kan ändra detta i Inställningar.</string>
     <string name="background_setup_keep">Behåll på</string>
     <string name="background_setup_off">Stäng av</string>
+    <string name="about_privacy_title">Integritet</string>
+    <string name="about_privacy_body">En gång om dagen skickar QuickBuds sin plattform och versionsnummer (till exempel ”Android 5.0.0”) för att räkna aktiva användare. Inget ID, ingen adress och inga hörlursdata skickas. Rapporter skickas bara när du skickar dem.</string>
 </resources>

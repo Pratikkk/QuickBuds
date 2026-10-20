@@ -12,3 +12,12 @@ CREATE TABLE IF NOT EXISTS reports (
   note TEXT                  -- the developer's one-line reason for the status
 );
 CREATE INDEX IF NOT EXISTS reports_sender_at ON reports (sender, at);
+
+-- Active installs per day: one count per app start per day, no ID (the /ping route).
+CREATE TABLE IF NOT EXISTS daily_use (
+  day TEXT NOT NULL,         -- UTC date
+  platform TEXT NOT NULL,    -- Android, Windows, Linux
+  version TEXT NOT NULL,
+  n INTEGER NOT NULL,
+  PRIMARY KEY (day, platform, version)
+);

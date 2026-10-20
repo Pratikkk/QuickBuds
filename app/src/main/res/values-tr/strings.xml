@@ -468,4 +468,6 @@
     <string name="background_setup_body">QuickBuds, widget\'ların çalışması ve kulaklıkların kendiliğinden yeniden bağlanması için küçük bir arka plan hizmeti çalıştırır. Telefon kilitliyken uyur, kilit açılınca uyanır. Bunu Ayarlar\'dan değiştirebilirsin.</string>
     <string name="background_setup_keep">Açık kalsın</string>
     <string name="background_setup_off">Kapat</string>
+    <string name="about_privacy_title">Gizlilik</string>
+    <string name="about_privacy_body">QuickBuds, etkin kullanıcıları saymak için günde bir kez platformunu ve sürüm numarasını (örneğin “Android 5.0.0”) gönderir. Kimlik, adres veya kulaklık verisi göndermez. Raporlar yalnızca sen gönderdiğinde gönderilir.</string>
 </resources>

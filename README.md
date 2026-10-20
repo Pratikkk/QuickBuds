@@ -185,6 +185,12 @@ The Material style's widget font is [Google Sans Flex](https://github.com/google
 Font License 1.1, a medium and a semibold instance with Latin, Greek and Cyrillic, bundled with its license in
 `app/src/main/assets/GoogleSansFlex-OFL.txt`).
 
+## Privacy
+
+Once a day QuickBuds sends its platform and version number (for example "Android 5.0.0") to a Cloudflare Worker. The Worker adds 1
+to that day's counter. It stores no ID, no address and no earbud data. A problem report is sent only when you send it.
+The Worker code is in [report-worker/](./report-worker).
+
 ## License
 
 Copyright (C) 2026 spizganed

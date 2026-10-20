@@ -470,4 +470,6 @@
     <string name="background_setup_body">QuickBuds เปิดบริการเบื้องหลังขนาดเล็กไว้ เพื่อให้วิดเจ็ตทำงานและหูฟังเชื่อมต่อใหม่เอง บริการจะหยุดพักเมื่อล็อกโทรศัพท์และกลับมาทำงานเมื่อปลดล็อก คุณเปลี่ยนได้ในการตั้งค่า</string>
     <string name="background_setup_keep">เปิดไว้</string>
     <string name="background_setup_off">ปิด</string>
+    <string name="about_privacy_title">ความเป็นส่วนตัว</string>
+    <string name="about_privacy_body">วันละครั้ง QuickBuds จะส่งแพลตฟอร์มและหมายเลขเวอร์ชัน (เช่น \"Android 5.0.0\") เพื่อนับผู้ใช้ที่ใช้งานอยู่ โดยไม่ส่งรหัสประจำตัว ที่อยู่ หรือข้อมูลหูฟัง รายงานจะถูกส่งก็ต่อเมื่อคุณสั่งส่งเท่านั้น</string>
 </resources>

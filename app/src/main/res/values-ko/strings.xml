@@ -468,4 +468,6 @@
     <string name="background_setup_body">위젯이 작동하고 이어버드가 자동으로 다시 연결되도록 QuickBuds는 작은 백그라운드 서비스를 실행합니다. 휴대폰이 잠겨 있으면 대기하고 잠금을 풀면 다시 시작합니다. 설정에서 변경할 수 있습니다.</string>
     <string name="background_setup_keep">켜 둠</string>
     <string name="background_setup_off">끄기</string>
+    <string name="about_privacy_title">개인정보</string>
+    <string name="about_privacy_body">QuickBuds는 활성 사용자 수를 세기 위해 하루에 한 번 플랫폼과 버전 번호(예: \"Android 5.0.0\")를 보냅니다. ID, 주소, 이어버드 데이터는 보내지 않습니다. 보고서는 직접 보낼 때만 전송됩니다.</string>
 </resources>

@@ -470,4 +470,6 @@
     <string name="background_setup_body">विजेट काम करें और ईयरबड अपने आप जुड़ें, इसके लिए QuickBuds एक छोटी बैकग्राउंड सर्विस चालू रखता है। फ़ोन लॉक होने पर यह सो जाती है और अनलॉक करने पर जाग जाती है। आप इसे सेटिंग में बदल सकते हैं।</string>
     <string name="background_setup_keep">चालू रखें</string>
     <string name="background_setup_off">बंद करें</string>
+    <string name="about_privacy_title">गोपनीयता</string>
+    <string name="about_privacy_body">सक्रिय उपयोगकर्ताओं को गिनने के लिए QuickBuds दिन में एक बार अपना प्लेटफ़ॉर्म और वर्ज़न नंबर (जैसे \"Android 5.0.0\") भेजता है। यह कोई आईडी, पता या ईयरबड डेटा नहीं भेजता। रिपोर्ट तभी भेजी जाती हैं जब आप भेजें।</string>
 </resources>
