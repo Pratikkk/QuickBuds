@@ -166,6 +166,16 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             // A throw here would leave the host showing "Can't load widget" with no trace.
             try {
                 val fit = fit(context, kind, id)
+                if (sweepPartial && sweepK >= 0f && fit.shape.paged) {
+                    // A sweep frame changes only the rings, the numbers, the case bar and the page's dimming: a partial update is much lighter.
+                    val state = WidgetStateStore.read(context)
+                    val shown = if (state.connected) state else sweepState ?: state
+                    val pv = RemoteViews(context.packageName, fit.shape.layout(context))
+                    battery(context, pv, WidgetSettings.palette(context), shown, fit, id, sweepK)
+                    pv.setFloat(R.id.w_content, "setAlpha", 0.35f + 0.65f * sweepK)
+                    mgr.partiallyUpdateAppWidget(id, pv)
+                    return
+                }
                 val (v, child) = build(context, WidgetStateStore.read(context), kind, id, fit)
                 if (child >= 0) {
                     val prev = WidgetSettings.shownChild(context, id)
@@ -595,10 +605,12 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         /** The battery page's look while a connect or disconnect sweeps (0..1, -1 none) and the levels it fades from. */
         @Volatile private var sweepK = -1f
         @Volatile private var sweepState: WidgetStateStore.State? = null
+        /** True for the frames between the first and the last of a sweep; those are partial updates. */
+        @Volatile private var sweepPartial = false
         private var sweepRun: Runnable? = null
         private val sweepHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        private const val SWEEP_STEPS = 16
-        private const val SWEEP_STEP_MS = 35L
+        private const val SWEEP_STEPS = 36
+        private const val SWEEP_STEP_MS = 16L
 
         /**
          * Connect: the rings fill from 0 to their level and the glyphs take their colour. Disconnect: the reverse, from
@@ -611,7 +623,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             val screenOn = app.getSystemService(android.os.PowerManager::class.java).isInteractive
             val scale = android.provider.Settings.Global.getFloat(app.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
             if (!screenOn || scale == 0f || (!connecting && last == null)) {
-                sweepK = -1f; sweepState = null
+                sweepK = -1f; sweepState = null; sweepPartial = false
                 return refreshAll(app)
             }
             sweepState = last
@@ -621,6 +633,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                     step++
                     val t = step / SWEEP_STEPS.toFloat()
                     val eased = 1f - (1f - t) * (1f - t)
+                    sweepPartial = step in 2 until SWEEP_STEPS
                     if (step >= SWEEP_STEPS) { sweepK = -1f; sweepState = null }
                     else sweepK = if (connecting) eased else 1f - eased
                     refreshAll(app)
