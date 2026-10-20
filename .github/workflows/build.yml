@@ -1,11 +1,15 @@
-# Checks the locales, builds the release APK and AAB, runs the desktop tests and builds the desktop archives
-# (scripts/desktop-dist.sh). Runs only by hand: `gh workflow run Build`, for a release or a test APK made from the
-# phone. On the PC, scripts/release-build.sh does the same, much faster (CLAUDE.md, Release). The APK is signed
+# Checks the locales, runs the Android unit tests and lint, builds the release APK and AAB, runs the core and desktop
+# tests and builds the desktop archives (scripts/desktop-dist.sh). Runs on every push to main and rework/rewrite, on pull
+# requests, and by hand (`gh workflow run Build`, for a test APK made from the phone). On the PC,
+# scripts/release-build.sh does the same, much faster (CLAUDE.md, Release). The APK is signed
 # when the repository has the RELEASE_KEYSTORE_B64 and RELEASE_KEY_PROPERTIES secrets, so it installs over the
 # release app. The run's Artifacts hold every release file.
 name: Build
 
 on:
+  push:
+    branches: [main, rework/rewrite]
+  pull_request:
   workflow_dispatch:
     inputs:
       appimage_only:
@@ -39,6 +43,8 @@ jobs:
           printf '%s\n' "$PROPS" > local/keys/keystore.properties
       - name: Every string in all locales
         run: python3 scripts/check-locales.py
+      - name: Unit tests and lint
+        run: ./gradlew :app:testDebugUnitTest :app:lintDebug
       - run: ./gradlew assembleRelease bundleRelease
       - name: Release names
         run: |
@@ -71,10 +77,14 @@ jobs:
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: desktop -> target
+          workspaces: |
+            desktop -> target
+            core -> target
       - name: Test
         if: ${{ !inputs.appimage_only }}
-        run: cd desktop && cargo test
+        run: |
+          cd core && cargo test
+          cd ../desktop && cargo test
       - name: Archives
         env:
           QB_APPIMAGE_ONLY: ${{ inputs.appimage_only && '1' || '' }}
