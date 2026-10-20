@@ -503,12 +503,9 @@ pub fn answer(m: &Message, unix: u32) -> Option<Message> {
 /// `F4` JSON: `00 F4 {"cmd":<its cmd>}`; `01 F4` when it does not parse.
 fn json_ack(json: &[u8]) -> Vec<u8> {
     if json.is_empty() { return vec![0, 0xF4]; }
-    match serde_json::from_slice::<serde_json::Value>(json) {
-        Ok(v) => {
-            let echo = match v["cmd"].as_str() { Some(c) => serde_json::json!({ "cmd": c }), None => serde_json::json!({}) };
-            [&[0u8, 0xF4][..], echo.to_string().as_bytes()].concat()
-        }
-        Err(_) => vec![1, 0xF4],
+    match crate::json::cmd_of(json) {
+        Some(c) => [&[0u8, 0xF4][..], c.map_or("{}".into(), |c| crate::json::echo(&c)).as_bytes()].concat(),
+        None => vec![1, 0xF4],
     }
 }
 
