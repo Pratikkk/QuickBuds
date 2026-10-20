@@ -1,7 +1,7 @@
 //! App settings › Report a problem: the phone's `ProblemReport`, posted with `curl` (as the updater does) to the same
 //! report Worker. Nothing goes out without Send; See the report shows the exact text first.
 
-use crate::protocol::*;
+use crate::types::*;
 use crate::session::{Line, LOG};
 use crate::{with_app, App, MainWindow, Report, Tr};
 use slint::{ComponentHandle, Model, VecModel};

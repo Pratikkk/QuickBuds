@@ -2,7 +2,8 @@
 //! says in words what happened and leaves protocol steps out; Detailed shows every line with its bytes. One colour
 //! per kind (`LogRow.kind`). Export always saves the raw lines.
 
-use crate::protocol::*;
+use crate::types::*;
+use crate::protocol::decode;
 use crate::session::{Cmd, Line, LOG};
 use crate::{with_app, App, DevLog, LogRow, MainWindow};
 use slint::{ComponentHandle, Model, VecModel};

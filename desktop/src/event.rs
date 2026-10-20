@@ -5,8 +5,8 @@
 use buds_core::msg::{decode, Anc, Inbound, Public};
 use buds_core::wire::Message;
 
-pub fn to_event(m: &Message) -> Option<crate::protocol::Event> {
-    use crate::protocol::{Event, HearingEv, PairedDevice};
+pub fn to_event(m: &Message) -> Option<crate::types::Event> {
+    use crate::types::{Event, HearingEv, PairedDevice};
     Some(match decode(m)? {
         Inbound::ProductId(id) => Event::ProductId(buds_core::cmd::product_text(id)),
         Inbound::Firmware(f) => Event::Firmware(buds_core::cmd::firmware_text(&f.iter().map(|x| (x.0, x.1, x.2.clone())).collect::<Vec<_>>())?),
@@ -21,7 +21,7 @@ pub fn to_event(m: &Message) -> Option<crate::protocol::Event> {
         Inbound::Features(f) => Event::Features(f),
         Inbound::EqCurrent(id) => Event::EqCurrent(id),
         Inbound::BassLevel(l) => Event::BassLevel(l),
-        Inbound::EqCustom(l) => Event::EqCustom(l.into_iter().map(|p| crate::protocol::Preset {
+        Inbound::EqCustom(l) => Event::EqCustom(l.into_iter().map(|p| crate::types::Preset {
             id: p.id, name: p.name, selected: p.selected, tag: [p.range.0 as u8, p.range.1 as u8],
             freqs: p.bands.iter().map(|b| b.0).collect(), gains: p.bands.iter().map(|b| b.1).collect(),
         }).collect()),
@@ -41,7 +41,7 @@ pub fn to_event(m: &Message) -> Option<crate::protocol::Event> {
         Inbound::TapLevel { level, default: None } => Event::TapPush(level),
         Inbound::Spatial(t) => Event::SpatialType(t),
         Inbound::Codec(c) => Event::Codec(c),
-        Inbound::CodecMask(mask) => Event::Codecs(crate::protocol::codecs_of(mask)),
+        Inbound::CodecMask(mask) => Event::Codecs(crate::types::codecs_of(mask)),
         Inbound::GameSound { selected, offered } => Event::GameSound(selected, offered),
         Inbound::PersonalAncStored(e) => Event::PncStored(e),
         Inbound::Preferred(m) => Event::Preferred(m),

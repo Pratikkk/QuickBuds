@@ -15,6 +15,7 @@ mod hearing;
 mod models;
 mod modeltest;
 mod protocol;
+mod types;
 mod report;
 mod session;
 mod theme;
@@ -29,7 +30,7 @@ mod strings { include!(concat!(env!("OUT_DIR"), "/strings.rs")); }
 
 slint::include_modules!();
 
-use protocol::{AncModes, LEVELS};
+use types::{AncModes, LEVELS};
 use session::{Cmd, Snapshot, Status};
 use slint::winit_030::{winit, WinitWindowAccessor};
 #[cfg(windows)]
@@ -214,11 +215,11 @@ impl Has {
     const ALL: Has = Has { game: true, eq: true, controls: true, hearing: true, dual: true };
     fn of(s: &Snapshot) -> Has {
         Has {
-            game: protocol::has_feature(&s.features, s.caps.game_mode_id()),
-            eq: protocol::eq_has(s.model, &s.caps),
+            game: types::has_feature(&s.features, s.caps.game_mode_id()),
+            eq: types::eq_has(s.model, &s.caps),
             controls: controls::available(s),
-            hearing: protocol::has_feature(&s.features, protocol::FEATURE_HEARING),
-            dual: protocol::has_feature(&s.features, protocol::FEATURE_DUAL),
+            hearing: types::has_feature(&s.features, types::FEATURE_HEARING),
+            dual: types::has_feature(&s.features, types::FEATURE_DUAL),
         }
     }
 }
@@ -676,9 +677,9 @@ impl App {
             b.set_anc_refused(s.anc_refused as i32);
             b.set_icon_anc(svg(anc_icon));
             b.set_anc_label(anc_label.as_str().into());
-            b.set_has_off(self.modes.supports(protocol::OFF));
-            b.set_has_adaptive(self.modes.supports(protocol::ADAPTIVE));
-            b.set_has_transparency(self.modes.supports(protocol::TRANSPARENCY));
+            b.set_has_off(self.modes.supports(types::OFF));
+            b.set_has_adaptive(self.modes.supports(types::ADAPTIVE));
+            b.set_has_transparency(self.modes.supports(types::TRANSPARENCY));
             b.set_levels(ModelRc::new(VecModel::from(levels.clone())));
             b.set_low_latency(s.low_latency.unwrap_or(false));
             b.set_has_game(self.has.game);

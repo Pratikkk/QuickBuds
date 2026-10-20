@@ -3,7 +3,8 @@
 
 use crate::bt;
 use crate::cmd;
-use crate::protocol::*;
+use crate::types::*;
+use crate::protocol::{answer_for, decode, unbatch, Framer};
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, Sender};
 use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};

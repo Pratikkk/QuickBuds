@@ -3,7 +3,7 @@
 //! current bindings from the buds' own table (`0x8108`) and hold cycle (`0x810C 02`), read when the page opens.
 //! `fn` values are measured (PROTOCOL.md §6): never derive new ones.
 
-use crate::protocol::*;
+use crate::types::*;
 use crate::session::{Cmd, Snapshot};
 use crate::{icons, svg, t, with_app, App, Choice, Controls, ControlsRow, MainWindow, Pick};
 use serde_json::Value;

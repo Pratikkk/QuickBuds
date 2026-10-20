@@ -1,5 +1,11 @@
 //! Tests of the core crate against the shipping `protocol.rs`. Only the desktop has both.
 
+/// The legacy decoders and builders next to the shared types: the reference side of the differential tests.
+mod old_all {
+    pub use crate::protocol::*;
+    pub use crate::types::*;
+}
+
 mod wire {
     use buds_core::wire::*;
 
@@ -19,7 +25,7 @@ mod wire {
     fn same_bytes_as_the_shipping_encoder() {
         for n in [0, 1, 3, 100, 120, 121, 122, 250, 600] {
             let m = msg(0x0403, 9, n);
-            assert_eq!(encode(&m, BUDGET), [crate::protocol::build_packet(m.cmd, m.seq, &m.payload)], "payload {n}");
+            assert_eq!(encode(&m, BUDGET), [crate::types::build_packet(m.cmd, m.seq, &m.payload)], "payload {n}");
         }
     }
 
@@ -65,7 +71,7 @@ mod msg {
     use buds_core::msg::*;
     use buds_core::wire::Message;
     use crate::event::to_event;
-    use crate::protocol as old;
+    use super::old_all as old;
 
     fn m(cmd: u16, seq: u8, payload: &[u8]) -> Message { Message { cmd, seq, payload: payload.to_vec() } }
     fn push_msg(payload: &[u8]) -> Message { m(PUSH, 0xFF, payload) }
@@ -296,7 +302,7 @@ mod msg {
         assert_eq!(decode(&m(0x810F, 1, &[0, 2])), Some(Inbound::EqCurrent(2)));
         assert_eq!(decode(&m(0x0504, 0xFF, &[1])), Some(Inbound::EqCurrent(1)));
         assert_eq!(decode(&m(0x8124, 1, &[0, 0xFB, 5, 0xFE])), Some(Inbound::BassLevel(-2)));
-        let p = crate::protocol::Preset { id: 4, name: "Rock".into(), freqs: vec![62, 250], gains: vec![3, -1], selected: true, tag: [0xFA, 6] };
+        let p = crate::types::Preset { id: 4, name: "Rock".into(), freqs: vec![62, 250], gains: vec![3, -1], selected: true, tag: [0xFA, 6] };
         let body = [&[0u8, 1, 1, 0xFA, 6, 4, 4][..], b"Rock", &[2, 62, 0, 3, 0xFA, 0, 0xFF]].concat();
         let Some(Inbound::EqCustom(n)) = decode(&m(0x8122, 1, &body)) else { panic!() };
         let Some(old::Event::EqCustom(o)) = old::decode(&old::build_packet(0x8122, 1, &body)) else { panic!() };
@@ -390,7 +396,7 @@ mod msg {
 mod cmd {
     use buds_core::cmd::*;
     use buds_core::msg::*;
-    use crate::protocol as old;
+    use super::old_all as old;
 
     #[test]
     fn connection_frames_match_the_shipping_builders() {
