@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">เสียงร้องในเพลงชัดขึ้น</string>
     <string name="row_wind_noise_title">ลดเสียงลม</string>
     <string name="row_wind_noise_sub">ลดเสียงลมเมื่ออยู่กลางแจ้ง</string>
-    <string name="protocol_next_dialog_title">มีโปรโตคอลใหม่</string>
-    <string name="protocol_next_dialog_body">QuickBuds 5.0 มีชั้นโปรโตคอลที่สร้างใหม่ สื่อสารกับหูฟังได้แม่นยำและสะอาดขึ้น ปิดอยู่เป็นค่าเริ่มต้น คุณเปิดหรือปิดได้ทุกเมื่อในการตั้งค่า</string>
-    <string name="protocol_next_dialog_try">ลองโปรโตคอลใหม่</string>
-    <string name="protocol_next_dialog_later">ไว้ทีหลัง</string>
     <string name="row_game_eq_title">อีควอไลเซอร์เกม</string>
     <string name="row_game_eq_sub">สลับหูฟังเป็นเสียงสำหรับเกมขณะที่เปิดเกมอยู่</string>
     <string name="game_eq_access_title">ต้องใช้สิทธิ์เข้าถึงการใช้งาน</string>
@@ -464,12 +460,11 @@
     <string name="test_not_marked">ยังไม่ได้ทำเครื่องหมาย</string>
     <string name="test_broken_hint">เกิดอะไรขึ้น? หนึ่งบรรทัดก็พอ</string>
     <string name="test_mark_all">ทำเครื่องหมายทุกฟีเจอร์เพื่อส่งผลลัพธ์</string>
-    <string name="background_setup_title">บริการเบื้องหลัง</string>
-    <string name="background_setup_body">QuickBuds เปิดบริการเบื้องหลังขนาดเล็กไว้ เพื่อให้วิดเจ็ตทำงานและหูฟังเชื่อมต่อใหม่เอง บริการจะหยุดพักเมื่อล็อกโทรศัพท์และกลับมาทำงานเมื่อปลดล็อก คุณเปลี่ยนได้ในการตั้งค่า</string>
-    <string name="background_setup_keep">เปิดไว้</string>
-    <string name="background_setup_off">ปิด</string>
     <string name="about_privacy_title">ความเป็นส่วนตัว</string>
     <string name="about_privacy_body">วันละครั้ง QuickBuds จะส่งแพลตฟอร์มและหมายเลขเวอร์ชัน (เช่น \"Android 5.0.0\") เพื่อนับผู้ใช้ที่ใช้งานอยู่ โดยไม่ส่งรหัสประจำตัว ที่อยู่ หรือข้อมูลหูฟัง รายงานจะถูกส่งก็ต่อเมื่อคุณสั่งส่งเท่านั้น</string>
     <string name="settings_protocol_legacy_title">โปรโตคอลเดิม</string>
     <string name="settings_protocol_legacy_sub">ใช้การเชื่อมต่อเดิมกับหูฟังหากการเชื่อมต่อใหม่ล้มเหลว เชื่อมต่อใหม่เพื่อใช้งาน</string>
+    <string name="welcome_title">ยินดีต้อนรับสู่ QuickBuds</string>
+    <string name="welcome_body">QuickBuds ใช้โปรโตคอลที่สร้างใหม่เป็นค่าเริ่มต้น หากบางรุ่นมีปัญหา ให้สลับไปใช้โปรโตคอลเดิมในการตั้งค่า คุณเปลี่ยนตัวเลือกเหล่านี้ได้ทุกเมื่อ</string>
+    <string name="welcome_done">เสร็จสิ้น</string>
 </resources>

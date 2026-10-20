@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">Vokal lebih jernih dalam lagu</string>
     <string name="row_wind_noise_title">Pengurangan bising angin</string>
     <string name="row_wind_noise_sub">Lebih sedikit bising angin di luar ruangan</string>
-    <string name="protocol_next_dialog_title">Protokol baru tersedia</string>
-    <string name="protocol_next_dialog_body">QuickBuds 5.0 memiliki lapisan protokol yang dibangun ulang. Komunikasinya dengan earbud lebih akurat dan bersih. Secara bawaan nonaktif. Anda dapat mengaktifkan atau menonaktifkannya kapan saja di Pengaturan.</string>
-    <string name="protocol_next_dialog_try">Coba protokol baru</string>
-    <string name="protocol_next_dialog_later">Nanti saja</string>
     <string name="row_game_eq_title">Ekualiser game</string>
     <string name="row_game_eq_sub">Mengalihkan earbud ke suara game selama game terbuka</string>
     <string name="game_eq_access_title">Perlu akses penggunaan</string>
@@ -464,12 +460,11 @@
     <string name="test_not_marked">Belum ditandai</string>
     <string name="test_broken_hint">Apa yang terjadi? Satu baris sudah cukup.</string>
     <string name="test_mark_all">Tandai setiap fitur untuk mengirim hasilnya.</string>
-    <string name="background_setup_title">Layanan latar belakang</string>
-    <string name="background_setup_body">QuickBuds menjalankan layanan latar belakang kecil agar widget berfungsi dan earbud tersambung kembali sendiri. Layanan tidur saat ponsel terkunci dan bangun saat dibuka. Anda dapat mengubahnya di Pengaturan.</string>
-    <string name="background_setup_keep">Tetap aktif</string>
-    <string name="background_setup_off">Matikan</string>
     <string name="about_privacy_title">Privasi</string>
     <string name="about_privacy_body">Sekali sehari QuickBuds mengirim platform dan nomor versinya (misalnya \"Android 5.0.0\") untuk menghitung pengguna aktif. Tidak ada ID, alamat, atau data earbud yang dikirim. Laporan hanya dikirim saat Anda mengirimnya.</string>
     <string name="settings_protocol_legacy_title">Protokol lama</string>
     <string name="settings_protocol_legacy_sub">Gunakan tautan lama ke earbud jika yang baru gagal. Sambungkan ulang untuk menerapkan.</string>
+    <string name="welcome_title">Selamat datang di QuickBuds</string>
+    <string name="welcome_body">QuickBuds memakai protokol barunya secara bawaan. Jika suatu model bermasalah, beralih ke protokol lama di Pengaturan. Pilihan ini dapat diubah kapan saja.</string>
+    <string name="welcome_done">Selesai</string>
 </resources>

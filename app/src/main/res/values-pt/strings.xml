@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">Vozes mais nítidas nas músicas</string>
     <string name="row_wind_noise_title">Redução de ruído do vento</string>
     <string name="row_wind_noise_sub">Menos ruído do vento ao ar livre</string>
-    <string name="protocol_next_dialog_title">Novo protocolo disponível</string>
-    <string name="protocol_next_dialog_body">O QuickBuds 5.0 tem uma camada de protocolo refeita. Ela conversa com os fones de forma mais precisa e limpa. Vem desativada por padrão. Você pode ativá-la ou desativá-la a qualquer momento em Configurações.</string>
-    <string name="protocol_next_dialog_try">Testar o novo protocolo</string>
-    <string name="protocol_next_dialog_later">Agora não</string>
     <string name="row_game_eq_title">Equalizador de jogos</string>
     <string name="row_game_eq_sub">Muda os fones para o som de jogos enquanto um jogo está aberto</string>
     <string name="game_eq_access_title">Acesso ao uso necessário</string>
@@ -462,12 +458,11 @@
     <string name="test_not_marked">Não marcada</string>
     <string name="test_broken_hint">O que aconteceu? Uma linha chega.</string>
     <string name="test_mark_all">Marque cada função para enviar o resultado.</string>
-    <string name="background_setup_title">Serviço em segundo plano</string>
-    <string name="background_setup_body">O QuickBuds mantém um pequeno serviço em segundo plano para os widgets funcionarem e os fones se reconectarem sozinhos. Ele dorme com o telefone bloqueado e acorda ao desbloquear. Você pode mudar isso nas Configurações.</string>
-    <string name="background_setup_keep">Manter ativado</string>
-    <string name="background_setup_off">Desativar</string>
     <string name="about_privacy_title">Privacidade</string>
     <string name="about_privacy_body">Uma vez por dia o QuickBuds envia sua plataforma e número de versão (por exemplo, \"Android 5.0.0\") para contar os usuários ativos. Ele não envia ID, endereço nem dados dos fones. Os relatórios só são enviados quando você os envia.</string>
     <string name="settings_protocol_legacy_title">Protocolo antigo</string>
     <string name="settings_protocol_legacy_sub">Usar o link antigo com os fones se o novo falhar. Reconecte para aplicar.</string>
+    <string name="welcome_title">Boas-vindas ao QuickBuds</string>
+    <string name="welcome_body">O QuickBuds usa por padrão o protocolo reconstruído. Se um modelo der problema, mude para o protocolo antigo nas Configurações. Você pode mudar essas opções quando quiser.</string>
+    <string name="welcome_done">Concluído</string>
 </resources>

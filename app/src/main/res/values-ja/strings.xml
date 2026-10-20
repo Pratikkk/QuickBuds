@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">曲のボーカルをよりクリアに</string>
     <string name="row_wind_noise_title">風切り音の低減</string>
     <string name="row_wind_noise_sub">屋外での風切り音を抑える</string>
-    <string name="protocol_next_dialog_title">新しいプロトコルが使えます</string>
-    <string name="protocol_next_dialog_body">QuickBuds 5.0 ではプロトコル層を作り直しました。イヤホンとのやり取りがより正確で簡潔になります。初期設定ではオフです。設定からいつでもオン/オフを切り替えられます。</string>
-    <string name="protocol_next_dialog_try">新しいプロトコルを試す</string>
-    <string name="protocol_next_dialog_later">今はしない</string>
     <string name="row_game_eq_title">ゲームイコライザー</string>
     <string name="row_game_eq_sub">ゲームを開いている間、イヤホンをゲーム用サウンドに切り替えます</string>
     <string name="game_eq_access_title">使用状況へのアクセスが必要です</string>
@@ -462,12 +458,11 @@
     <string name="test_not_marked">未記録</string>
     <string name="test_broken_hint">何が起きましたか？1 行で十分です。</string>
     <string name="test_mark_all">結果を送信するには、すべての機能を記録してください。</string>
-    <string name="background_setup_title">バックグラウンドサービス</string>
-    <string name="background_setup_body">ウィジェットを動かし、イヤホンを自動で再接続するため、QuickBuds は小さなバックグラウンドサービスを実行します。スマートフォンのロック中は停止し、ロック解除で再開します。設定で変更できます。</string>
-    <string name="background_setup_keep">オンのまま</string>
-    <string name="background_setup_off">オフにする</string>
     <string name="about_privacy_title">プライバシー</string>
     <string name="about_privacy_body">アクティブユーザー数を数えるため、QuickBuds は 1 日 1 回、プラットフォームとバージョン番号（例：「Android 5.0.0」）を送信します。ID、アドレス、イヤホンのデータは送信しません。レポートはあなたが送信したときだけ送られます。</string>
     <string name="settings_protocol_legacy_title">旧プロトコル</string>
     <string name="settings_protocol_legacy_sub">新しい接続が失敗したときに、イヤホンとの旧接続を使います。反映するには再接続してください。</string>
+    <string name="welcome_title">QuickBuds へようこそ</string>
+    <string name="welcome_body">QuickBuds は標準で再構築したプロトコルを使います。機種に不具合があれば、設定で旧プロトコルに切り替えてください。これらの選択はいつでも変更できます。</string>
+    <string name="welcome_done">完了</string>
 </resources>

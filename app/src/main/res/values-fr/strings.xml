@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">Voix plus claires dans les morceaux</string>
     <string name="row_wind_noise_title">Réduction du bruit du vent</string>
     <string name="row_wind_noise_sub">Moins de bruit de vent en extérieur</string>
-    <string name="protocol_next_dialog_title">Nouveau protocole disponible</string>
-    <string name="protocol_next_dialog_body">QuickBuds 5.0 a une couche de protocole refaite. Elle dialogue avec les écouteurs de façon plus précise et plus propre. Elle est désactivée par défaut. Vous pouvez l\'activer ou la désactiver à tout moment dans les Paramètres.</string>
-    <string name="protocol_next_dialog_try">Essayer le nouveau protocole</string>
-    <string name="protocol_next_dialog_later">Pas maintenant</string>
     <string name="row_game_eq_title">Égaliseur de jeu</string>
     <string name="row_game_eq_sub">Passe les écouteurs sur leur son de jeu tant qu\'un jeu est ouvert</string>
     <string name="game_eq_access_title">Accès à l\'utilisation requis</string>
@@ -462,12 +458,11 @@
     <string name="test_not_marked">Non notée</string>
     <string name="test_broken_hint">Que s\'est-il passé ? Une ligne suffit.</string>
     <string name="test_mark_all">Notez chaque fonction pour envoyer le résultat.</string>
-    <string name="background_setup_title">Service en arrière-plan</string>
-    <string name="background_setup_body">QuickBuds garde un petit service en arrière-plan pour que les widgets fonctionnent et que les écouteurs se reconnectent seuls. Il dort quand le téléphone est verrouillé et se réveille au déverrouillage. Vous pouvez le modifier dans les Réglages.</string>
-    <string name="background_setup_keep">Laisser activé</string>
-    <string name="background_setup_off">Désactiver</string>
     <string name="about_privacy_title">Confidentialité</string>
     <string name="about_privacy_body">Une fois par jour, QuickBuds envoie sa plateforme et son numéro de version (par exemple « Android 5.0.0 ») pour compter les utilisateurs actifs. Il n’envoie ni identifiant, ni adresse, ni données des écouteurs. Les rapports ne partent que lorsque vous les envoyez.</string>
     <string name="settings_protocol_legacy_title">Ancien protocole</string>
     <string name="settings_protocol_legacy_sub">Utiliser l’ancienne liaison avec les écouteurs si la nouvelle échoue. Reconnectez pour appliquer.</string>
+    <string name="welcome_title">Bienvenue dans QuickBuds</string>
+    <string name="welcome_body">QuickBuds utilise par défaut son protocole reconstruit. Si un modèle pose problème, passez à l’ancien protocole dans les Réglages. Vous pouvez changer ces choix à tout moment.</string>
+    <string name="welcome_done">Terminé</string>
 </resources>

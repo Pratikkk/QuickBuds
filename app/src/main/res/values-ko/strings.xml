@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">노래의 보컬을 더 선명하게</string>
     <string name="row_wind_noise_title">바람 소음 감소</string>
     <string name="row_wind_noise_sub">야외에서 바람 소음 줄이기</string>
-    <string name="protocol_next_dialog_title">새 프로토콜 사용 가능</string>
-    <string name="protocol_next_dialog_body">QuickBuds 5.0에는 새로 만든 프로토콜 계층이 있습니다. 이어버드와 더 정확하고 깔끔하게 통신합니다. 기본값은 꺼짐이며, 설정에서 언제든 켜거나 끌 수 있습니다.</string>
-    <string name="protocol_next_dialog_try">새 프로토콜 사용해 보기</string>
-    <string name="protocol_next_dialog_later">나중에</string>
     <string name="row_game_eq_title">게임 이퀄라이저</string>
     <string name="row_game_eq_sub">게임이 열려 있는 동안 이어버드를 게임 사운드로 전환합니다</string>
     <string name="game_eq_access_title">사용 정보 접근 권한 필요</string>
@@ -462,12 +458,11 @@
     <string name="test_not_marked">표시 안 됨</string>
     <string name="test_broken_hint">무슨 일이 있었나요? 한 줄이면 충분합니다.</string>
     <string name="test_mark_all">결과를 보내려면 모든 기능을 표시하세요.</string>
-    <string name="background_setup_title">백그라운드 서비스</string>
-    <string name="background_setup_body">위젯이 작동하고 이어버드가 자동으로 다시 연결되도록 QuickBuds는 작은 백그라운드 서비스를 실행합니다. 휴대폰이 잠겨 있으면 대기하고 잠금을 풀면 다시 시작합니다. 설정에서 변경할 수 있습니다.</string>
-    <string name="background_setup_keep">켜 둠</string>
-    <string name="background_setup_off">끄기</string>
     <string name="about_privacy_title">개인정보</string>
     <string name="about_privacy_body">QuickBuds는 활성 사용자 수를 세기 위해 하루에 한 번 플랫폼과 버전 번호(예: \"Android 5.0.0\")를 보냅니다. ID, 주소, 이어버드 데이터는 보내지 않습니다. 보고서는 직접 보낼 때만 전송됩니다.</string>
     <string name="settings_protocol_legacy_title">레거시 프로토콜</string>
     <string name="settings_protocol_legacy_sub">새 연결이 실패하면 이어버드와의 이전 연결을 사용합니다. 적용하려면 다시 연결하세요.</string>
+    <string name="welcome_title">QuickBuds에 오신 것을 환영합니다</string>
+    <string name="welcome_body">QuickBuds는 기본적으로 새로 만든 프로토콜을 사용합니다. 모델에 문제가 있으면 설정에서 레거시 프로토콜로 바꾸세요. 이 선택은 언제든 바꿀 수 있습니다.</string>
+    <string name="welcome_done">완료</string>
 </resources>

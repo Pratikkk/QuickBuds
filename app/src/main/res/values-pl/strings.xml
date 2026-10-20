@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">Wyraźniejszy wokal w utworach</string>
     <string name="row_wind_noise_title">Redukcja szumu wiatru</string>
     <string name="row_wind_noise_sub">Mniej szumu wiatru na zewnątrz</string>
-    <string name="protocol_next_dialog_title">Dostępny nowy protokół</string>
-    <string name="protocol_next_dialog_body">QuickBuds 5.0 ma przebudowaną warstwę protokołu. Komunikuje się ze słuchawkami dokładniej i czyściej. Domyślnie jest wyłączona. W Ustawieniach możesz ją włączyć lub wyłączyć w dowolnej chwili.</string>
-    <string name="protocol_next_dialog_try">Wypróbuj nowy protokół</string>
-    <string name="protocol_next_dialog_later">Nie teraz</string>
     <string name="row_game_eq_title">Korektor do gier</string>
     <string name="row_game_eq_sub">Przełącza słuchawki na dźwięk do gier, gdy gra jest otwarta</string>
     <string name="game_eq_access_title">Wymagany dostęp do danych użytkowania</string>
@@ -462,12 +458,11 @@
     <string name="test_not_marked">Nieoznaczone</string>
     <string name="test_broken_hint">Co się stało? Wystarczy jedna linijka.</string>
     <string name="test_mark_all">Oznacz każdą funkcję, aby wysłać wynik.</string>
-    <string name="background_setup_title">Usługa w tle</string>
-    <string name="background_setup_body">QuickBuds utrzymuje małą usługę w tle, aby widżety działały, a słuchawki łączyły się same. Gdy telefon jest zablokowany, usługa śpi, a po odblokowaniu się budzi. Możesz to zmienić w Ustawieniach.</string>
-    <string name="background_setup_keep">Zostaw włączoną</string>
-    <string name="background_setup_off">Wyłącz</string>
     <string name="about_privacy_title">Prywatność</string>
     <string name="about_privacy_body">Raz dziennie QuickBuds wysyła swoją platformę i numer wersji (na przykład „Android 5.0.0”), aby liczyć aktywnych użytkowników. Nie wysyła identyfikatora, adresu ani danych słuchawek. Zgłoszenia są wysyłane tylko wtedy, gdy je wyślesz.</string>
     <string name="settings_protocol_legacy_title">Stary protokół</string>
     <string name="settings_protocol_legacy_sub">Użyj starego łącza ze słuchawkami, jeśli nowe zawiedzie. Połącz ponownie, aby zastosować.</string>
+    <string name="welcome_title">Witaj w QuickBuds</string>
+    <string name="welcome_body">QuickBuds domyślnie używa przebudowanego protokołu. Jeśli model sprawia problemy, przełącz się na stary protokół w Ustawieniach. Te wybory możesz zmienić w każdej chwili.</string>
+    <string name="welcome_done">Gotowe</string>
 </resources>

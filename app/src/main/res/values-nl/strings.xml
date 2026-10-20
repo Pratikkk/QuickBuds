@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">Duidelijkere zang in nummers</string>
     <string name="row_wind_noise_title">Windruisonderdrukking</string>
     <string name="row_wind_noise_sub">Minder windruis buiten</string>
-    <string name="protocol_next_dialog_title">Nieuw protocol beschikbaar</string>
-    <string name="protocol_next_dialog_body">QuickBuds 5.0 heeft een herbouwde protocollaag. Die praat nauwkeuriger en schoner met de oordopjes. Standaard staat hij uit. In Instellingen zet je hem altijd aan of uit.</string>
-    <string name="protocol_next_dialog_try">Nieuw protocol proberen</string>
-    <string name="protocol_next_dialog_later">Niet nu</string>
     <string name="row_game_eq_title">Game-equalizer</string>
     <string name="row_game_eq_sub">Zet de oordopjes op hun gamegeluid zolang een game open is</string>
     <string name="game_eq_access_title">Toegang tot gebruik nodig</string>
@@ -462,12 +458,11 @@
     <string name="test_not_marked">Niet gemarkeerd</string>
     <string name="test_broken_hint">Wat gebeurde er? Eén regel is genoeg.</string>
     <string name="test_mark_all">Markeer elke functie om het resultaat te versturen.</string>
-    <string name="background_setup_title">Achtergrondservice</string>
-    <string name="background_setup_body">QuickBuds houdt een kleine achtergrondservice actief zodat de widgets werken en de oortjes zelf opnieuw verbinden. De service slaapt als de telefoon vergrendeld is en wordt wakker bij het ontgrendelen. Je kunt dit wijzigen in Instellingen.</string>
-    <string name="background_setup_keep">Aan laten</string>
-    <string name="background_setup_off">Uitzetten</string>
     <string name="about_privacy_title">Privacy</string>
     <string name="about_privacy_body">Eén keer per dag stuurt QuickBuds zijn platform en versienummer (bijvoorbeeld „Android 5.0.0”) om actieve gebruikers te tellen. Er gaat geen ID, adres of oortjesdata mee. Meldingen worden alleen verstuurd als jij ze verstuurt.</string>
     <string name="settings_protocol_legacy_title">Oud protocol</string>
     <string name="settings_protocol_legacy_sub">Gebruik de oude verbinding met de oortjes als de nieuwe faalt. Maak opnieuw verbinding om toe te passen.</string>
+    <string name="welcome_title">Welkom bij QuickBuds</string>
+    <string name="welcome_body">QuickBuds gebruikt standaard het opnieuw opgebouwde protocol. Werkt een model niet goed, schakel dan in Instellingen naar het oude protocol. Je kunt dit altijd wijzigen.</string>
+    <string name="welcome_done">Klaar</string>
 </resources>

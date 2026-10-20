@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">Tydligare sång i låtar</string>
     <string name="row_wind_noise_title">Vindbrusreducering</string>
     <string name="row_wind_noise_sub">Mindre vindbrus utomhus</string>
-    <string name="protocol_next_dialog_title">Nytt protokoll tillgängligt</string>
-    <string name="protocol_next_dialog_body">QuickBuds 5.0 har ett ombyggt protokollager. Det pratar mer exakt och rent med hörlurarna. Det är avstängt som standard. Du kan slå på eller av det när som helst i Inställningar.</string>
-    <string name="protocol_next_dialog_try">Prova nya protokollet</string>
-    <string name="protocol_next_dialog_later">Inte nu</string>
     <string name="row_game_eq_title">Spelequalizer</string>
     <string name="row_game_eq_sub">Växlar hörlurarna till spelljud medan ett spel är öppet</string>
     <string name="game_eq_access_title">Åtkomst till användning krävs</string>
@@ -462,12 +458,11 @@
     <string name="test_not_marked">Inte markerad</string>
     <string name="test_broken_hint">Vad hände? En rad räcker.</string>
     <string name="test_mark_all">Markera varje funktion för att skicka resultatet.</string>
-    <string name="background_setup_title">Bakgrundstjänst</string>
-    <string name="background_setup_body">QuickBuds kör en liten bakgrundstjänst så att widgetarna fungerar och hörlurarna ansluter själva. Tjänsten sover när telefonen är låst och vaknar när du låser upp. Du kan ändra detta i Inställningar.</string>
-    <string name="background_setup_keep">Behåll på</string>
-    <string name="background_setup_off">Stäng av</string>
     <string name="about_privacy_title">Integritet</string>
     <string name="about_privacy_body">En gång om dagen skickar QuickBuds sin plattform och versionsnummer (till exempel ”Android 5.0.0”) för att räkna aktiva användare. Inget ID, ingen adress och inga hörlursdata skickas. Rapporter skickas bara när du skickar dem.</string>
     <string name="settings_protocol_legacy_title">Äldre protokoll</string>
     <string name="settings_protocol_legacy_sub">Använd den gamla länken till hörlurarna om den nya misslyckas. Anslut igen för att tillämpa.</string>
+    <string name="welcome_title">Välkommen till QuickBuds</string>
+    <string name="welcome_body">QuickBuds använder som standard det ombyggda protokollet. Om en modell krånglar, byt till det äldre protokollet i Inställningar. Du kan ändra dessa val när som helst.</string>
+    <string name="welcome_done">Klar</string>
 </resources>

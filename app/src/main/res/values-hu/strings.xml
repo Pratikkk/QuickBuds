@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">Tisztább ének a dalokban</string>
     <string name="row_wind_noise_title">Szélzajcsökkentés</string>
     <string name="row_wind_noise_sub">Kevesebb szélzaj a szabadban</string>
-    <string name="protocol_next_dialog_title">Új protokoll érhető el</string>
-    <string name="protocol_next_dialog_body">A QuickBuds 5.0 újraépített protokollréteget tartalmaz. Pontosabban és tisztábban kommunikál a fülhallgatóval. Alapértelmezés szerint ki van kapcsolva. A Beállításokban bármikor be- vagy kikapcsolhatja.</string>
-    <string name="protocol_next_dialog_try">Új protokoll kipróbálása</string>
-    <string name="protocol_next_dialog_later">Most nem</string>
     <string name="row_game_eq_title">Játék-hangszínszabályzó</string>
     <string name="row_game_eq_sub">Játék közben a fülhallgatót játékhangzásra kapcsolja</string>
     <string name="game_eq_access_title">Használati hozzáférés szükséges</string>
@@ -462,12 +458,11 @@
     <string name="test_not_marked">Nincs megjelölve</string>
     <string name="test_broken_hint">Mi történt? Egy sor elég.</string>
     <string name="test_mark_all">Jelölj meg minden funkciót az eredmény elküldéséhez.</string>
-    <string name="background_setup_title">Háttérszolgáltatás</string>
-    <string name="background_setup_body">A QuickBuds egy kis háttérszolgáltatást futtat, hogy a widgetek működjenek, és a fülhallgató magától újracsatlakozzon. Zárolt telefonnál alszik, feloldáskor felébred. Ezt a Beállításokban módosíthatod.</string>
-    <string name="background_setup_keep">Bekapcsolva marad</string>
-    <string name="background_setup_off">Kikapcsolás</string>
     <string name="about_privacy_title">Adatvédelem</string>
     <string name="about_privacy_body">A QuickBuds naponta egyszer elküldi a platformját és a verziószámát (például „Android 5.0.0”) az aktív felhasználók megszámlálásához. Nem küld azonosítót, címet vagy fülhallgatóadatot. A jelentések csak akkor mennek el, ha te elküldöd őket.</string>
     <string name="settings_protocol_legacy_title">Régi protokoll</string>
     <string name="settings_protocol_legacy_sub">A régi kapcsolat használata a fülhallgatóval, ha az új nem működik. Alkalmazáshoz csatlakozz újra.</string>
+    <string name="welcome_title">Üdvözöl a QuickBuds</string>
+    <string name="welcome_body">A QuickBuds alapból az újjáépített protokollt használja. Ha egy modell hibázik, válts a régi protokollra a Beállításokban. Ezeket bármikor módosíthatod.</string>
+    <string name="welcome_done">Kész</string>
 </resources>

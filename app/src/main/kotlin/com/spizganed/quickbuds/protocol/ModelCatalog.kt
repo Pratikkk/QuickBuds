@@ -19,14 +19,24 @@ object ModelCatalog {
     /** A model id picked by hand in the model list; unset = detected. */
     const val KEY_MANUAL = "budsModelManual"
 
-    @Volatile private var models: List<Model>? = null
+    /**
+     * Two model databases: `models.json` is ours and the default (new protocol); `models-legacy.json` is the frozen copy the
+     * old protocol keeps. A device whose new protocol failed ([ProtocolNext.enabled] false) reads the legacy one.
+     */
+    @Volatile private var current: List<Model>? = null
+    @Volatile private var legacy: List<Model>? = null
 
-    fun all(context: Context): List<Model> = models ?: runCatching {
-        val list = JSONObject(context.assets.open("models.json").bufferedReader().use { it.readText() })
-            .getJSONArray("whiteList")
-        (0 until list.length()).map { list.getJSONObject(it) }
-            .map { Model(it.getString("id"), it.getString("name"), it) }
-    }.getOrDefault(emptyList()).also { models = it }
+    fun all(context: Context): List<Model> {
+        val old = !com.spizganed.quickbuds.protocol2.ProtocolNext.enabled(context)
+        (if (old) legacy else current)?.let { return it }
+        val file = if (old) "models-legacy.json" else "models.json"
+        val list = runCatching {
+            val a = JSONObject(context.assets.open(file).bufferedReader().use { it.readText() }).getJSONArray("whiteList")
+            (0 until a.length()).map { a.getJSONObject(it) }.map { Model(it.getString("id"), it.getString("name"), it) }
+        }.getOrDefault(emptyList())
+        if (old) legacy = list else current = list
+        return list
+    }
 
     /**
      * `[VENDOR]` HeyMelody folds four colour ranges into one id (on the BLE scan id;

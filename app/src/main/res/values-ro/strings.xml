@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">Voce mai clară în melodii</string>
     <string name="row_wind_noise_title">Reducerea zgomotului vântului</string>
     <string name="row_wind_noise_sub">Mai puțin zgomot de vânt afară</string>
-    <string name="protocol_next_dialog_title">Protocol nou disponibil</string>
-    <string name="protocol_next_dialog_body">QuickBuds 5.0 are un strat de protocol refăcut. Comunică mai precis și mai curat cu căștile. Este dezactivat implicit. Îl puteți activa sau dezactiva oricând în Setări.</string>
-    <string name="protocol_next_dialog_try">Încearcă protocolul nou</string>
-    <string name="protocol_next_dialog_later">Nu acum</string>
     <string name="row_game_eq_title">Egalizator pentru jocuri</string>
     <string name="row_game_eq_sub">Trece căștile pe sunetul de joc cât timp un joc este deschis</string>
     <string name="game_eq_access_title">Este necesar accesul la utilizare</string>
@@ -462,12 +458,11 @@
     <string name="test_not_marked">Nemarcată</string>
     <string name="test_broken_hint">Ce s-a întâmplat? Un rând este suficient.</string>
     <string name="test_mark_all">Marchează fiecare funcție ca să trimiți rezultatul.</string>
-    <string name="background_setup_title">Serviciu în fundal</string>
-    <string name="background_setup_body">QuickBuds păstrează un mic serviciu în fundal ca widgeturile să funcționeze, iar căștile să se reconecteze singure. Serviciul doarme cât timp telefonul este blocat și se trezește la deblocare. Poți schimba acest lucru în Setări.</string>
-    <string name="background_setup_keep">Păstrează pornit</string>
-    <string name="background_setup_off">Dezactivează</string>
     <string name="about_privacy_title">Confidențialitate</string>
     <string name="about_privacy_body">O dată pe zi QuickBuds trimite platforma și numărul versiunii (de exemplu „Android 5.0.0”) pentru a număra utilizatorii activi. Nu trimite ID, adresă sau date ale căștilor. Rapoartele se trimit doar când le trimiți tu.</string>
     <string name="settings_protocol_legacy_title">Protocol vechi</string>
     <string name="settings_protocol_legacy_sub">Folosește legătura veche cu căștile dacă cea nouă eșuează. Reconectează pentru a aplica.</string>
+    <string name="welcome_title">Bun venit în QuickBuds</string>
+    <string name="welcome_body">QuickBuds folosește implicit protocolul reconstruit. Dacă un model are probleme, treci la protocolul vechi din Setări. Poți schimba aceste opțiuni oricând.</string>
+    <string name="welcome_done">Gata</string>
 </resources>

@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">Şarkılarda daha net vokal</string>
     <string name="row_wind_noise_title">Rüzgar gürültüsü azaltma</string>
     <string name="row_wind_noise_sub">Dışarıda daha az rüzgar gürültüsü</string>
-    <string name="protocol_next_dialog_title">Yeni protokol kullanılabilir</string>
-    <string name="protocol_next_dialog_body">QuickBuds 5.0, yeniden yazılmış bir protokol katmanı içerir. Kulaklıkla daha doğru ve temiz iletişim kurar. Varsayılan olarak kapalıdır. Ayarlar\'dan istediğiniz zaman açıp kapatabilirsiniz.</string>
-    <string name="protocol_next_dialog_try">Yeni protokolü dene</string>
-    <string name="protocol_next_dialog_later">Şimdi değil</string>
     <string name="row_game_eq_title">Oyun ekolayzırı</string>
     <string name="row_game_eq_sub">Oyun açıkken kulaklığı oyun sesine geçirir</string>
     <string name="game_eq_access_title">Kullanım erişimi gerekli</string>
@@ -462,12 +458,11 @@
     <string name="test_not_marked">İşaretlenmedi</string>
     <string name="test_broken_hint">Ne oldu? Bir satır yeterli.</string>
     <string name="test_mark_all">Sonucu göndermek için her özelliği işaretleyin.</string>
-    <string name="background_setup_title">Arka plan hizmeti</string>
-    <string name="background_setup_body">QuickBuds, widget\'ların çalışması ve kulaklıkların kendiliğinden yeniden bağlanması için küçük bir arka plan hizmeti çalıştırır. Telefon kilitliyken uyur, kilit açılınca uyanır. Bunu Ayarlar\'dan değiştirebilirsin.</string>
-    <string name="background_setup_keep">Açık kalsın</string>
-    <string name="background_setup_off">Kapat</string>
     <string name="about_privacy_title">Gizlilik</string>
     <string name="about_privacy_body">QuickBuds, etkin kullanıcıları saymak için günde bir kez platformunu ve sürüm numarasını (örneğin “Android 5.0.0”) gönderir. Kimlik, adres veya kulaklık verisi göndermez. Raporlar yalnızca sen gönderdiğinde gönderilir.</string>
     <string name="settings_protocol_legacy_title">Eski protokol</string>
     <string name="settings_protocol_legacy_sub">Yenisi başarısız olursa kulaklıkla eski bağlantıyı kullan. Uygulamak için yeniden bağlan.</string>
+    <string name="welcome_title">QuickBuds\'a hoş geldin</string>
+    <string name="welcome_body">QuickBuds varsayılan olarak yeniden yazılan protokolünü kullanır. Bir model sorun çıkarırsa Ayarlar\'dan eski protokole geç. Bu seçimleri istediğin zaman değiştirebilirsin.</string>
+    <string name="welcome_done">Tamam</string>
 </resources>

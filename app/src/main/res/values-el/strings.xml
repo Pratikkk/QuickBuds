@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">Πιο καθαρά φωνητικά στα τραγούδια</string>
     <string name="row_wind_noise_title">Μείωση θορύβου ανέμου</string>
     <string name="row_wind_noise_sub">Λιγότερος θόρυβος ανέμου σε εξωτερικούς χώρους</string>
-    <string name="protocol_next_dialog_title">Διαθέσιμο νέο πρωτόκολλο</string>
-    <string name="protocol_next_dialog_body">Το QuickBuds 5.0 έχει ανακατασκευασμένο επίπεδο πρωτοκόλλου. Επικοινωνεί με τα ακουστικά πιο ακριβώς και καθαρά. Είναι απενεργοποιημένο από προεπιλογή. Μπορείτε να το ενεργοποιείτε ή να το απενεργοποιείτε ανά πάσα στιγμή στις Ρυθμίσεις.</string>
-    <string name="protocol_next_dialog_try">Δοκιμή νέου πρωτοκόλλου</string>
-    <string name="protocol_next_dialog_later">Όχι τώρα</string>
     <string name="row_game_eq_title">Ισοσταθμιστής παιχνιδιών</string>
     <string name="row_game_eq_sub">Αλλάζει τα ακουστικά σε ήχο παιχνιδιού όσο είναι ανοιχτό ένα παιχνίδι</string>
     <string name="game_eq_access_title">Απαιτείται πρόσβαση χρήσης</string>
@@ -462,12 +458,11 @@
     <string name="test_not_marked">Χωρίς σήμανση</string>
     <string name="test_broken_hint">Τι συνέβη; Αρκεί μία γραμμή.</string>
     <string name="test_mark_all">Σημειώστε κάθε λειτουργία για να στείλετε το αποτέλεσμα.</string>
-    <string name="background_setup_title">Υπηρεσία παρασκηνίου</string>
-    <string name="background_setup_body">Το QuickBuds κρατά ενεργή μια μικρή υπηρεσία παρασκηνίου ώστε να λειτουργούν τα widget και τα ακουστικά να συνδέονται μόνα τους. Κοιμάται όταν το τηλέφωνο είναι κλειδωμένο και ξυπνά με το ξεκλείδωμα. Μπορείτε να το αλλάξετε στις Ρυθμίσεις.</string>
-    <string name="background_setup_keep">Να μένει ενεργή</string>
-    <string name="background_setup_off">Απενεργοποίηση</string>
     <string name="about_privacy_title">Απόρρητο</string>
     <string name="about_privacy_body">Μία φορά την ημέρα το QuickBuds στέλνει την πλατφόρμα και τον αριθμό έκδοσης (π.χ. «Android 5.0.0») για να μετρήσει τους ενεργούς χρήστες. Δεν στέλνει αναγνωριστικό, διεύθυνση ή δεδομένα ακουστικών. Οι αναφορές στέλνονται μόνο όταν τις στείλετε εσείς.</string>
     <string name="settings_protocol_legacy_title">Παλαιό πρωτόκολλο</string>
     <string name="settings_protocol_legacy_sub">Χρήση της παλιάς σύνδεσης με τα ακουστικά αν αποτύχει η νέα. Επανασυνδεθείτε για εφαρμογή.</string>
+    <string name="welcome_title">Καλώς ήρθατε στο QuickBuds</string>
+    <string name="welcome_body">Το QuickBuds χρησιμοποιεί από προεπιλογή το νέο πρωτόκολλό του. Αν ένα μοντέλο δεν λειτουργεί σωστά, αλλάξτε στο παλιό πρωτόκολλο από τις Ρυθμίσεις. Αλλάξτε τις επιλογές όποτε θέλετε.</string>
+    <string name="welcome_done">Τέλος</string>
 </resources>

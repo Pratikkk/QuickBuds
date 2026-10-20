@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">Более чёткий вокал в песнях</string>
     <string name="row_wind_noise_title">Подавление шума ветра</string>
     <string name="row_wind_noise_sub">Меньше шума ветра на улице</string>
-    <string name="protocol_next_dialog_title">Доступен новый протокол</string>
-    <string name="protocol_next_dialog_body">В QuickBuds 5.0 переработан уровень протокола. Он обменивается данными с наушниками точнее и чище. По умолчанию он выключен. Включить или выключить его можно в любой момент в настройках.</string>
-    <string name="protocol_next_dialog_try">Попробовать новый протокол</string>
-    <string name="protocol_next_dialog_later">Не сейчас</string>
     <string name="row_game_eq_title">Эквалайзер для игр</string>
     <string name="row_game_eq_sub">Переключает наушники на игровой звук, пока открыта игра</string>
     <string name="game_eq_access_title">Нужен доступ к данным об использовании</string>
@@ -462,12 +458,11 @@
     <string name="test_not_marked">Не отмечено</string>
     <string name="test_broken_hint">Что произошло? Хватит одной строки.</string>
     <string name="test_mark_all">Отметьте каждую функцию, чтобы отправить результат.</string>
-    <string name="background_setup_title">Фоновая служба</string>
-    <string name="background_setup_body">QuickBuds держит небольшую фоновую службу, чтобы работали виджеты, а наушники подключались сами. Пока телефон заблокирован, служба спит, а после разблокировки просыпается. Это можно изменить в настройках.</string>
-    <string name="background_setup_keep">Оставить включённой</string>
-    <string name="background_setup_off">Выключить</string>
     <string name="about_privacy_title">Конфиденциальность</string>
     <string name="about_privacy_body">Раз в день QuickBuds отправляет свою платформу и номер версии (например, «Android 5.0.0»), чтобы считать активных пользователей. Он не отправляет ни идентификатор, ни адрес, ни данные наушников. Отчёты отправляются только по вашей команде.</string>
     <string name="settings_protocol_legacy_title">Старый протокол</string>
     <string name="settings_protocol_legacy_sub">Использовать старое соединение с наушниками, если новое не работает. Подключитесь заново, чтобы применить.</string>
+    <string name="welcome_title">Добро пожаловать в QuickBuds</string>
+    <string name="welcome_body">По умолчанию QuickBuds использует заново созданный протокол. Если модель работает неправильно, переключитесь на старый протокол в настройках. Эти настройки можно менять в любое время.</string>
+    <string name="welcome_done">Готово</string>
 </resources>

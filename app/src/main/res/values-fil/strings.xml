@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">Mas malinaw na boses sa mga kanta</string>
     <string name="row_wind_noise_title">Pagbawas ng ingay ng hangin</string>
     <string name="row_wind_noise_sub">Mas kaunting ingay ng hangin sa labas</string>
-    <string name="protocol_next_dialog_title">May bagong protocol</string>
-    <string name="protocol_next_dialog_body">May muling-ginawang protocol layer ang QuickBuds 5.0. Mas tumpak at malinis itong nakikipag-usap sa earbuds. Naka-off ito bilang default. Maaari mo itong i-on o i-off anumang oras sa Settings.</string>
-    <string name="protocol_next_dialog_try">Subukan ang bagong protocol</string>
-    <string name="protocol_next_dialog_later">Mamaya na</string>
     <string name="row_game_eq_title">Game equalizer</string>
     <string name="row_game_eq_sub">Inilalagay ang earbuds sa game sound habang bukas ang isang laro</string>
     <string name="game_eq_access_title">Kailangan ang usage access</string>
@@ -462,12 +458,11 @@
     <string name="test_not_marked">Hindi namarkahan</string>
     <string name="test_broken_hint">Ano ang nangyari? Sapat na ang isang linya.</string>
     <string name="test_mark_all">Markahan ang bawat feature para maipadala ang resulta.</string>
-    <string name="background_setup_title">Background service</string>
-    <string name="background_setup_body">Nagpapatakbo ang QuickBuds ng maliit na background service para gumana ang mga widget at kusang kumonekta ang earbuds. Natutulog ito kapag naka-lock ang telepono at gumigising kapag in-unlock mo ito. Mababago mo ito sa Settings.</string>
-    <string name="background_setup_keep">Panatilihing naka-on</string>
-    <string name="background_setup_off">I-off</string>
     <string name="about_privacy_title">Privacy</string>
     <string name="about_privacy_body">Isang beses kada araw, ipinapadala ng QuickBuds ang platform at version number nito (halimbawa \"Android 5.0.0\") para bilangin ang mga aktibong user. Walang ID, address o data ng earbuds na ipinapadala. Ang mga ulat ay ipinapadala lamang kapag ikaw ang nagpadala.</string>
     <string name="settings_protocol_legacy_title">Legacy protocol</string>
     <string name="settings_protocol_legacy_sub">Gamitin ang lumang link sa earbuds kung pumalpak ang bago. Kumonekta ulit para ilapat.</string>
+    <string name="welcome_title">Maligayang pagdating sa QuickBuds</string>
+    <string name="welcome_body">Ginagamit ng QuickBuds ang bago nitong protocol bilang default. Kung may problema ang isang modelo, lumipat sa Legacy protocol sa Settings. Mababago mo ang mga ito anumang oras.</string>
+    <string name="welcome_done">Tapos</string>
 </resources>

@@ -76,10 +76,6 @@
     <string name="row_vocal_sub">歌曲人聲更清晰</string>
     <string name="row_wind_noise_title">風噪抑制</string>
     <string name="row_wind_noise_sub">減少戶外風噪</string>
-    <string name="protocol_next_dialog_title">新協定可用</string>
-    <string name="protocol_next_dialog_body">QuickBuds 5.0 重新建構了協定層，與耳機的通訊更精確、更簡潔。預設為關閉，您可隨時在設定中開啟或關閉。</string>
-    <string name="protocol_next_dialog_try">試用新協定</string>
-    <string name="protocol_next_dialog_later">暫不</string>
     <string name="row_game_eq_title">遊戲等化器</string>
     <string name="row_game_eq_sub">開啟遊戲時，耳機切換為遊戲音效</string>
     <string name="game_eq_access_title">需要使用情況存取權</string>
@@ -464,12 +460,11 @@
     <string name="test_not_marked">未標記</string>
     <string name="test_broken_hint">發生了什麼事？一行就夠了。</string>
     <string name="test_mark_all">標記所有功能後即可傳送結果。</string>
-    <string name="background_setup_title">背景服務</string>
-    <string name="background_setup_body">QuickBuds 會執行一個小型背景服務，讓小工具正常運作，並讓耳機自動重新連線。手機鎖定時它會休眠，解鎖後喚醒。你可以在設定中變更。</string>
-    <string name="background_setup_keep">保持開啟</string>
-    <string name="background_setup_off">關閉</string>
     <string name="about_privacy_title">隱私</string>
     <string name="about_privacy_body">QuickBuds 每天一次傳送其平台與版本號（例如「Android 5.0.0」）來統計活躍使用者。它不傳送 ID、位址或耳機資料。只有你傳送時才會送出回報。</string>
     <string name="settings_protocol_legacy_title">舊協定</string>
     <string name="settings_protocol_legacy_sub">新連線失敗時使用與耳機的舊連線。重新連線後生效。</string>
+    <string name="welcome_title">歡迎使用 QuickBuds</string>
+    <string name="welcome_body">QuickBuds 預設使用重建的協定。如果某個型號有問題，請在設定中切換到舊協定。這些選擇可隨時變更。</string>
+    <string name="welcome_done">完成</string>
 </resources>

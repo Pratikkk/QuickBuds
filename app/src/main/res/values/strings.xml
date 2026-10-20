@@ -100,10 +100,6 @@
     <string name="row_vocal_sub">Clearer vocals in songs</string>
     <string name="row_wind_noise_title">Wind noise reduction</string>
     <string name="row_wind_noise_sub">Less wind noise outdoors</string>
-    <string name="protocol_next_dialog_title">New protocol available</string>
-    <string name="protocol_next_dialog_body">QuickBuds 5.0 has a rebuilt protocol layer. It talks to the earbuds more accurately and cleanly. It is off by default. You can switch it on or off at any time in Settings.</string>
-    <string name="protocol_next_dialog_try">Try new protocol</string>
-    <string name="protocol_next_dialog_later">Not now</string>
     <string name="row_game_eq_title">Game equalizer</string>
     <string name="row_game_eq_sub">Switches the buds to their game sound while a game is open</string>
     <string name="game_eq_access_title">Usage access needed</string>
@@ -550,12 +546,11 @@
     <string name="test_not_marked">Not marked</string>
     <string name="test_broken_hint">What happened? One line is enough.</string>
     <string name="test_mark_all">Mark every feature to send the result.</string>
-    <string name="background_setup_title">Background service</string>
-    <string name="background_setup_body">QuickBuds keeps a small background service running so the widgets work and the earbuds reconnect by themselves. It sleeps while the phone is locked and wakes when you unlock it. You can change this in Settings.</string>
-    <string name="background_setup_keep">Keep on</string>
-    <string name="background_setup_off">Turn off</string>
     <string name="about_privacy_title">Privacy</string>
     <string name="about_privacy_body">Once a day QuickBuds sends its platform and version number (for example \"Android 5.0.0\") to count active users. It sends no ID, no address and no earbud data. Reports are sent only when you send them.</string>
     <string name="settings_protocol_legacy_title">Legacy protocol</string>
     <string name="settings_protocol_legacy_sub">Use the old link to the earbuds if the new one fails. Reconnect to apply.</string>
+    <string name="welcome_title">Welcome to QuickBuds</string>
+    <string name="welcome_body">QuickBuds uses its rebuilt protocol by default. If a model misbehaves, switch to Legacy protocol in Settings. Change these choices any time.</string>
+    <string name="welcome_done">Done</string>
 </resources>
