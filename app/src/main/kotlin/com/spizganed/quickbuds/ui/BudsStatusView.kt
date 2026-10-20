@@ -196,14 +196,13 @@ class BudsStatusView(context: Context) : View(context) {
 
     companion object {
         /**
-         * Glyph colour by wear (WIDGETS.md 1); the case is always `text`. Shared with the widgets.
-         * Material style: a bud in the ear and the case take the accent (M3 primary), so the three states read by colour.
+         * Glyph colour by wear: accent in the ear (and the case), darker out of the ear, darkest in the case. Shared with the widgets.
          */
         fun wearTint(p: Palette, isCase: Boolean, status: Int, material: Boolean = false): Int = when {
-            material && (isCase || status == 3 || status == 7) -> p.accent
-            isCase || status == 3 || status == 7 -> p.text
-            status == 4 || status == 0 -> Palette.withAlpha(p.textSecondary, 0.45f)
-            else -> p.textSecondary
+            // The accent for a bud in the ear and for the case; the bud out of the ear and in the case take it darker, in two steps.
+            isCase || status == 3 || status == 7 -> p.accent
+            status == 4 || status == 0 -> androidx.core.graphics.ColorUtils.blendARGB(p.card, p.accent, 0.28f)
+            else -> androidx.core.graphics.ColorUtils.blendARGB(p.card, p.accent, 0.55f)
         }
     }
 }
