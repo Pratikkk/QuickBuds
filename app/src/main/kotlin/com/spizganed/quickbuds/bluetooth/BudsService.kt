@@ -203,6 +203,8 @@ class BudsService : Service(), BudsConnectionManager.Listener {
     }
 
     private fun forceConnect(withAudio: Boolean) {
+        // A missed unlock broadcast must never leave the service asleep: check the real state.
+        if (asleep && !shouldSleep()) { asleep = false; statusLog("[SVC] Wake (state check)") }
         if (asleep) {
             statusLog("[SVC] FORCE_CONNECT ignored (asleep, screen locked)")
             return
