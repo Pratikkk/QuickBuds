@@ -451,8 +451,8 @@ class BudsConnectionManager(private val context: Context) {
         Thread {
             try {
                 sendRawBlocking(Outbound.feature(typed, Capabilities.gameModeId(context), on),"GameMode")
-                // The buds apply the switch a moment after the ack: an immediate read returns the old value and the switch jumps back.
-                Thread.sleep(400)
+                // The buds apply the switch about a second after the ack (the push `0x0204` 05 confirms it): an earlier read returns the old value and the switch jumps back. [CAPTURE] 2026-10-20, Buds 4.
+                Thread.sleep(1500)
                 sendRawBlocking(statusQuery(), "verify features")
             } catch (e: Exception) {
                 log("GAME MODE write failed: ${e.message}")
@@ -1212,6 +1212,7 @@ class BudsConnectionManager(private val context: Context) {
             cmd == 0x8115 || cmd == 0x8116 || cmd == 0x811E || cmd == 0x811F || // Golden Sound replies
             cmd == 0x812A || cmd == 0x812B || cmd == OpoProtocol.CMD_SPATIAL_TYPE_PUSH || // spatial / game sound type
             cmd == 0x811A || cmd == 0x8133 || cmd == 0x8132 || // personalized ANC, tap sensitivity, preferred device
+            cmd == 0x0500 ||                             // time request from the buds, answered (answer 0500)
             cmd in 0x8400..0x84FF ||                     // acks for 0x04xx set commands
             cmd in LogDecoder.REPLY_NAMES                // decoded elsewhere, see there
         if (explained) return
