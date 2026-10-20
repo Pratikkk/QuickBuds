@@ -114,7 +114,7 @@ class BudsStatusView(context: Context) : View(context) {
                 s.level = levels[i]
                 s.anim?.cancel()
                 s.anim = ValueAnimator.ofFloat(s.shown, target).apply {
-                    duration = 450
+                    duration = if (target == 0f) 1000 else 700
                     interpolator = DecelerateInterpolator()
                     addUpdateListener { s.shown = it.animatedValue as Float; postInvalidateOnAnimation() }
                     start()
@@ -125,6 +125,13 @@ class BudsStatusView(context: Context) : View(context) {
         val wear = { st: Int -> if (connected) wearLabel(st)?.let { " $it" } ?: "" else "" }
         contentDescription = "${names[0]} ${pctText(left)}${wear(leftStatus)}, ${names[1]} ${pctText(case)}, ${names[2]} ${pctText(right)}${wear(rightStatus)}"
         invalidate()
+    }
+
+    /** The number follows the ring while it sweeps (80, 70, ... 0), then a dash; on connect the reverse. */
+    private fun pctFor(s: Slot): String {
+        val shown = Math.round(s.shown * 100)
+        if (s.level < 0 && shown <= 0) return "—"
+        return if (nothing) "$shown" else "$shown%"
     }
 
     private fun pctText(level: Int) = if (level < 0 || !connected) "—" else if (nothing) "$level" else "$level%"
@@ -170,7 +177,7 @@ class BudsStatusView(context: Context) : View(context) {
             }
 
             pctPaint.color = p.text
-            canvas.drawText(pctText(s.level), cx, ring + dp(30f), pctPaint)
+            canvas.drawText(pctFor(s), cx, ring + dp(30f), pctPaint)
 
             if (nothing) return@forEachIndexed
             val wear = if (i == 1 || !connected) null else wearLabel(s.status)

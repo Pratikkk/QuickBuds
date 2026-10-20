@@ -233,6 +233,9 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 v.setOnClickPendingIntent(CONN.root, null)
             }
 
+            // The page behind the chip is dimmed; it fades up to full with the sweep. Set both ways.
+            v.setFloat(R.id.w_content, "setAlpha", if (live || sweepK >= 0f) 0.35f + 0.65f * k else 0.3f)
+
             // Both pages and the list are filled every time, so the one sliding or fading out still
             // shows current values (a pick's highlight while the list closes).
             if (live) grid(context, v, p, state, fit, id)
@@ -594,8 +597,8 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         @Volatile private var sweepState: WidgetStateStore.State? = null
         private var sweepRun: Runnable? = null
         private val sweepHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        private const val SWEEP_STEPS = 8
-        private const val SWEEP_STEP_MS = 70L
+        private const val SWEEP_STEPS = 16
+        private const val SWEEP_STEP_MS = 35L
 
         /**
          * Connect: the rings fill from 0 to their level and the glyphs take their colour. Disconnect: the reverse, from

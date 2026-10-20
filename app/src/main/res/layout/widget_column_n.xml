@@ -5,7 +5,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/w_root" android:layout_width="match_parent" android:layout_height="match_parent">
 <ImageView android:id="@+id/w_bg" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/widget_bg" android:scaleType="fitXY" android:importantForAccessibility="no" />
-<ViewFlipper android:id="@+id/w_pages" android:layout_width="match_parent" android:layout_height="match_parent" android:inAnimation="@anim/widget_enter_left" android:outAnimation="@anim/widget_exit_right" android:animateFirstView="true" android:layoutAnimation="@anim/widget_connect_layout">
+<ViewFlipper android:id="@+id/w_pages" android:layout_width="match_parent" android:layout_height="match_parent" android:inAnimation="@anim/widget_enter_left" android:outAnimation="@anim/widget_exit_right" android:animateFirstView="true">
 <FrameLayout android:id="@+id/w_content" android:layout_width="match_parent" android:layout_height="match_parent" android:paddingTop="7dp" android:paddingBottom="7dp" android:paddingStart="3dp" android:paddingEnd="3dp">
 <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:showDividers="middle" android:divider="@drawable/widget_gap">
 <FrameLayout android:id="@+id/w_panel_left" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">

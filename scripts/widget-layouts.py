@@ -301,7 +301,7 @@ def shape_layout(name, sfx):
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/w_root" {MW} {MH}>
 {img("w_bg", "widget_bg")}
-<ViewFlipper android:id="@+id/w_pages" {MW} {MH} android:inAnimation="@anim/widget_enter_left" android:outAnimation="@anim/widget_exit_right" android:animateFirstView="true" android:layoutAnimation="@anim/widget_connect_layout">
+<ViewFlipper android:id="@+id/w_pages" {MW} {MH} android:inAnimation="@anim/widget_enter_left" android:outAnimation="@anim/widget_exit_right" android:animateFirstView="true">
 <FrameLayout android:id="@+id/w_content" {MW} {MH} {page_pad()}>
 {SHAPES[name]()}
 </FrameLayout>
@@ -341,7 +341,7 @@ for S in ("c", "n", "md"):
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/w_root" android:layout_width="match_parent" android:layout_height="match_parent">
 {img("w_bg", "widget_bg")}
-<ViewFlipper android:id="@+id/w_pages" android:layout_width="match_parent" android:layout_height="match_parent" android:inAnimation="@anim/widget_enter_left" android:outAnimation="@anim/widget_exit_right" android:animateFirstView="true" android:layoutAnimation="@anim/widget_connect_layout">
+<ViewFlipper android:id="@+id/w_pages" android:layout_width="match_parent" android:layout_height="match_parent" android:inAnimation="@anim/widget_enter_left" android:outAnimation="@anim/widget_exit_right" android:animateFirstView="true">
 <FrameLayout android:id="@+id/w_content" android:layout_width="match_parent" android:layout_height="match_parent">
 <ViewFlipper android:id="@+id/w_slide0" android:layout_width="match_parent" android:layout_height="match_parent" android:inAnimation="@anim/widget_enter_left" android:outAnimation="@anim/widget_exit_left" android:animateFirstView="true">
 <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" />

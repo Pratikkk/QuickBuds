@@ -8,7 +8,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/w_root" android:layout_width="match_parent" android:layout_height="match_parent">
 <ImageView android:id="@+id/w_bg" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/widget_bg" android:scaleType="fitXY" android:importantForAccessibility="no" />
-<ViewFlipper android:id="@+id/w_pages" android:layout_width="match_parent" android:layout_height="match_parent" android:inAnimation="@anim/widget_enter_left" android:outAnimation="@anim/widget_exit_right" android:animateFirstView="true" android:layoutAnimation="@anim/widget_connect_layout">
+<ViewFlipper android:id="@+id/w_pages" android:layout_width="match_parent" android:layout_height="match_parent" android:inAnimation="@anim/widget_enter_left" android:outAnimation="@anim/widget_exit_right" android:animateFirstView="true">
 <FrameLayout android:id="@+id/w_content" android:layout_width="match_parent" android:layout_height="match_parent">
 <ViewFlipper android:id="@+id/w_slide0" android:layout_width="match_parent" android:layout_height="match_parent" android:inAnimation="@anim/widget_enter_left" android:outAnimation="@anim/widget_exit_left" android:animateFirstView="true">
 <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" />
