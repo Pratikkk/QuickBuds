@@ -18,6 +18,8 @@ import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.GoldenSound
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol2.Outbound
+import com.spizganed.quickbuds.protocol2.ProtocolNext
 
 /**
  * Golden Sound (PROTOCOL.md §9): the on/off switch, the profiles kept on this phone (a tap applies
@@ -113,9 +115,10 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
     private fun requestCurves() {
         val r = GoldenSound.records(this).firstOrNull { it.uid == activeUid } ?: return
         if (hearingCurves.containsKey(r.uid)) { paintRadar(); return }
+        val typed = ProtocolNext.enabled(this)
         manager?.golden(*listOfNotNull(
-            OpoProtocol.hearingFilter(r.uid, r.values),
-            if (r.scan.isNotEmpty()) OpoProtocol.earScanFilter(r.uid, r.scan) else null
+            Outbound.hearingFilter(typed, r.uid, r.values),
+            if (r.scan.isNotEmpty()) Outbound.scanFilter(typed, r.uid, r.scan) else null
         ).toTypedArray())
     }
 
@@ -153,12 +156,7 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
 
     /** Applies a record as HeyMelody does: description id, record, ear scan, then the switch on. */
     private fun apply(r: GoldenSound.Record) {
-        manager?.golden(*listOfNotNull(
-            if (r.descId > 0) OpoProtocol.hearingRestore(r.descId) else null,
-            OpoProtocol.hearingRecord(r.uid, r.name, r.values),
-            if (r.scan.isNotEmpty()) OpoProtocol.earScanData(r.uid, r.scan) else null,
-            OpoProtocol.setFeature(OpoProtocol.FEATURE_GOLDEN_SOUND, true)
-        ).toTypedArray())
+        manager?.golden(*Outbound.goldenApply(ProtocolNext.enabled(this), r.uid, r.name, r.values, r.scan, r.descId).toTypedArray())
         activeUid = r.uid
         paintList()
         paintRadar()

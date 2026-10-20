@@ -27,6 +27,7 @@ import com.spizganed.quickbuds.protocol2.Anc
 import com.spizganed.quickbuds.protocol2.Cmd
 import com.spizganed.quickbuds.protocol2.Decode
 import com.spizganed.quickbuds.protocol2.Msg
+import com.spizganed.quickbuds.protocol2.Outbound
 import com.spizganed.quickbuds.protocol2.Public
 import com.spizganed.quickbuds.protocol2.ProtocolNext
 import com.spizganed.quickbuds.protocol2.Wire
@@ -347,8 +348,8 @@ class BudsConnectionManager(private val context: Context) {
                 when {
                     ids.isEmpty() -> log("skip register notify: the buds offer none of ours")
                     Capabilities.supports(context, OpoProtocol.CMD_REGISTER_NOTIFY) ->
-                        sendRawBlocking(OpoProtocol.registerNotifications(ids), "register notify")
-                    else -> ids.forEach { sendRawBlocking(OpoProtocol.registerOne(it), "register notify $it") }
+                        sendRawBlocking(Outbound.register(typed, ids), "register notify")
+                    else -> ids.forEach { sendRawBlocking(Outbound.registerOne(typed, it), "register notify $it") }
                 }
                 query(OpoProtocol.CMD_QUERY_STATUS, statusQuery(), "query status")
                 query(OpoProtocol.CMD_QUERY_ANC, OpoProtocol.queryAncMode(), "query anc")
@@ -373,7 +374,7 @@ class BudsConnectionManager(private val context: Context) {
                 // realme Link hands 3D audio to the buds on every connect; else the `1B` switch can do nothing (issue #9).
                 if (ModelCatalog.current(context)?.json?.optInt("spatialToggle") == 1 &&
                     Capabilities.supports(context, OpoProtocol.CMD_SPATIAL_SOURCE)) {
-                    delay(200); sendRawBlocking(OpoProtocol.spatialOnBuds(), "3D audio on the buds")
+                    delay(200); sendRawBlocking(Outbound.spatialOnBuds(typed),"3D audio on the buds")
                 }
             } catch (e: Exception) {
                 log("Init sequence error: ${e.message}")
@@ -442,14 +443,14 @@ class BudsConnectionManager(private val context: Context) {
         val bit = AncModes.of(context).bit(mode)
             ?: return log("ANC: $mode is not a mode of these buds, not sent")
         if (mode in AncModes.LEVELS) lastAncLevelSent = mode
-        sendRaw(OpoProtocol.anc(bit), "ANC $mode")
+        sendRaw(Outbound.anc(typed, bit),"ANC $mode")
     }
 
     /** Writes, then reads the state back: models that do not push `GAME EVT` still show the real state. */
     fun setGameMode(on: Boolean) {
         Thread {
             try {
-                sendRawBlocking(OpoProtocol.setFeature(Capabilities.gameModeId(context), on), "GameMode")
+                sendRawBlocking(Outbound.feature(typed, Capabilities.gameModeId(context), on),"GameMode")
                 sendRawBlocking(statusQuery(), "verify features")
             } catch (e: Exception) {
                 log("GAME MODE write failed: ${e.message}")
@@ -466,9 +467,9 @@ class BudsConnectionManager(private val context: Context) {
     fun setDualDevice(on: Boolean) {
         Thread {
             try {
-                sendRawBlocking(OpoProtocol.setFeature(OpoProtocol.FEATURE_DUAL_DEVICE, on), "Dual device -> $on")
+                sendRawBlocking(Outbound.feature(typed, OpoProtocol.FEATURE_DUAL_DEVICE, on), "Dual device -> $on")
                 sendRawBlocking(statusQuery(), "verify features")
-                sendRawBlocking(OpoProtocol.dualFollowup(on), "Dual follow-up")
+                sendRawBlocking(Outbound.dualFollowup(typed, on),"Dual follow-up")
             } catch (e: Exception) {
                 log("DUAL WRITE failed: ${e.message}")
             }
@@ -487,21 +488,21 @@ class BudsConnectionManager(private val context: Context) {
 
     /** Connects or disconnects another device on the list; the buds push the new list. */
     fun connectDevice(mac: String, on: Boolean) =
-        sendRaw(OpoProtocol.connectDevice(mac, on), "${if (on) "Connect" else "Disconnect"} $mac")
+        sendRaw(Outbound.connectDevice(typed, mac, on),"${if (on) "Connect" else "Disconnect"} $mac")
 
     fun setPreferred(mac: String?) {
         Thread {
             try {
-                sendRawBlocking(OpoProtocol.setPreferred(mac), "Preferred ${mac ?: "auto"}")
+                sendRawBlocking(Outbound.preferredSet(typed, mac), "Preferred ${mac ?: "auto"}")
                 Thread.sleep(250)
-                sendRawBlocking(OpoProtocol.queryPreferred(), "query preferred")
+                sendRawBlocking(Outbound.preferredRead(typed), "query preferred")
             } catch (e: Exception) {
                 log("PREFERRED write failed: ${e.message}")
             }
         }.start()
     }
 
-    fun refreshPreferred() = sendRaw(OpoProtocol.queryPreferred(), "query preferred")
+    fun refreshPreferred() = sendRaw(Outbound.preferredRead(typed), "query preferred")
 
     /**
      * `[count]` then per device `[MAC, 6 bytes reversed][entry length][state][flags][nameLen][name UTF-8]`.
@@ -571,26 +572,26 @@ class BudsConnectionManager(private val context: Context) {
     /** Selects a custom preset unchanged: the same frame as a save, but a newer pick may replace it. */
     fun selectCustomEq(p: EqCodec.Preset) {
         picked(p.id)
-        sendThenRead(OpoProtocol.customEq(EqCodec.ACTION_SAVE, p) to "EQ custom ${p.id} '${p.name}'", ++eqPickSeq)
+        sendThenRead(Outbound.customEq(typed, EqCodec.ACTION_SAVE, p) to "EQ custom ${p.id} '${p.name}'", ++eqPickSeq)
     }
 
     /** Selects AND saves a custom preset — `0x0418` is both (a band edit or rename is the same frame). */
     fun saveCustomEq(p: EqCodec.Preset) {
         picked(p.id)
         eqCustom = eqCustom.map { if (it.id == p.id) p else it }
-        sendThenRead(OpoProtocol.customEq(EqCodec.ACTION_SAVE, p) to "EQ custom ${p.id} '${p.name}'")
+        sendThenRead(Outbound.customEq(typed, EqCodec.ACTION_SAVE, p) to "EQ custom ${p.id} '${p.name}'")
     }
 
     /** No local update for create/delete: the buds assign and renumber ids, so only the re-read knows. */
     fun createCustomEq(name: String, freqs: List<Int>) =
-        sendThenRead(OpoProtocol.customEq(EqCodec.ACTION_CREATE, EqCodec.newPreset(name, freqs)) to "EQ create '$name'")
+        sendThenRead(Outbound.customEq(typed, EqCodec.ACTION_CREATE,EqCodec.newPreset(name, freqs)) to "EQ create '$name'")
 
     fun deleteCustomEq(p: EqCodec.Preset) =
-        sendThenRead(OpoProtocol.customEq(EqCodec.ACTION_DELETE, p) to "EQ delete ${p.id} '${p.name}'")
+        sendThenRead(Outbound.customEq(typed, EqCodec.ACTION_DELETE,p) to "EQ delete ${p.id} '${p.name}'")
 
     fun setBassWaveLevel(level: Int) {
         bassWaveLevel = level
-        sendThenRead(OpoProtocol.setBassWaveLevel(level) to "BassWave level $level")
+        sendThenRead(Outbound.bassLevel(typed, level) to "BassWave level $level")
     }
 
     /** Optional write, then the EQ reads these buds list (see Capabilities), in order on one thread. */
@@ -618,7 +619,7 @@ class BudsConnectionManager(private val context: Context) {
     }
 
     /** Find my earbuds: both buds' own locator tone. `[CAPTURE]` 2026-09-23, PROTOCOL.md §9. */
-    fun setFindTone(on: Boolean) = sendRaw(OpoProtocol.findTone(on), "Find tone -> $on")
+    fun setFindTone(on: Boolean) = sendRaw(Outbound.find(typed, on),"Find tone -> $on")
 
     private val FEATURES_KEY = Capabilities.KEY_FEATURES
 
@@ -664,7 +665,7 @@ class BudsConnectionManager(private val context: Context) {
             try {
                 for ((id, on) in changes) {
                     if (id == OpoProtocol.FEATURE_POWER_SAVING) audioAfterRestart = true
-                    sendRawBlocking(OpoProtocol.setFeature(id, on), "Feature 0x%02X -> %s".format(id, on))
+                    sendRawBlocking(Outbound.feature(typed, id, on), "Feature 0x%02X -> %s".format(id, on))
                 }
                 Thread.sleep(400)
                 sendRawBlocking(statusQuery(), "verify features")
@@ -720,7 +721,7 @@ class BudsConnectionManager(private val context: Context) {
     @Volatile var headMotionType: Int? = null
         private set
 
-    fun setHeadMotionType(type: Int) = writeThenRead(OpoProtocol.setHeadMotionType(type), "Head motion type $type",
+    fun setHeadMotionType(type: Int) = writeThenRead(Outbound.headGesture(typed, type),"Head motion type $type",
         OpoProtocol.queryHeadMotionType(), "query head motion type") { headMotionType = type }
 
     /** Codec picker (`highAudio` models): the current codec and the offered ones, from `0x8114` / `0x8123`. */
@@ -732,13 +733,13 @@ class BudsConnectionManager(private val context: Context) {
     /** The buds restart after it and come back without phone audio, as after power saving. */
     fun setCodec(codec: Int, hiRes: Boolean) {
         audioAfterRestart = true
-        sendRaw(OpoProtocol.setCodec(codec, hiRes), "Codec $codec hiRes=$hiRes")
+        sendRaw(Outbound.codec(typed, codec, hiRes),"Codec $codec hiRes=$hiRes")
     }
 
-    fun setSpatialType(type: Int) = writeThenRead(OpoProtocol.setSpatialType(type), "Spatial type $type",
+    fun setSpatialType(type: Int) = writeThenRead(Outbound.spatial(typed, type),"Spatial type $type",
         OpoProtocol.querySpatialType(), "query spatial type") { spatialType = type }
 
-    fun setGameSoundType(type: Int) = writeThenRead(OpoProtocol.setGameSoundType(type), "Game sound type $type",
+    fun setGameSoundType(type: Int) = writeThenRead(Outbound.gameSound(typed, type),"Game sound type $type",
         OpoProtocol.queryGameSound(), "query game sound") { gameSoundType = type }
 
     private fun writeThenRead(write: ByteArray, label: String, read: ByteArray, readLabel: String, optimistic: () -> Unit) {
@@ -755,14 +756,14 @@ class BudsConnectionManager(private val context: Context) {
     }
 
     /** Personalized ANC action ([OpoProtocol.PERSONAL_NOISE_TEST] ...); see [Listener.onPersonalNoiseResult]. */
-    fun personalNoise(action: Int) = sendRaw(OpoProtocol.personalNoise(action), "Personalized ANC $action")
+    fun personalNoise(action: Int) = sendRaw(Outbound.personalAnc(typed, action),"Personalized ANC $action")
     fun queryPersonalNoise() = sendRaw(OpoProtocol.queryPersonalNoise(), "query personalized ANC")
 
     /** The default from the last `0x8133` reply; the push carries the level only. */
     private var tapLevelDefault = 0
 
     /** `0x0420 01 <1|0>`: a game app is in the foreground (PROTOCOL.md §9). */
-    fun setGameEqState(inGame: Boolean) = sendRaw(OpoProtocol.gameEqState(inGame), "Game equalizer in game=$inGame")
+    fun setGameEqState(inGame: Boolean) = sendRaw(Outbound.gameEq(typed, inGame),"Game equalizer in game=$inGame")
 
     fun refreshTapLevel() = sendRaw(OpoProtocol.queryTapLevel(), "query tap level")
 
@@ -770,7 +771,7 @@ class BudsConnectionManager(private val context: Context) {
     fun setTapLevel(level: Int) {
         Thread {
             try {
-                sendRawBlocking(OpoProtocol.setTapLevel(level), "Tap level $level")
+                sendRawBlocking(Outbound.tapLevel(typed, level),"Tap level $level")
                 Thread.sleep(250)
                 sendRawBlocking(OpoProtocol.queryTapLevel(), "query tap level")
             } catch (e: Exception) {
@@ -780,7 +781,7 @@ class BudsConnectionManager(private val context: Context) {
     }
 
     /** Starts (`true`) or stops the earbud fit test; the result comes as [Listener.onFitResult]. */
-    fun fitTest(on: Boolean) = sendRaw(OpoProtocol.fitTest(on), "Fit test ${if (on) "start" else "stop"}")
+    fun fitTest(on: Boolean) = sendRaw(Outbound.fitTest(typed, on),"Fit test ${if (on) "start" else "stop"}")
 
     /** Alert-sound volume 1..10 from `0x8130` / `0x8427`, null until read. `[CAPTURE]` 2026-09-25. */
     @Volatile var alertVolume: Int? = null
@@ -793,7 +794,7 @@ class BudsConnectionManager(private val context: Context) {
         alertVolume = level
         Thread {
             try {
-                sendRawBlocking(OpoProtocol.setAlertVolume(level), "Alert volume $level")
+                sendRawBlocking(Outbound.alertVolume(typed, level),"Alert volume $level")
                 Thread.sleep(250)
                 sendRawBlocking(OpoProtocol.queryAlertVolume(), "query alert volume")
             } catch (e: Exception) {
@@ -810,7 +811,7 @@ class BudsConnectionManager(private val context: Context) {
      * everywhere else in this protocol.
      */
     fun sendHoldAncModes(mask: Int, type: Int) {
-        sendRaw(OpoProtocol.setHoldAncModes(mask, type), "Hold ANC modes ($type) -> 0x%04X".format(mask))
+        sendRaw(Outbound.holdCycle(typed, mask, type),"Hold ANC modes ($type) -> 0x%04X".format(mask))
         Thread {
             try {
                 Thread.sleep(400)
@@ -991,7 +992,7 @@ class BudsConnectionManager(private val context: Context) {
         // buds reject does not leave us believing a lie for long.
         lastKeyFnTable = table.copy(entries = updated)
 
-        sendRaw(OpoProtocol.setKeyFunction(updated), "set key function")
+        sendRaw(Outbound.gestureTable(typed, updated),"set key function")
 
         // Read it straight back. The write's payload layout is [OSS], and the device has
         // shown that it ignores a WRONG command number in total silence (0x0402 produced no
