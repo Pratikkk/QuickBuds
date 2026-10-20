@@ -815,4 +815,21 @@ pub fn cmd_of(p: &[u8]) -> u16 {
 
 pub fn payload_of(p: &[u8]) -> &[u8] { &p[header_len(p)..] }
 
+/// A `0x812F` frame as the normal replies it carries (`00 <count>`, then `<cmd LE> <len LE> <reply
+/// payload>`, `cmd` being the query's), each a frame with the batch's seq; stops at one that runs past the end.
+pub fn unbatch(p: &[u8]) -> Vec<Vec<u8>> {
+    let (pl, seq) = (payload_of(p), seq_of(p));
+    let mut out = Vec::new();
+    let [0, n, rest @ ..] = pl else { return out };
+    let mut r = rest;
+    for _ in 0..*n {
+        let [c0, c1, l0, l1, tail @ ..] = r else { break };
+        let len = u16::from_le_bytes([*l0, *l1]) as usize;
+        if tail.len() < len { break; }
+        out.push(build_packet(u16::from_le_bytes([*c0, *c1]) | 0x8000, seq, &tail[..len]));
+        r = &tail[len..];
+    }
+    out
+}
+
 pub fn seq_of(p: &[u8]) -> u8 { p[header_len(p) - 3] }

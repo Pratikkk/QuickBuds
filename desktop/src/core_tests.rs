@@ -70,7 +70,7 @@ mod wire {
 mod msg {
     use buds_core::msg::*;
     use buds_core::wire::Message;
-    use crate::event::to_event;
+    use crate::newproto::to_event;
     use super::old_all as old;
 
     fn m(cmd: u16, seq: u8, payload: &[u8]) -> Message { Message { cmd, seq, payload: payload.to_vec() } }

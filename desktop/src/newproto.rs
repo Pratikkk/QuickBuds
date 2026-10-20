@@ -1,12 +1,34 @@
-//! Bridge from the core's typed messages to the shipping session's `Event`. A message with no match here goes
-//! to the shipping decoder (the "new protocol" setting moves the sections over one at a time). The bitmap is
-//! not bridged: the session keeps the shipping `Caps`.
+//! The NEW protocol (docs/PROTOCOL-NEXT.md) as the app uses it: the glue between `buds_core` (frames, messages,
+//! answers) and the app's log-format frames and `Event`. The legacy link is `protocol.rs`; `proto.rs` picks one.
 
+use crate::types::{cmd_of, payload_of, seq_of, Event};
 use buds_core::msg::{decode, Anc, Inbound, Public};
-use buds_core::wire::Message;
+use buds_core::wire::{encode, Message, Reassembler, BUDGET};
 
-pub fn to_event(m: &Message) -> Option<crate::types::Event> {
-    use crate::types::{Event, HearingEv, PairedDevice};
+/// The message inside a log-format frame (`types::build_packet`).
+fn message(p: &[u8]) -> Message { Message { cmd: cmd_of(p), seq: seq_of(p), payload: payload_of(p).to_vec() } }
+
+/// The wire frames of one message; a message above the frame budget goes out in slices (§2).
+pub fn frames_out(cmd: u16, seq: u8, payload: &[u8]) -> Vec<Vec<u8>> {
+    encode(&Message { cmd, seq, payload: payload.to_vec() }, BUDGET)
+}
+
+/// Bytes in, messages out, each as one log-format frame: the handlers read whole frames.
+pub fn frames_in(r: &mut Reassembler, data: &[u8]) -> Vec<Vec<u8>> {
+    r.push(data).iter().map(|m| crate::types::build_packet(m.cmd, m.seq, &m.payload)).collect()
+}
+
+/// The event of a frame, or `None` when `buds_core` does not know it yet.
+pub fn event(p: &[u8]) -> Option<Event> { to_event(&message(p)) }
+
+/// The reply to a request the buds send, as `((cmd, payload), seq)`.
+pub fn answer(p: &[u8], now: u32) -> Option<((u16, Vec<u8>), u8)> {
+    buds_core::msg::answer(&message(p), now).map(|a| ((a.cmd, a.payload), a.seq))
+}
+
+/// Core messages to the app's events. The bitmap is not bridged: the session keeps `Caps`.
+pub fn to_event(m: &Message) -> Option<Event> {
+    use crate::types::{HearingEv, PairedDevice};
     Some(match decode(m)? {
         Inbound::ProductId(id) => Event::ProductId(buds_core::cmd::product_text(id)),
         Inbound::Firmware(f) => Event::Firmware(buds_core::cmd::firmware_text(&f.iter().map(|x| (x.0, x.1, x.2.clone())).collect::<Vec<_>>())?),
