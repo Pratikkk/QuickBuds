@@ -466,4 +466,8 @@
     <string name="test_not_marked">ยังไม่ได้ทำเครื่องหมาย</string>
     <string name="test_broken_hint">เกิดอะไรขึ้น? หนึ่งบรรทัดก็พอ</string>
     <string name="test_mark_all">ทำเครื่องหมายทุกฟีเจอร์เพื่อส่งผลลัพธ์</string>
+    <string name="background_setup_title">บริการเบื้องหลัง</string>
+    <string name="background_setup_body">QuickBuds เปิดบริการเบื้องหลังขนาดเล็กไว้ เพื่อให้วิดเจ็ตทำงานและหูฟังเชื่อมต่อใหม่เอง บริการจะหยุดพักเมื่อล็อกโทรศัพท์และกลับมาทำงานเมื่อปลดล็อก คุณเปลี่ยนได้ในการตั้งค่า</string>
+    <string name="background_setup_keep">เปิดไว้</string>
+    <string name="background_setup_off">ปิด</string>
 </resources>

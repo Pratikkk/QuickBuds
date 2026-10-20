@@ -466,4 +466,8 @@
     <string name="test_not_marked">未標記</string>
     <string name="test_broken_hint">發生了什麼事？一行就夠了。</string>
     <string name="test_mark_all">標記所有功能後即可傳送結果。</string>
+    <string name="background_setup_title">背景服務</string>
+    <string name="background_setup_body">QuickBuds 會執行一個小型背景服務，讓小工具正常運作，並讓耳機自動重新連線。手機鎖定時它會休眠，解鎖後喚醒。你可以在設定中變更。</string>
+    <string name="background_setup_keep">保持開啟</string>
+    <string name="background_setup_off">關閉</string>
 </resources>

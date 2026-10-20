@@ -464,4 +464,8 @@
     <string name="test_not_marked">Nicht markiert</string>
     <string name="test_broken_hint">Was ist passiert? Eine Zeile reicht.</string>
     <string name="test_mark_all">Markiere jede Funktion, um das Ergebnis zu senden.</string>
+    <string name="background_setup_title">Hintergrunddienst</string>
+    <string name="background_setup_body">QuickBuds hält einen kleinen Hintergrunddienst am Laufen, damit die Widgets funktionieren und sich die Ohrhörer selbst verbinden. Er schläft bei gesperrtem Telefon und wacht beim Entsperren auf. Du kannst das in den Einstellungen ändern.</string>
+    <string name="background_setup_keep">Eingeschaltet lassen</string>
+    <string name="background_setup_off">Ausschalten</string>
 </resources>

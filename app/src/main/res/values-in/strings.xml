@@ -466,4 +466,8 @@
     <string name="test_not_marked">Belum ditandai</string>
     <string name="test_broken_hint">Apa yang terjadi? Satu baris sudah cukup.</string>
     <string name="test_mark_all">Tandai setiap fitur untuk mengirim hasilnya.</string>
+    <string name="background_setup_title">Layanan latar belakang</string>
+    <string name="background_setup_body">QuickBuds menjalankan layanan latar belakang kecil agar widget berfungsi dan earbud tersambung kembali sendiri. Layanan tidur saat ponsel terkunci dan bangun saat dibuka. Anda dapat mengubahnya di Pengaturan.</string>
+    <string name="background_setup_keep">Tetap aktif</string>
+    <string name="background_setup_off">Matikan</string>
 </resources>

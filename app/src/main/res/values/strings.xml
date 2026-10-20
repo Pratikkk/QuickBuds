@@ -552,4 +552,8 @@
     <string name="test_not_marked">Not marked</string>
     <string name="test_broken_hint">What happened? One line is enough.</string>
     <string name="test_mark_all">Mark every feature to send the result.</string>
+    <string name="background_setup_title">Background service</string>
+    <string name="background_setup_body">QuickBuds keeps a small background service running so the widgets work and the earbuds reconnect by themselves. It sleeps while the phone is locked and wakes when you unlock it. You can change this in Settings.</string>
+    <string name="background_setup_keep">Keep on</string>
+    <string name="background_setup_off">Turn off</string>
 </resources>

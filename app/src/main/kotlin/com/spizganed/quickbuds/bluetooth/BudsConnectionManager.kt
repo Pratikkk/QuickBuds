@@ -48,6 +48,7 @@ class BudsConnectionManager(private val context: Context) {
     companion object {
         /** Last firmware version read, as HeyMelody shows it ([OpoProtocol.firmwareVersion]). */
         const val KEY_FIRMWARE = "firmwareVersion"
+        private const val HANDSHAKE_WAIT_MS = 6000L
     }
 
     init {
@@ -1863,8 +1864,6 @@ class BudsConnectionManager(private val context: Context) {
             }
         }
     }
-
-    private companion object { const val HANDSHAKE_WAIT_MS = 6000L }
 
     private fun log(msg: String) {
         Log.d("BudsConn", msg)

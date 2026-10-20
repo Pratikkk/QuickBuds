@@ -464,4 +464,8 @@
     <string name="test_not_marked">Neoznačeno</string>
     <string name="test_broken_hint">Co se stalo? Stačí jeden řádek.</string>
     <string name="test_mark_all">Označte každou funkci, abyste mohli odeslat výsledek.</string>
+    <string name="background_setup_title">Služba na pozadí</string>
+    <string name="background_setup_body">QuickBuds nechává běžet malou službu na pozadí, aby fungovaly widgety a sluchátka se připojovala sama. Když je telefon zamčený, služba spí, a po odemknutí se probudí. Můžete to změnit v Nastavení.</string>
+    <string name="background_setup_keep">Nechat zapnuté</string>
+    <string name="background_setup_off">Vypnout</string>
 </resources>

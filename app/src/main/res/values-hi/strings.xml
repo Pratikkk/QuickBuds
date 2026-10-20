@@ -466,4 +466,8 @@
     <string name="test_not_marked">चिह्नित नहीं</string>
     <string name="test_broken_hint">क्या हुआ? एक पंक्ति काफ़ी है।</string>
     <string name="test_mark_all">नतीजा भेजने के लिए हर फ़ीचर चिह्नित करें।</string>
+    <string name="background_setup_title">बैकग्राउंड सर्विस</string>
+    <string name="background_setup_body">विजेट काम करें और ईयरबड अपने आप जुड़ें, इसके लिए QuickBuds एक छोटी बैकग्राउंड सर्विस चालू रखता है। फ़ोन लॉक होने पर यह सो जाती है और अनलॉक करने पर जाग जाती है। आप इसे सेटिंग में बदल सकते हैं।</string>
+    <string name="background_setup_keep">चालू रखें</string>
+    <string name="background_setup_off">बंद करें</string>
 </resources>

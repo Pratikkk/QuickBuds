@@ -464,4 +464,8 @@
     <string name="test_not_marked">Nemarcată</string>
     <string name="test_broken_hint">Ce s-a întâmplat? Un rând este suficient.</string>
     <string name="test_mark_all">Marchează fiecare funcție ca să trimiți rezultatul.</string>
+    <string name="background_setup_title">Serviciu în fundal</string>
+    <string name="background_setup_body">QuickBuds păstrează un mic serviciu în fundal ca widgeturile să funcționeze, iar căștile să se reconecteze singure. Serviciul doarme cât timp telefonul este blocat și se trezește la deblocare. Poți schimba acest lucru în Setări.</string>
+    <string name="background_setup_keep">Păstrează pornit</string>
+    <string name="background_setup_off">Dezactivează</string>
 </resources>

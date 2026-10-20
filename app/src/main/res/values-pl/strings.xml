@@ -464,4 +464,8 @@
     <string name="test_not_marked">Nieoznaczone</string>
     <string name="test_broken_hint">Co się stało? Wystarczy jedna linijka.</string>
     <string name="test_mark_all">Oznacz każdą funkcję, aby wysłać wynik.</string>
+    <string name="background_setup_title">Usługa w tle</string>
+    <string name="background_setup_body">QuickBuds utrzymuje małą usługę w tle, aby widżety działały, a słuchawki łączyły się same. Gdy telefon jest zablokowany, usługa śpi, a po odblokowaniu się budzi. Możesz to zmienić w Ustawieniach.</string>
+    <string name="background_setup_keep">Zostaw włączoną</string>
+    <string name="background_setup_off">Wyłącz</string>
 </resources>

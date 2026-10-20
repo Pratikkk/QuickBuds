@@ -46,6 +46,45 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         }
     }
 
+    /**
+     * The service sleeps while the phone is locked: the RFCOMM link closes and nothing connects until
+     * the user unlocks. Smart auto-pause keeps it awake, because that needs the wear events.
+     */
+    @Volatile private var asleep = false
+
+    private fun shouldSleep(): Boolean {
+        val locked = getSystemService(android.app.KeyguardManager::class.java).isKeyguardLocked ||
+            !getSystemService(android.os.PowerManager::class.java).isInteractive
+        return locked && !smartPauseOn()
+    }
+
+    private fun smartPauseOn() = getSharedPreferences(ThemeRes.PREFS_NAME, MODE_PRIVATE).getBoolean(PREF_SMART_PAUSE, false)
+
+    private fun sleep() {
+        if (asleep) return
+        asleep = true
+        statusLog("[SVC] Sleep (screen locked)")
+        handler.removeCallbacksAndMessages(null)
+        manager?.disconnect()
+    }
+
+    private fun wake() {
+        if (!asleep) return
+        asleep = false
+        statusLog("[SVC] Wake (unlocked)")
+        if (backgroundAllowed(this)) forceConnect(false)
+    }
+
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                Intent.ACTION_SCREEN_OFF -> if (!smartPauseOn()) sleep()
+                Intent.ACTION_USER_PRESENT -> wake()
+                Intent.ACTION_SCREEN_ON -> if (!getSystemService(android.app.KeyguardManager::class.java).isKeyguardLocked) wake()
+            }
+        }
+    }
+
     inner class LocalBinder : Binder() {
         fun getService(): BudsService = this@BudsService
     }
@@ -63,6 +102,13 @@ class BudsService : Service(), BudsConnectionManager.Listener {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             registerReceiver(widgetCommandReceiver, filter)
         }
+
+        val screen = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF); addAction(Intent.ACTION_SCREEN_ON); addAction(Intent.ACTION_USER_PRESENT)
+        }
+        registerReceiver(screenReceiver, screen)
+        // Started by a Bluetooth event while locked: stay asleep until the unlock.
+        if (backgroundAllowed(this) && shouldSleep()) asleep = true
 
         startForegroundService()
     }
@@ -157,6 +203,10 @@ class BudsService : Service(), BudsConnectionManager.Listener {
     }
 
     private fun forceConnect(withAudio: Boolean) {
+        if (asleep) {
+            statusLog("[SVC] FORCE_CONNECT ignored (asleep, screen locked)")
+            return
+        }
         if (manager?.isConnected() == true) {
             statusLog("[SVC] FORCE_CONNECT ignored (already connected)")
             return
@@ -255,12 +305,19 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         try { manager?.setBridge(false) } catch (_: Exception) {}
         try { manager?.removeListener(this) } catch (_: Exception) {}
         try { unregisterReceiver(widgetCommandReceiver) } catch (_: Exception) {}
+        try { unregisterReceiver(screenReceiver) } catch (_: Exception) {}
         super.onDestroy()
     }
 
     override fun onConnected(connected: Boolean) {
         val st = WidgetStateStore.read(this)
         st.connected = connected
+        if (!connected && asleep) {
+            // Our own sleep, not a lid event: show disconnected, keep the lid state.
+            WidgetStateStore.write(this, st)
+            AncWidgetProvider.refreshAll(this)
+            return
+        }
         if (connected) {
             statusLog("[SVC] Connected")
             st.caseLidClosed = false

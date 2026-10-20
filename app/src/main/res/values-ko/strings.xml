@@ -464,4 +464,8 @@
     <string name="test_not_marked">표시 안 됨</string>
     <string name="test_broken_hint">무슨 일이 있었나요? 한 줄이면 충분합니다.</string>
     <string name="test_mark_all">결과를 보내려면 모든 기능을 표시하세요.</string>
+    <string name="background_setup_title">백그라운드 서비스</string>
+    <string name="background_setup_body">위젯이 작동하고 이어버드가 자동으로 다시 연결되도록 QuickBuds는 작은 백그라운드 서비스를 실행합니다. 휴대폰이 잠겨 있으면 대기하고 잠금을 풀면 다시 시작합니다. 설정에서 변경할 수 있습니다.</string>
+    <string name="background_setup_keep">켜 둠</string>
+    <string name="background_setup_off">끄기</string>
 </resources>

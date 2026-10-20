@@ -464,4 +464,8 @@
     <string name="test_not_marked">未記録</string>
     <string name="test_broken_hint">何が起きましたか？1 行で十分です。</string>
     <string name="test_mark_all">結果を送信するには、すべての機能を記録してください。</string>
+    <string name="background_setup_title">バックグラウンドサービス</string>
+    <string name="background_setup_body">ウィジェットを動かし、イヤホンを自動で再接続するため、QuickBuds は小さなバックグラウンドサービスを実行します。スマートフォンのロック中は停止し、ロック解除で再開します。設定で変更できます。</string>
+    <string name="background_setup_keep">オンのまま</string>
+    <string name="background_setup_off">オフにする</string>
 </resources>

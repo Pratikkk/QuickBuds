@@ -464,4 +464,8 @@
     <string name="test_not_marked">Nincs megjelölve</string>
     <string name="test_broken_hint">Mi történt? Egy sor elég.</string>
     <string name="test_mark_all">Jelölj meg minden funkciót az eredmény elküldéséhez.</string>
+    <string name="background_setup_title">Háttérszolgáltatás</string>
+    <string name="background_setup_body">A QuickBuds egy kis háttérszolgáltatást futtat, hogy a widgetek működjenek, és a fülhallgató magától újracsatlakozzon. Zárolt telefonnál alszik, feloldáskor felébred. Ezt a Beállításokban módosíthatod.</string>
+    <string name="background_setup_keep">Bekapcsolva marad</string>
+    <string name="background_setup_off">Kikapcsolás</string>
 </resources>

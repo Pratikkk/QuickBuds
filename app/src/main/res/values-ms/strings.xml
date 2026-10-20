@@ -464,4 +464,8 @@
     <string name="test_not_marked">Belum ditanda</string>
     <string name="test_broken_hint">Apa yang berlaku? Satu baris sudah cukup.</string>
     <string name="test_mark_all">Tandakan setiap ciri untuk menghantar hasilnya.</string>
+    <string name="background_setup_title">Perkhidmatan latar belakang</string>
+    <string name="background_setup_body">QuickBuds menjalankan perkhidmatan latar belakang kecil supaya widget berfungsi dan earbud bersambung semula sendiri. Ia tidur semasa telefon dikunci dan bangun apabila dibuka kunci. Anda boleh mengubahnya dalam Tetapan.</string>
+    <string name="background_setup_keep">Kekalkan hidup</string>
+    <string name="background_setup_off">Matikan</string>
 </resources>

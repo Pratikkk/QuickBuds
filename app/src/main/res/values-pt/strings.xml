@@ -464,4 +464,8 @@
     <string name="test_not_marked">Não marcada</string>
     <string name="test_broken_hint">O que aconteceu? Uma linha chega.</string>
     <string name="test_mark_all">Marque cada função para enviar o resultado.</string>
+    <string name="background_setup_title">Serviço em segundo plano</string>
+    <string name="background_setup_body">O QuickBuds mantém um pequeno serviço em segundo plano para os widgets funcionarem e os fones se reconectarem sozinhos. Ele dorme com o telefone bloqueado e acorda ao desbloquear. Você pode mudar isso nas Configurações.</string>
+    <string name="background_setup_keep">Manter ativado</string>
+    <string name="background_setup_off">Desativar</string>
 </resources>

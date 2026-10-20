@@ -466,4 +466,8 @@
     <string name="test_not_marked">Chưa đánh dấu</string>
     <string name="test_broken_hint">Đã xảy ra chuyện gì? Một dòng là đủ.</string>
     <string name="test_mark_all">Đánh dấu mọi tính năng để gửi kết quả.</string>
+    <string name="background_setup_title">Dịch vụ nền</string>
+    <string name="background_setup_body">QuickBuds chạy một dịch vụ nền nhỏ để widget hoạt động và tai nghe tự kết nối lại. Dịch vụ ngủ khi điện thoại bị khóa và thức dậy khi bạn mở khóa. Bạn có thể đổi điều này trong Cài đặt.</string>
+    <string name="background_setup_keep">Giữ bật</string>
+    <string name="background_setup_off">Tắt</string>
 </resources>

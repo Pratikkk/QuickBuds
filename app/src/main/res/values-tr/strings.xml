@@ -464,4 +464,8 @@
     <string name="test_not_marked">İşaretlenmedi</string>
     <string name="test_broken_hint">Ne oldu? Bir satır yeterli.</string>
     <string name="test_mark_all">Sonucu göndermek için her özelliği işaretleyin.</string>
+    <string name="background_setup_title">Arka plan hizmeti</string>
+    <string name="background_setup_body">QuickBuds, widget\'ların çalışması ve kulaklıkların kendiliğinden yeniden bağlanması için küçük bir arka plan hizmeti çalıştırır. Telefon kilitliyken uyur, kilit açılınca uyanır. Bunu Ayarlar\'dan değiştirebilirsin.</string>
+    <string name="background_setup_keep">Açık kalsın</string>
+    <string name="background_setup_off">Kapat</string>
 </resources>

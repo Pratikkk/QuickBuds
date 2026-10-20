@@ -464,4 +464,8 @@
     <string name="test_not_marked">Niet gemarkeerd</string>
     <string name="test_broken_hint">Wat gebeurde er? Eén regel is genoeg.</string>
     <string name="test_mark_all">Markeer elke functie om het resultaat te versturen.</string>
+    <string name="background_setup_title">Achtergrondservice</string>
+    <string name="background_setup_body">QuickBuds houdt een kleine achtergrondservice actief zodat de widgets werken en de oortjes zelf opnieuw verbinden. De service slaapt als de telefoon vergrendeld is en wordt wakker bij het ontgrendelen. Je kunt dit wijzigen in Instellingen.</string>
+    <string name="background_setup_keep">Aan laten</string>
+    <string name="background_setup_off">Uitzetten</string>
 </resources>
