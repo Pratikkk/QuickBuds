@@ -51,6 +51,10 @@ class BudsConnectionManager(private val context: Context) {
         /** Last firmware version read, as HeyMelody shows it ([OpoProtocol.firmwareVersion]). */
         const val KEY_FIRMWARE = "firmwareVersion"
         private const val HANDSHAKE_WAIT_MS = 6000L
+        /** The buds apply a write about a second after the ack; a read sooner returns the old value and the switch flickers. */
+        private const val VERIFY_DELAY_MS = 2200L
+        /** For this long after our own write, a read of that switch shows what we wrote. */
+        private const val PENDING_MS = 2000L
     }
 
     init {
@@ -452,9 +456,10 @@ class BudsConnectionManager(private val context: Context) {
     fun setGameMode(on: Boolean) {
         Thread {
             try {
+                notePending(Capabilities.gameModeId(context), on)
                 sendRawBlocking(proto.feature(Capabilities.gameModeId(context), on),"GameMode")
                 // The buds apply the switch about a second after the ack (the push `0x0204` 05 confirms it): an earlier read returns the old value and the switch jumps back. [CAPTURE] 2026-10-20, Buds 4.
-                Thread.sleep(1500)
+                Thread.sleep(VERIFY_DELAY_MS)
                 sendRawBlocking(statusQuery(), "verify features")
             } catch (e: Exception) {
                 log("GAME MODE write failed: ${e.message}")
@@ -468,10 +473,24 @@ class BudsConnectionManager(private val context: Context) {
      * Dual connection, in HeyMelody's exact order (`[CAPTURE]` 2026-09-25): `0x0403 11 xx`, a status
      * re-read, then `0x0413 08 00 xx`. The buds answer with a `0x0204` subType `06` device list.
      */
+    private val pending = java.util.concurrent.ConcurrentHashMap<Int, Pair<Int, Long>>()
+
+    private fun notePending(id: Int, on: Boolean) { pending[id] = (if (on) 1 else 0) to System.currentTimeMillis() }
+
+    /** A status read inside [PENDING_MS] of our own write keeps the written value for that switch (no flicker). */
+    private fun withPending(states: Map<Int, Int>): Map<Int, Int> {
+        val now = System.currentTimeMillis()
+        val out = states.toMutableMap()
+        for ((id, v) in pending) { if (now - v.second > PENDING_MS) pending.remove(id) else if (id in out) out[id] = v.first }
+        return out
+    }
+
     fun setDualDevice(on: Boolean) {
         Thread {
             try {
+                notePending(Feature.DUAL_DEVICE, on)
                 sendRawBlocking(proto.feature(Feature.DUAL_DEVICE, on), "Dual device -> $on")
+                Thread.sleep(VERIFY_DELAY_MS)
                 sendRawBlocking(statusQuery(), "verify features")
                 sendRawBlocking(proto.dualFollowup(on),"Dual follow-up")
             } catch (e: Exception) {
@@ -498,7 +517,7 @@ class BudsConnectionManager(private val context: Context) {
         Thread {
             try {
                 sendRawBlocking(proto.preferredSet(mac), "Preferred ${mac ?: "auto"}")
-                Thread.sleep(250)
+                Thread.sleep(VERIFY_DELAY_MS)
                 sendRawBlocking(proto.preferredRead(), "query preferred")
             } catch (e: Exception) {
                 log("PREFERRED write failed: ${e.message}")
@@ -607,7 +626,7 @@ class BudsConnectionManager(private val context: Context) {
         eqQueue.execute {
             if (pick != null && pick != eqPickSeq) return@execute
             try {
-                if (write != null) { sendRawBlocking(write.first, write.second); Thread.sleep(250) }
+                if (write != null) { sendRawBlocking(write.first, write.second); Thread.sleep(400) }
                 for ((cmd, read) in listOf(
                         OpoProtocol.CMD_QUERY_EQ to (OpoProtocol.queryEq() to "query EQ"),
                         OpoProtocol.CMD_QUERY_EQ_ALL to (OpoProtocol.queryEqAll() to "query custom EQ"),
@@ -668,11 +687,12 @@ class BudsConnectionManager(private val context: Context) {
         Thread {
             try {
                 for ((id, on) in changes) {
+                    notePending(id, on)
                     // The buds restart after these two and come back without phone audio (a 3D audio switch that drops hi-res restarts them too).
                     if (id == Feature.POWER_SAVING || id == Feature.HIRES_CODEC) audioAfterRestart = true
                     sendRawBlocking(proto.feature(id, on), "Feature 0x%02X -> %s".format(id, on))
                 }
-                Thread.sleep(400)
+                Thread.sleep(VERIFY_DELAY_MS)
                 sendRawBlocking(statusQuery(), "verify features")
             } catch (e: Exception) {
                 log("FEATURE WRITE failed: ${e.message}")
@@ -689,7 +709,7 @@ class BudsConnectionManager(private val context: Context) {
             try {
                 for (p in packets) { sendRawBlocking(p, "golden"); Thread.sleep(60) }
                 if (packets.any { OppoPacketFramer.normalise(it).let { f -> f[4].toInt() == 0x03 && f[5].toInt() == 0x04 } }) {
-                    Thread.sleep(400)
+                    Thread.sleep(VERIFY_DELAY_MS)
                     sendRawBlocking(statusQuery(), "verify features")
                 }
             } catch (e: Exception) {
@@ -752,7 +772,7 @@ class BudsConnectionManager(private val context: Context) {
         Thread {
             try {
                 sendRawBlocking(write, label)
-                Thread.sleep(400)
+                Thread.sleep(VERIFY_DELAY_MS)
                 sendRawBlocking(read, readLabel)
             } catch (e: Exception) {
                 log("$label failed: ${e.message}")
@@ -777,7 +797,7 @@ class BudsConnectionManager(private val context: Context) {
         Thread {
             try {
                 sendRawBlocking(proto.tapLevel(level),"Tap level $level")
-                Thread.sleep(250)
+                Thread.sleep(VERIFY_DELAY_MS)
                 sendRawBlocking(OpoProtocol.queryTapLevel(), "query tap level")
             } catch (e: Exception) {
                 log("TAP LEVEL write failed: ${e.message}")
@@ -800,7 +820,7 @@ class BudsConnectionManager(private val context: Context) {
         Thread {
             try {
                 sendRawBlocking(proto.alertVolume(level),"Alert volume $level")
-                Thread.sleep(250)
+                Thread.sleep(VERIFY_DELAY_MS)
                 sendRawBlocking(OpoProtocol.queryAlertVolume(), "query alert volume")
             } catch (e: Exception) {
                 log("ALERT VOLUME write failed: ${e.message}")
@@ -819,7 +839,7 @@ class BudsConnectionManager(private val context: Context) {
         sendRaw(proto.holdCycle(mask, type),"Hold ANC modes ($type) -> 0x%04X".format(mask))
         Thread {
             try {
-                Thread.sleep(400)
+                Thread.sleep(VERIFY_DELAY_MS)
                 sendRawBlocking(OpoProtocol.queryNoiseSwitchModes(type), "verify hold ANC modes")
             } catch (e: Exception) {
                 log("HOLD MODES WRITE: verify query failed: ${e.message}")
@@ -843,7 +863,7 @@ class BudsConnectionManager(private val context: Context) {
     private fun verifyKeyFunctionAfterDelay() {
         Thread {
             try {
-                Thread.sleep(400)
+                Thread.sleep(VERIFY_DELAY_MS)
                 sendRawBlocking(OpoProtocol.queryKeyFunction(), "verify key function")
             } catch (e: Exception) {
                 log("ON-CALL WRITE: verify query failed: ${e.message}")
@@ -1462,7 +1482,7 @@ class BudsConnectionManager(private val context: Context) {
                 val o = 2 + i * 2
                 if (o + 1 < payload.size) (payload[o].toInt() and 0xFF) to (payload[o + 1].toInt() and 0xFF)
                 else null
-            }.toMap()
+            }.toMap().let { withPending(it) }
             featureStates = states
             log("FEATURES: " + states.entries.joinToString(" ") { "%02X=%d".format(java.util.Locale.ROOT, it.key, it.value) })
             // Game mode has its own push (0x0204 subType 0x05) but none at connect time; this is
@@ -1766,7 +1786,7 @@ class BudsConnectionManager(private val context: Context) {
                 later { onTapLevel(m.level, tapLevelDefault) }
             }
             is Msg.Features -> {
-                val states = m.list.toMap()
+                val states = withPending(m.list.toMap())
                 featureStates = states
                 log("FEATURES: " + states.entries.joinToString(" ") { "%02X=%d".format(java.util.Locale.ROOT, it.key, it.value) })
                 val game = states[Capabilities.gameModeId(context)]
