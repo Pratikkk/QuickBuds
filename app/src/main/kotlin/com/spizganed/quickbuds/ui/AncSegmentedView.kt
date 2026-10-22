@@ -99,6 +99,8 @@ class AncSegmentedView(
      */
     private val material = ThemeRes.material(context)
 
+    private val glassDisc = ThemeRes.GlassDrawable(context, 26f)
+
     private fun drawMaterial(canvas: Canvas) {
         val n = labels.size
         val gap = dp(4f)
@@ -118,7 +120,12 @@ class AncSegmentedView(
                 continue
             }
             val r = dp(26f)
-            canvas.drawCircle(cx, r, r, trackPaint)
+            if (p.glass) {
+                // Glass: every mode is a glass disc; the selected one is lit white.
+                glassDisc.setBounds((cx - r).toInt(), 0, (cx + r).toInt(), (r * 2).toInt())
+                glassDisc.draw(canvas)
+                if (on > 0f) { trackPaint.color = Palette.withAlpha(0xFFFFFFFF.toInt(), 0.85f * on); canvas.drawCircle(cx, r, r, trackPaint) }
+            } else canvas.drawCircle(cx, r, r, trackPaint)
             icons.getOrNull(i)?.run {
                 setTint(Palette.blend(p.textSecondary, p.onAccent, on))
                 val s = dp(12f).toInt()

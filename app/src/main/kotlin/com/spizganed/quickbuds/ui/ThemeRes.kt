@@ -122,27 +122,27 @@ object ThemeRes {
      */
     private fun glassify(p: Palette) = p.copy(
         glass = true, background = Color.TRANSPARENT, card = Palette.GLASS_FILL, text = Color.WHITE,
-        textSecondary = 0xB8FFFFFF.toInt(), outline = 0x40FFFFFF
+        textSecondary = 0xB8FFFFFF.toInt(), outline = 0x59FFFFFF
     )
 
     /** The window behind the glass: a deep base with soft colour blobs, tinted by the accent. */
     fun glassBackground(context: Context, accent: Int): Drawable {
         if (!glassGradient(context)) return ColorDrawable(Color.BLACK)
         val dm = context.resources.displayMetrics
-        val r = maxOf(dm.widthPixels, dm.heightPixels) * 0.75f
+        val r = dm.heightPixels * 0.5f
         fun blob(color: Int, cx: Float, cy: Float) = android.graphics.drawable.GradientDrawable().apply {
             gradientType = android.graphics.drawable.GradientDrawable.RADIAL_GRADIENT
             gradientRadius = r
             setGradientCenter(cx, cy)
             colors = intArrayOf(color, Palette.withAlpha(color, 0f))
         }
-        val hsv = FloatArray(3).also { Color.colorToHSV(accent, it) }
-        fun hue(shift: Float) = Color.HSVToColor(floatArrayOf((hsv[0] + shift) % 360f, 0.75f, 0.95f))
+        // The design's four blobs (blue, purple, orange, teal) on a deep base, dimmed to a dark window.
         return android.graphics.drawable.LayerDrawable(arrayOf(
-            ColorDrawable(0xFF14123A.toInt()),
-            blob(Palette.withAlpha(hue(0f), 0.85f), 0.1f, 0.12f),
-            blob(Palette.withAlpha(hue(150f), 0.7f), 0.95f, 0.35f),
-            blob(Palette.withAlpha(hue(60f), 0.6f), 0.5f, 1.0f)
+            ColorDrawable(0xFF07070F.toInt()),
+            blob(Palette.withAlpha(0xFF4A6DFF.toInt(), 0.38f), 0.12f, 0.18f),
+            blob(Palette.withAlpha(0xFFC27BFF.toInt(), 0.30f), 0.88f, 0.12f),
+            blob(Palette.withAlpha(0xFFFF9D6B.toInt(), 0.26f), 0.78f, 0.92f),
+            blob(Palette.withAlpha(0xFF27D0C4.toInt(), 0.28f), 0.08f, 0.95f)
         ))
     }
 
@@ -175,8 +175,8 @@ object ThemeRes {
     const val KEY_GLASS = "styleGlass"
     private const val KEY_GLASS_GRADIENT = "styleGlassGradient"
 
-    /** Glass: a soft colour gradient behind the glass. Off (the default): a pitch black window. */
-    fun glassGradient(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_GLASS_GRADIENT, false)
+    /** Glass: a dark colour gradient behind the glass (the default). Off: a pitch black window. */
+    fun glassGradient(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_GLASS_GRADIENT, true)
 
     fun setGlassGradient(context: Context, on: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_GLASS_GRADIENT, on).apply()
@@ -368,6 +368,36 @@ object ThemeRes {
         if (nothing(context)) DotArt.Box(context, palette(context).card, fill, radiusDp)
         else shape(context, fill, null, if (material(context)) FULL else radiusDp)
 
+    /** The design's glass surface: a diagonal white gradient, a light rim and a bright line along the top edge. */
+    class GlassDrawable(context: Context, private val radiusDp: Float, private val selected: Boolean = false) : Drawable() {
+        private val d = context.resources.displayMetrics.density
+        private val fill = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+        private val rim = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            style = android.graphics.Paint.Style.STROKE; strokeWidth = d; color = 0x4DFFFFFF
+        }
+        private val lit = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { style = android.graphics.Paint.Style.STROKE; strokeWidth = d }
+        private val box = android.graphics.RectF()
+
+        override fun onBoundsChange(b: android.graphics.Rect) {
+            fill.shader = android.graphics.LinearGradient(b.left.toFloat(), b.top.toFloat(), b.right.toFloat(), b.bottom.toFloat(),
+                if (selected) 0x55FFFFFF else 0x38FFFFFF, if (selected) 0x2EFFFFFF else 0x14FFFFFF, android.graphics.Shader.TileMode.CLAMP)
+            lit.shader = android.graphics.LinearGradient(0f, b.top.toFloat(), 0f, b.top + 20 * d, 0x8CFFFFFF.toInt(), 0, android.graphics.Shader.TileMode.CLAMP)
+        }
+
+        override fun draw(canvas: android.graphics.Canvas) {
+            val r = minOf(radiusDp * d, bounds.width() / 2f, bounds.height() / 2f)
+            box.set(bounds); box.inset(d / 2, d / 2)
+            canvas.drawRoundRect(box, r, r, fill)
+            canvas.drawRoundRect(box, r, r, rim)
+            box.inset(d, d)
+            canvas.drawRoundRect(box, r - d, r - d, lit)
+        }
+        override fun setAlpha(alpha: Int) {}
+        override fun setColorFilter(colorFilter: android.graphics.ColorFilter?) {}
+        @Deprecated("Deprecated in Java")
+        override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
+    }
+
     /** A group of rows or a home tile: the [card], in dots in the dot style (borders back on home). */
     fun group(context: Context): Drawable? = if (material(context)) Segments(context) else card(context)
 
@@ -377,6 +407,9 @@ object ThemeRes {
      * reads the rows from the view it is the background of.
      */
     class Segments(context: Context) : Drawable() {
+        // Glass: one glass card for the whole list, a hairline where the tiles part.
+        private val glassCard = if (palette(context).glass) GlassDrawable(context, 28f) else null
+        private val line = android.graphics.Paint().apply { color = 0x29FFFFFF }
         private val fill = palette(context).container
         private val outer = dp(context, LIST_OUTER).toFloat()
         private val inner = dp(context, LIST_INNER).toFloat()
@@ -406,6 +439,13 @@ object ThemeRes {
                 }
             }
             if (top >= 0) tiles += top to bottom
+            if (glassCard != null) {
+                glassCard.bounds = bounds
+                glassCard.draw(canvas)
+                val h = dp(group.context, 1f).toFloat()
+                for (i in 1 until tiles.size) canvas.drawRect(bounds.left.toFloat(), tiles[i].first - h * 1.5f, bounds.right.toFloat(), tiles[i].first - h * 0.5f, line)
+                return
+            }
             tiles.forEachIndexed { i, (t0, b0) ->
                 // The first and last tiles reach the edges, over the group's own padding.
                 val t = if (i == 0) bounds.top else t0
@@ -478,11 +518,12 @@ object ThemeRes {
     fun card(context: Context, radiusDp: Float = 24f, fill: Int? = null, solid: Boolean = false, topOnly: Boolean = false, base: Int? = null): Drawable {
         val p = palette(context)
         if (nothing(context)) return DotArt.Box(context, fill ?: p.card, p.outline, radiusDp, topOnly, solid, base)
-        // Glass: a translucent surface with a light edge; a sheet is nearly opaque, or its content would show through.
-        if (p.glass) return shape(context, if (topOnly) 0xF21E1C4A.toInt() else if (fill == null || fill == p.card) p.container else fill, p.outline, radiusDp).apply {
-            // A sheen from the top-left, as light on glass.
-            if (!topOnly && (fill == null || fill == p.card)) { orientation = GradientDrawable.Orientation.TL_BR; colors = intArrayOf(0x3DFFFFFF, 0x14FFFFFF) }
-            if (topOnly) { val r = dp(context, radiusDp).toFloat(); cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f) }
+        // Glass: the design's glass surface; a sheet is nearly opaque, or its content would show through.
+        if (p.glass) {
+            if (!topOnly) return GlassDrawable(context, radiusDp)
+            return shape(context, 0xF2141238.toInt(), p.outline, radiusDp).apply {
+                val r = dp(context, radiusDp).toFloat(); cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f)
+            }
         }
         // Material: a tonal surface, no outline.
         if (material(context)) return shape(context, if (fill == null || fill == p.card) p.container else fill, null, radiusDp).apply {

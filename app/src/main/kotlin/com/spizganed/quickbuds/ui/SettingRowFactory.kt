@@ -193,7 +193,7 @@ object SettingRowFactory {
                 val checkedState = intArrayOf(android.R.attr.state_checked)
                 trackDrawable = android.graphics.drawable.StateListDrawable().apply {
                     // Glass: a tinted track and a white thumb that keeps its size, as the system's own glass switch.
-                    addState(checkedState, ThemeRes.shape(context, if (p.glass) Palette.blend(p.accent, 0xFF14123A.toInt(), 0.35f) else p.accent, null, ThemeRes.FULL).apply { setSize(dp(52f), dp(32f)) })
+                    addState(checkedState, ThemeRes.shape(context, if (p.glass) 0xCCECF0FF.toInt() else p.accent, null, ThemeRes.FULL).apply { setSize(dp(52f), dp(32f)) })
                     addState(intArrayOf(), (if (p.glass) ThemeRes.shape(context, 0x4D0A0A28, p.outline, ThemeRes.FULL, 1f)
                         else ThemeRes.shape(context, p.container, p.textSecondary, ThemeRes.FULL, 2f)).apply { setSize(dp(52f), dp(32f)) })
                 }
