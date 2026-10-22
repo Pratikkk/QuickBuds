@@ -21,6 +21,11 @@ object UsagePing {
         return prefs.getString(KEY_ID, null) ?: java.util.UUID.randomUUID().toString().also { prefs.edit().putString(KEY_ID, it).apply() }
     }
 
+    /** Forgets the install ID: the next ping or report makes a new one. */
+    fun resetId(c: Context) {
+        c.getSharedPreferences(ThemeRes.PREFS_NAME, Context.MODE_PRIVATE).edit().remove(KEY_ID).apply()
+    }
+
     private const val URL_PING = "https://quickbuds-report.spizganed.workers.dev/ping"
     private const val KEY_DAY = "usagePingDay"
 

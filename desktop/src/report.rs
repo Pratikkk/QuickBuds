@@ -225,16 +225,20 @@ fn post(url: &str, body: &str) -> (u16, String) {
     (code.trim().parse().unwrap_or(0), text.to_string())
 }
 
-/// The install ID: a random UUID made on the first start and kept in `settings.json` ("app_id"). It ties to no device,
-/// account or address. Sent with the daily ping and with a problem report.
-pub(crate) fn app_id() -> String {
-    if let Some(id) = crate::load_settings()["app_id"].as_str() { return id.to_string(); }
+/// A random version 4 UUID. `RandomState` is seeded by the system's random source: two of them give 128 random bits, with no extra crate.
+fn new_id() -> String {
     use std::hash::{BuildHasher, Hasher};
-    // `RandomState` is seeded by the system's random source: two of them give 128 random bits, with no extra crate.
     let r = |_: u8| std::collections::hash_map::RandomState::new().build_hasher().finish();
     let (a, b) = (r(0), r(1));
-    let id = format!("{:08x}-{:04x}-4{:03x}-{:04x}-{:012x}", (a >> 32) as u32, (a >> 16) as u16, (a & 0xfff) as u16,
-        0x8000 | (b >> 48) as u16 & 0x3fff, b & 0xffff_ffff_ffff);
+    format!("{:08x}-{:04x}-4{:03x}-{:04x}-{:012x}", (a >> 32) as u32, (a >> 16) as u16, (a & 0xfff) as u16,
+        0x8000 | (b >> 48) as u16 & 0x3fff, b & 0xffff_ffff_ffff)
+}
+
+/// The install ID: a random UUID made on the first start and kept in `settings.json` ("app_id"). It ties to no device,
+/// account or address. Sent with the daily ping and with a problem report. Delete the key to get a new one.
+pub(crate) fn app_id() -> String {
+    if let Some(id) = crate::load_settings()["app_id"].as_str() { return id.to_string(); }
+    let id = new_id();
     crate::save_setting("app_id", id.clone().into());
     id
 }
@@ -258,6 +262,7 @@ pub(crate) fn send(d: Draft) -> (bool, Option<String>) {
     let json = serde_json::json!({
         "app": format!("QuickBuds {} {}", env!("CARGO_PKG_VERSION"), if cfg!(windows) { "Windows" } else { "Linux" }),
         "model": d.model, "categories": d.categories, "description": d.description, "log": d.log, "crash": d.crash,
+        "id": app_id(),
     });
     let (code, text) = post(WORKER, &json.to_string());
     let message = serde_json::from_str::<serde_json::Value>(&text).ok()
@@ -353,6 +358,17 @@ mod tests {
     fn macs() {
         assert_eq!(scrub_macs("to AA:bb:01:02:03:04 ok"), "to XX:XX:XX:XX:XX:XX ok");
         assert_eq!(scrub_macs("12:34:56.789 RX AA 07"), "12:34:56.789 RX AA 07");
+    }
+
+    #[test]
+    fn install_id_is_a_v4_uuid() {
+        let (a, b) = (new_id(), new_id());
+        assert_ne!(a, b);
+        let parts: Vec<&str> = a.split('-').collect();
+        assert_eq!(parts.iter().map(|p| p.len()).collect::<Vec<_>>(), [8, 4, 4, 4, 12]);
+        assert!(parts[2].starts_with('4'));
+        assert!(matches!(parts[3].as_bytes()[0], b'8' | b'9' | b'a' | b'b'));
+        assert!(a.bytes().all(|c| c == b'-' || c.is_ascii_hexdigit() && !c.is_ascii_uppercase()));
     }
 
     #[test]

@@ -461,7 +461,8 @@
     <string name="test_broken_hint">Apa yang terjadi? Satu baris sudah cukup.</string>
     <string name="test_mark_all">Tandai setiap fitur untuk mengirim hasilnya.</string>
     <string name="about_privacy_title">Privasi</string>
-    <string name="about_privacy_body">Sekali sehari QuickBuds mengirim platform dan nomor versinya (misalnya \"Android 5.0.0\") untuk menghitung pengguna aktif. Tidak ada ID, alamat, atau data earbud yang dikirim. Laporan hanya dikirim saat Anda mengirimnya.</string>
+    <string name="about_privacy_body">QuickBuds mengirim platform, nomor versi (misalnya \"Android 5.0.0\") dan ID instalasi acak sekali sehari untuk menghitung pengguna aktif. ID ini tidak terkait dengan perangkat, akun, atau alamat apa pun, dan aplikasi tidak mengirim data earbud. Laporan membawa ID yang sama dan hanya dikirim saat kamu mengirimnya.</string>
+    <string name="about_privacy_reset">Setel ulang ID instalasi</string>
     <string name="settings_protocol_legacy_title">Protokol lama</string>
     <string name="settings_protocol_legacy_sub">Gunakan tautan lama ke earbud jika yang baru gagal. Sambungkan ulang untuk menerapkan.</string>
     <string name="welcome_title">Selamat datang di QuickBuds</string>

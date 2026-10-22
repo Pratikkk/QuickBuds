@@ -459,7 +459,8 @@
     <string name="test_broken_hint">Apa yang berlaku? Satu baris sudah cukup.</string>
     <string name="test_mark_all">Tandakan setiap ciri untuk menghantar hasilnya.</string>
     <string name="about_privacy_title">Privasi</string>
-    <string name="about_privacy_body">Sekali sehari QuickBuds menghantar platform dan nombor versinya (contohnya \"Android 5.0.0\") untuk mengira pengguna aktif. Ia tidak menghantar ID, alamat atau data earbud. Laporan hanya dihantar apabila anda menghantarnya.</string>
+    <string name="about_privacy_body">QuickBuds menghantar platform, nombor versi (contohnya \"Android 5.0.0\") dan ID pemasangan rawak sekali sehari untuk mengira pengguna aktif. ID itu tidak dikaitkan dengan peranti, akaun atau alamat, dan apl tidak menghantar data fon telinga. Laporan membawa ID yang sama dan hanya dihantar apabila anda menghantarnya.</string>
+    <string name="about_privacy_reset">Tetapkan semula ID pemasangan</string>
     <string name="settings_protocol_legacy_title">Protokol lama</string>
     <string name="settings_protocol_legacy_sub">Guna pautan lama ke earbud jika yang baharu gagal. Sambung semula untuk menggunakan.</string>
     <string name="welcome_title">Selamat datang ke QuickBuds</string>

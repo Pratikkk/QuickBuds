@@ -459,7 +459,8 @@
     <string name="test_broken_hint">Co się stało? Wystarczy jedna linijka.</string>
     <string name="test_mark_all">Oznacz każdą funkcję, aby wysłać wynik.</string>
     <string name="about_privacy_title">Prywatność</string>
-    <string name="about_privacy_body">Raz dziennie QuickBuds wysyła swoją platformę i numer wersji (na przykład „Android 5.0.0”), aby liczyć aktywnych użytkowników. Nie wysyła identyfikatora, adresu ani danych słuchawek. Zgłoszenia są wysyłane tylko wtedy, gdy je wyślesz.</string>
+    <string name="about_privacy_body">Raz dziennie QuickBuds wysyła swoją platformę, numer wersji (na przykład „Android 5.0.0”) i losowy identyfikator instalacji, aby liczyć aktywnych użytkowników. Identyfikator nie jest powiązany z urządzeniem, kontem ani adresem, a aplikacja nie wysyła danych słuchawek. Zgłoszenia zawierają ten sam identyfikator i są wysyłane tylko wtedy, gdy je wyślesz.</string>
+    <string name="about_privacy_reset">Zresetuj identyfikator instalacji</string>
     <string name="settings_protocol_legacy_title">Stary protokół</string>
     <string name="settings_protocol_legacy_sub">Użyj starego łącza ze słuchawkami, jeśli nowe zawiedzie. Połącz ponownie, aby zastosować.</string>
     <string name="welcome_title">Witaj w QuickBuds</string>

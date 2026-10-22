@@ -459,7 +459,8 @@
     <string name="test_broken_hint">Wat gebeurde er? Eén regel is genoeg.</string>
     <string name="test_mark_all">Markeer elke functie om het resultaat te versturen.</string>
     <string name="about_privacy_title">Privacy</string>
-    <string name="about_privacy_body">Eén keer per dag stuurt QuickBuds zijn platform en versienummer (bijvoorbeeld „Android 5.0.0”) om actieve gebruikers te tellen. Er gaat geen ID, adres of oortjesdata mee. Meldingen worden alleen verstuurd als jij ze verstuurt.</string>
+    <string name="about_privacy_body">QuickBuds stuurt één keer per dag zijn platform, versienummer (bijvoorbeeld „Android 5.0.0”) en een willekeurig installatie-ID om actieve gebruikers te tellen. Het ID is aan geen enkel apparaat, account of adres gekoppeld en de app stuurt geen oordopjesgegevens. Meldingen dragen hetzelfde ID en gaan alleen weg als jij ze verstuurt.</string>
+    <string name="about_privacy_reset">Installatie-ID resetten</string>
     <string name="settings_protocol_legacy_title">Oud protocol</string>
     <string name="settings_protocol_legacy_sub">Gebruik de oude verbinding met de oortjes als de nieuwe faalt. Maak opnieuw verbinding om toe te passen.</string>
     <string name="welcome_title">Welkom bij QuickBuds</string>

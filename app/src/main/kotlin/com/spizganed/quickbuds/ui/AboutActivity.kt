@@ -104,6 +104,18 @@ class AboutActivity : Activity() {
                 setTextColor(p.textSecondary)
                 setLineSpacing(0f, 1.15f)
             })
+            addView(TextView(this@AboutActivity).apply {
+                setText(R.string.about_privacy_reset)
+                textSize = 15f
+                typeface = ThemeRes.medium(context)
+                setTextColor(p.accent)
+                setPadding(0, dp(14f), 0, 0)
+                setOnClickListener {
+                    UsagePing.resetId(this@AboutActivity)
+                    isEnabled = false
+                    alpha = 0.4f
+                }
+            })
         })
 
         setContentView(ScrollView(this).apply {

@@ -158,8 +158,10 @@ both SIL Open Font License 1.1, licenses bundled in `app/src/main/assets/`.
 
 ## Privacy
 
-Once a day QuickBuds sends its platform and version number (for example "Android 5.0.0") to a Cloudflare Worker. The Worker adds 1
-to that day's counter. It stores no ID, no address and no earbud data. A problem report is sent only when you send it.
+Once a day QuickBuds sends its platform, its version number (for example "Android 5.0.0") and a random install ID to a Cloudflare Worker.
+The Worker counts active installs with it. The ID ties to no device, account or address, and the app sends no earbud data.
+A problem report carries the same ID and is sent only when you send it. On Android, About > Privacy > Reset install ID
+forgets the ID. On the PC, delete the `app_id` key in `settings.json`.
 The Worker code is in [report-worker/](./report-worker).
 
 ## License
