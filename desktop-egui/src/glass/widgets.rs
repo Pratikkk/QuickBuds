@@ -136,6 +136,18 @@ pub fn row_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug + Copy, re
     (enabled && r.clicked() && !toggled, toggled)
 }
 
+/// A one-line list item (a preset): lit inside the card when selected, dimmed while it waits for the buds.
+pub fn list_item_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, rect: Rect, label: &str, selected: bool, dim: bool) -> Response {
+    let r = ui.interact(rect, wid(ui, id), Sense::click());
+    let (h, _) = feel(ui, &r);
+    if selected { ui.painter().rect_filled(rect.shrink2(Vec2::new(8.0, 5.0)), 20.0, white(0.24)); }
+    else if h > 0.0 { ui.painter().rect_filled(rect.shrink2(Vec2::new(8.0, 5.0)), 20.0, white(0.08 * h)); }
+    text(ui, rect.left_center() + Vec2::new(28.0, 0.0), Align2::LEFT_CENTER, label, 16.0, if dim { 0.5 } else { 1.0 });
+    if selected { ui.painter().circle_filled(rect.right_center() - Vec2::new(64.0, 0.0), 5.0, Color32::WHITE); }
+    if r.hovered() && !dim { ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand); }
+    r
+}
+
 /// A hairline between rows.
 pub fn divider_at(ui: &Ui, x0: f32, x1: f32, y: f32) {
     ui.painter().hline(x0..=x1, y, Stroke::new(1.0, white(0.16)));
@@ -157,14 +169,24 @@ pub fn ring_at(ui: &Ui, center: Pos2, radius: f32, frac: Option<f32>, glyph: Opt
     if let Some(g) = glyph { icon_at(ui, g, square(center, radius * 0.8), white(a)); }
 }
 
-/// A slider: a glass track with a white fill and a thumb. Returns true while the value changes.
-pub fn slider_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, rect: Rect, value: &mut f32, min: f32, max: f32) -> bool {
+/// What a slider did this frame.
+#[derive(Default, Clone, Copy)]
+pub struct Slide { pub changed: bool, pub released: bool }
+
+fn slide_value(r: &Response, t: f32, min: f32, max: f32, whole: bool) -> Option<f32> {
+    r.interact_pointer_pos().filter(|_| r.is_pointer_button_down_on() || r.dragged())?;
+    let v = min + (max - min) * t.clamp(0.0, 1.0);
+    Some(if whole { v.round() } else { v })
+}
+
+/// A horizontal slider: a glass track with a white fill and a thumb.
+pub fn slider_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, rect: Rect, value: &mut f32, min: f32, max: f32, whole: bool) -> Slide {
     let r = ui.interact(rect, wid(ui, id), Sense::click_and_drag());
-    let mut changed = false;
-    if let Some(p) = r.interact_pointer_pos().filter(|_| r.is_pointer_button_down_on() || r.dragged()) {
-        let t = ((p.x - rect.left() - 12.0) / (rect.width() - 24.0)).clamp(0.0, 1.0);
-        let v = min + (max - min) * t;
-        if (v - *value).abs() > f32::EPSILON { *value = v; changed = true; }
+    let mut s = Slide { changed: false, released: r.drag_stopped() || r.clicked() };
+    if let Some(p) = r.interact_pointer_pos() {
+        if let Some(v) = slide_value(&r, (p.x - rect.left() - 12.0) / (rect.width() - 24.0), min, max, whole) {
+            if v != *value { *value = v; s.changed = true; }
+        }
     }
     let t = ((*value - min) / (max - min)).clamp(0.0, 1.0);
     let track = Rect::from_center_size(rect.center(), Vec2::new(rect.width() - 8.0, 8.0));
@@ -173,7 +195,48 @@ pub fn slider_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, rect: 
     ui.painter().rect_filled(Rect::from_min_max(track.min, Pos2::new(x, track.max.y)), 4.0, white(0.85));
     let (_, p) = feel(ui, &r);
     ui.painter().circle_filled(Pos2::new(x, rect.center().y), 11.0 + 2.0 * p, Color32::WHITE);
-    changed
+    s
+}
+
+/// A vertical slider (an EQ band): the top is `max`.
+pub fn vslider_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, rect: Rect, value: &mut f32, min: f32, max: f32, whole: bool) -> Slide {
+    let r = ui.interact(rect, wid(ui, id), Sense::click_and_drag());
+    let mut s = Slide { changed: false, released: r.drag_stopped() || r.clicked() };
+    if let Some(p) = r.interact_pointer_pos() {
+        if let Some(v) = slide_value(&r, 1.0 - (p.y - rect.top() - 12.0) / (rect.height() - 24.0), min, max, whole) {
+            if v != *value { *value = v; s.changed = true; }
+        }
+    }
+    let t = ((*value - min) / (max - min)).clamp(0.0, 1.0);
+    let track = Rect::from_center_size(rect.center(), Vec2::new(8.0, rect.height() - 8.0));
+    ui.painter().rect_filled(track, 4.0, white(0.22));
+    let y = rect.bottom() - 12.0 - (rect.height() - 24.0) * t;
+    let zero = rect.bottom() - 12.0 - (rect.height() - 24.0) * ((0.0 - min) / (max - min));
+    ui.painter().rect_filled(Rect::from_min_max(Pos2::new(track.left(), y.min(zero)), Pos2::new(track.right(), y.max(zero))), 4.0, white(0.85));
+    let (_, p) = feel(ui, &r);
+    ui.painter().circle_filled(Pos2::new(rect.center().x, y), 11.0 + 2.0 * p, Color32::WHITE);
+    s
+}
+
+/// A text field on a glass pill. Returns the field's response; it has `lost_focus()` when editing ends.
+pub fn text_field_at(ui: &mut Ui, rect: Rect, text: &mut String, max_len: usize) -> Response {
+    glass_at(ui, rect, rect.height() / 2.0, 1.0);
+    let inner = rect.shrink2(Vec2::new(18.0, 6.0));
+    ui.put(inner, egui::TextEdit::singleline(text).frame(egui::Frame::NONE).char_limit(max_len).text_color(Color32::WHITE).vertical_align(egui::Align::Center))
+}
+
+/// Cancel and Accept at the bottom of a dialog's content area. Some(true) accept, Some(false) cancel.
+pub fn dialog_buttons(ui: &mut Ui, cancel: &str, accept: &str) -> Option<bool> {
+    let r = ui.max_rect();
+    let y = r.bottom() - 44.0;
+    let acc = Rect::from_min_size(Pos2::new(r.right() - 130.0, y), Vec2::new(130.0, 44.0));
+    let can = Rect::from_min_size(Pos2::new(acc.left() - 10.0 - 110.0, y), Vec2::new(110.0, 44.0));
+    let mut out = None;
+    if button_at(ui, "cancel", can, 22.0, false).clicked() { out = Some(false); }
+    text(ui, can.center(), Align2::CENTER_CENTER, cancel, 15.0, 1.0);
+    if button_at(ui, "accept", acc, 22.0, true).clicked() { out = Some(true); }
+    ui.painter().text(acc.center(), Align2::CENTER_CENTER, accept, FontId::proportional(15.0), Color32::from_rgb(27, 26, 69));
+    out
 }
 
 /// A dialog: a dimmed window and a centred glass card. `content` gets the card's inner ui. Returns false when closed.

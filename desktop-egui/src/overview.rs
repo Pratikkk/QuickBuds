@@ -23,9 +23,20 @@ pub fn demo_snapshot() -> Snapshot {
         low_latency: Some(false),
         model,
         codec: Some(3),
+        bass_on: Some(true),
+        bass_level: Some(2),
+        eq_current: Some(21),
+        eq_custom: vec![demo_preset(21, "GoodEQ", [2, 1, 0, -1, 2, 3]), demo_preset(22, "Custom1", [0; 6])],
         features: vec![(types::FEATURE_GAME_MODE, 0), (types::FEATURE_GAME_MODE_MAIN, 0), (FEATURE_HIRES, 1), (FEATURE_SPATIAL, 0), (FEATURE_DUAL, 1), (FEATURE_HEARING, 0)],
         ..Default::default()
     }
+}
+
+fn demo_preset(id: u8, name: &str, gains: [i8; 6]) -> types::Preset {
+    let mut p = types::Preset::new(name, types::EQ_DEFAULT_FREQS.to_vec());
+    p.id = id;
+    p.gains = gains.to_vec();
+    p
 }
 
 /// (mode id, icon, index into the level names)
@@ -60,14 +71,20 @@ pub fn show(app: &mut App, ui: &mut Ui) {
     header(app, ui, content);
     let body = Rect::from_min_max(Pos2::new(content.left(), content.top() + 58.0), content.max);
     confirm_dialog(app, ui);
-    match app.page {
-        Page::Overview => {
-            // The page scrolls when it is taller than the window: a child ui clipped to the body.
-            let mut page = ui.new_child(egui::UiBuilder::new().max_rect(body));
-            page.set_clip_rect(body.intersect(ui.clip_rect()));
-            overview(app, &mut page, body);
+    if app.page != app.shown_page { app.shown_page = app.page; app.scroll = 0.0; }
+    if matches!(app.page, Page::Overview | Page::Eq) {
+        // A page scrolls when it is taller than the window: a child ui clipped to the body.
+        let mut page = ui.new_child(egui::UiBuilder::new().max_rect(body));
+        page.set_clip_rect(body.intersect(ui.clip_rect()));
+        if page.rect_contains_pointer(body) {
+            let dy = page.input(|i| i.smooth_scroll_delta.y);
+            if dy != 0.0 { app.scroll = (app.scroll - dy).max(0.0); }
         }
-        _ => placeholder(ui, body),
+        let shifted = Rect::from_min_max(Pos2::new(body.left(), body.top() - app.scroll), body.max);
+        let bottom = match app.page { Page::Eq => crate::eq::show(app, &mut page, shifted), _ => overview(app, &mut page, shifted) };
+        app.scroll = app.scroll.min((bottom + app.scroll - body.bottom() + 12.0).max(0.0));
+    } else {
+        placeholder(ui, body);
     }
 }
 
@@ -138,13 +155,8 @@ fn placeholder(ui: &mut Ui, body: Rect) {
 /// `confirm`: the string asked before the write (the buds reconnect).
 struct HomeRow { id: &'static str, icon: &'static str, title: String, sub: String, trailing: Trailing, enabled: bool, page: Option<Page>, confirm: Option<&'static str> }
 
-fn overview(app: &mut App, ui: &mut Ui, view: Rect) {
-    // The layout runs from the scrolled top; its height is measured at the end for the next frame's limit.
-    if ui.rect_contains_pointer(view) {
-        let dy = ui.input(|i| i.smooth_scroll_delta.y);
-        if dy != 0.0 { app.scroll = (app.scroll - dy).max(0.0); }
-    }
-    let body = Rect::from_min_max(Pos2::new(view.left(), view.top() - app.scroll), Pos2::new(view.right(), view.bottom()));
+/// Draws the Overview from `body` (already scrolled) and returns the bottom of its content.
+fn overview(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let s = app.snap.clone();
     let on = s.status == Status::On;
     let listed = |id: u8| s.features.iter().find(|f| f.0 == id).map(|f| f.1);
@@ -201,7 +213,6 @@ fn overview(app: &mut App, ui: &mut Ui, view: Rect) {
     }
 
     let bottom = [batt.bottom(), anc.bottom(), rows_r.bottom(), nav_r.bottom()].into_iter().fold(f32::MIN, f32::max);
-    app.scroll = app.scroll.min((bottom + app.scroll - view.bottom() + 12.0).max(0.0));
     battery(app, ui, batt);
     noise(app, ui, anc);
     for (rect, list, id) in [(rows_r, right, "right"), (nav_r, left, "left")] {
@@ -230,6 +241,7 @@ fn overview(app: &mut App, ui: &mut Ui, view: Rect) {
             }
         }
     }
+    bottom
 }
 
 fn battery(app: &mut App, ui: &mut Ui, rect: Rect) {
@@ -317,13 +329,8 @@ fn confirm_dialog(app: &mut App, ui: &mut Ui) {
     let open = glass::dialog(ui.ctx(), "confirm", t(tr, "codec_dialog_title"), Vec2::new(440.0, 230.0), |ui| {
         let r = ui.max_rect();
         ui.add(egui::Label::new(egui::RichText::new(t(tr, msg)).size(14.0).color(white(0.85))).wrap());
-        let y = r.bottom() - 44.0;
-        let accept = Rect::from_min_size(Pos2::new(r.right() - 130.0, y), Vec2::new(130.0, 44.0));
-        let cancel = Rect::from_min_size(Pos2::new(accept.left() - 10.0 - 110.0, y), Vec2::new(110.0, 44.0));
-        if glass::button_at(ui, "cancel", cancel, 22.0, false).clicked() { decision = Some(false); }
-        glass::text(ui, cancel.center(), Align2::CENTER_CENTER, t(tr, "dialog_cancel"), 15.0, 1.0);
-        if glass::button_at(ui, "accept", accept, 22.0, true).clicked() { decision = Some(true); }
-        ui.painter().text(accept.center(), Align2::CENTER_CENTER, t(tr, "codec_dialog_accept"), egui::FontId::proportional(15.0), egui::Color32::from_rgb(27, 26, 69));
+        let _ = r;
+        decision = glass::dialog_buttons(ui, t(tr, "dialog_cancel"), t(tr, "codec_dialog_accept"));
     });
     match decision {
         Some(true) => for c in cmds { app.send(c); },

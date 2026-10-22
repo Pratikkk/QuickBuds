@@ -14,6 +14,7 @@ mod session;
 #[path = "../../desktop/src/types.rs"]
 mod types;
 
+mod eq;
 mod glass;
 mod overview;
 
@@ -150,6 +151,8 @@ pub struct App {
     pub confirm: Option<(Vec<Cmd>, &'static str)>,
     /// The Overview's scroll offset in points.
     pub scroll: f32,
+    pub shown_page: Page,
+    pub eq: eq::State,
 }
 
 impl App {
@@ -169,7 +172,7 @@ impl App {
         let glow = load_settings()["glass_gradient"].as_bool().unwrap_or(true);
         Self {
             snap: Snapshot::default(), tx, tr: translations(chosen_locale()), inbox, page: Page::Overview, has: Has::ALL,
-            modes: AncModes::default(), last_level: None, levels_open: false, glow, demo, confirm: None, scroll: 0.0,
+            modes: AncModes::default(), last_level: None, levels_open: false, glow, demo, confirm: None, scroll: 0.0, shown_page: Page::Overview, eq: Default::default(),
         }
     }
 
