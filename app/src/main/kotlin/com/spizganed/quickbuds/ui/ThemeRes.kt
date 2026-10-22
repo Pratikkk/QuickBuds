@@ -136,13 +136,13 @@ object ThemeRes {
             setGradientCenter(cx, cy)
             colors = intArrayOf(color, Palette.withAlpha(color, 0f))
         }
-        // The design's four blobs (blue, purple, orange, teal) on a deep base, dimmed to a dark window.
+        // The design's four blobs (blue, purple, orange, teal) on a deep base, dimmed to a dark midnight window.
         return android.graphics.drawable.LayerDrawable(arrayOf(
-            ColorDrawable(0xFF07070F.toInt()),
-            blob(Palette.withAlpha(0xFF4A6DFF.toInt(), 0.38f), 0.12f, 0.18f),
-            blob(Palette.withAlpha(0xFFC27BFF.toInt(), 0.30f), 0.88f, 0.12f),
-            blob(Palette.withAlpha(0xFFFF9D6B.toInt(), 0.26f), 0.78f, 0.92f),
-            blob(Palette.withAlpha(0xFF27D0C4.toInt(), 0.28f), 0.08f, 0.95f)
+            ColorDrawable(0xFF0A0A16.toInt()),
+            blob(Palette.withAlpha(0xFF4A6DFF.toInt(), 0.24f), 0.12f, 0.18f),
+            blob(Palette.withAlpha(0xFFC27BFF.toInt(), 0.17f), 0.88f, 0.12f),
+            blob(Palette.withAlpha(0xFFFF9D6B.toInt(), 0.13f), 0.78f, 0.92f),
+            blob(Palette.withAlpha(0xFF27D0C4.toInt(), 0.15f), 0.08f, 0.95f)
         ))
     }
 
@@ -175,8 +175,8 @@ object ThemeRes {
     const val KEY_GLASS = "styleGlass"
     private const val KEY_GLASS_GRADIENT = "styleGlassGradient"
 
-    /** Glass: a dark colour gradient behind the glass. Off (the default): a pitch black window (OLED). */
-    fun glassGradient(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_GLASS_GRADIENT, false)
+    /** Glass: a dim midnight glow behind the glass (the default). Off: a pitch black window (OLED). */
+    fun glassGradient(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_GLASS_GRADIENT, true)
 
     fun setGlassGradient(context: Context, on: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_GLASS_GRADIENT, on).apply()
@@ -521,7 +521,7 @@ object ThemeRes {
         // Glass: the design's glass surface; a sheet is nearly opaque, or its content would show through.
         if (p.glass) {
             if (!topOnly) return GlassDrawable(context, radiusDp)
-            return shape(context, if (glassGradient(context)) 0xF2141238.toInt() else 0xF2181818.toInt(), p.outline, radiusDp).apply {
+            return shape(context, if (glassGradient(context)) 0xF20F0F22.toInt() else 0xF2181818.toInt(), p.outline, radiusDp).apply {
                 val r = dp(context, radiusDp).toFloat(); cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f)
             }
         }
