@@ -187,6 +187,9 @@ fn pairs(b: &[u8]) -> Option<Vec<(u8, u8)>> {
 fn le(b: &[u8]) -> u32 { b[..b.len().min(4)].iter().rev().fold(0, |v, &x| v << 8 | x as u32) }
 
 /// §8: status bits 0 out of the case, 1 in ear, 2 lid open; bit 3 is a flag we drop.
+/// §8: a wearing list has parts and every part is 1 (left), 2 (right) or 3 (case).
+fn valid_wear(v: &Vec<(u8, u8)>) -> bool { !v.is_empty() && v.iter().all(|x| (1..=3).contains(&x.0)) }
+
 fn wear_bits(v: Vec<(u8, u8)>) -> Vec<(u8, u8)> { v.into_iter().map(|(i, st)| (i, st & 7)).collect() }
 
 pub fn decode(p: &[u8]) -> Option<Event> {
@@ -197,11 +200,10 @@ pub fn decode(p: &[u8]) -> Option<Event> {
         0x8103 => Event::ProductId(product_id(pl)?),
         0x8200 => Event::Offered(offered_events(pl)?),
         // `[status][count][pairs]`
-        0x8106 if sub == Some(0) => Event::Battery(battery(&pl[1..])),
+        0x8106 if sub == Some(0) => Event::Battery(battery(&pl[1..])?),
         0x8109 => {
             // `[count][pairs]`, or `[status][count][pairs]` (WearingStatusParser tries both).
-            let valid = |v: &Vec<(u8, u8)>| !v.is_empty() && v.iter().all(|x| (1..=3).contains(&x.0));
-            Event::Wear(wear_bits(pairs(pl).filter(valid).or_else(|| pairs(pl.get(1..)?).filter(valid))?))
+            Event::Wear(wear_bits(pairs(pl).filter(valid_wear).or_else(|| pairs(pl.get(1..)?).filter(valid_wear))?))
         }
         // `[status][01 01][value LE, 1-4 bytes]`
         0x810C if pl.len() >= 4 && pl[1] == 1 && pl[2] == 1 => {
@@ -239,8 +241,8 @@ pub fn decode(p: &[u8]) -> Option<Event> {
         // `00 FB 05 <level>`
         0x8124 if sub == Some(0) && pl.len() >= 4 => Event::BassLevel(pl[3] as i8),
         EVT_PUSH => match sub? {
-            0x01 => Event::Battery(battery(&pl[1..])),
-            0x02 => Event::Wear(wear_bits(pairs(&pl[1..])?)),
+            0x01 => Event::Battery(battery(&pl[1..])?),
+            0x02 => Event::Wear(wear_bits(pairs(&pl[1..]).filter(valid_wear)?)),
             0x03 if pl.len() >= 5 && pl[1] == 1 && pl[2] == 1 => Event::AncRaw(u16::from_le_bytes([pl[3], pl[4]]) as u32),
             0x03 if pl.len() >= 4 && pl[1] == 4 && pl[2] == 1 => Event::SmartLevel(le(&pl[3..])),
             0x05 if pl.len() >= 2 => Event::GameMode(pl.to_vec()),
@@ -360,10 +362,12 @@ impl Framer {
 }
 
 /// Battery (§7): `<count>` then `<index> <raw>` pairs, 1 left, 2 right, 3 case; level `raw & 7F`, charging `raw & 80`.
-pub fn battery(payload: &[u8]) -> Vec<(u8, u8, bool)> {
-    let Some((&count, rest)) = payload.split_first() else { return Vec::new() };
+/// A count of 0, or a list that runs past the end, is no list (None).
+pub fn battery(payload: &[u8]) -> Option<Vec<(u8, u8, bool)>> {
+    let (&count, rest) = payload.split_first()?;
+    if count == 0 || rest.len() < count as usize * 2 { return None; }
     // Level 0 is "not known" (the Air7 Pro's closed case, issue #9): left out, as HeyMelody hides it.
-    rest.chunks_exact(2).take(count as usize).filter(|c| c[1] & 0x7F != 0).map(|c| (c[0], c[1] & 0x7F, c[1] & 0x80 != 0)).collect()
+    Some(rest.chunks_exact(2).take(count as usize).filter(|c| c[1] & 0x7F != 0).map(|c| (c[0], c[1] & 0x7F, c[1] & 0x80 != 0)).collect())
 }
 
 #[cfg(test)]
@@ -372,7 +376,10 @@ mod tests {
 
     #[test]
     fn battery_level_zero_is_left_out() {
-        assert_eq!(battery(&[3, 1, 0x46, 2, 0xC6, 3, 0]), [(1, 0x46, false), (2, 0x46, true)]);
+        assert_eq!(battery(&[3, 1, 0x46, 2, 0xC6, 3, 0]).unwrap(), [(1, 0x46, false), (2, 0x46, true)]);
+        assert_eq!(battery(&[0]), None);
+        assert_eq!(battery(&[0, 1, 0x46]), None);
+        assert_eq!(battery(&[3, 1, 0x46, 2]), None);
     }
 
     #[test]
@@ -556,7 +563,7 @@ mod tests {
         let got = f.push(y);
         assert_eq!(got, vec![a.clone(), a]);
         assert_eq!(f.discarded.len(), 2);
-        assert_eq!(battery(payload_of(&got[0])), [(1, 100, false), (2, 100, false), (3, 80, true)]);
+        assert_eq!(battery(payload_of(&got[0])).unwrap(), [(1, 100, false), (2, 100, false), (3, 80, true)]);
     }
 
     #[test]

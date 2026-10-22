@@ -850,8 +850,7 @@ object BatteryParser {
 
     /**
      * Parse battery query response (Cmd=0x8106).
-     * Payload: [status][count][Index, RawValue] pairs  (status byte is skipped:
-     * it is not 1/2/3, so the pair loop ignores it naturally)
+     * Payload: [status 00][count][Index, RawValue] pairs. A count of 0, or a list that runs past the end, is no list (null).
      * Index: 1=Left, 2=Right, 3=Case.
      * RawValue: level = val & 0x7F, charging = (val & 0x80) != 0
      * Level 0 is "not known" (the Air7 Pro's closed case, issue #9): left out, as HeyMelody hides it.
@@ -861,22 +860,22 @@ object BatteryParser {
         val cmd = OpoProtocol.u16(data, 4)
         if (cmd != 0x8106) return null
         val payLen = OpoProtocol.u16(data, 7)
-        if (data.size < 9 + payLen) return null
+        if (data.size < 9 + payLen || payLen < 2 || data[9].toInt() != 0) return null
+        val count = data[10].toInt() and 0xFF
+        if (count == 0 || payLen < 2 + count * 2) return null
 
         var l: Info? = null
         var r: Info? = null
         var c: Info? = null
-        var i = 9
-        while (i + 1 < 9 + payLen) {
-            val idx = data[i].toInt() and 0xFF
-            val raw = data[i + 1].toInt() and 0xFF
+        for (j in 0 until count) {
+            val idx = data[11 + j * 2].toInt() and 0xFF
+            val raw = data[12 + j * 2].toInt() and 0xFF
             val info = if ((raw and 0x7F) == 0) null else Info(raw and 0x7F, (raw and 0x80) != 0)
             when (idx) {
                 1 -> l = info
                 2 -> r = info
                 3 -> c = info
             }
-            i += 2
         }
         return Result(l, r, c)
     }
@@ -893,7 +892,7 @@ object BatteryParser {
         if (data.size < 9 + payLen || payLen < 2) return null
         if ((data[9].toInt() and 0xFF) != 0x01) return null
         val count = data[10].toInt() and 0xFF
-        if (payLen < 2 + count * 2) return null
+        if (count == 0 || payLen < 2 + count * 2) return null
 
         var l: Info? = null
         var r: Info? = null

@@ -518,6 +518,8 @@ Example, right hold: `AA 0D 00 00 04 02 FF 06 00 F1 02 01 04 08 03`.
 
 `[CAPTURE]` Payload `<count>` then `<index> <raw>` pairs: `01` left, `02` right, `03` case.
 Level = `raw & 0x7F`, charging = `raw & 0x80`. Example: `03 01 64 02 64 03 50`.
+The query reply has a status byte `00` before the count. A count of 0, or a list that runs past the end, is no list: the parsers
+ignore the message and clear nothing.
 
 - The case and a bud inside it report only with the lid **open**. With it closed, `0x0106` returns
   only the bud outside (`01 01 5A`) and nothing is pushed `[CAPTURE]`. So case charging is not shown,
@@ -531,7 +533,7 @@ Level = `raw & 0x7F`, charging = `raw & 0x80`. Example: `03 01 64 02 64 03 50`.
 `[CAPTURE]` Payload `<count>` then `<component> <status>` pairs; component `1` left, `2` right, `3` case.
 
 The status is bits `[VENDOR]`: bit 0 out of the case, bit 1 in ear, bit 2 lid open, bit 3 a flag
-HeyMelody calls "safe remind". Both apps clear bit 3, so only the codes below remain.
+HeyMelody calls "safe remind". Both apps clear bit 3, so only the codes below remain. Query replies and pushes both need at least one part, and every part must be `1`-`3`.
 
 | Status | Meaning |
 |---|---|
