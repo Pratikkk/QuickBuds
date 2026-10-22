@@ -461,10 +461,8 @@
     <string name="about_privacy_title">Privacy</string>
     <string name="about_privacy_body">QuickBuds stuurt één keer per dag zijn platform, versienummer (bijvoorbeeld „Android 5.0.0”) en een willekeurig installatie-ID om actieve gebruikers te tellen. Het ID is aan geen enkel apparaat, account of adres gekoppeld en de app stuurt geen oordopjesgegevens. Meldingen dragen hetzelfde ID en gaan alleen weg als jij ze verstuurt.</string>
     <string name="about_privacy_reset">Installatie-ID resetten</string>
-    <string name="settings_protocol_legacy_title">Oud protocol</string>
-    <string name="settings_protocol_legacy_sub">Gebruik de oude verbinding met de oortjes als de nieuwe faalt. Maak opnieuw verbinding om toe te passen.</string>
     <string name="welcome_title">Welkom bij QuickBuds</string>
-    <string name="welcome_body">QuickBuds gebruikt standaard het opnieuw opgebouwde protocol. Werkt een model niet goed, schakel dan in Instellingen naar het oude protocol. Je kunt dit altijd wijzigen.</string>
+    <string name="welcome_body">Je kunt dit altijd wijzigen.</string>
     <string name="welcome_done">Klaar</string>
     <string name="setup_perm_title">Machtigingen</string>
     <string name="setup_perm_body">QuickBuds heeft Bluetooth nodig om met je oortjes te praten. Meldingen tonen de achtergrondservice.</string>

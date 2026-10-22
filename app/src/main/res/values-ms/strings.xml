@@ -461,10 +461,8 @@
     <string name="about_privacy_title">Privasi</string>
     <string name="about_privacy_body">QuickBuds menghantar platform, nombor versi (contohnya \"Android 5.0.0\") dan ID pemasangan rawak sekali sehari untuk mengira pengguna aktif. ID itu tidak dikaitkan dengan peranti, akaun atau alamat, dan apl tidak menghantar data fon telinga. Laporan membawa ID yang sama dan hanya dihantar apabila anda menghantarnya.</string>
     <string name="about_privacy_reset">Tetapkan semula ID pemasangan</string>
-    <string name="settings_protocol_legacy_title">Protokol lama</string>
-    <string name="settings_protocol_legacy_sub">Guna pautan lama ke earbud jika yang baharu gagal. Sambung semula untuk menggunakan.</string>
     <string name="welcome_title">Selamat datang ke QuickBuds</string>
-    <string name="welcome_body">QuickBuds menggunakan protokol barunya secara lalai. Jika sesuatu model bermasalah, tukar ke protokol lama dalam Tetapan. Pilihan ini boleh diubah pada bila-bila masa.</string>
+    <string name="welcome_body">Pilihan ini boleh diubah pada bila-bila masa.</string>
     <string name="welcome_done">Selesai</string>
     <string name="setup_perm_title">Kebenaran</string>
     <string name="setup_perm_body">QuickBuds memerlukan Bluetooth untuk berhubung dengan earbud anda. Pemberitahuan memaparkan perkhidmatan latar belakang.</string>

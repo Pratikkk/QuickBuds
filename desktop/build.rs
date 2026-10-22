@@ -33,7 +33,7 @@ const STRINGS: &[&str] = &[
     "test_answered", "test_no_answer", "test_section_features", "test_works", "test_broken", "test_skip", "test_skipped",
     "test_not_marked", "test_broken_hint", "test_mark_all",
     "update_title", "update_installed", "update_latest", "update_check", "update_checking", "update_up_to_date",
-    "update_available", "update_install", "update_failed", "update_auto_title", "update_auto_sub", "settings_clear_battery_title", "settings_protocol_legacy_title", "settings_protocol_legacy_sub",
+    "update_available", "update_install", "update_failed", "update_auto_title", "update_auto_sub", "settings_clear_battery_title",
     "settings_clear_battery_sub", "update_found_title",
     "conn_on", "conn_action_connect", "conn_action_disconnect", "conn_connecting", "dual_not_connected",
     "status_left", "status_right", "status_case", "anc_section", "anc_seg_off", "anc_seg_anc", "anc_need_ear",

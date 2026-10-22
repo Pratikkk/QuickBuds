@@ -463,10 +463,8 @@
     <string name="about_privacy_title">Quyền riêng tư</string>
     <string name="about_privacy_body">QuickBuds gửi nền tảng, số phiên bản (ví dụ \"Android 5.0.0\") và một ID cài đặt ngẫu nhiên mỗi ngày một lần để đếm người dùng đang hoạt động. ID không gắn với thiết bị, tài khoản hay địa chỉ nào, và ứng dụng không gửi dữ liệu tai nghe. Báo cáo mang cùng ID đó và chỉ được gửi khi bạn gửi.</string>
     <string name="about_privacy_reset">Đặt lại ID cài đặt</string>
-    <string name="settings_protocol_legacy_title">Giao thức cũ</string>
-    <string name="settings_protocol_legacy_sub">Dùng kết nối cũ với tai nghe nếu kết nối mới thất bại. Kết nối lại để áp dụng.</string>
     <string name="welcome_title">Chào mừng đến với QuickBuds</string>
-    <string name="welcome_body">QuickBuds mặc định dùng giao thức được xây dựng lại. Nếu một mẫu lỗi, hãy chuyển sang giao thức cũ trong Cài đặt. Bạn có thể đổi các lựa chọn này bất cứ lúc nào.</string>
+    <string name="welcome_body">Bạn có thể đổi các lựa chọn này bất cứ lúc nào.</string>
     <string name="welcome_done">Xong</string>
     <string name="setup_perm_title">Quyền</string>
     <string name="setup_perm_body">QuickBuds cần Bluetooth để trò chuyện với tai nghe của bạn. Thông báo hiển thị dịch vụ nền.</string>

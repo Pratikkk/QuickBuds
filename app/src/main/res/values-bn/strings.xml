@@ -461,8 +461,6 @@
     <string name="about_privacy_title">গোপনীয়তা</string>
     <string name="about_privacy_body">QuickBuds দিনে একবার তার প্ল্যাটফর্ম, সংস্করণ নম্বর (যেমন \"Android 5.0.0\") এবং একটি এলোমেলো ইনস্টল আইডি পাঠায়, সক্রিয় ব্যবহারকারী গণনার জন্য। আইডিটি কোনো ডিভাইস, অ্যাকাউন্ট বা ঠিকানার সঙ্গে যুক্ত নয়, এবং অ্যাপ ইয়ারবাডের কোনো ডেটা পাঠায় না। রিপোর্টে একই আইডি থাকে এবং আপনি পাঠালে তবেই যায়।</string>
     <string name="about_privacy_reset">ইনস্টল আইডি রিসেট করুন</string>
-    <string name="settings_protocol_legacy_title">লেগেসি প্রোটোকল</string>
-    <string name="settings_protocol_legacy_sub">নতুনটি কাজ না করলে ইয়ারবাডের সাথে পুরনো সংযোগ ব্যবহার করুন। প্রয়োগ করতে আবার সংযুক্ত করুন।</string>
     <string name="welcome_title">QuickBuds-এ স্বাগতম</string>
     <string name="welcome_body">QuickBuds ডিফল্টভাবে তার নতুন প্রোটোকল ব্যবহার করে। কোনো মডেলে সমস্যা হলে সেটিংসে লেগেসি প্রোটোকলে যান। এই পছন্দগুলো যেকোনো সময় বদলানো যায়।</string>
     <string name="welcome_done">শেষ</string>

@@ -6,7 +6,8 @@ import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
 
 /**
- * The new protocol: the one entry point of this package. The app reaches it through [ProtocolSelect].
+ * The typed protocol layer (docs/PROTOCOL.md): the one entry point of this package. The app does not call it yet; the shipping layer is `protocol/LegacyProtocol.kt`.
+ * OutboundTest and MsgTest hold it byte-identical to the shipping layer, so pieces can move over one at a time.
  * Out: every frame the app sends is built here from a [Cmd] builder. In: [decode], [answer] and [rx] read what the buds send.
  * The frame envelope and the sequence counter come from the legacy builder, so both protocols share one counter.
  * Plain Kotlin apart from the envelope, so a JVM test runs it.

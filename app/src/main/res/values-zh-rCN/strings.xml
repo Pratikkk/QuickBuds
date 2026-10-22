@@ -463,10 +463,8 @@
     <string name="about_privacy_title">隐私</string>
     <string name="about_privacy_body">QuickBuds 每天发送一次平台、版本号（例如 “Android 5.0.0”）和一个随机安装 ID，用于统计活跃用户。该 ID 不与任何设备、账号或地址关联，应用也不会发送耳机数据。报告带有相同的 ID，仅在你发送时才会发出。</string>
     <string name="about_privacy_reset">重置安装 ID</string>
-    <string name="settings_protocol_legacy_title">旧协议</string>
-    <string name="settings_protocol_legacy_sub">新连接失败时使用与耳机的旧连接。重新连接后生效。</string>
     <string name="welcome_title">欢迎使用 QuickBuds</string>
-    <string name="welcome_body">QuickBuds 默认使用重建的协议。如果某个型号出问题，请在设置中切换到旧协议。这些选择可随时更改。</string>
+    <string name="welcome_body">这些选择可随时更改。</string>
     <string name="welcome_done">完成</string>
     <string name="setup_perm_title">权限</string>
     <string name="setup_perm_body">QuickBuds 需要蓝牙才能与耳机通信。通知用于显示后台服务。</string>

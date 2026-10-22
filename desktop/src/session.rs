@@ -4,7 +4,7 @@
 use crate::bt;
 use crate::cmd;
 use crate::types::*;
-use crate::proto::Proto;
+use crate::protocol::Framer;
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, Sender};
 use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -231,7 +231,7 @@ struct Conn<'a> {
     /// 0 for the bridge.
     addr: u64,
     /// The link's protocol (docs/PROTOCOL.md), chosen once per connection.
-    proto: Proto,
+    framer: Framer,
     /// Messages received on this connection: none after the init sequence means the new protocol failed.
     rx: u32,
     seq: u8,
@@ -243,13 +243,10 @@ struct Conn<'a> {
 
 impl<'a> Conn<'a> {
     fn new(link: bt::Link, name: String, addr: u64, emit: &'a Emit) -> Self {
-        let next = crate::protocol_next(addr);
-        crate::types::use_legacy_db(!next);
         let model = find_model(None, Some(&name));
         let mut s = Snapshot { status: Status::On, name, detected: model, ..Default::default() };
         pick_model(&mut s);
-        log("NOTE", Vec::new(), Some(format!("Protocol: {}{}", if next { "new" } else { "legacy" }, if crate::fell_back(addr) { " (fell back for these buds)" } else { "" })));
-        Conn { link, addr, proto: Proto::new(next), rx: 0, seq: 0, level: None, s, emit }
+        Conn { link, addr, framer: Framer::default(), rx: 0, seq: 0, level: None, s, emit }
     }
 
     /// Sends a frame built by `buds_core::cmd`.
@@ -259,8 +256,7 @@ impl<'a> Conn<'a> {
         let seq = seq.unwrap_or_else(|| { self.seq = self.seq % 0xFE + 1; self.seq });
         let p = build_packet(cmd, seq, payload);
         log("TX", p.clone(), describe_tx(cmd, payload));
-        // A message too big for one frame goes out in slices (PROTOCOL.md §2).
-        for f in self.proto.frames_out(cmd, seq, payload) { self.link.write(&f)?; }
+        self.link.write(&p)?;
         Ok(())
     }
 
@@ -271,7 +267,7 @@ impl<'a> Conn<'a> {
         loop {
             let n = self.link.read(&mut buf)?;
             let mut changed = false;
-            let frames = self.proto.frames_in(&buf[..n]);
+            let frames = self.framer.push(&buf[..n]);
             self.rx += frames.len() as u32;
             for p in frames.into_iter().flat_map(|p| {
                 // A batch reply is logged as it came, then handled as the replies it carries.
@@ -280,11 +276,11 @@ impl<'a> Conn<'a> {
                 log("RX", p, Some(format!("batch reply, {} answers", parts.len())));
                 parts
             }) {
-                let e = self.proto.decode(&p);
+                let e = crate::protocol::decode(&p);
                 let human = e.as_ref().map(describe).or_else(|| describe_other(&p));
                 // Some buds drop the link a few seconds after an unanswered request (issue #2: the time request).
                 let now = SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs() as u32);
-                let answer = self.proto.answer(&p, now);
+                let answer = crate::protocol::answer_for(&p, now).map(|a| (a, crate::types::seq_of(&p)));
                 // A refused ANC write (status 14 with no bud in an ear): read the real mode back (§5).
                 let refused = cmd_of(&p) == CMD_SET_ANC | 0x8000 && payload_of(&p).first().is_some_and(|&st| st != 0);
                 let need_ear = refused && payload_of(&p).first() == Some(&0x0E);
@@ -294,7 +290,7 @@ impl<'a> Conn<'a> {
                 if need_ear { self.s.anc_refused += 1; changed = true; }
                 if let Some(e) = e { changed |= self.apply(e); }
             }
-            let skipped = self.proto.take_discarded();
+            let skipped = std::mem::take(&mut self.framer.discarded);
             if !skipped.is_empty() { log("DISCARDED RX", skipped, None); }
             if changed { (self.emit)(self.s.clone()); }
             if Instant::now() >= end { return Ok(()); }
@@ -377,12 +373,6 @@ impl<'a> Conn<'a> {
         let init = self.init();
         // Buds that named their model are remembered, renamed or not.
         if init.is_ok() && self.s.model.is_some() { remember(self.addr); }
-        // The new protocol got no answer at all: these buds use the old link from the next connect on (Android does the same).
-        if self.proto.is_new() && self.rx == 0 {
-            crate::mark_fell_back(self.addr);
-            log("NOTE", Vec::new(), Some("PROTOCOL FALLBACK: no answer. Reconnecting on the legacy protocol.".into()));
-            return End::Lost;
-        }
         match init.and_then(|_| self.run(rx)) {
             Ok(end) => end,
             Err(_) => End::Lost,

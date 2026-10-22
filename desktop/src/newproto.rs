@@ -1,5 +1,5 @@
 //! The NEW protocol (docs/PROTOCOL.md) as the app uses it: the glue between `buds_core` (frames, messages,
-//! answers) and the app's log-format frames and `Event`. The legacy link is `protocol.rs`; `proto.rs` picks one.
+//! answers) and the app's log-format frames and `Event`. The app runs the legacy link (`protocol.rs`); this glue is used by the tests only.
 
 use crate::types::{cmd_of, payload_of, seq_of, Event};
 use buds_core::msg::{decode, Anc, Inbound, Public};

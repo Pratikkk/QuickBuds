@@ -461,10 +461,8 @@
     <string name="about_privacy_title">Privacidad</string>
     <string name="about_privacy_body">Una vez al día QuickBuds envía su plataforma, su número de versión (por ejemplo «Android 5.0.0») y un ID de instalación aleatorio para contar los usuarios activos. El ID no se vincula a ningún dispositivo, cuenta ni dirección, y la app no envía datos de los auriculares. Los informes llevan el mismo ID y solo se envían cuando tú los envías.</string>
     <string name="about_privacy_reset">Restablecer el ID de instalación</string>
-    <string name="settings_protocol_legacy_title">Protocolo antiguo</string>
-    <string name="settings_protocol_legacy_sub">Usar el enlace antiguo con los auriculares si el nuevo falla. Vuelve a conectar para aplicar.</string>
     <string name="welcome_title">Te damos la bienvenida a QuickBuds</string>
-    <string name="welcome_body">QuickBuds usa por defecto su protocolo rediseñado. Si un modelo falla, cambia al protocolo antiguo en Ajustes. Puedes cambiar estas opciones cuando quieras.</string>
+    <string name="welcome_body">Puedes cambiar estas opciones cuando quieras.</string>
     <string name="welcome_done">Listo</string>
     <string name="setup_perm_title">Permisos</string>
     <string name="setup_perm_body">QuickBuds necesita Bluetooth para hablar con tus auriculares. Las notificaciones muestran el servicio en segundo plano.</string>

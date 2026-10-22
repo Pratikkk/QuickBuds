@@ -461,10 +461,8 @@
     <string name="about_privacy_title">プライバシー</string>
     <string name="about_privacy_body">QuickBuds は 1 日に 1 回、プラットフォーム、バージョン番号（例: 「Android 5.0.0」）、ランダムなインストール ID を送信し、アクティブなユーザー数を数えます。この ID は端末、アカウント、アドレスのいずれにも結び付かず、アプリはイヤホンのデータを送信しません。レポートにも同じ ID が付き、あなたが送信したときだけ送られます。</string>
     <string name="about_privacy_reset">インストール ID をリセット</string>
-    <string name="settings_protocol_legacy_title">旧プロトコル</string>
-    <string name="settings_protocol_legacy_sub">新しい接続が失敗したときに、イヤホンとの旧接続を使います。反映するには再接続してください。</string>
     <string name="welcome_title">QuickBuds へようこそ</string>
-    <string name="welcome_body">QuickBuds は標準で再構築したプロトコルを使います。機種に不具合があれば、設定で旧プロトコルに切り替えてください。これらの選択はいつでも変更できます。</string>
+    <string name="welcome_body">これらの選択はいつでも変更できます。</string>
     <string name="welcome_done">完了</string>
     <string name="setup_perm_title">権限</string>
     <string name="setup_perm_body">QuickBuds はイヤホンと通信するために Bluetooth が必要です。通知はバックグラウンドサービスを表示します。</string>

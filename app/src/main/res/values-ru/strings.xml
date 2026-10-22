@@ -461,10 +461,8 @@
     <string name="about_privacy_title">Конфиденциальность</string>
     <string name="about_privacy_body">Раз в день QuickBuds отправляет свою платформу, номер версии (например, «Android 5.0.0») и случайный идентификатор установки, чтобы считать активных пользователей. Идентификатор не связан с устройством, аккаунтом или адресом, а приложение не отправляет данные наушников. Отчёты содержат тот же идентификатор и отправляются только тогда, когда вы их отправляете.</string>
     <string name="about_privacy_reset">Сбросить идентификатор установки</string>
-    <string name="settings_protocol_legacy_title">Старый протокол</string>
-    <string name="settings_protocol_legacy_sub">Использовать старое соединение с наушниками, если новое не работает. Подключитесь заново, чтобы применить.</string>
     <string name="welcome_title">Добро пожаловать в QuickBuds</string>
-    <string name="welcome_body">По умолчанию QuickBuds использует заново созданный протокол. Если модель работает неправильно, переключитесь на старый протокол в настройках. Эти настройки можно менять в любое время.</string>
+    <string name="welcome_body">Эти настройки можно менять в любое время.</string>
     <string name="welcome_done">Готово</string>
     <string name="setup_perm_title">Разрешения</string>
     <string name="setup_perm_body">QuickBuds нужен Bluetooth для связи с наушниками. Уведомления показывают фоновую службу.</string>

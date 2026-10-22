@@ -461,10 +461,8 @@
     <string name="about_privacy_title">Privacidade</string>
     <string name="about_privacy_body">Uma vez por dia o QuickBuds envia a sua plataforma, o número da versão (por exemplo \"Android 5.0.0\") e um ID de instalação aleatório para contar os usuários ativos. O ID não está ligado a nenhum dispositivo, conta ou endereço, e o app não envia dados dos fones. Os relatórios levam o mesmo ID e só são enviados quando você os envia.</string>
     <string name="about_privacy_reset">Redefinir o ID de instalação</string>
-    <string name="settings_protocol_legacy_title">Protocolo antigo</string>
-    <string name="settings_protocol_legacy_sub">Usar o link antigo com os fones se o novo falhar. Reconecte para aplicar.</string>
     <string name="welcome_title">Boas-vindas ao QuickBuds</string>
-    <string name="welcome_body">O QuickBuds usa por padrão o protocolo reconstruído. Se um modelo der problema, mude para o protocolo antigo nas Configurações. Você pode mudar essas opções quando quiser.</string>
+    <string name="welcome_body">Você pode mudar essas opções quando quiser.</string>
     <string name="welcome_done">Concluído</string>
     <string name="setup_perm_title">Permissões</string>
     <string name="setup_perm_body">O QuickBuds precisa de Bluetooth para falar com seus fones. As notificações mostram o serviço em segundo plano.</string>

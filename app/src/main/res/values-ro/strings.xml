@@ -461,10 +461,8 @@
     <string name="about_privacy_title">Confidențialitate</string>
     <string name="about_privacy_body">O dată pe zi QuickBuds trimite platforma, numărul versiunii (de exemplu „Android 5.0.0”) și un ID de instalare aleatoriu pentru a număra utilizatorii activi. ID-ul nu este legat de niciun dispozitiv, cont sau adresă, iar aplicația nu trimite date despre căști. Rapoartele poartă același ID și se trimit doar când le trimiți tu.</string>
     <string name="about_privacy_reset">Resetează ID-ul de instalare</string>
-    <string name="settings_protocol_legacy_title">Protocol vechi</string>
-    <string name="settings_protocol_legacy_sub">Folosește legătura veche cu căștile dacă cea nouă eșuează. Reconectează pentru a aplica.</string>
     <string name="welcome_title">Bun venit în QuickBuds</string>
-    <string name="welcome_body">QuickBuds folosește implicit protocolul reconstruit. Dacă un model are probleme, treci la protocolul vechi din Setări. Poți schimba aceste opțiuni oricând.</string>
+    <string name="welcome_body">Poți schimba aceste opțiuni oricând.</string>
     <string name="welcome_done">Gata</string>
     <string name="setup_perm_title">Permisiuni</string>
     <string name="setup_perm_body">QuickBuds are nevoie de Bluetooth ca să vorbească cu căștile. Notificările arată serviciul din fundal.</string>

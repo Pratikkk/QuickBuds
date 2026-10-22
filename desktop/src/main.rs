@@ -9,8 +9,8 @@ mod devtools;
 mod dots;
 mod dual;
 mod earbuds;
+#[cfg(test)]
 mod newproto;
-mod proto;
 mod eq;
 mod hearing;
 mod models;
@@ -144,29 +144,6 @@ fn load_settings() -> serde_json::Value {
     settings_path().and_then(|p| std::fs::read_to_string(p).ok())
         .and_then(|s| serde_json::from_str(&s).ok()).unwrap_or_else(|| serde_json::json!({}))
 }
-
-/// Settings › Legacy protocol (`protocol_legacy`): the user chose the old link (docs/PROTOCOL.md).
-fn protocol_legacy() -> bool { load_settings()["protocol_legacy"].as_bool().unwrap_or(false) }
-
-/// `settings.json` "protocol_fell_back": `<address>|<version>` of buds the new protocol failed on in this app version.
-fn fell_back_entry(addr: u64) -> String { format!("{addr:012X}|{}", env!("CARGO_PKG_VERSION")) }
-
-fn fell_back(addr: u64) -> bool {
-    let e = fell_back_entry(addr);
-    load_settings()["protocol_fell_back"].as_array().is_some_and(|a| a.iter().any(|x| x.as_str() == Some(&e)))
-}
-
-/// The new protocol failed on these buds: the old link runs there until the app updates. Entries of other versions go.
-fn mark_fell_back(addr: u64) {
-    let tail = format!("|{}", env!("CARGO_PKG_VERSION"));
-    let mut keep: Vec<serde_json::Value> = load_settings()["protocol_fell_back"].as_array().into_iter().flatten()
-        .filter(|x| x.as_str().is_some_and(|s| s.ends_with(&tail))).cloned().collect();
-    keep.push(fell_back_entry(addr).into());
-    save_setting("protocol_fell_back", keep.into());
-}
-
-/// The new protocol is the default: on unless the user chose legacy or these buds fell back.
-fn protocol_next(addr: u64) -> bool { !protocol_legacy() && !fell_back(addr) }
 
 fn save_setting(key: &str, value: serde_json::Value) {
     let Some(path) = settings_path() else { return };
@@ -428,8 +405,6 @@ fn set_texts(tr: &Tr, s: &[String]) {
     tr.set_update_auto_sub(t(s, "update_auto_sub").into());
     tr.set_clear_battery_title(t(s, "settings_clear_battery_title").into());
     tr.set_clear_battery_sub(t(s, "settings_clear_battery_sub").into());
-    tr.set_protocol_legacy_title(t(s, "settings_protocol_legacy_title").into());
-    tr.set_protocol_legacy_sub(t(s, "settings_protocol_legacy_sub").into());
     tr.set_style_classic(t(s, "widget_style_classic").into());
     tr.set_style_dots(t(s, "widget_style_nothing").into());
     tr.set_style_material(t(s, "widget_style_material").into());

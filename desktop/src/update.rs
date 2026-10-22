@@ -167,8 +167,6 @@ pub fn setup(main: &MainWindow) {
     g.on_check(|| with_app(check));
     g.on_set_auto(|on| with_app(|a| { save_setting("update_auto", on.into()); a.main.global::<Update>().set_auto(on); }));
     g.set_clear_battery(load_settings()["clear_battery"].as_bool().unwrap_or(false));
-    g.set_protocol_legacy(crate::protocol_legacy());
-    g.on_set_protocol_legacy(|on| with_app(|a| { save_setting("protocol_legacy", on.into()); a.main.global::<Update>().set_protocol_legacy(on); }));
     g.on_set_clear_battery(|on| with_app(|a| { save_setting("clear_battery", on.into()); a.main.global::<Update>().set_clear_battery(on); }));
     g.on_install(|| with_app(|a| {
         let Some(r) = FOUND.lock().unwrap().take() else { return };

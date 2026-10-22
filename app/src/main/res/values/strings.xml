@@ -549,10 +549,8 @@
     <string name="about_privacy_title">Privacy</string>
     <string name="about_privacy_body">Once a day QuickBuds sends its platform, its version number (for example \"Android 5.0.0\") and a random install ID to count active users. The ID ties to no device, account or address, and the app sends no earbud data. Reports carry the same ID and are sent only when you send them.</string>
     <string name="about_privacy_reset">Reset install ID</string>
-    <string name="settings_protocol_legacy_title">Legacy protocol</string>
-    <string name="settings_protocol_legacy_sub">Use the old link to the earbuds if the new one fails. Reconnect to apply.</string>
     <string name="welcome_title">Welcome to QuickBuds</string>
-    <string name="welcome_body">QuickBuds uses its rebuilt protocol by default. If a model misbehaves, switch to Legacy protocol in Settings. Change these choices any time.</string>
+    <string name="welcome_body">Change these choices any time.</string>
     <string name="welcome_done">Done</string>
     <string name="setup_perm_title">Permissions</string>
     <string name="setup_perm_body">QuickBuds needs Bluetooth to talk to your earbuds. Notifications show the background service.</string>

@@ -461,10 +461,8 @@
     <string name="about_privacy_title">Integritet</string>
     <string name="about_privacy_body">En gång om dagen skickar QuickBuds sin plattform, versionsnummer (till exempel ”Android 5.0.0”) och ett slumpmässigt installations-ID för att räkna aktiva användare. ID:t är inte kopplat till någon enhet, något konto eller någon adress, och appen skickar inga hörlursdata. Rapporter bär samma ID och skickas bara när du skickar dem.</string>
     <string name="about_privacy_reset">Återställ installations-ID</string>
-    <string name="settings_protocol_legacy_title">Äldre protokoll</string>
-    <string name="settings_protocol_legacy_sub">Använd den gamla länken till hörlurarna om den nya misslyckas. Anslut igen för att tillämpa.</string>
     <string name="welcome_title">Välkommen till QuickBuds</string>
-    <string name="welcome_body">QuickBuds använder som standard det ombyggda protokollet. Om en modell krånglar, byt till det äldre protokollet i Inställningar. Du kan ändra dessa val när som helst.</string>
+    <string name="welcome_body">Du kan ändra dessa val när som helst.</string>
     <string name="welcome_done">Klar</string>
     <string name="setup_perm_title">Behörigheter</string>
     <string name="setup_perm_body">QuickBuds behöver Bluetooth för att prata med dina hörlurar. Aviseringar visar bakgrundstjänsten.</string>

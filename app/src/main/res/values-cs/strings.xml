@@ -461,10 +461,8 @@
     <string name="about_privacy_title">Soukromí</string>
     <string name="about_privacy_body">QuickBuds jednou denně odešle svou platformu, číslo verze (například „Android 5.0.0“) a náhodné instalační ID, aby spočítal aktivní uživatele. ID se neváže na zařízení, účet ani adresu a aplikace neodesílá žádná data sluchátek. Hlášení nesou stejné ID a odesílají se jen tehdy, když je odešleš.</string>
     <string name="about_privacy_reset">Obnovit instalační ID</string>
-    <string name="settings_protocol_legacy_title">Starší protokol</string>
-    <string name="settings_protocol_legacy_sub">Použít starý spoj se sluchátky, když nový selže. Pro použití se znovu připojte.</string>
     <string name="welcome_title">Vítejte v QuickBuds</string>
-    <string name="welcome_body">QuickBuds ve výchozím stavu používá přepracovaný protokol. Když model nefunguje správně, přepněte v Nastavení na starší protokol. Volby můžete kdykoli změnit.</string>
+    <string name="welcome_body">Volby můžete kdykoli změnit.</string>
     <string name="welcome_done">Hotovo</string>
     <string name="setup_perm_title">Oprávnění</string>
     <string name="setup_perm_body">QuickBuds potřebuje Bluetooth ke komunikaci se sluchátky. Oznámení zobrazují službu na pozadí.</string>

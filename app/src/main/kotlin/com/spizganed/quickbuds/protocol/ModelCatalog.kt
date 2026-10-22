@@ -19,22 +19,15 @@ object ModelCatalog {
     /** A model id picked by hand in the model list; unset = detected. */
     const val KEY_MANUAL = "budsModelManual"
 
-    /**
-     * Two model databases: `models.json` is ours and the default (new protocol); `models-legacy.json` is the frozen copy the
-     * old protocol keeps. A device whose new protocol failed ([ProtocolNext.enabled] false) reads the legacy one.
-     */
-    @Volatile private var current: List<Model>? = null
-    @Volatile private var legacy: List<Model>? = null
+    @Volatile private var cache: List<Model>? = null
 
     fun all(context: Context): List<Model> {
-        val old = !com.spizganed.quickbuds.protocol2.ProtocolNext.enabled(context)
-        (if (old) legacy else current)?.let { return it }
-        val file = if (old) "models-legacy.json" else "models.json"
+        cache?.let { return it }
         val list = runCatching {
-            val a = JSONObject(context.assets.open(file).bufferedReader().use { it.readText() }).getJSONArray("whiteList")
+            val a = JSONObject(context.assets.open("models.json").bufferedReader().use { it.readText() }).getJSONArray("whiteList")
             (0 until a.length()).map { a.getJSONObject(it) }.map { Model(it.getString("id"), it.getString("name"), it) }
         }.getOrDefault(emptyList())
-        if (old) legacy = list else current = list
+        cache = list
         return list
     }
 

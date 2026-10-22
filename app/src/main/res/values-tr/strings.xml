@@ -461,10 +461,8 @@
     <string name="about_privacy_title">Gizlilik</string>
     <string name="about_privacy_body">QuickBuds günde bir kez platformunu, sürüm numarasını (örneğin “Android 5.0.0”) ve rastgele bir kurulum kimliğini gönderir; amaç etkin kullanıcıları saymaktır. Kimlik hiçbir cihaza, hesaba veya adrese bağlı değildir ve uygulama kulaklık verisi göndermez. Raporlar aynı kimliği taşır ve yalnızca sen gönderdiğinde gönderilir.</string>
     <string name="about_privacy_reset">Kurulum kimliğini sıfırla</string>
-    <string name="settings_protocol_legacy_title">Eski protokol</string>
-    <string name="settings_protocol_legacy_sub">Yenisi başarısız olursa kulaklıkla eski bağlantıyı kullan. Uygulamak için yeniden bağlan.</string>
     <string name="welcome_title">QuickBuds\'a hoş geldin</string>
-    <string name="welcome_body">QuickBuds varsayılan olarak yeniden yazılan protokolünü kullanır. Bir model sorun çıkarırsa Ayarlar\'dan eski protokole geç. Bu seçimleri istediğin zaman değiştirebilirsin.</string>
+    <string name="welcome_body">Bu seçimleri istediğin zaman değiştirebilirsin.</string>
     <string name="welcome_done">Tamam</string>
     <string name="setup_perm_title">İzinler</string>
     <string name="setup_perm_body">QuickBuds\'ın kulaklıklarınla konuşması için Bluetooth gerekir. Bildirimler arka plan hizmetini gösterir.</string>

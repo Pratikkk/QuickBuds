@@ -461,10 +461,8 @@
     <string name="about_privacy_title">Απόρρητο</string>
     <string name="about_privacy_body">Μία φορά την ημέρα το QuickBuds στέλνει την πλατφόρμα του, τον αριθμό έκδοσης (για παράδειγμα «Android 5.0.0») και ένα τυχαίο αναγνωριστικό εγκατάστασης, για να μετρά τους ενεργούς χρήστες. Το αναγνωριστικό δεν συνδέεται με συσκευή, λογαριασμό ή διεύθυνση και η εφαρμογή δεν στέλνει δεδομένα ακουστικών. Οι αναφορές φέρουν το ίδιο αναγνωριστικό και στέλνονται μόνο όταν τις στείλεις.</string>
     <string name="about_privacy_reset">Επαναφορά αναγνωριστικού εγκατάστασης</string>
-    <string name="settings_protocol_legacy_title">Παλαιό πρωτόκολλο</string>
-    <string name="settings_protocol_legacy_sub">Χρήση της παλιάς σύνδεσης με τα ακουστικά αν αποτύχει η νέα. Επανασυνδεθείτε για εφαρμογή.</string>
     <string name="welcome_title">Καλώς ήρθατε στο QuickBuds</string>
-    <string name="welcome_body">Το QuickBuds χρησιμοποιεί από προεπιλογή το νέο πρωτόκολλό του. Αν ένα μοντέλο δεν λειτουργεί σωστά, αλλάξτε στο παλιό πρωτόκολλο από τις Ρυθμίσεις. Αλλάξτε τις επιλογές όποτε θέλετε.</string>
+    <string name="welcome_body">Αλλάξτε τις επιλογές όποτε θέλετε.</string>
     <string name="welcome_done">Τέλος</string>
     <string name="setup_perm_title">Άδειες</string>
     <string name="setup_perm_body">Το QuickBuds χρειάζεται Bluetooth για να μιλά με τα ακουστικά σας. Οι ειδοποιήσεις δείχνουν την υπηρεσία παρασκηνίου.</string>

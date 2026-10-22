@@ -463,10 +463,8 @@
     <string name="about_privacy_title">ความเป็นส่วนตัว</string>
     <string name="about_privacy_body">QuickBuds ส่งแพลตฟอร์ม หมายเลขเวอร์ชัน (เช่น \"Android 5.0.0\") และรหัสติดตั้งแบบสุ่มวันละครั้งเพื่อนับผู้ใช้ที่ใช้งานอยู่ รหัสนี้ไม่ผูกกับอุปกรณ์ บัญชี หรือที่อยู่ใด ๆ และแอปไม่ส่งข้อมูลของหูฟัง รายงานจะมีรหัสเดียวกันและจะถูกส่งเมื่อคุณส่งเองเท่านั้น</string>
     <string name="about_privacy_reset">รีเซ็ตรหัสติดตั้ง</string>
-    <string name="settings_protocol_legacy_title">โปรโตคอลเดิม</string>
-    <string name="settings_protocol_legacy_sub">ใช้การเชื่อมต่อเดิมกับหูฟังหากการเชื่อมต่อใหม่ล้มเหลว เชื่อมต่อใหม่เพื่อใช้งาน</string>
     <string name="welcome_title">ยินดีต้อนรับสู่ QuickBuds</string>
-    <string name="welcome_body">QuickBuds ใช้โปรโตคอลที่สร้างใหม่เป็นค่าเริ่มต้น หากบางรุ่นมีปัญหา ให้สลับไปใช้โปรโตคอลเดิมในการตั้งค่า คุณเปลี่ยนตัวเลือกเหล่านี้ได้ทุกเมื่อ</string>
+    <string name="welcome_body">คุณเปลี่ยนตัวเลือกเหล่านี้ได้ทุกเมื่อ</string>
     <string name="welcome_done">เสร็จสิ้น</string>
     <string name="setup_perm_title">สิทธิ์</string>
     <string name="setup_perm_body">QuickBuds ต้องใช้บลูทูธเพื่อสื่อสารกับหูฟังของคุณ การแจ้งเตือนแสดงบริการเบื้องหลัง</string>

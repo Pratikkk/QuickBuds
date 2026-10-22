@@ -461,10 +461,8 @@
     <string name="about_privacy_title">Adatvédelem</string>
     <string name="about_privacy_body">A QuickBuds naponta egyszer elküldi a platformját, a verziószámát (például „Android 5.0.0”) és egy véletlenszerű telepítési azonosítót az aktív felhasználók megszámlálásához. Az azonosító nem kötődik eszközhöz, fiókhoz vagy címhez, és az alkalmazás nem küld fülhallgatóadatot. A jelentések ugyanazt az azonosítót viszik, és csak akkor mennek el, ha te elküldöd őket.</string>
     <string name="about_privacy_reset">Telepítési azonosító visszaállítása</string>
-    <string name="settings_protocol_legacy_title">Régi protokoll</string>
-    <string name="settings_protocol_legacy_sub">A régi kapcsolat használata a fülhallgatóval, ha az új nem működik. Alkalmazáshoz csatlakozz újra.</string>
     <string name="welcome_title">Üdvözöl a QuickBuds</string>
-    <string name="welcome_body">A QuickBuds alapból az újjáépített protokollt használja. Ha egy modell hibázik, válts a régi protokollra a Beállításokban. Ezeket bármikor módosíthatod.</string>
+    <string name="welcome_body">Ezeket bármikor módosíthatod.</string>
     <string name="welcome_done">Kész</string>
     <string name="setup_perm_title">Engedélyek</string>
     <string name="setup_perm_body">A QuickBudsnak Bluetooth kell a fülhallgatóval való beszélgetéshez. Az értesítések mutatják a háttérszolgáltatást.</string>
