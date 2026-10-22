@@ -565,6 +565,9 @@ HeyMelody calls "safe remind". Both apps clear bit 3, so only the codes below re
 - **The ids are per model** `[VENDOR]`. `models.json` `statusQuery` holds the list (81 HeyMelody
   models, from HeyMelody 116.9.0's built-in data). Buds 4: `05 04 0B 11 18 06 1B 1D 1C` (matches the
   capture). Enco Buds2: `05 06` `[TESTED]`.
+  Checked against the HeyMelody 117.6.6 id rule (`PROTOCOL.md` section 11): all 85 listed models match it, except that our lists leave out the
+  ids of features we decided against (`22`-`24`, `3C` neck health, `3D` Gemini assistant). Wear detection `04` is asked for every model
+  with `wearDetection` 1 or 2 (the Enco X4 and Buds Pro 4 have 2).
 - **A longer list drops some links.** Was: one fixed 23-id list, which dropped the Enco Buds2 (issue
   #5). Is: the per-model list. `02 05 0D` kept that link up `[CAPTURE]`.
 - A model without `statusQuery` (hand-added) gets the 23 ids, plus `1A` where it has `windMode`.
