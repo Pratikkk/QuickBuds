@@ -236,9 +236,9 @@ class SetupActivity : Activity() {
         heading(R.string.setup_look_title, R.string.setup_look_body)
         label(R.string.widget_style_title)
         // Listed Material, QuickBuds, Pixel art; ORDER maps a segment to the stored style index (as Settings > Theme).
-        val order = intArrayOf(2, 0, 1)
+        val order = intArrayOf(2, 0, 1, 3)
         body.addView(AncSegmentedView(this, listOf(getString(R.string.widget_style_material), getString(R.string.widget_style_classic),
-            getString(R.string.widget_style_nothing))).apply {
+            getString(R.string.widget_style_nothing), getString(R.string.widget_style_glass))).apply {
             selected = order.indexOf(ThemeRes.style(this@SetupActivity))
             contentDescription = getString(R.string.widget_style_title)
             onSegmentTapped = { i ->

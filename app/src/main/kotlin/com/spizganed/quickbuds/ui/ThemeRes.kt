@@ -8,6 +8,7 @@ import android.content.res.Resources
 import android.os.Build
 import android.os.LocaleList
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
@@ -106,11 +107,42 @@ object ThemeRes {
 
     /** The active preset. Cached; [invalidate] after changing presets. Under Match system the
      *  cache also drops when the system's light / dark setting no longer matches it. */
-    fun palette(context: Context): Palette {
+    fun palette(context: Context): Palette = base(context).let { if (glass(context)) glassify(it) else it }
+
+    private fun base(context: Context): Palette {
         val wallpaper = PaletteStore.wallpaperKey(context)
         cached?.let { if (wallpaper == cachedWallpaper && (!PaletteStore.auto(context) || it.isLight == PaletteStore.systemLight(context))) return it }
         cachedWallpaper = wallpaper
         return PaletteStore.active(context.applicationContext).also { cached = it }
+    }
+
+    /**
+     * Glass: always dark text on a deep gradient, so a light preset is not used; the surfaces are translucent whites
+     * ([Palette.container]); the accent stays the preset's (or the wallpaper's).
+     */
+    private fun glassify(p: Palette) = p.copy(
+        glass = true, background = Color.TRANSPARENT, card = Palette.GLASS_FILL, text = Color.WHITE,
+        textSecondary = 0xB8FFFFFF.toInt(), outline = 0x40FFFFFF
+    )
+
+    /** The window behind the glass: a deep base with soft colour blobs, tinted by the accent. */
+    fun glassBackground(context: Context, accent: Int): Drawable {
+        val dm = context.resources.displayMetrics
+        val r = maxOf(dm.widthPixels, dm.heightPixels) * 0.75f
+        fun blob(color: Int, cx: Float, cy: Float) = android.graphics.drawable.GradientDrawable().apply {
+            gradientType = android.graphics.drawable.GradientDrawable.RADIAL_GRADIENT
+            gradientRadius = r
+            setGradientCenter(cx, cy)
+            colors = intArrayOf(color, Palette.withAlpha(color, 0f))
+        }
+        val hsv = FloatArray(3).also { Color.colorToHSV(accent, it) }
+        fun hue(shift: Float) = Color.HSVToColor(floatArrayOf((hsv[0] + shift) % 360f, 0.75f, 0.95f))
+        return android.graphics.drawable.LayerDrawable(arrayOf(
+            ColorDrawable(0xFF14123A.toInt()),
+            blob(Palette.withAlpha(hue(0f), 0.85f), 0.1f, 0.12f),
+            blob(Palette.withAlpha(hue(150f), 0.7f), 0.95f, 0.35f),
+            blob(Palette.withAlpha(hue(60f), 0.6f), 0.5f, 1.0f)
+        ))
     }
 
     fun invalidate() { cached = null }
@@ -120,7 +152,7 @@ object ThemeRes {
 
     // The language is part of it so a language change below Android 13 rebuilds open screens too.
     // The style too, so a Classic / Nothing change rebuilds open screens.
-    private fun signature(context: Context, p: Palette) = p.id + p.tokens.contentToString() + language(context) + nothing(context) + material(context)
+    private fun signature(context: Context, p: Palette) = p.id + p.tokens.contentToString() + language(context) + nothing(context) + material(context) + glass(context)
 
     private const val KEY_NOTHING = "styleNothing"
 
@@ -139,12 +171,18 @@ object ThemeRes {
     fun material(context: Context) = !nothing(context) &&
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).also { PaletteStore.defaults(it) }.getBoolean(KEY_MATERIAL, false)
 
-    /** The style picker's index: 0 Classic, 1 Dot matrix, 2 Material. */
-    fun style(context: Context) = if (nothing(context)) 1 else if (material(context)) 2 else 0
+    const val KEY_GLASS = "styleGlass"
+
+    /** Glass style: Material's shapes on translucent surfaces over a gradient window. Implies [material]. */
+    fun glass(context: Context) = material(context) &&
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_GLASS, false)
+
+    /** The style picker's index: 0 Classic, 1 Dot matrix, 2 Material, 3 Glass. */
+    fun style(context: Context) = if (nothing(context)) 1 else if (glass(context)) 3 else if (material(context)) 2 else 0
 
     fun setStyle(context: Context, index: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putBoolean(KEY_NOTHING, index == 1).putBoolean(KEY_MATERIAL, index == 2).apply()
+            .putBoolean(KEY_NOTHING, index == 1).putBoolean(KEY_MATERIAL, index == 2 || index == 3).putBoolean(KEY_GLASS, index == 3).apply()
         com.spizganed.quickbuds.widget.AncWidgetProvider.refreshAll(context)
     }
 
@@ -231,6 +269,13 @@ object ThemeRes {
             activity.window.statusBarColor = p.background
             @Suppress("DEPRECATION")
             activity.window.navigationBarColor = p.background
+        }
+        if (p.glass) {
+            activity.window.setBackgroundDrawable(glassBackground(activity, p.accent))
+            @Suppress("DEPRECATION")
+            activity.window.statusBarColor = Color.TRANSPARENT
+            @Suppress("DEPRECATION")
+            activity.window.navigationBarColor = Color.TRANSPARENT
         }
         // Dot matrix: Doto for every text the theme sets (XML and plain code-built TextViews).
         if (nothing(activity)) activity.theme.applyStyle(R.style.ThemeOverlay_App_Nothing, true)
@@ -329,6 +374,12 @@ object ThemeRes {
         private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = fill }
         private val path = android.graphics.Path()
         private val box = android.graphics.RectF()
+        // Glass: a light edge round each tile.
+        private val edge = palette(context).takeIf { it.glass }?.let { p ->
+            android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                style = android.graphics.Paint.Style.STROKE; strokeWidth = dp(context, 1f).toFloat(); color = p.outline
+            }
+        }
 
         override fun draw(canvas: android.graphics.Canvas) {
             val group = callback as? android.view.ViewGroup ?: return
@@ -356,6 +407,7 @@ object ThemeRes {
                 path.reset()
                 path.addRoundRect(box, floatArrayOf(rt, rt, rt, rt, rb, rb, rb, rb), android.graphics.Path.Direction.CW)
                 canvas.drawPath(path, paint)
+                edge?.let { canvas.drawPath(path, it) }
             }
         }
 
@@ -417,6 +469,10 @@ object ThemeRes {
     fun card(context: Context, radiusDp: Float = 24f, fill: Int? = null, solid: Boolean = false, topOnly: Boolean = false, base: Int? = null): Drawable {
         val p = palette(context)
         if (nothing(context)) return DotArt.Box(context, fill ?: p.card, p.outline, radiusDp, topOnly, solid, base)
+        // Glass: a translucent surface with a light edge; a sheet is nearly opaque, or its content would show through.
+        if (p.glass) return shape(context, if (topOnly) 0xF21E1C4A.toInt() else if (fill == null || fill == p.card) p.container else fill, p.outline, radiusDp).apply {
+            if (topOnly) { val r = dp(context, radiusDp).toFloat(); cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f) }
+        }
         // Material: a tonal surface, no outline.
         if (material(context)) return shape(context, if (fill == null || fill == p.card) p.container else fill, null, radiusDp).apply {
             if (topOnly) { val r = dp(context, radiusDp).toFloat(); cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f) }
