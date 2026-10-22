@@ -274,7 +274,7 @@
     <string name="about_kofi_desc">Ko-fi पर सहयोग करें</string>
     <string name="about_github_desc">GitHub पर सोर्स कोड</string>
     <string name="about_license_title">लाइसेंस</string>
-    <string name="about_license_body">QuickBuds GNU जनरल पब्लिक लाइसेंस v3.0 के तहत मुफ़्त सॉफ़्टवेयर है। यह OppoPodsManager, OppoPods, Pods-Protocol-Reverse-Engineering, OPPO-Pods-Win और DevPods के खुले रिवर्स-इंजीनियरिंग काम पर आधारित है; पूरा श्रेय GitHub पर है।</string>
+    <string name="about_license_body">QuickBuds GNU जनरल पब्लिक लाइसेंस v3.0 के तहत मुफ़्त सॉफ़्टवेयर है। यह OppoPodsManager, OppoPods और Pods-Protocol-Reverse-Engineering के खुले रिवर्स-इंजीनियरिंग काम पर आधारित है; पूरा श्रेय GitHub पर है।</string>
     <string name="theme_builtin">बिल्ट-इन</string>
     <string name="theme_auto">सिस्टम के अनुसार</string>
     <string name="theme_auto_sub">लाइट मोड में %1$s, डार्क मोड में %2$s</string>

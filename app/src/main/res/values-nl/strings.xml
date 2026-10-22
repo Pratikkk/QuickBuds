@@ -274,7 +274,7 @@
     <string name="about_kofi_desc">Steunen op Ko-fi</string>
     <string name="about_github_desc">Broncode op GitHub</string>
     <string name="about_license_title">Licentie</string>
-    <string name="about_license_body">QuickBuds is vrije software onder de GNU General Public License v3.0. Het bouwt voort op het open reverse-engineeringwerk van OppoPodsManager, OppoPods, Pods-Protocol-Reverse-Engineering, OPPO-Pods-Win en DevPods; alle credits staan op GitHub.</string>
+    <string name="about_license_body">QuickBuds is vrije software onder de GNU General Public License v3.0. Het bouwt voort op het open reverse-engineeringwerk van OppoPodsManager, OppoPods en Pods-Protocol-Reverse-Engineering; alle credits staan op GitHub.</string>
     <string name="theme_builtin">Ingebouwd</string>
     <string name="theme_auto">Systeem volgen</string>
     <string name="theme_auto_sub">%1$s in lichte modus, %2$s in donkere modus</string>

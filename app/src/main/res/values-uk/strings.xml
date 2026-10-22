@@ -274,7 +274,7 @@
     <string name="about_kofi_desc">Підтримати на Ko-fi</string>
     <string name="about_github_desc">Вихідний код на GitHub</string>
     <string name="about_license_title">Ліцензія</string>
-    <string name="about_license_body">QuickBuds — вільне ПЗ за ліцензією GNU General Public License v3.0. Воно спирається на відкриті роботи зі зворотної розробки OppoPodsManager, OppoPods, Pods-Protocol-Reverse-Engineering, OPPO-Pods-Win і DevPods; повний список подяк на GitHub.</string>
+    <string name="about_license_body">QuickBuds — вільне ПЗ за ліцензією GNU General Public License v3.0. Воно спирається на відкриті роботи зі зворотної розробки OppoPodsManager, OppoPods і Pods-Protocol-Reverse-Engineering; повний список подяк на GitHub.</string>
     <string name="theme_builtin">Вбудовані</string>
     <string name="theme_auto">Як у системі</string>
     <string name="theme_auto_sub">%1$s у світлому режимі, %2$s у темному</string>

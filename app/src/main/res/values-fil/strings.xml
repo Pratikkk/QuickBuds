@@ -274,7 +274,7 @@
     <string name="about_kofi_desc">Suportahan sa Ko-fi</string>
     <string name="about_github_desc">Source code sa GitHub</string>
     <string name="about_license_title">Lisensya</string>
-    <string name="about_license_body">Ang QuickBuds ay libreng software sa ilalim ng GNU General Public License v3.0. Nakabatay ito sa bukas na reverse-engineering na gawa ng OppoPodsManager, OppoPods, Pods-Protocol-Reverse-Engineering, OPPO-Pods-Win at DevPods; nasa GitHub ang buong listahan ng credits.</string>
+    <string name="about_license_body">Ang QuickBuds ay libreng software sa ilalim ng GNU General Public License v3.0. Nakabatay ito sa bukas na reverse-engineering na gawa ng OppoPodsManager, OppoPods at Pods-Protocol-Reverse-Engineering; nasa GitHub ang buong listahan ng credits.</string>
     <string name="theme_builtin">Built-in</string>
     <string name="theme_auto">Sundan ang system</string>
     <string name="theme_auto_sub">%1$s sa light mode, %2$s sa dark mode</string>

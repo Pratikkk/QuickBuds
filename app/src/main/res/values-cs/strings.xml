@@ -274,7 +274,7 @@
     <string name="about_kofi_desc">Podpořit na Ko-fi</string>
     <string name="about_github_desc">Zdrojový kód na GitHubu</string>
     <string name="about_license_title">Licence</string>
-    <string name="about_license_body">QuickBuds je svobodný software pod licencí GNU General Public License v3.0. Staví na otevřené práci zpětného inženýrství projektů OppoPodsManager, OppoPods, Pods-Protocol-Reverse-Engineering, OPPO-Pods-Win a DevPods; úplné poděkování je na GitHubu.</string>
+    <string name="about_license_body">QuickBuds je svobodný software pod licencí GNU General Public License v3.0. Staví na otevřené práci zpětného inženýrství projektů OppoPodsManager, OppoPods a Pods-Protocol-Reverse-Engineering; úplné poděkování je na GitHubu.</string>
     <string name="theme_builtin">Vestavěné</string>
     <string name="theme_auto">Podle systému</string>
     <string name="theme_auto_sub">%1$s ve světlém režimu, %2$s v tmavém</string>

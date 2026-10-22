@@ -274,7 +274,7 @@
     <string name="about_kofi_desc">Sokong di Ko-fi</string>
     <string name="about_github_desc">Kod sumber di GitHub</string>
     <string name="about_license_title">Lesen</string>
-    <string name="about_license_body">QuickBuds ialah perisian bebas di bawah GNU General Public License v3.0. Ia dibina atas kerja kejuruteraan terbalik terbuka OppoPodsManager, OppoPods, Pods-Protocol-Reverse-Engineering, OPPO-Pods-Win dan DevPods; senarai penghargaan penuh ada di GitHub.</string>
+    <string name="about_license_body">QuickBuds ialah perisian bebas di bawah GNU General Public License v3.0. Ia dibina atas kerja kejuruteraan terbalik terbuka OppoPodsManager, OppoPods dan Pods-Protocol-Reverse-Engineering; senarai penghargaan penuh ada di GitHub.</string>
     <string name="theme_builtin">Terbina dalam</string>
     <string name="theme_auto">Ikut sistem</string>
     <string name="theme_auto_sub">%1$s dalam mod cerah, %2$s dalam mod gelap</string>
