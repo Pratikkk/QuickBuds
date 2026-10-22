@@ -646,7 +646,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         @Volatile private var sweepPartial = false
         private var sweepRun: Runnable? = null
         private val sweepHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        private const val SWEEP_STEPS = 36
+        private const val SWEEP_STEPS = 18
         private const val SWEEP_STEP_MS = 16L
 
         /**
