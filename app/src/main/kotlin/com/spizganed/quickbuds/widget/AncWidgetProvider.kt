@@ -147,6 +147,11 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
 
         /** Repaints every placed widget of every size: state, palette or settings changed. */
         fun refreshAll(context: Context) {
+            // The first levels after a connect start the fill-in sweep.
+            if (awaitLevels) {
+                val st = WidgetStateStore.read(context)
+                if (st.leftBattery >= 0 || st.caseBattery >= 0 || st.rightBattery >= 0) { awaitLevels = false; return sweep(context, true, null) }
+            }
             val mgr = AppWidgetManager.getInstance(context)
             for ((cls, kind) in providers) {
                 for (id in mgr.getAppWidgetIds(ComponentName(context, cls))) update(context, mgr, id, kind)
@@ -172,7 +177,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                     val shown = if (state.connected) state else sweepState ?: state
                     val pv = RemoteViews(context.packageName, fit.shape.layout(context))
                     battery(context, pv, WidgetSettings.palette(context), shown, fit, id, sweepK)
-                    pv.setFloat(R.id.w_content, "setAlpha", 0.35f + 0.65f * sweepK)
+                    pv.setFloat(R.id.w_content, "setAlpha", sweepK)
                     mgr.partiallyUpdateAppWidget(id, pv)
                     return
                 }
@@ -208,7 +213,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             val p = WidgetSettings.palette(context)
             val live = state.connected
             // [k]: how connected the battery page looks, 0 ghost rings, 1 full. Between 0 and 1 a connect or disconnect sweeps ([animate]).
-            val k = if (sweepK >= 0f) sweepK else if (live) 1f else 0f
+            val k = if (sweepK >= 0f) sweepK else if (live && !awaitLevels) 1f else 0f
             val ghost = !live && sweepK < 0f
             val shown = if (live) state else sweepState ?: state.also { it.leftStatus = -1; it.rightStatus = -1 }
 
@@ -251,8 +256,8 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 v.setOnClickPendingIntent(CONN.root, null)
             }
 
-            // The page behind the chip is dimmed; it fades up to full with the sweep. Set both ways.
-            v.setFloat(R.id.w_content, "setAlpha", if (live || sweepK >= 0f) 0.35f + 0.65f * k else 0.3f)
+            // The page behind the chip is blank (the panel's own colour); it fades in with the sweep. Set both ways.
+            v.setFloat(R.id.w_content, "setAlpha", k)
 
             // Both pages and the list are filled every time, so the one sliding or fading out still
             // shows current values (a pick's highlight while the list closes).
@@ -614,6 +619,8 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
 
         /** The battery page's look while a connect or disconnect sweeps (0..1, -1 none) and the levels it fades from. */
         @Volatile private var sweepK = -1f
+        /** True from a connect until the first levels arrive: the battery page stays blank. */
+        @Volatile private var awaitLevels = false
         @Volatile private var sweepState: WidgetStateStore.State? = null
         /** The Connect chip's loading state: set while a connect from the widget (or the app) is under way. */
         @Volatile private var connecting = false
@@ -655,6 +662,23 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
          * while the screen is on, and the chip shows when it ends. The launcher's own update rate may thin the steps.
          */
         fun animate(context: Context, connecting: Boolean, last: WidgetStateStore.State?) {
+            val app = context.applicationContext
+            // A connect has no levels yet (the buds report a moment later): the page stays blank until they do, or for 4 s.
+            if (connecting) {
+                val st = WidgetStateStore.read(app)
+                if (st.leftBattery < 0 && st.caseBattery < 0 && st.rightBattery < 0) {
+                    sweepRun?.let { sweepHandler.removeCallbacks(it) }
+                    sweepK = -1f; sweepState = null; sweepPartial = false
+                    awaitLevels = true
+                    sweepHandler.postDelayed({ if (awaitLevels) { awaitLevels = false; sweep(app, true, null) } }, 4000)
+                    return refreshAll(app)
+                }
+            }
+            awaitLevels = false
+            sweep(app, connecting, last)
+        }
+
+        private fun sweep(context: Context, connecting: Boolean, last: WidgetStateStore.State?) {
             val app = context.applicationContext
             sweepRun?.let { sweepHandler.removeCallbacks(it) }
             val screenOn = app.getSystemService(android.os.PowerManager::class.java).isInteractive
