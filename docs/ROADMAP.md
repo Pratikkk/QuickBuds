@@ -6,6 +6,10 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
 
 ## Planned
 
+- **Protocol: merge the new findings into the legacy layer.** The legacy layer has many fixes. `protocol2` replaces it only
+  when it does everything HeyMelody and realme Link do, on every model. Until then: a facts ledger (every command, push
+  and feature against every model, gaps marked), then port verified facts into the legacy layer.
+
 - **Material style on the desktop, next passes.** The main window has the style choice (QuickBuds, Pixel art,
   Material), Material for everyone without a saved style, the system accent, and M3 cards. Tested on Xvfb only: check the tray panel (Windows), Windows and a real Linux accent.
 - **Fixes from the 4.12.0 reports** (the rest wait for a retest or for realme Link data):

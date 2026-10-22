@@ -1,8 +1,9 @@
 # PROTOCOL.md — the earbud wire format
 
 The wire format of the OPPO / OnePlus / realme earbud RFCOMM link, as the owned protocol layer implements it
-(`core/` in Rust, `protocol2/` in Kotlin). The old layer (the Legacy switch) is described in
-[PROTOCOL-LEGACY.md](./PROTOCOL-LEGACY.md); it is frozen.
+(`core/` in Rust, `protocol2/` in Kotlin). The shipping layer is the legacy one, described in
+[PROTOCOL-LEGACY.md](./PROTOCOL-LEGACY.md). It carries many fixes. Verified facts from this file move into it.
+This layer replaces it only when it does everything HeyMelody and realme Link do, on every model.
 Each fact comes from a capture, from our own buds, or from the vendor apps' behaviour (studied for
 interoperability only). The code is written from this file, not from the vendor apps.
 
