@@ -718,6 +718,8 @@ the active record; the phone keeps the list. A record: 4-byte id (big-endian, ch
 - **`18` is a quality switch, not a codec switch** `[CAPTURE]`: LHDC V5 either way. On: 44.1-192 kHz,
   400 kbps cap. Off: 44.1 / 48 kHz, 256 kbps. The phone chose 48 kHz / 24-bit both times. No LDAC on
   Buds 4.
+  The buds accept the write and do not drop the link `[CAPTURE]` (report #33, a Samsung S25 FE: 14 writes, no disconnect). The switch changes the
+  LHDC V5 settings only; a phone that negotiates AAC instead (the same log reads codec `2`) gets no effect. Compare `0x0114` (current codec) with `8`.
 
 ### Codec picker (`hiRes` models) `[VENDOR]`, wired
 
