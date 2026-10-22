@@ -71,7 +71,42 @@ pub fn wear_sensor_seen(s: &Snapshot, demo: bool) -> bool {
     true
 }
 
+/// The undecorated window's edges: the cursor and the system resize on a press near an edge.
+fn resize_edges(ui: &Ui) {
+    use egui::{CursorIcon as C, ResizeDirection as D};
+    let ctx = ui.ctx();
+    if ctx.input(|i| i.viewport().maximized.unwrap_or(false) || i.viewport().fullscreen.unwrap_or(false)) { return; }
+    let Some(p) = ctx.input(|i| i.pointer.hover_pos()) else { return };
+    let r = ctx.content_rect();
+    let e = 6.0;
+    let (l, rt, t, b) = (p.x - r.left() < e, r.right() - p.x < e, p.y - r.top() < e, r.bottom() - p.y < e);
+    let (dir, cursor) = match (l, rt, t, b) {
+        (true, _, true, _) => (D::NorthWest, C::ResizeNwSe),
+        (_, true, true, _) => (D::NorthEast, C::ResizeNeSw),
+        (true, _, _, true) => (D::SouthWest, C::ResizeNeSw),
+        (_, true, _, true) => (D::SouthEast, C::ResizeNwSe),
+        (true, ..) => (D::West, C::ResizeHorizontal),
+        (_, true, ..) => (D::East, C::ResizeHorizontal),
+        (_, _, true, _) => (D::North, C::ResizeVertical),
+        (_, _, _, true) => (D::South, C::ResizeVertical),
+        _ => return,
+    };
+    ctx.set_cursor_icon(cursor);
+    if ctx.input(|i| i.pointer.primary_pressed()) { ctx.send_viewport_cmd(egui::ViewportCommand::BeginResize(dir)); }
+}
+
+/// A strip that moves the window when dragged and maximizes it on a double click.
+fn drag_strip(ui: &mut Ui, id: &str, rect: Rect) {
+    let r = ui.interact(rect, ui.scope_id().with(id), egui::Sense::click_and_drag());
+    if r.drag_started_by(egui::PointerButton::Primary) { ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag); }
+    if r.double_clicked() {
+        let max = ui.ctx().input(|i| i.viewport().maximized.unwrap_or(false));
+        ui.ctx().send_viewport_cmd(egui::ViewportCommand::Maximized(!max));
+    }
+}
+
 pub fn show(app: &mut App, ui: &mut Ui) {
+    resize_edges(ui);
     let full = ui.max_rect();
     let sb = Rect::from_min_size(full.min + Vec2::splat(12.0), Vec2::new(236.0, full.height() - 24.0));
     sidebar(app, ui, sb);
@@ -81,6 +116,7 @@ pub fn show(app: &mut App, ui: &mut Ui) {
     confirm_dialog(app, ui);
     if app.page != app.shown_page {
         app.shown_page = app.page;
+        app.page_since = std::time::Instant::now();
         app.scroll = 0.0;
         if !app.demo {
             match app.page { Page::Dual => crate::dual::opened(app), Page::Earbuds => app.send(Cmd::EarbudReads), Page::Gestures => crate::gestures::opened(app), Page::Hearing => crate::hearing::opened(app), _ => {} }
@@ -88,13 +124,18 @@ pub fn show(app: &mut App, ui: &mut Ui) {
     }
     if matches!(app.page, Page::Overview | Page::Eq | Page::Dual | Page::Earbuds | Page::Dev | Page::Gestures | Page::Hearing | Page::Settings | Page::Models) {
         // A page scrolls when it is taller than the window: a child ui clipped to the body.
+        // A page rises and fades in.
+        let t = (app.page_since.elapsed().as_secs_f32() / 0.3).min(1.0);
+        let ease = 1.0 - (1.0 - t).powi(3);
+        if t < 1.0 { ui.ctx().request_repaint(); }
         let mut page = ui.new_child(egui::UiBuilder::new().max_rect(body));
         page.set_clip_rect(body.intersect(ui.clip_rect()));
+        page.set_opacity(ease);
         if page.rect_contains_pointer(body) {
             let dy = page.input(|i| i.smooth_scroll_delta.y);
             if dy != 0.0 { app.scroll = (app.scroll - dy).max(0.0); }
         }
-        let shifted = Rect::from_min_max(Pos2::new(body.left(), body.top() - app.scroll), body.max);
+        let shifted = Rect::from_min_max(Pos2::new(body.left(), body.top() - app.scroll + 16.0 * (1.0 - ease)), body.max);
         let bottom = match app.page {
             Page::Eq => crate::eq::show(app, &mut page, shifted),
             Page::Dual => crate::dual::show(app, &mut page, shifted),
@@ -114,6 +155,7 @@ pub fn show(app: &mut App, ui: &mut Ui) {
 
 fn sidebar(app: &mut App, ui: &mut Ui, sb: Rect) {
     glass::glass_at(ui, sb, 32.0, 1.0);
+    drag_strip(ui, "drag-sidebar", Rect::from_min_size(sb.min, Vec2::new(sb.width(), 70.0)));
     glass::icon_at(ui, icons::BUD_LEFT, Rect::from_center_size(Pos2::new(sb.left() + 34.0, sb.top() + 38.0), Vec2::new(18.0, 24.0)), white(1.0));
     glass::text(ui, Pos2::new(sb.left() + 52.0, sb.top() + 38.0), Align2::LEFT_CENTER, "QuickBuds", 17.0, 1.0);
     let h = app.has;
@@ -125,19 +167,24 @@ fn sidebar(app: &mut App, ui: &mut Ui, sb: Rect) {
         (Page::Dual, icons::DEVICES, "dual_title", h.dual),
         (Page::Earbuds, icons::EARBUD, "earbuds_title", true),
     ];
-    let mut y = sb.top() + 76.0;
-    let mut go = None;
-    for (page, icon, key, ready) in top {
-        let r = Rect::from_min_size(Pos2::new(sb.left() + 12.0, y), Vec2::new(sb.width() - 24.0, 44.0));
-        if glass::nav_item_at(ui, key, r, icon, t(&app.tr, key), app.page == page || (page == Page::Earbuds && app.page == Page::Models), ready).clicked() && ready { go = Some(page); }
-        y += 46.0;
+    let bottom = [(Page::Settings, icons::SETTINGS_COG, "desktop_nav_app_settings", true), (Page::Dev, icons::DEV_TOOLS, "action_dev_tools", true)];
+    let bottom_y = sb.bottom() - 12.0 - 44.0 * bottom.len() as f32 - 2.0;
+    let mut items: Vec<(Page, &'static str, &'static str, bool, Rect)> = vec![];
+    for (i, (page, icon, key, ready)) in top.into_iter().enumerate() {
+        items.push((page, icon, key, ready, Rect::from_min_size(Pos2::new(sb.left() + 12.0, sb.top() + 76.0 + 46.0 * i as f32), Vec2::new(sb.width() - 24.0, 44.0))));
     }
-    let bottom = [(Page::Settings, icons::SETTINGS_COG, "desktop_nav_app_settings"), (Page::Dev, icons::DEV_TOOLS, "action_dev_tools")];
-    let mut y = sb.bottom() - 12.0 - 44.0 * bottom.len() as f32 - 2.0;
-    for (page, icon, key) in bottom {
-        let r = Rect::from_min_size(Pos2::new(sb.left() + 12.0, y), Vec2::new(sb.width() - 24.0, 44.0));
-        if glass::nav_item_at(ui, key, r, icon, t(&app.tr, key), app.page == page, true).clicked() { go = Some(page); }
-        y += 46.0;
+    for (i, (page, icon, key, ready)) in bottom.into_iter().enumerate() {
+        items.push((page, icon, key, ready, Rect::from_min_size(Pos2::new(sb.left() + 12.0, bottom_y + 46.0 * i as f32), Vec2::new(sb.width() - 24.0, 44.0))));
+    }
+    let on_page = |p: Page| p == app.page || (p == Page::Earbuds && app.page == Page::Models);
+    // The lit pill slides to the selected entry.
+    if let Some(sel) = items.iter().find(|i| on_page(i.0)).map(|i| i.4) {
+        let ty = ui.ctx().animate_value_with_time(egui::Id::NULL.with("nav-pill"), sel.top(), 0.22);
+        ui.painter().rect_filled(Rect::from_min_size(Pos2::new(sel.left(), ty), sel.size()), 22.0, glass::sel_fill(1.0));
+    }
+    let mut go = None;
+    for (page, icon, key, ready, r) in &items {
+        if glass::nav_item_at(ui, *key, *r, icon, t(&app.tr, key), on_page(*page), *ready).clicked() && *ready { go = Some(*page); }
     }
     if let Some(p) = go { app.page = p; }
 }
@@ -145,8 +192,22 @@ fn sidebar(app: &mut App, ui: &mut Ui, sb: Rect) {
 fn header(app: &mut App, ui: &mut Ui, c: Rect) {
     let s = &app.snap;
     let title = if s.name.is_empty() { "QuickBuds" } else { s.name.as_str() };
+    // The window has no title bar: the header and the top of the sidebar move it.
+    drag_strip(ui, "drag-header", Rect::from_min_max(Pos2::new(c.left(), c.top() - 18.0), Pos2::new(c.right(), c.top() + 52.0)));
     glass::text(ui, Pos2::new(c.left() + 4.0, c.top() + 23.0), Align2::LEFT_CENTER, title, 30.0, 1.0);
     let mut x = c.right();
+    // Our own close button, top right; the other buttons sit left of it.
+    {
+        x -= 46.0;
+        let r = Rect::from_min_size(Pos2::new(x, c.top()), Vec2::splat(46.0));
+        x -= 10.0;
+        let resp = glass::button_at(ui, "close", r, 23.0, false);
+        let k = 8.0;
+        let col = white(1.0);
+        ui.painter().line_segment([r.center() + Vec2::new(-k, -k), r.center() + Vec2::new(k, k)], egui::Stroke::new(2.2, col));
+        ui.painter().line_segment([r.center() + Vec2::new(-k, k), r.center() + Vec2::new(k, -k)], egui::Stroke::new(2.2, col));
+        if resp.clicked() { ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close); }
+    }
     let icon_btn = |ui: &mut Ui, x: &mut f32, id: &str, svg: &'static str| {
         *x -= 46.0;
         let r = Rect::from_min_size(Pos2::new(*x, c.top()), Vec2::splat(46.0));
@@ -282,7 +343,7 @@ fn battery(app: &mut App, ui: &mut Ui, rect: Rect) {
         let cx = rect.left() + rect.width() * (1.0 / 6.0 + n as f32 / 3.0);
         let b = s.battery[i];
         let frac = b.map(|x| x.0 as f32 / 100.0);
-        glass::ring_at(ui, Pos2::new(cx, rect.top() + 66.0), 40.0, if on { frac } else { None }, Some(glyph), !on);
+        glass::ring_at(ui, ("ring", n), Pos2::new(cx, rect.top() + 66.0), 40.0, if on { frac } else { None }, Some(glyph), !on);
         let pct = match (b, on) { (Some(x), true) => format!("{}%", x.0), _ => "—".into() };
         glass::text(ui, Pos2::new(cx, rect.top() + 134.0), Align2::CENTER_CENTER, &pct, 21.0, if on { 1.0 } else { 0.5 });
         let sub = if i == 2 { t(tr, "status_case") } else { wear(i) };

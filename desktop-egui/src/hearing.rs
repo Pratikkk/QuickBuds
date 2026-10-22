@@ -8,7 +8,7 @@ use crate::hearing_logic::*;
 use crate::session::{Cmd, Status, HEARING};
 use crate::types::*;
 use crate::{cmd, icons, load_settings, save_setting, t, App};
-use eframe::egui::{self, Align2, Color32, FontId, Pos2, Rect, Shape, Stroke, Ui, Vec2};
+use eframe::egui::{self, Align2, FontId, Pos2, Rect, Shape, Stroke, Ui, Vec2};
 use serde_json::json;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -273,7 +273,7 @@ fn radar(ui: &Ui, rect: Rect, values: Option<[f32; 6]>) {
     for i in 0..6 { ui.painter().line_segment([c, point(i, 10.0)], Stroke::new(1.0, white(0.2))); }
     ui.painter().add(Shape::closed_line(poly([10.0; 6]), Stroke::new(1.5, white(0.5))));
     if let Some(v) = values {
-        ui.painter().add(Shape::convex_polygon(poly(v), Color32::from_white_alpha(46), Stroke::new(2.5, Color32::WHITE)));
+        ui.painter().add(Shape::convex_polygon(poly(v), white(0.18), Stroke::new(2.5, white(1.0))));
     }
     for (i, f) in HEARING_AXES.iter().enumerate() {
         let text = if *f >= 1000 { format!("{} kHz", *f as f32 / 1000.0) } else { format!("{f} Hz") };
@@ -344,7 +344,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
             let r = Rect::from_min_size(Pos2::new(x0 + i as f32 * (w / 2.0 + 4.0), y), Vec2::new(w / 2.0 - 4.0, 44.0));
             let lit = app.hearing.ear == i;
             if glass::button_at(ui, ("ear", i), r, 22.0, lit).clicked() { app.hearing.ear = i; }
-            ui.painter().text(r.center(), Align2::CENTER_CENTER, t(&tr, label), FontId::proportional(14.0), if lit { Color32::from_rgb(27, 26, 69) } else { Color32::WHITE });
+            ui.painter().text(r.center(), Align2::CENTER_CENTER, t(&tr, label), FontId::proportional(14.0), if lit { glass::on_accent() } else { glass::white(1.0) });
         }
         y += 44.0 + 12.0;
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 380.0));

@@ -80,4 +80,11 @@
         <item name="android:windowEnterAnimation">@anim/sheet_in</item>
         <item name="android:windowExitAnimation">@anim/sheet_out</item>
     </style>
+    <!-- Glass: screens rise and fade instead of the platform's slide ([Entrance]). -->
+    <style name="GlassWindowAnim">
+        <item name="android:activityOpenEnterAnimation">@anim/glass_open_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/glass_open_exit</item>
+        <item name="android:activityCloseEnterAnimation">@anim/glass_close_enter</item>
+        <item name="android:activityCloseExitAnimation">@anim/glass_close_exit</item>
+    </style>
 </resources>

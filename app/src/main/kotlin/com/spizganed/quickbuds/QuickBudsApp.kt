@@ -97,6 +97,7 @@ class QuickBudsApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        com.spizganed.quickbuds.ui.Entrance.install(this)
         // A preset change rebuilds every open activity when it comes back to the front,
         // because colours are applied at inflation (ThemeRes.select), not afterwards.
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {

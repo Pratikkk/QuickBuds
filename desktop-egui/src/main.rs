@@ -31,6 +31,7 @@ mod hearing;
 mod models;
 mod settings;
 mod overview;
+mod palette;
 
 pub use buds_core::{cmd, msg, wire};
 
@@ -166,12 +167,16 @@ pub struct App {
     /// The Overview's scroll offset in points.
     pub scroll: f32,
     pub shown_page: Page,
+    pub page_since: std::time::Instant,
     pub eq: eq::State,
     pub dual: dual::State,
     pub earbuds: earbuds::State,
     pub dev: dev::State,
     pub gestures: gestures::State,
     pub settings: settings::State,
+    pub style: glass::style::Style,
+    /// What the style was last made for: (system light, saved settings stamp).
+    style_for: bool,
     pub hearing: hearing::State,
 }
 
@@ -182,7 +187,6 @@ impl App {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
         glass::install(cc);
         egui_extras::install_image_loaders(&cc.egui_ctx);
-        fonts::install(&cc.egui_ctx);
         let inbox = Arc::new(Mutex::new(None));
         let demo = std::env::var_os("QB_DEMO").is_some();
         let tx = if demo {
@@ -194,10 +198,25 @@ impl App {
             session::spawn(move |s| { *inbox.lock().unwrap() = Some(s); ctx.request_repaint(); })
         };
         let glow = load_settings()["glass_gradient"].as_bool().unwrap_or(true);
-        Self {
+        let mut app = Self {
             snap: Snapshot::default(), tx, tr: translations(chosen_locale()), inbox, page: Page::Overview, has: Has::ALL,
-            modes: AncModes::default(), last_level: None, levels_open: false, glow, demo, confirm: None, scroll: 0.0, shown_page: Page::Overview, eq: Default::default(), dual: Default::default(), earbuds: Default::default(), dev: Default::default(), gestures: Default::default(), settings: Default::default(), hearing: Default::default(),
-        }
+            modes: AncModes::default(), last_level: None, levels_open: false, glow, demo, confirm: None, scroll: 0.0, shown_page: Page::Overview, page_since: std::time::Instant::now(), eq: Default::default(), dual: Default::default(), earbuds: Default::default(), dev: Default::default(), gestures: Default::default(), settings: Default::default(), hearing: Default::default(), style: glass::style::Style::Glass, style_for: false,
+        };
+        app.reload_style(&cc.egui_ctx);
+        app
+    }
+
+    /// Reads the saved style and theme, and sets them for the widgets and the font. Called at the start, after a change in
+    /// Settings, and when the system's light / dark changes (Match system).
+    pub fn reload_style(&mut self, ctx: &egui::Context) {
+        use glass::style::{self, Style};
+        self.style = Style::from_key(load_settings()["egui_style"].as_str().unwrap_or("glass"));
+        let light = palette::is_light_system(ctx);
+        self.style_for = light;
+        let pal = if self.style == Style::Glass { palette::Pal::DEFAULT } else { palette::active(light, self.style == Style::Material) };
+        style::set(self.style, pal);
+        fonts::apply(ctx, self.style);
+        self.glow = load_settings()["glass_gradient"].as_bool().unwrap_or(true);
     }
 
     fn apply(&mut self, s: Snapshot) {
@@ -213,9 +232,13 @@ impl App {
 }
 
 impl eframe::App for App {
+    /// The window is transparent outside its rounded pane.
+    fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] { [0.0, 0.0, 0.0, 0.0] }
+
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let new = self.inbox.lock().unwrap().take();
         if let Some(s) = new { self.apply(s); }
+        if palette::is_light_system(ui.ctx()) != self.style_for && palette::auto() { let ctx = ui.ctx().clone(); self.reload_style(&ctx); }
         glass::set_glow(ui.ctx(), if self.glow { 1.0 } else { 0.0 });
         glass::backdrop(ui);
         overview::show(self, ui);
@@ -227,6 +250,8 @@ fn main() -> eframe::Result {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1180.0, 760.0])
             .with_min_inner_size([760.0, 560.0])
+            .with_decorations(false)
+            .with_transparent(true)
             .with_title("QuickBuds")
             .with_app_id("quickbuds"),
         renderer: eframe::Renderer::Glow,

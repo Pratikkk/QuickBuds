@@ -28,7 +28,7 @@ fn button(ui: &mut glass::Ui, id: &str, x: &mut f32, y: f32, label: &str, lit: b
     let r = Rect::from_min_size(Pos2::new(*x, y), Vec2::new(w, 42.0));
     *x += w + 8.0;
     let hit = glass::button_at(ui, id, r, 21.0, lit).clicked();
-    ui.painter().text(r.center(), Align2::CENTER_CENTER, label, FontId::proportional(14.0), if lit { Color32::from_rgb(27, 26, 69) } else { Color32::WHITE });
+    ui.painter().text(r.center(), Align2::CENTER_CENTER, label, FontId::proportional(14.0), if lit { glass::on_accent() } else { glass::white(1.0) });
     hit
 }
 

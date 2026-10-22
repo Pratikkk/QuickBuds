@@ -260,6 +260,13 @@ class BottomSheetDialog(private val activity: Activity) {
 
         d.window?.let { w ->
             w.setBackgroundDrawable(ColorDrawable(0x00000000))
+            // Glass on Android 12+: the window blurs what is behind it, and the sheet is the window's own background so
+            // the blur takes its rounded shape.
+            if (ThemeRes.glass(activity) && !ThemeRes.nothing(activity) && ThemeRes.windowBlur(activity)) {
+                root.background = null
+                w.setBackgroundDrawable(ThemeRes.sheet(activity))
+                w.setBackgroundBlurRadius(dp(28f))
+            }
             w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             // A light dim: the sheet is a chooser over content the user is still
             // looking at (the ANC circles, the gesture list), not a modal that

@@ -21,10 +21,18 @@ const CANDIDATES: &[&str] = &[
     "/usr/share/fonts/cantarell/Cantarell-VF.otf",
 ];
 
-pub fn install(ctx: &egui::Context) {
-    let Some(bytes) = CANDIDATES.iter().find_map(|p| std::fs::read(p).ok()) else { return };
+/// The phone's bundled Doto, for the Pixel art style.
+static DOTO: &[u8] = include_bytes!("../../app/src/main/res/font/doto.ttf");
+
+/// Sets the font for a style: Doto for Pixel art, else the system sans if the PC has one.
+pub fn apply(ctx: &egui::Context, style: crate::glass::style::Style) {
     let mut fonts = FontDefinitions::default();
-    fonts.font_data.insert("ui".into(), Arc::new(FontData::from_owned(bytes)));
-    fonts.families.entry(FontFamily::Proportional).or_default().insert(0, "ui".into());
+    if style == crate::glass::style::Style::Pixel {
+        fonts.font_data.insert("doto".into(), Arc::new(FontData::from_static(DOTO)));
+        fonts.families.entry(FontFamily::Proportional).or_default().insert(0, "doto".into());
+    } else if let Some(bytes) = CANDIDATES.iter().find_map(|p| std::fs::read(p).ok()) {
+        fonts.font_data.insert("ui".into(), Arc::new(FontData::from_owned(bytes)));
+        fonts.families.entry(FontFamily::Proportional).or_default().insert(0, "ui".into());
+    }
     ctx.set_fonts(fonts);
 }

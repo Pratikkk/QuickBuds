@@ -50,7 +50,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
             let r = Rect::from_min_size(Pos2::new(x0 + i as f32 * (w / 2.0 + 4.0), y), Vec2::new(w / 2.0 - 4.0, 46.0));
             let lit = side == i as u8 + 1;
             if glass::button_at(ui, ("side", i), r, 23.0, lit).clicked() { app.gestures.side = i as u8 + 1; }
-            ui.painter().text(r.center(), Align2::CENTER_CENTER, t(&tr, label), egui::FontId::proportional(15.0), if lit { egui::Color32::from_rgb(27, 26, 69) } else { egui::Color32::WHITE });
+            ui.painter().text(r.center(), Align2::CENTER_CENTER, t(&tr, label), egui::FontId::proportional(15.0), if lit { glass::on_accent() } else { glass::white(1.0) });
         }
         y += 46.0 + 18.0;
     }

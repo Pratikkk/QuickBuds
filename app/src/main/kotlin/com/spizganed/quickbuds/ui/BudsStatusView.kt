@@ -28,7 +28,7 @@ import kotlin.math.min
  */
 class BudsStatusView(context: Context) : View(context) {
 
-    private class Slot(val icon: Drawable, val iconRatio: Float, val boxW: Float, val boxH: Float) {
+    private class Slot(val icon: Drawable, val iconRatio: Float, val boxW: Float, val boxH: Float, val glassW: Float, val glassH: Float) {
         var level = -1
         var shown = 0f          // animated ring fraction 0..1
         var status = -1
@@ -69,9 +69,9 @@ class BudsStatusView(context: Context) : View(context) {
     // Glyphs keep their SVG's true ratio (buds 176x272, case 496x400), fitted inside the SPEC's
     // boxes (bud 42x56, case 58x42). The right bud is its own mirrored drawable.
     private val slots = listOf(
-        Slot(context.getDrawable(R.drawable.ic_bud_left)!!.mutate(), 176f / 272f, 42f, 56f),
-        Slot(context.getDrawable(R.drawable.ic_case)!!.mutate(), 496f / 400f, 58f, 42f),
-        Slot(context.getDrawable(R.drawable.ic_bud_right)!!.mutate(), 176f / 272f, 42f, 56f)
+        Slot(context.getDrawable(R.drawable.ic_bud_left)!!.mutate(), 176f / 272f, 42f, 56f, 31f, 42f),
+        Slot(context.getDrawable(R.drawable.ic_case)!!.mutate(), 496f / 400f, 58f, 42f, 52f, 42f),
+        Slot(context.getDrawable(R.drawable.ic_bud_right)!!.mutate(), 176f / 272f, 42f, 56f, 31f, 42f)
     )
     private val names = listOf(
         context.getString(R.string.status_left),
@@ -94,6 +94,13 @@ class BudsStatusView(context: Context) : View(context) {
         textSize = dp(13f); textAlign = Paint.Align.CENTER; color = p.textSecondary
     }
     private val arcBox = RectF()
+
+    /** Glass: a lit glass disc in the ring, a soft light along the arc and a gradient arc, as the design's rings. */
+    private val glass = p.glass && !nothing
+    private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = dp(13f); strokeCap = Paint.Cap.ROUND }
+    private val discPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val rimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = dp(1f) }
+    private val sweepMatrix = android.graphics.Matrix()
     private val semibold = ThemeRes.medium(context)
 
     /** 90dp (SPEC 104, made ~13% shorter), shrunk only if three columns cannot fit on a very narrow screen. */
@@ -138,6 +145,15 @@ class BudsStatusView(context: Context) : View(context) {
 
     private fun pctText(level: Int) = if (level < 0 || !connected) "—" else if (nothing) "$level" else "$level%"
 
+    private fun withA(color: Int, a: Float) = (color and 0x00FFFFFF) or ((((color ushr 24) and 0xFF) * (0.35f + 0.65f * a)).toInt() shl 24)
+
+    /** Glass glyphs are white: bright in the ear and for the case, softer out of the ear, softest in the case. */
+    private fun glassTint(isCase: Boolean, status: Int): Int = when {
+        isCase || status == 3 || status == 7 -> 0xF2FFFFFF.toInt()
+        status == 4 || status == 0 -> 0x73FFFFFF
+        else -> 0xB3FFFFFF.toInt()
+    }
+
     /** Before the model's first "in ear" the "in ear" shown may be a stand-in: no label. */
     private var noWearLabel = false
 
@@ -172,14 +188,37 @@ class BudsStatusView(context: Context) : View(context) {
             } else {
                 val r = ring / 2 - trackPaint.strokeWidth / 2
                 arcBox.set(cx - r, cy - r, cx + r, cy + r)
-                canvas.drawOval(arcBox, trackPaint)
-                if (s.shown > 0f) canvas.drawArc(arcBox, -90f, 360f * s.shown, false, arcPaint)
+                if (glass) {
+                    val a = conn
+                    // The glass disc inside the ring: lit from the top.
+                    val inner = r - trackPaint.strokeWidth / 2 - dp(1f)
+                    discPaint.shader = android.graphics.LinearGradient(0f, cy - inner, 0f, cy + inner, intArrayOf(withA(0x2EFFFFFF, a), withA(0x0AFFFFFF, a)), null, android.graphics.Shader.TileMode.CLAMP)
+                    canvas.drawCircle(cx, cy, inner, discPaint)
+                    rimPaint.shader = android.graphics.LinearGradient(0f, cy - inner, 0f, cy + inner, intArrayOf(withA(0x8CFFFFFF.toInt(), a), withA(0x14FFFFFF, a)), null, android.graphics.Shader.TileMode.CLAMP)
+                    canvas.drawCircle(cx, cy, inner, rimPaint)
+                    trackPaint.color = 0x38FFFFFF
+                    canvas.drawOval(arcBox, trackPaint)
+                    if (s.shown > 0f) {
+                        glowPaint.color = withA(0x24FFFFFF, a)
+                        canvas.drawArc(arcBox, -90f, 360f * s.shown, false, glowPaint)
+                        sweepMatrix.setRotate(-90f, cx, cy)
+                        val sweep = android.graphics.SweepGradient(cx, cy, intArrayOf(0xFFD8E0FF.toInt(), 0xFFFFFFFF.toInt()), floatArrayOf(0f, 1f))
+                        sweep.setLocalMatrix(sweepMatrix)
+                        arcPaint.shader = sweep
+                        arcPaint.alpha = (255 * (0.35f + 0.65f * a)).toInt()
+                        canvas.drawArc(arcBox, -90f, 360f * s.shown, false, arcPaint)
+                    }
+                } else {
+                    canvas.drawOval(arcBox, trackPaint)
+                    if (s.shown > 0f) canvas.drawArc(arcBox, -90f, 360f * s.shown, false, arcPaint)
+                }
 
-                // Glyph: fit the SPEC box, keeping the SVG's own ratio.
-                val bw = dp(s.boxW) * scale
-                val bh = dp(s.boxH) * scale
+                // Glyph: fit the SPEC box, keeping the SVG's own ratio. Glass: the design's smaller glyph (bud 31x42 in a 90 ring).
+                val gscale = if (glass) ring / dp(90f) else scale
+                val bw = dp(if (glass) s.glassW else s.boxW) * gscale
+                val bh = dp(if (glass) s.glassH else s.boxH) * gscale
                 val (iw, ih) = if (s.iconRatio < bw / bh) bh * s.iconRatio to bh else bw to bw / s.iconRatio
-                s.icon.setTint(androidx.core.graphics.ColorUtils.blendARGB(p.disabled, wearTint(p, isCase, s.status, ThemeRes.material(context)), conn))
+                s.icon.setTint(androidx.core.graphics.ColorUtils.blendARGB(p.disabled, if (glass) glassTint(isCase, s.status) else wearTint(p, isCase, s.status, ThemeRes.material(context)), conn))
                 s.icon.setBounds((cx - iw / 2).toInt(), (cy - ih / 2).toInt(), (cx + iw / 2).toInt(), (cy + ih / 2).toInt())
                 s.icon.draw(canvas)
             }

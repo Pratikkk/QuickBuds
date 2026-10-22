@@ -237,6 +237,9 @@ struct Conn<'a> {
     seq: u8,
     /// The last ANC level sent, to name a report that says only "noise cancelling".
     level: Option<String>,
+    /// Switches just written: (feature id, the value written, until). The buds' next reports may still carry the
+    /// old value; they do not undo the click. The status read after the write is the last word.
+    holds: Vec<(u8, bool, Instant)>,
     s: Snapshot,
     emit: &'a Emit,
 }
@@ -246,7 +249,13 @@ impl<'a> Conn<'a> {
         let model = find_model(None, Some(&name));
         let mut s = Snapshot { status: Status::On, name, detected: model, ..Default::default() };
         pick_model(&mut s);
-        Conn { link, addr, framer: Framer::default(), rx: 0, seq: 0, level: None, s, emit }
+        Conn { link, addr, framer: Framer::default(), rx: 0, seq: 0, level: None, holds: Vec::new(), s, emit }
+    }
+
+    /// A switch written just now keeps the value written for a moment.
+    fn hold(&mut self, id: u8, on: bool) {
+        self.holds.retain(|h| h.0 != id);
+        self.holds.push((id, on, Instant::now() + Duration::from_millis(2500)));
     }
 
     /// Sends a frame built by `buds_core::cmd`.
@@ -298,6 +307,10 @@ impl<'a> Conn<'a> {
     }
 
     fn apply(&mut self, e: Event) -> bool {
+        self.holds.retain(|h| h.2 > Instant::now());
+        let holds = &self.holds;
+        // The value a report may set for a switch: the one just written wins while it is held.
+        let held = |id: u8, v: bool| holds.iter().find(|h| h.0 == id).map_or(v, |h| h.1);
         let s = &mut self.s;
         match e {
             Event::Caps(c) => s.caps = c,
@@ -335,7 +348,7 @@ impl<'a> Conn<'a> {
                 None => return false,
             },
             Event::GameMode(pl) => match game_on(&pl, crate::load_settings()["product_id"].as_str()) {
-                Some(on) => s.low_latency = Some(on),
+                Some(on) => s.low_latency = Some(held(s.caps.game_mode_id(), on)),
                 None => return false,
             },
             Event::AlertVolume(l) => s.alert_volume = Some(l),
@@ -358,9 +371,10 @@ impl<'a> Conn<'a> {
             Event::HoldMask(k, m) => match s.hold_masks.iter_mut().find(|x| x.0 == k) { Some(x) => x.1 = m, None => s.hold_masks.push((k, m)) },
             Event::Features(f) => {
                 let get = |id: u8| f.iter().find(|x| x.0 == id).map(|x| x.1 == 1);
-                s.low_latency = get(s.caps.game_mode_id()).or(s.low_latency);
-                s.bass_on = get(FEATURE_BASSWAVE).or(s.bass_on);
+                s.low_latency = get(s.caps.game_mode_id()).map(|v| held(s.caps.game_mode_id(), v)).or(s.low_latency);
+                s.bass_on = get(FEATURE_BASSWAVE).map(|v| held(FEATURE_BASSWAVE, v)).or(s.bass_on);
                 for (id, v) in f {
+                    let v = held(id, v == 1) as u8;
                     match s.features.iter_mut().find(|x| x.0 == id) { Some(x) => x.1 = v, None => s.features.push((id, v)) }
                 }
             }
@@ -485,8 +499,14 @@ impl<'a> Conn<'a> {
                         self.s.anc = Some(mode);
                     }
                     Cmd::LowLatency(on) => {
-                        self.tx(cmd::feature(self.s.caps.game_mode_id(), on))?;
+                        let id = self.s.caps.game_mode_id();
+                        self.hold(id, on);
                         self.s.low_latency = Some(on);
+                        (self.emit)(self.s.clone());
+                        self.tx(cmd::feature(id, on))?;
+                        // Read the status back: what the buds report is what stays.
+                        self.pump(250)?;
+                        self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?;
                     }
                     // Each EQ write updates the state first, so the replies before the new values
                     // do not snap the UI back.
@@ -503,8 +523,12 @@ impl<'a> Conn<'a> {
                     Cmd::EqCreate(p) => self.eq_write((CMD_SAVE_CUSTOM_EQ, p.encode(EQ_CREATE)))?,
                     Cmd::EqDelete(p) => self.eq_write((CMD_SAVE_CUSTOM_EQ, p.encode(EQ_DELETE)))?,
                     Cmd::BassWave(on) => {
+                        self.hold(FEATURE_BASSWAVE, on);
                         self.s.bass_on = Some(on);
+                        (self.emit)(self.s.clone());
                         self.tx(cmd::feature(FEATURE_BASSWAVE, on))?;
+                        self.pump(250)?;
+                        self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?;
                     }
                     Cmd::BassLevel(l) => {
                         self.s.bass_level = Some(l);
@@ -514,6 +538,7 @@ impl<'a> Conn<'a> {
                     // Power saving restarts the buds: the link drops and the idle rescan reconnects.
                     Cmd::Features(changes) => {
                         for &(id, on) in &changes {
+                            self.hold(id, on);
                             if let Some(x) = self.s.features.iter_mut().find(|x| x.0 == id) { x.1 = on as u8; }
                         }
                         (self.emit)(self.s.clone());
@@ -534,6 +559,7 @@ impl<'a> Conn<'a> {
                     Cmd::StatusRead => self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?,
                     // HeyMelody's order: the switch, the status re-read, then the follow-up; the buds push the list.
                     Cmd::Dual(on) => {
+                        self.hold(FEATURE_DUAL, on);
                         if let Some(x) = self.s.features.iter_mut().find(|x| x.0 == FEATURE_DUAL) { x.1 = on as u8; }
                         (self.emit)(self.s.clone());
                         self.tx(cmd::feature(FEATURE_DUAL, on))?;

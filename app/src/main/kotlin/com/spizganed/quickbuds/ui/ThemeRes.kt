@@ -175,6 +175,10 @@ object ThemeRes {
     const val KEY_GLASS = "styleGlass"
     private const val KEY_GLASS_GRADIENT = "styleGlassGradient"
 
+    /** Window blur behind a glass sheet: Android 12 and newer, when the system allows it. */
+    fun windowBlur(context: Context): Boolean =
+        Build.VERSION.SDK_INT >= 31 && (context as? Activity)?.windowManager?.isCrossWindowBlurEnabled == true
+
     /** Glass: a dim midnight glow behind the glass (the default). Off: a pitch black window (OLED). */
     fun glassGradient(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_GLASS_GRADIENT, true)
 
@@ -380,7 +384,7 @@ object ThemeRes {
 
         override fun onBoundsChange(b: android.graphics.Rect) {
             fill.shader = android.graphics.LinearGradient(b.left.toFloat(), b.top.toFloat(), b.right.toFloat(), b.bottom.toFloat(),
-                if (selected) 0x55FFFFFF else 0x38FFFFFF, if (selected) 0x2EFFFFFF else 0x14FFFFFF, android.graphics.Shader.TileMode.CLAMP)
+                if (selected) 0x40FFFFFF else 0x26FFFFFF, if (selected) 0x22FFFFFF else 0x0AFFFFFF, android.graphics.Shader.TileMode.CLAMP)
             lit.shader = android.graphics.LinearGradient(0f, b.top.toFloat(), 0f, b.top + 20 * d, 0x8CFFFFFF.toInt(), 0, android.graphics.Shader.TileMode.CLAMP)
         }
 
@@ -521,7 +525,8 @@ object ThemeRes {
         // Glass: the design's glass surface; a sheet is nearly opaque, or its content would show through.
         if (p.glass) {
             if (!topOnly) return GlassDrawable(context, radiusDp)
-            return shape(context, if (glassGradient(context)) 0xF20F0F22.toInt() else 0xF2181818.toInt(), p.outline, radiusDp).apply {
+            val sheetRgb = if (glassGradient(context)) 0x0F0F22 else 0x181818
+            return shape(context, sheetRgb or (if (windowBlur(context)) 0xA8000000.toInt() else 0xF2000000.toInt()), p.outline, radiusDp).apply {
                 val r = dp(context, radiusDp).toFloat(); cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f)
             }
         }
