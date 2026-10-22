@@ -1,64 +1,70 @@
+<div align="center">
+
 # QuickBuds
 
-> Open-source HeyMelody alternative for Android, Windows and Linux. Control OnePlus / OPPO / realme
-> earbuds over Bluetooth, no root: battery, noise cancellation (ANC), equalizer, hearing profile,
-> gestures, wear detection, fit test, find my earbuds, dual connection, low latency mode, home screen
-> widgets and a tray icon.
+**Control your OnePlus, OPPO and realme earbuds. No vendor app, no root.**
+
+Android · Windows · Linux
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](./LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Android%208%2B%20%7C%20Windows%20%7C%20Linux-3DDC84.svg)](#install)
 [![Release](https://img.shields.io/badge/Release-latest-blue.svg)](https://github.com/spizganed/QuickBuds/releases/latest)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/spizganed)
 
-QuickBuds does everything the vendor app does for your earbuds, in a fast, clean app: on the phone
-with real home screen widgets, and on the PC with a tray icon. It is a hobby project; you can
-support it on [Ko-fi](https://ko-fi.com/spizganed).
+<img src="docs/images/phone.png" width="230" alt="QuickBuds on a phone"> &nbsp; <img src="docs/images/desktop.png" width="560" alt="QuickBuds on a PC">
 
-## Screenshots
+</div>
 
-| Phone | PC |
-| :---: | :---: |
-| <img src="docs/images/phone.png" width="220"> | <img src="docs/images/desktop.png" width="560"> |
-
-| Widget: battery | Widget: noise control | Tray: Windows | Tray: Linux |
-| :---: | :---: | :---: | :---: |
-| <img src="docs/images/widget-battery.png" width="180"> | <img src="docs/images/widget-controls.png" width="180"> | <img src="docs/images/tray-windows.png" width="300"> | <img src="docs/images/tray-linux.png" width="240"> |
-
-## Features
-
-- **Battery and wear status** for each bud and the case, live.
-- **Noise control:** Off, Noise cancelling (Low / Medium / High / Smart), Adaptive, Transparency.
-- **Sound:** equalizer with presets, custom curves and bass boost, high-quality audio, 3D audio, low latency mode.
-- **Hearing profile and fit test:** a hearing test that tunes the sound to your ears, and a check of the ear-tip seal.
-- **Controls:** gestures per bud, wear detection, dual connection, find my earbuds, prompt volume, firmware version.
-- **Each model's own features:** QuickBuds reads the model and shows only what that model supports.
-- **Android:** home screen widgets (battery, controls, 2×2 or 4×2; a double tap switches the page) and a first-run setup.
-- **PC:** tray icon with quick controls (Windows) or a battery menu (Linux).
-- **Looks:** Material, QuickBuds (classic) and Pixel art (dot matrix) styles, OLED Black / Classic Dark / White themes,
-  your own accent colour and presets. The same styles and colours on the phone, the widgets and the PC.
-- **27 languages**, switchable in the app. **Updates** from GitHub releases; the PC app updates itself.
+QuickBuds is an open-source alternative to HeyMelody and realme Link. It talks to your earbuds over
+Bluetooth and shows the controls that your model has: on the phone with real home screen widgets, and on
+the PC with a tray icon. It is a hobby project; you can support it on [Ko-fi](https://ko-fi.com/spizganed).
 
 ## Install
 
-Pair your earbuds in the system's Bluetooth settings first. QuickBuds connects to paired earbuds; it
-does not pair them. Every file is in the [latest release](https://github.com/spizganed/QuickBuds/releases/latest).
+Pair your earbuds in the system's Bluetooth settings first. QuickBuds connects to paired earbuds; it does not pair them.
 
-- **Android 8+:** install `QuickBuds<version>.apk` and allow the Bluetooth permission when asked.
-- **Windows 10 / 11:** unzip `QuickBuds<version>-windows-x64.zip` and run `quickbuds.exe`. It is portable:
-  no installer, no drivers, no background services.
-- **Linux:** run this command. It downloads the AppImage to your home folder and starts it. The AppImage
-  holds every library it needs, so it runs on any distro with BlueZ. It updates itself.
-  ```sh
-  curl -fLo ~/QuickBuds.AppImage https://github.com/spizganed/QuickBuds/releases/latest/download/QuickBuds-linux-x64.AppImage && chmod +x ~/QuickBuds.AppImage && ~/QuickBuds.AppImage
-  ```
-  If it says FUSE is missing, install `fuse3` from your distro. The tarball
-  `QuickBuds<version>-linux-x64.tar.gz` is the alternative: it needs BlueZ, GTK 3 and libayatana-appindicator,
-  and its README has the rest.
+| Platform | How |
+| --- | --- |
+| **Android 8+** | Install `QuickBuds<version>.apk` from the [latest release](https://github.com/spizganed/QuickBuds/releases/latest). Allow the Bluetooth permission when asked. |
+| **Windows 10 / 11** | Unzip `QuickBuds<version>-windows-x64.zip` and run `quickbuds.exe`. It is portable: no installer, no drivers, no background service. |
+| **Linux** | Run the command below. It needs only `curl` and BlueZ. |
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/spizganed/QuickBuds/main/scripts/install-linux.sh | sh
+```
+
+The command puts the AppImage in `~/.local/share/quickbuds`, adds a `quickbuds` command and a menu entry, and needs no root.
+The app updates itself. To remove it, run the same script with `uninstall`:
+`curl -fsSL https://raw.githubusercontent.com/spizganed/QuickBuds/main/scripts/install-linux.sh | sh -s uninstall`.
+If you prefer, download `QuickBuds-linux-x64.AppImage` or the tarball `QuickBuds<version>-linux-x64.tar.gz` from the release. The tarball needs BlueZ, GTK 3 and libayatana-appindicator.
 
 > **Got the APK somewhere else?** The only official downloads are the GitHub releases. A copy from
 > another site is genuine only if it is signed with this certificate (SHA-256), which
 > `apksigner verify --print-certs <apk>` shows:
 > `9ae0ea888079cbd86af5a24391cd351af4a81fc04ebe9bd8429074c736249f61`
+
+## What it does
+
+| | |
+| --- | --- |
+| **Battery and wear** | Each bud and the case, live. |
+| **Noise control** | Off, Noise cancelling (Low, Medium, High, Smart), Adaptive, Transparency. |
+| **Sound** | Equalizer with presets, custom curves and bass boost. High-quality audio, 3D audio, low latency mode. |
+| **Hearing** | A hearing test that tunes the sound to your ears, and a fit test of the ear-tip seal. |
+| **Controls** | Gestures per bud, wear detection, dual connection, find my earbuds, prompt volume, firmware version. |
+| **Per model** | QuickBuds reads the model and shows only what that model supports. |
+| **Android** | Home screen widgets (battery and controls, 2×2 or 4×2) and a first-run setup. |
+| **PC** | A tray icon with quick controls (Windows) or a battery menu (Linux). |
+| **Looks** | Material, QuickBuds and Pixel art styles. OLED Black, Classic Dark and White themes, your own accent and presets. The same on the phone, the widgets and the PC. |
+| **Languages and updates** | 27 languages, switchable in the app. Updates from GitHub releases; the PC app updates itself. |
+
+<div align="center">
+
+| Widget: battery | Widget: noise control | Tray: Windows | Tray: Linux |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/images/widget-battery.png" width="170"> | <img src="docs/images/widget-controls.png" width="170"> | <img src="docs/images/tray-windows.png" width="280"> | <img src="docs/images/tray-linux.png" width="220"> |
+
+</div>
 
 ## Supported earbuds
 

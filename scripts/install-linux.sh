@@ -1,0 +1,61 @@
+#!/bin/sh
+# Installs QuickBuds on Linux for the current user: the AppImage, a `quickbuds` command and a menu entry.
+#   curl -fsSL https://raw.githubusercontent.com/spizganed/QuickBuds/main/scripts/install-linux.sh | sh
+# Remove it again with: sh install-linux.sh uninstall
+# No root needed. Needs curl and BlueZ (bluetoothctl). Updates come from the app itself.
+set -eu
+
+app="$HOME/.local/share/quickbuds"
+bin="$HOME/.local/bin"
+menu="$HOME/.local/share/applications"
+icons="$HOME/.local/share/icons/hicolor/scalable/apps"
+url="https://github.com/spizganed/QuickBuds/releases/latest/download/QuickBuds-linux-x64.AppImage"
+
+if [ "${1:-}" = uninstall ]; then
+  rm -rf "$app" "$bin/quickbuds" "$menu/quickbuds.desktop" "$icons/quickbuds.svg"
+  echo "QuickBuds removed. Its settings stay in ~/.config/quickbuds."
+  exit 0
+fi
+
+[ "$(uname -s)" = Linux ] && [ "$(uname -m)" = x86_64 ] || { echo "This installer needs Linux on x86_64." >&2; exit 1; }
+command -v curl >/dev/null 2>&1 || { echo "Install curl first." >&2; exit 1; }
+command -v bluetoothctl >/dev/null 2>&1 || echo "Warning: BlueZ (bluetoothctl) is missing. Install it, then pair your earbuds." >&2
+
+mkdir -p "$app" "$bin" "$menu" "$icons"
+tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
+echo "Downloading QuickBuds..."
+curl -fL --progress-bar -o "$tmp" "$url"
+chmod +x "$tmp"
+mv "$tmp" "$app/QuickBuds.AppImage"
+
+# The icon comes out of the AppImage, which needs no FUSE for this.
+work=$(mktemp -d)
+( cd "$work" && APPIMAGE_EXTRACT_AND_RUN=1 "$app/QuickBuds.AppImage" --appimage-extract '*.svg' >/dev/null 2>&1 ) || true
+icon=$(find "$work" -name '*.svg' 2>/dev/null | head -1)
+[ -n "$icon" ] && cp "$icon" "$icons/quickbuds.svg"
+rm -rf "$work"
+
+cat > "$bin/quickbuds" <<EOF
+#!/bin/sh
+# Starts QuickBuds. Without FUSE, the AppImage runs extracted.
+if [ -e /dev/fuse ] && command -v fusermount3 >/dev/null 2>&1 || command -v fusermount >/dev/null 2>&1; then
+  exec "$app/QuickBuds.AppImage" "\$@"
+fi
+APPIMAGE_EXTRACT_AND_RUN=1 exec "$app/QuickBuds.AppImage" "\$@"
+EOF
+chmod +x "$bin/quickbuds"
+
+cat > "$menu/quickbuds.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=QuickBuds
+Comment=Control OnePlus, OPPO and realme earbuds
+Exec=$bin/quickbuds
+Icon=quickbuds
+Categories=AudioVideo;Audio;
+Terminal=false
+EOF
+
+echo "QuickBuds is installed. Start it from the menu, or run: quickbuds"
+case ":$PATH:" in *":$bin:"*) ;; *) echo "Add $bin to your PATH to use the quickbuds command." ;; esac
