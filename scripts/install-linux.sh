@@ -31,9 +31,9 @@ mv "$tmp" "$app/QuickBuds.AppImage"
 
 # The icon comes out of the AppImage, which needs no FUSE for this.
 work=$(mktemp -d)
-( cd "$work" && APPIMAGE_EXTRACT_AND_RUN=1 "$app/QuickBuds.AppImage" --appimage-extract '*.svg' >/dev/null 2>&1 ) || true
-icon=$(find "$work" -name '*.svg' 2>/dev/null | head -1)
-[ -n "$icon" ] && cp "$icon" "$icons/quickbuds.svg"
+( cd "$work" && APPIMAGE_EXTRACT_AND_RUN=1 "$app/QuickBuds.AppImage" --appimage-extract >/dev/null 2>&1 ) || true
+icon=$(find -L "$work" -name 'quickbuds.svg' -type f 2>/dev/null | head -1)
+if [ -n "$icon" ]; then cp "$icon" "$icons/quickbuds.svg"; else echo "No icon found; the menu entry has no icon." >&2; fi
 rm -rf "$work"
 
 cat > "$bin/quickbuds" <<EOF
