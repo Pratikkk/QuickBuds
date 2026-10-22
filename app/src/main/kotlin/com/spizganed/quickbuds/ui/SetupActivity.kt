@@ -201,7 +201,8 @@ class SetupActivity : Activity() {
         isSingleLine = true
         minWidth = dp(72f)
         setPadding(dp(14f), 0, dp(14f), 0)
-        if (action == null) setTextColor(p.textSecondary)
+        // The state text has no pill: its right edge meets the switches' (the rows' 16dp padding), not 14dp inside it.
+        if (action == null) { setTextColor(p.textSecondary); setPadding(0, 0, 0, 0); gravity = Gravity.CENTER_VERTICAL or Gravity.END; minWidth = 0 }
         else {
             setTextColor(ThemeRes.onFill(this@SetupActivity))
             background = ThemeRes.ripple(this@SetupActivity, ThemeRes.pill(this@SetupActivity, p.accent, 18f))
