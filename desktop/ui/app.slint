@@ -467,7 +467,9 @@ component Ring {
         source: glyph;
         width: glyph-w; height: glyph-h;
         x: (size - self.width) / 2; y: (size - self.height) / 2;
-        colorize: tint;
+        // Without a link the glyph fades to the outline shade, as the phone's glyph fades to its disabled colour.
+        colorize: Buds.on ? tint : Palette.outline;
+        animate colorize { duration: Motion.base; }
     }
     Text {
         y: size + 4px; width: size;
