@@ -98,7 +98,7 @@
     <string name="row_sleep_title">Pause en cas de sommeil</string>
     <string name="row_sleep_sub">Arrête la musique si vous vous endormez</string>
     <string name="row_lost_title">Rappel de perte</string>
-    <string name="row_lost_sub">Te prévient quand un écouteur risque d'être perdu</string>
+    <string name="row_lost_sub">Te prévient quand un écouteur risque d\'être perdu</string>
     <string name="row_power_saving_title">Économie d\'énergie</string>
     <string name="row_power_saving_sub">Désactive les extras pour plus d\'autonomie</string>
     <string name="power_saving_confirm">Les écouteurs vont redémarrer.</string>
