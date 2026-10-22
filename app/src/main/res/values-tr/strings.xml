@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">Her kulaklığın hangi kulakta olduğunu algılar</string>
     <string name="row_sleep_title">Uykuda duraklat</string>
     <string name="row_sleep_sub">Uyuyakalırsanız müziği durdurur</string>
+    <string name="row_lost_title">Kayıp hatırlatıcısı</string>
+    <string name="row_lost_sub">Bir kulaklık kaybolabilirse seni uyarır</string>
     <string name="row_power_saving_title">Güç tasarrufu</string>
     <string name="row_power_saving_sub">Daha uzun pil ömrü için ekstraları kapatır</string>
     <string name="power_saving_confirm">Kulaklıklar yeniden başlatılacak.</string>

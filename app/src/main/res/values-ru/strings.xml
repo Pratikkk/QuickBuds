@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">Определяет, в каком ухе каждый наушник</string>
     <string name="row_sleep_title">Пауза во сне</string>
     <string name="row_sleep_sub">Останавливает музыку, если вы уснули</string>
+    <string name="row_lost_title">Напоминание о потере</string>
+    <string name="row_lost_sub">Напоминает, если наушник может потеряться</string>
     <string name="row_power_saving_title">Энергосбережение</string>
     <string name="row_power_saving_sub">Отключает лишнее для большей автономности</string>
     <string name="power_saving_confirm">Наушники перезагрузятся.</string>

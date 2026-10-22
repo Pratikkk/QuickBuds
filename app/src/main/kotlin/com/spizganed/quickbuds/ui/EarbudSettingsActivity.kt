@@ -213,6 +213,8 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
             R.string.row_adaptive_ear_title, R.string.row_adaptive_ear_sub)
         switch(Feature.SLEEP_PAUSE, null, R.drawable.ic_earbud,
             R.string.row_sleep_title, R.string.row_sleep_sub)
+        switch(Feature.LOST_REMIND, null, R.drawable.ic_find_buds,
+            R.string.row_lost_title, R.string.row_lost_sub)
         switch(Feature.SPEECH_PERCEPTION, null, R.drawable.ic_transparency,
             R.string.row_speech_title, R.string.row_speech_sub)
         switch(Feature.HEARING_OPTIMIZE, null, R.drawable.ic_hearing,

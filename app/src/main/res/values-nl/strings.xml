@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">Herkent in welk oor elk oordopje zit</string>
     <string name="row_sleep_title">Pauzeren bij slapen</string>
     <string name="row_sleep_sub">Stopt de muziek als je in slaap valt</string>
+    <string name="row_lost_title">Verliesmelding</string>
+    <string name="row_lost_sub">Herinnert je als een oordopje kwijt kan raken</string>
     <string name="row_power_saving_title">Energiebesparing</string>
     <string name="row_power_saving_sub">Zet extra\'s uit voor een langere accuduur</string>
     <string name="power_saving_confirm">De oordopjes worden opnieuw opgestart.</string>

@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">কোন বাড কোন কানে তা শনাক্ত করে</string>
     <string name="row_sleep_title">ঘুমালে বিরতি</string>
     <string name="row_sleep_sub">ঘুমিয়ে পড়লে গান থামায়</string>
+    <string name="row_lost_title">হারানোর সতর্কতা</string>
+    <string name="row_lost_sub">ইয়ারবাড হারিয়ে যেতে পারলে মনে করিয়ে দেয়</string>
     <string name="row_power_saving_title">পাওয়ার সেভিং</string>
     <string name="row_power_saving_sub">দীর্ঘ ব্যাটারির জন্য অতিরিক্ত ফিচার বন্ধ</string>
     <string name="power_saving_confirm">ইয়ারবাড রিস্টার্ট হবে।</string>

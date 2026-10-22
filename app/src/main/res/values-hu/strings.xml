@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">Érzékeli, melyik fülben van melyik fülhallgató</string>
     <string name="row_sleep_title">Szünet alváskor</string>
     <string name="row_sleep_sub">Leállítja a zenét, ha elalszol</string>
+    <string name="row_lost_title">Elvesztés-emlékeztető</string>
+    <string name="row_lost_sub">Szól, ha egy fülhallgató elveszhet</string>
     <string name="row_power_saving_title">Energiatakarékosság</string>
     <string name="row_power_saving_sub">Kikapcsolja az extrákat a hosszabb üzemidőért</string>
     <string name="power_saving_confirm">A fülhallgatók újraindulnak.</string>

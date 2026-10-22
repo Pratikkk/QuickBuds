@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">पहचानता है कि कौन सा बड किस कान में है</string>
     <string name="row_sleep_title">सोने पर रोकें</string>
     <string name="row_sleep_sub">सो जाने पर संगीत रोकता है</string>
+    <string name="row_lost_title">खोने की याद दिलाना</string>
+    <string name="row_lost_sub">इयरबड खो सकता हो तो याद दिलाता है</string>
     <string name="row_power_saving_title">पावर सेविंग</string>
     <string name="row_power_saving_sub">लंबी बैटरी के लिए अतिरिक्त फ़ीचर बंद</string>
     <string name="power_saving_confirm">ईयरबड रीस्टार्ट होंगे।</string>

@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">Визначає, в якому вусі кожен навушник</string>
     <string name="row_sleep_title">Пауза під час сну</string>
     <string name="row_sleep_sub">Зупиняє музику, якщо ви заснули</string>
+    <string name="row_lost_title">Нагадування про втрату</string>
+    <string name="row_lost_sub">Нагадує, коли навушник може загубитися</string>
     <string name="row_power_saving_title">Енергозбереження</string>
     <string name="row_power_saving_sub">Вимикає зайве для довшої роботи</string>
     <string name="power_saving_confirm">Навушники перезапустяться.</string>

@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">Mengesan telinga bagi setiap earbud</string>
     <string name="row_sleep_title">Jeda semasa tidur</string>
     <string name="row_sleep_sub">Menghentikan muzik jika anda tertidur</string>
+    <string name="row_lost_title">Peringatan kehilangan</string>
+    <string name="row_lost_sub">Mengingatkan apabila earbud mungkin hilang</string>
     <string name="row_power_saving_title">Penjimatan kuasa</string>
     <string name="row_power_saving_sub">Mematikan ciri tambahan untuk bateri lebih lama</string>
     <string name="power_saving_confirm">Earbud akan dimulakan semula.</string>

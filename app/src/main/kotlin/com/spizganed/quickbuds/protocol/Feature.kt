@@ -28,6 +28,8 @@ object Feature {
     const val ADAPTIVE_VOLUME = 0x30
     const val ADAPTIVE_EAR = 0x31
     const val SLEEP_PAUSE = 0x3A
+    /** Lost reminder (Enco Clip2, Buds Clip). */
+    const val LOST_REMIND = 0x16
     const val SPEECH_PERCEPTION = 0x32
     const val LONG_PRESS_VOLUME = 0x35
     const val SWIFT_PAIR = 0x37

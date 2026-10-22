@@ -66,7 +66,7 @@ QuickBuds works on **any Android 8+ phone** (Samsung, Google Pixel, Xiaomi, Noth
 not only on OnePlus / OPPO phones. It knows every earbud in HeyMelody's and realme Link's lists, 127 in
 all, and shows only the features each one has.
 
-<details open><summary><b>Confirmed</b> (12 models)</summary>
+<details><summary><b>Confirmed</b> (12 models)</summary>
 
 <details><summary><b>OnePlus</b> (4)</summary>
 

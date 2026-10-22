@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">Känner av vilket öra varje lur sitter i</string>
     <string name="row_sleep_title">Pausa vid sömn</string>
     <string name="row_sleep_sub">Stoppar musiken om du somnar</string>
+    <string name="row_lost_title">Förlustpåminnelse</string>
+    <string name="row_lost_sub">Påminner dig när en hörsnäcka kan gå förlorad</string>
     <string name="row_power_saving_title">Energisparläge</string>
     <string name="row_power_saving_sub">Stänger av extrafunktioner för längre batteritid</string>
     <string name="power_saving_confirm">Hörlurarna startas om.</string>

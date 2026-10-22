@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">Zjistí, ve kterém uchu je které sluchátko</string>
     <string name="row_sleep_title">Pauza při usnutí</string>
     <string name="row_sleep_sub">Zastaví hudbu, když usnete</string>
+    <string name="row_lost_title">Upozornění na ztrátu</string>
+    <string name="row_lost_sub">Připomene, když se sluchátko může ztratit</string>
     <string name="row_power_saving_title">Úspora energie</string>
     <string name="row_power_saving_sub">Vypne doplňky pro delší výdrž</string>
     <string name="power_saving_confirm">Sluchátka se restartují.</string>

@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">Detecta en qué oído está cada auricular</string>
     <string name="row_sleep_title">Pausa al dormir</string>
     <string name="row_sleep_sub">Detiene la música si te duermes</string>
+    <string name="row_lost_title">Aviso de pérdida</string>
+    <string name="row_lost_sub">Te avisa cuando un auricular podría perderse</string>
     <string name="row_power_saving_title">Ahorro de energía</string>
     <string name="row_power_saving_sub">Desactiva extras para más autonomía</string>
     <string name="power_saving_confirm">Los auriculares se reiniciarán.</string>

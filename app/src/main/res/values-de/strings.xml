@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">Erkennt, in welchem Ohr jeder Ohrhörer steckt</string>
     <string name="row_sleep_title">Pause beim Einschlafen</string>
     <string name="row_sleep_sub">Stoppt die Musik, wenn du einschläfst</string>
+    <string name="row_lost_title">Verlustwarnung</string>
+    <string name="row_lost_sub">Erinnert dich, wenn ein Ohrhörer verloren gehen könnte</string>
     <string name="row_power_saving_title">Energiesparmodus</string>
     <string name="row_power_saving_sub">Schaltet Extras ab für längere Akkulaufzeit</string>
     <string name="power_saving_confirm">Die Ohrhörer werden neu gestartet.</string>

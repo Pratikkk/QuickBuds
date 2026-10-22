@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">Phát hiện mỗi tai nghe ở tai nào</string>
     <string name="row_sleep_title">Tạm dừng khi ngủ</string>
     <string name="row_sleep_sub">Dừng nhạc nếu bạn ngủ thiếp đi</string>
+    <string name="row_lost_title">Nhắc nhở thất lạc</string>
+    <string name="row_lost_sub">Nhắc bạn khi tai nghe có thể bị thất lạc</string>
     <string name="row_power_saving_title">Tiết kiệm pin</string>
     <string name="row_power_saving_sub">Tắt tính năng phụ để pin lâu hơn</string>
     <string name="power_saving_confirm">Tai nghe sẽ khởi động lại.</string>

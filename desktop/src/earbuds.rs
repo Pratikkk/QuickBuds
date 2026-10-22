@@ -19,6 +19,7 @@ const ROWS: &[(u8, Option<&str>, &str, &str, &str, Option<&str>, bool)] = &[
     (0x30, None, icons::VOLUME, "row_adaptive_volume_title", "row_adaptive_volume_sub", None, false),
     (0x31, None, icons::EARBUD, "row_adaptive_ear_title", "row_adaptive_ear_sub", None, false),
     (0x3A, None, icons::EARBUD, "row_sleep_title", "row_sleep_sub", None, false),
+    (0x16, None, icons::FIND_BUDS, "row_lost_title", "row_lost_sub", None, false),
     (0x32, None, icons::TRANSPARENCY, "row_speech_title", "row_speech_sub", None, false),
     // Adaptive sound costs battery: asks only to turn on. Power saving restarts the buds: asks both ways.
     (FEATURE_HEARING_OPTIMIZE, None, icons::HEARING, "row_hearing_optimize_title", "row_hearing_optimize_sub", Some("hearing_optimize_confirm"), false),

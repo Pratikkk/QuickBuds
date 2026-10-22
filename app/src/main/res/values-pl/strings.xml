@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">Wykrywa, w którym uchu jest słuchawka</string>
     <string name="row_sleep_title">Pauza podczas snu</string>
     <string name="row_sleep_sub">Zatrzymuje muzykę, gdy zaśniesz</string>
+    <string name="row_lost_title">Przypomnienie o zgubieniu</string>
+    <string name="row_lost_sub">Przypomina, gdy słuchawka może się zgubić</string>
     <string name="row_power_saving_title">Oszczędzanie energii</string>
     <string name="row_power_saving_sub">Wyłącza dodatki, by bateria działała dłużej</string>
     <string name="power_saving_confirm">Słuchawki uruchomią się ponownie.</string>

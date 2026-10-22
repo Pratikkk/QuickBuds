@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">偵測每隻耳機戴在哪隻耳朵</string>
     <string name="row_sleep_title">睡眠時暫停</string>
     <string name="row_sleep_sub">入睡時停止播放音樂</string>
+    <string name="row_lost_title">遺失提醒</string>
+    <string name="row_lost_sub">耳機可能遺失時提醒你</string>
     <string name="row_power_saving_title">省電模式</string>
     <string name="row_power_saving_sub">關閉非必要功能以延長續航</string>
     <string name="power_saving_confirm">耳機將會重新啟動。</string>

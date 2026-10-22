@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">Detectează în ce ureche este fiecare cască</string>
     <string name="row_sleep_title">Pauză la adormire</string>
     <string name="row_sleep_sub">Oprește muzica dacă adormi</string>
+    <string name="row_lost_title">Memento de pierdere</string>
+    <string name="row_lost_sub">Te anunță când o cască ar putea fi pierdută</string>
     <string name="row_power_saving_title">Economisire energie</string>
     <string name="row_power_saving_sub">Oprește extra pentru o autonomie mai mare</string>
     <string name="power_saving_confirm">Căștile vor reporni.</string>

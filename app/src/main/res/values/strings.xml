@@ -120,6 +120,8 @@
     <string name="row_adaptive_ear_sub">Detects which ear each bud is in</string>
     <string name="row_sleep_title">Pause when asleep</string>
     <string name="row_sleep_sub">Stops music if you fall asleep</string>
+    <string name="row_lost_title">Lost reminder</string>
+    <string name="row_lost_sub">Reminds you when an earbud may be lost</string>
     <string name="row_power_saving_title">Power saving</string>
     <string name="row_power_saving_sub">Turns off extras for longer battery life</string>
     <string name="power_saving_confirm">The earbuds will restart.</string>

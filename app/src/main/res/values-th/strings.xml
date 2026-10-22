@@ -96,6 +96,8 @@
     <string name="row_adaptive_ear_sub">ตรวจว่าหูฟังแต่ละข้างอยู่หูไหน</string>
     <string name="row_sleep_title">หยุดชั่วคราวเมื่อหลับ</string>
     <string name="row_sleep_sub">หยุดเพลงเมื่อคุณหลับ</string>
+    <string name="row_lost_title">เตือนการสูญหาย</string>
+    <string name="row_lost_sub">เตือนเมื่อหูฟังอาจหายไป</string>
     <string name="row_power_saving_title">ประหยัดพลังงาน</string>
     <string name="row_power_saving_sub">ปิดฟีเจอร์เสริมเพื่อแบตเตอรี่ที่นานขึ้น</string>
     <string name="power_saving_confirm">หูฟังจะรีสตาร์ท</string>
