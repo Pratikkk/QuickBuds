@@ -130,6 +130,22 @@ fn local_now() -> [u32; 7] {
 }
 
 /// `settings.json` in the user's config folder (`%APPDATA%\QuickBuds`, `~/.config/quickbuds`).
+/// Linux: the desktop's accent from the XDG settings portal (Slint reads none there). None when the portal has no accent.
+#[cfg(not(windows))]
+fn portal_accent() -> Option<slint::Color> {
+    let conn = dbus::blocking::Connection::new_session().ok()?;
+    let proxy = conn.with_proxy("org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop", std::time::Duration::from_millis(500));
+    let (v,): (dbus::arg::Variant<dbus::arg::Variant<(f64, f64, f64)>>,) =
+        proxy.method_call("org.freedesktop.portal.Settings", "Read", ("org.freedesktop.appearance", "accent-color")).ok()?;
+    let (r, g, b) = v.0.0;
+    if ![r, g, b].iter().all(|c| (0.0..=1.0).contains(c)) { return None; }
+    let byte = |c: f64| (c * 255.0).round() as u8;
+    Some(slint::Color::from_rgb_u8(byte(r), byte(g), byte(b)))
+}
+
+#[cfg(windows)]
+fn portal_accent() -> Option<slint::Color> { None }
+
 fn settings_path() -> Option<std::path::PathBuf> {
     #[cfg(windows)]
     let dir = std::env::var_os("APPDATA").map(|d| std::path::PathBuf::from(d).join("QuickBuds"));
@@ -854,7 +870,7 @@ fn main() {
     main.show().expect("show");
     with_app(|a| theme::apply(a));
     let scale = main.window().scale_factor();
-    SYS_ACCENT.set(Some(main.global::<Dots>().get_system_accent()));
+    SYS_ACCENT.set(Some(portal_accent().unwrap_or_else(|| main.global::<Dots>().get_system_accent())));
     let style = start_style();
     MATERIAL.set(style == "material");
     with_app(|a| { theme::apply(a); a.set_style(style == "pixel", scale); });
