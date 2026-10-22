@@ -67,8 +67,8 @@ AA 0C 00 00 04 02 FF 05 00 03 01 01 08 00   ANC push (Seq FF)
 
 ### Slicing `[VENDOR]`
 
-A message that does not fit the frame budget goes out in slices. QuickBuds neither sends nor joins slices:
-no command it uses is large enough. The framer drops a sliced frame as noise.
+A message that does not fit the frame budget goes out in slices. QuickBuds sends none: no command it writes is large enough.
+The framers (`OppoPacketFramer`, `Framer` in `protocol.rs`) join received slices into one whole message.
 
 ```
 AA  <TotalLen>  <Slice> 00  <Fsn>  <part of Cmd/Seq/PayLen/Payload>
@@ -77,7 +77,8 @@ AA  <TotalLen>  <Slice> 00  <Fsn>  <part of Cmd/Seq/PayLen/Payload>
 - `Slice`: `00` whole message, `01` first slice, `02` middle slice, `03` last slice.
 - `Fsn` (slice counter, from `00`) is present in every slice, never in a whole message.
   `TotalLen` is then `3 + data`, not `2 + data`.
-- The receiver joins the slice data in order and parses the message when `Slice` is `03`.
+- The receiver joins the slice data in order and parses the message when `Slice` is `03`. A middle or last slice with no first slice before it is dropped.
+  A declared `PayLen` larger than the bytes present cuts the payload to the bytes present. A slice frame has `TotalLen` 4 or more, a whole message 7 or more.
 - Frame budget: 660 bytes by default; the reply to `0x0107` can lower it. Buds that report a larger budget
   allow bigger slices for bulk transfers. Over 129 bytes `TotalLen` takes two LEB128 bytes.
 - A read that starts with `AA` begins a new frame. Any other read continues the frame in progress.

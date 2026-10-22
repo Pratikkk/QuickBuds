@@ -311,8 +311,9 @@ fn json_ack(json: &[u8]) -> Vec<u8> {
 }
 
 /// Splits the RFCOMM byte stream into packets. Bytes before an `AA` are dropped into `discarded` (for the log).
+/// Slices of one message (§2: slice byte 1 first, 2 middle, 3 last) come out as one whole packet.
 #[derive(Default)]
-pub struct Framer { buf: Vec<u8>, pub discarded: Vec<u8> }
+pub struct Framer { buf: Vec<u8>, slices: Option<Vec<u8>>, pub discarded: Vec<u8> }
 
 impl Framer {
     pub fn push(&mut self, data: &[u8]) -> Vec<Vec<u8>> {
@@ -324,13 +325,32 @@ impl Framer {
                 None => { self.discarded.append(&mut self.buf); break; }
             }
             let Some((total, n)) = leb128(&self.buf[1..]) else { break };
-            // ponytail: 4 KiB sanity cap; a bogus length resyncs on the next AA.
-            if total < 7 || total > 4096 { self.discarded.push(self.buf.remove(0)); continue; }
+            if self.buf.len() < 2 + n { break; }
+            let slice = self.buf[1 + n];
+            let sliced = (1..=3).contains(&slice);
+            // ponytail: 4 KiB sanity cap; a bogus length resyncs on the next AA. A slice has 3 header bytes, a message 7.
+            if total < if sliced { 4 } else { 7 } || total > 4096 { self.discarded.push(self.buf.remove(0)); continue; }
             let size = 1 + n + total;
             if self.buf.len() < size { break; }
-            out.push(self.buf.drain(..size).collect());
+            let frame: Vec<u8> = self.buf.drain(..size).collect();
+            if sliced { out.extend(self.join(slice, &frame[1 + n + 3..])); } else { out.push(frame); }
         }
         out
+    }
+
+    /// Collects slice data; after slice 3 returns the whole message as one packet. A middle or last slice with no first slice is dropped.
+    /// A `PayLen` past the bytes present keeps the bytes present.
+    fn join(&mut self, slice: u8, data: &[u8]) -> Option<Vec<u8>> {
+        if slice == 1 { self.slices = Some(data.to_vec()); } else { self.slices.as_mut()?.extend_from_slice(data); }
+        if slice != 3 { return None; }
+        let msg = self.slices.take()?;
+        if msg.len() < 5 { return None; }
+        let n = (u16::from_le_bytes([msg[3], msg[4]]) as usize).min(msg.len() - 5);
+        let mut whole = vec![0xAA, ((2 + 5 + n) & 0x7F) as u8, 0, 0];
+        whole.extend_from_slice(&msg[..3]);
+        whole.extend_from_slice(&(n as u16).to_le_bytes());
+        whole.extend_from_slice(&msg[5..5 + n]);
+        Some(whole)
     }
 }
 
@@ -529,6 +549,29 @@ mod tests {
         assert_eq!(got, vec![a.clone(), a]);
         assert_eq!(f.discarded.len(), 2);
         assert_eq!(battery(payload_of(&got[0])), [(1, 100, false), (2, 100, false), (3, 80, true)]);
+    }
+
+    #[test]
+    fn framer_joins_slices() {
+        // PROTOCOL.md §2: a 1500-byte message in slices of 3 + data bytes; the whole packet has a one-byte length.
+        let payload: Vec<u8> = (0..300).map(|i| i as u8).collect();
+        let mut msg = vec![0x15, 0x81, 4, 0x2C, 0x01];
+        msg.extend(&payload);
+        let slice = |kind: u8, fsn: u8, d: &[u8]| { let mut f = vec![0xAA, 3 + d.len() as u8, kind, 0, fsn]; f.extend(d); f };
+        let (a, rest) = msg.split_at(100);
+        let (b, c) = rest.split_at(100);
+        let mut f = Framer::default();
+        let mut stream = slice(1, 0, a);
+        stream.extend(slice(2, 1, b));
+        stream.extend(slice(3, 2, c));
+        let got = f.push(&stream);
+        assert_eq!(got.len(), 1);
+        assert_eq!((cmd_of(&got[0]), payload_of(&got[0])), (0x8115, &payload[..]));
+        // a last slice with no first slice before it is dropped
+        assert!(Framer::default().push(&slice(3, 2, c)).is_empty());
+        // a whole message still passes unchanged
+        let w = build_packet(0x8106, 0xF0, &[1, 2]);
+        assert_eq!(Framer::default().push(&w), vec![w]);
     }
 
     #[test]

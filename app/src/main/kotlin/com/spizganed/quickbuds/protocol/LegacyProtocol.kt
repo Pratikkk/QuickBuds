@@ -2,7 +2,7 @@ package com.spizganed.quickbuds.protocol
 
 /*
  * The legacy protocol: every builder and parser of the old wire code, in one file.
- * The new protocol is in protocol2/NewProtocol.kt. The rest of the app reaches both through protocol2/ProtocolSelect.kt.
+ * The typed layer (protocol2/NewProtocol.kt) is not in use yet; tests keep it byte-identical to this file.
  * Shared data is not here: Feature.kt, Capabilities.kt, ModelCatalog.kt, AncModes.kt.
  */
 
@@ -662,6 +662,7 @@ object OpoProtocol {
  * `TotalLen` (byte 1) is LEB128, so a frame over 127 bytes has a longer header (Golden Sound's
  * ear-scan data, PROTOCOL-LEGACY.md §9). Every frame comes out [normalise]d, so the rest of the app
  * keeps its fixed layout: cmd at 4-5, seq at 6, payload length at 7-8, payload from 9.
+ * Slices of one message (PROTOCOL-LEGACY.md §2) are joined into one such frame.
  */
 class OppoPacketFramer {
     private var pending = ByteArray(0)
@@ -687,18 +688,42 @@ class OppoPacketFramer {
             }
             val (totalLen, lenBytes) = readLength(pending) ?: break
 
+            if (pending.size < 2 + lenBytes) break
+            // Slice byte (PROTOCOL.md §2): 0 a whole message, 1 first, 2 middle, 3 last slice. A slice has 3 header bytes, a message 7.
+            val slice = pending[1 + lenBytes].toInt()
+            val sliced = slice in 1..3
             val frameLen = 1 + lenBytes + totalLen
-            if (totalLen < 7 || frameLen > 2048) {
+            if (totalLen < (if (sliced) 4 else 7) || frameLen > 2048) {
                 onDiscard?.invoke(pending.copyOfRange(0, 1))
                 pending = pending.copyOfRange(1, pending.size)
                 continue
             }
             if (pending.size < frameLen) break
 
-            frames += normalise(pending.copyOfRange(0, frameLen))
+            val frame = pending.copyOfRange(0, frameLen)
             pending = pending.copyOfRange(frameLen, pending.size)
+            if (sliced) join(slice, frame.copyOfRange(1 + lenBytes + 3, frameLen))?.let { frames += it }
+            else frames += normalise(frame)
         }
         return frames
+    }
+
+    private var slices: ByteArray? = null
+
+    /**
+     * Collects the data of slices 1, 2, 3 and returns the whole message as one normalised frame after slice 3.
+     * A middle or last slice with no first slice before it is dropped. A `PayLen` past the bytes present keeps the bytes present.
+     */
+    private fun join(slice: Int, data: ByteArray): ByteArray? {
+        if (slice == 1) slices = data
+        else slices = (slices ?: return null) + data
+        if (slice != 3) return null
+        val msg = slices ?: return null
+        slices = null
+        if (msg.size < 5) return null
+        val payload = minOf((msg[3].toInt() and 0xFF) or ((msg[4].toInt() and 0xFF) shl 8), msg.size - 5)
+        val fixed = msg.copyOfRange(0, 3) + byteArrayOf(payload.toByte(), (payload shr 8).toByte()) + msg.copyOfRange(5, 5 + payload)
+        return byteArrayOf(0xAA.toByte(), ((2 + fixed.size) and 0x7F).toByte(), 0, 0) + fixed
     }
 
     companion object {
