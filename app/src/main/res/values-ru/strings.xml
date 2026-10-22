@@ -465,7 +465,7 @@
     <string name="welcome_body">Несколько шагов настроят QuickBuds. Любой выбор можно потом изменить в настройках.</string>
     <string name="welcome_done">Готово</string>
     <string name="setup_perm_title">Разрешения</string>
-    <string name="setup_perm_body">QuickBuds нужен Bluetooth для связи с наушниками. Уведомления показывают фоновую службу.</string>
+    <string name="setup_perm_body">QuickBuds нужен Bluetooth, чтобы общаться с наушниками. Android требует уведомление для фоновой службы, поэтому разрешите и уведомления.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Уведомления</string>
     <string name="setup_allow">Разрешить</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">Выберите внешний вид</string>
     <string name="setup_look_body">Выберите стиль и тему. Оба можно изменить в настройках.</string>
     <string name="setup_earbuds_title">Ваши наушники</string>
-    <string name="setup_earbuds_body">Выберите наушники, которыми управляет QuickBuds. Сначала подключите их в Android.</string>
+    <string name="setup_earbuds_body">Выберите наушники. Если написано «Не подключено», подключите их в настройках Bluetooth.</string>
     <string name="setup_earbuds_none">Сопряжённые наушники не найдены.</string>
     <string name="setup_earbuds_pair">Открыть настройки Bluetooth</string>
     <string name="setup_earbuds_known">Известная модель</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">Расскажите разработчику, что работает, а что нет. Ничего не отправляется, пока вы не нажмёте «Отправить». Оба инструмента есть в настройках.</string>
     <string name="settings_ping_title">Учитывать мою установку</string>
     <string name="settings_ping_sub">Отправлять ежедневный подсчёт с идентификатором установки</string>
+    <string name="setup_earbuds_connected">Подключено</string>
+    <string name="setup_earbuds_disconnected">Не подключено</string>
     <string name="setup_ready_title">Всё готово</string>
     <string name="setup_ready_body">Подключите наушники и откройте QuickBuds. Все выборы остаются в настройках.</string>
 </resources>

@@ -467,7 +467,7 @@
     <string name="welcome_body">Vài bước sẽ thiết lập QuickBuds. Bạn có thể đổi mọi lựa chọn sau trong Cài đặt.</string>
     <string name="welcome_done">Xong</string>
     <string name="setup_perm_title">Quyền</string>
-    <string name="setup_perm_body">QuickBuds cần Bluetooth để trò chuyện với tai nghe của bạn. Thông báo hiển thị dịch vụ nền.</string>
+    <string name="setup_perm_body">QuickBuds cần Bluetooth để trò chuyện với tai nghe của bạn. Android yêu cầu thông báo cho dịch vụ nền, vì vậy hãy cho phép cả Thông báo.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Thông báo</string>
     <string name="setup_allow">Cho phép</string>
@@ -480,7 +480,7 @@
     <string name="setup_look_title">Chọn giao diện</string>
     <string name="setup_look_body">Chọn một kiểu và một chủ đề. Bạn có thể đổi cả hai trong Cài đặt.</string>
     <string name="setup_earbuds_title">Tai nghe của bạn</string>
-    <string name="setup_earbuds_body">Chọn tai nghe mà QuickBuds điều khiển. Hãy ghép đôi chúng trong Android trước.</string>
+    <string name="setup_earbuds_body">Chọn tai nghe của bạn. Nếu hiện Chưa kết nối, hãy kết nối trong cài đặt Bluetooth.</string>
     <string name="setup_earbuds_none">Không tìm thấy tai nghe đã ghép đôi.</string>
     <string name="setup_earbuds_pair">Mở cài đặt Bluetooth</string>
     <string name="setup_earbuds_known">Mẫu đã biết</string>
@@ -495,6 +495,8 @@
     <string name="setup_feedback_body">Cho nhà phát triển biết điều gì hoạt động và điều gì không. Không có gì được gửi cho đến khi bạn chạm Gửi. Cả hai công cụ đều có trong Cài đặt.</string>
     <string name="settings_ping_title">Đếm lượt cài của tôi</string>
     <string name="settings_ping_sub">Gửi số đếm hằng ngày cùng ID cài đặt</string>
+    <string name="setup_earbuds_connected">Đã kết nối</string>
+    <string name="setup_earbuds_disconnected">Chưa kết nối</string>
     <string name="setup_ready_title">Sẵn sàng</string>
     <string name="setup_ready_body">Kết nối tai nghe và mở QuickBuds. Mọi lựa chọn vẫn nằm trong Cài đặt.</string>
 </resources>

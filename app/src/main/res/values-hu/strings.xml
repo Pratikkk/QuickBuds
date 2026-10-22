@@ -465,7 +465,7 @@
     <string name="welcome_body">Néhány lépésben beállítható a QuickBuds. Minden döntést később módosíthatsz a Beállításokban.</string>
     <string name="welcome_done">Kész</string>
     <string name="setup_perm_title">Engedélyek</string>
-    <string name="setup_perm_body">A QuickBudsnak Bluetooth kell a fülhallgatóval való beszélgetéshez. Az értesítések mutatják a háttérszolgáltatást.</string>
+    <string name="setup_perm_body">A QuickBudsnak Bluetooth kell a fülhallgatóval való beszélgetéshez. Az Android értesítést követel a háttérszolgáltatáshoz, ezért az Értesítéseket is engedélyezd.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Értesítések</string>
     <string name="setup_allow">Engedélyez</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">Válassz kinézetet</string>
     <string name="setup_look_body">Válassz stílust és témát. Mindkettőt módosíthatod a Beállításokban.</string>
     <string name="setup_earbuds_title">A fülhallgatód</string>
-    <string name="setup_earbuds_body">Válaszd ki a fülhallgatót, amelyet a QuickBuds vezérel. Előbb párosítsd az Androidban.</string>
+    <string name="setup_earbuds_body">Válaszd ki a fülhallgatód. Ha Nincs csatlakoztatva áll rajta, csatlakoztasd a Bluetooth-beállításokban.</string>
     <string name="setup_earbuds_none">Nem található párosított fülhallgató.</string>
     <string name="setup_earbuds_pair">Bluetooth-beállítások megnyitása</string>
     <string name="setup_earbuds_known">Ismert modell</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">Mondd el a fejlesztőnek, mi működik és mi nem. A Küldés megérintéséig semmi sem megy el. Mindkét eszköz a Beállításokban van.</string>
     <string name="settings_ping_title">Telepítésem számlálása</string>
     <string name="settings_ping_sub">A napi számlálás küldése a telepítési azonosítóval</string>
+    <string name="setup_earbuds_connected">Csatlakoztatva</string>
+    <string name="setup_earbuds_disconnected">Nincs csatlakoztatva</string>
     <string name="setup_ready_title">Minden kész</string>
     <string name="setup_ready_body">Csatlakoztasd a fülhallgatót, és nyisd meg a QuickBudsot. Minden választás a Beállításokban marad.</string>
 </resources>

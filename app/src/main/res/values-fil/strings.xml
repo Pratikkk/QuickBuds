@@ -465,7 +465,7 @@
     <string name="welcome_body">Ilang hakbang lang para i-set up ang QuickBuds. Mababago mo ang bawat pagpili sa Settings.</string>
     <string name="welcome_done">Tapos</string>
     <string name="setup_perm_title">Mga pahintulot</string>
-    <string name="setup_perm_body">Kailangan ng QuickBuds ang Bluetooth para makipag-usap sa earbuds mo. Ipinapakita ng mga notification ang background service.</string>
+    <string name="setup_perm_body">Kailangan ng QuickBuds ang Bluetooth para makausap ang iyong earbuds. Nangangailangan ang Android ng notification para sa background service, kaya payagan din ang Notifications.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Mga notification</string>
     <string name="setup_allow">Payagan</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">Pumili ng hitsura</string>
     <string name="setup_look_body">Pumili ng istilo at tema. Pareho itong mababago sa Settings.</string>
     <string name="setup_earbuds_title">Ang iyong earbuds</string>
-    <string name="setup_earbuds_body">Piliin ang earbuds na kokontrolin ng QuickBuds. I-pair muna ang mga ito sa Android.</string>
+    <string name="setup_earbuds_body">Piliin ang iyong earbuds. Kung Hindi nakakonekta ang nakasulat, ikonekta ito sa Bluetooth settings.</string>
     <string name="setup_earbuds_none">Walang nahanap na naka-pair na earbuds.</string>
     <string name="setup_earbuds_pair">Buksan ang Bluetooth settings</string>
     <string name="setup_earbuds_known">Kilalang modelo</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">Sabihin sa developer kung ano ang gumagana at hindi. Walang ipapadala hangga’t hindi mo pinipindot ang Send. Nasa Settings ang dalawang tool.</string>
     <string name="settings_ping_title">Bilangin ang aking install</string>
     <string name="settings_ping_sub">Ipadala ang araw-araw na bilang kasama ang install ID</string>
+    <string name="setup_earbuds_connected">Nakakonekta</string>
+    <string name="setup_earbuds_disconnected">Hindi nakakonekta</string>
     <string name="setup_ready_title">Handa ka na</string>
     <string name="setup_ready_body">Ikonekta ang earbuds at buksan ang QuickBuds. Nasa Settings ang bawat pagpili.</string>
 </resources>

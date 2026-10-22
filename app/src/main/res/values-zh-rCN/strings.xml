@@ -467,7 +467,7 @@
     <string name="welcome_body">几步就能设置好 QuickBuds。每个选择之后都可以在设置中更改。</string>
     <string name="welcome_done">完成</string>
     <string name="setup_perm_title">权限</string>
-    <string name="setup_perm_body">QuickBuds 需要蓝牙才能与耳机通信。通知用于显示后台服务。</string>
+    <string name="setup_perm_body">QuickBuds 需要蓝牙才能与耳机通信。Android 要求后台服务显示通知，因此也请允许通知。</string>
     <string name="setup_perm_bt">蓝牙</string>
     <string name="setup_perm_notif">通知</string>
     <string name="setup_allow">允许</string>
@@ -480,7 +480,7 @@
     <string name="setup_look_title">选择外观</string>
     <string name="setup_look_body">选择样式和主题。两者都可以在设置中更改。</string>
     <string name="setup_earbuds_title">你的耳机</string>
-    <string name="setup_earbuds_body">选择 QuickBuds 控制的耳机。请先在 Android 中配对。</string>
+    <string name="setup_earbuds_body">选择你的耳机。如果显示“未连接”，请在蓝牙设置中连接。</string>
     <string name="setup_earbuds_none">未找到已配对的耳机。</string>
     <string name="setup_earbuds_pair">打开蓝牙设置</string>
     <string name="setup_earbuds_known">已知型号</string>
@@ -495,6 +495,8 @@
     <string name="setup_feedback_body">告诉开发者哪些能用、哪些不能用。点按发送之前不会发送任何内容。两个工具都在设置中。</string>
     <string name="settings_ping_title">统计我的安装</string>
     <string name="settings_ping_sub">随安装 ID 发送每日计数</string>
+    <string name="setup_earbuds_connected">已连接</string>
+    <string name="setup_earbuds_disconnected">未连接</string>
     <string name="setup_ready_title">一切就绪</string>
     <string name="setup_ready_body">连接耳机并打开 QuickBuds。这里的所有选择都保留在设置中。</string>
 </resources>

@@ -465,7 +465,7 @@
     <string name="welcome_body">Een paar stappen stellen QuickBuds in. Je kunt elke keuze later wijzigen in Instellingen.</string>
     <string name="welcome_done">Klaar</string>
     <string name="setup_perm_title">Machtigingen</string>
-    <string name="setup_perm_body">QuickBuds heeft Bluetooth nodig om met je oortjes te praten. Meldingen tonen de achtergrondservice.</string>
+    <string name="setup_perm_body">QuickBuds heeft Bluetooth nodig om met je oordopjes te praten. Android eist een melding voor de achtergrondservice, dus sta ook Meldingen toe.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Meldingen</string>
     <string name="setup_allow">Toestaan</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">Kies een look</string>
     <string name="setup_look_body">Kies een stijl en een thema. Beide kun je wijzigen in Instellingen.</string>
     <string name="setup_earbuds_title">Je oordopjes</string>
-    <string name="setup_earbuds_body">Kies de oordopjes die QuickBuds bedient. Koppel ze eerst in Android.</string>
+    <string name="setup_earbuds_body">Kies je oordopjes. Staat er Niet verbonden, verbind ze dan in de Bluetooth-instellingen.</string>
     <string name="setup_earbuds_none">Geen gekoppelde oordopjes gevonden.</string>
     <string name="setup_earbuds_pair">Bluetooth-instellingen openen</string>
     <string name="setup_earbuds_known">Bekend model</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">Vertel de ontwikkelaar wat werkt en wat niet. Er wordt niets verstuurd tot je op Verzenden tikt. Beide hulpmiddelen staan in Instellingen.</string>
     <string name="settings_ping_title">Mijn installatie meetellen</string>
     <string name="settings_ping_sub">De dagelijkse telling met de installatie-ID versturen</string>
+    <string name="setup_earbuds_connected">Verbonden</string>
+    <string name="setup_earbuds_disconnected">Niet verbonden</string>
     <string name="setup_ready_title">Klaar</string>
     <string name="setup_ready_body">Verbind je oortjes en open QuickBuds. Elke keuze blijft in Instellingen.</string>
 </resources>

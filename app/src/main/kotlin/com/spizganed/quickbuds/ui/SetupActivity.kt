@@ -3,6 +3,13 @@ package com.spizganed.quickbuds.ui
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.bluetooth.BluetoothA2dp
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
@@ -91,6 +98,30 @@ class SetupActivity : Activity() {
     }
 
     override fun onSaveInstanceState(out: Bundle) { super.onSaveInstanceState(out); out.putInt("page", page) }
+
+    /** The addresses of the earbuds that are connected for audio now; null until the first answer. */
+    private var connected: Set<String>? = null
+
+    /** A link change while the earbuds page shows: ask again once Android has settled. */
+    private val linkReceiver = object : BroadcastReceiver() {
+        override fun onReceive(c: Context, i: Intent) { if (page == EARBUDS) body.postDelayed({ queryConnected() }, 800) }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val filter = IntentFilter().apply {
+            addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
+            addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
+            addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) registerReceiver(linkReceiver, filter, RECEIVER_EXPORTED)
+        else registerReceiver(linkReceiver, filter)
+    }
+
+    override fun onStop() {
+        runCatching { unregisterReceiver(linkReceiver) }
+        super.onStop()
+    }
 
     /** A permission dialog, the Bluetooth settings or the battery dialog may have changed what a page shows. */
     override fun onResume() {
@@ -327,6 +358,7 @@ class SetupActivity : Activity() {
             })
             return
         }
+        queryConnected()
         val found = BudsDevice.candidates(this)
         val picked = BudsDevice.savedAddress(this)?.takeIf { a -> found.any { it.address == a } } ?: found.firstOrNull()?.address
         if (found.isEmpty()) {
@@ -352,7 +384,9 @@ class SetupActivity : Activity() {
                     show(EARBUDS)
                 }
                 row.findViewWithTag<TextView>(SettingRowFactory.TITLE_TAG).text = d.name
-                SettingRowFactory.subtitle(this, row).setText(if (model != null) R.string.setup_earbuds_known else R.string.setup_earbuds_unknown)
+                val state = connected?.let { getString(if (d.address in it) R.string.setup_earbuds_connected else R.string.setup_earbuds_disconnected) }
+                SettingRowFactory.subtitle(this, row).text =
+                    getString(if (model != null) R.string.setup_earbuds_known else R.string.setup_earbuds_unknown) + (state?.let { "\n$it" } ?: "")
                 SettingRowFactory.addSplit(list, row)
             }
             body.addView(list)
@@ -364,6 +398,21 @@ class SetupActivity : Activity() {
                 startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
             })
         })
+    }
+
+    /** Which earbuds are connected for audio. A change repaints the earbuds page; the same answer does nothing. */
+    @SuppressLint("MissingPermission")
+    private fun queryConnected() {
+        if (!granted(bluetoothPermissions())) return
+        val adapter = getSystemService(BluetoothManager::class.java)?.adapter ?: return
+        adapter.getProfileProxy(this, object : BluetoothProfile.ServiceListener {
+            override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
+                val now = proxy.connectedDevices.map { it.address }.toSet()
+                adapter.closeProfileProxy(profile, proxy)
+                runOnUiThread { if (now != connected) { connected = now; if (page == EARBUDS) show(EARBUDS) } }
+            }
+            override fun onServiceDisconnected(profile: Int) {}
+        }, BluetoothProfile.A2DP)
     }
 
     private fun batteryExempt() = getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)

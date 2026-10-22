@@ -465,7 +465,7 @@
     <string name="welcome_body">Pár kroků nastaví QuickBuds. Každou volbu můžete později změnit v Nastavení.</string>
     <string name="welcome_done">Hotovo</string>
     <string name="setup_perm_title">Oprávnění</string>
-    <string name="setup_perm_body">QuickBuds potřebuje Bluetooth ke komunikaci se sluchátky. Oznámení zobrazují službu na pozadí.</string>
+    <string name="setup_perm_body">QuickBuds potřebuje Bluetooth ke komunikaci se sluchátky. Android vyžaduje pro službu na pozadí oznámení, proto povolte i Oznámení.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Oznámení</string>
     <string name="setup_allow">Povolit</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">Vyberte vzhled</string>
     <string name="setup_look_body">Vyberte styl a motiv. Obojí můžete změnit v Nastavení.</string>
     <string name="setup_earbuds_title">Vaše sluchátka</string>
-    <string name="setup_earbuds_body">Vyberte sluchátka, která QuickBuds ovládá. Nejdřív je spárujte v Androidu.</string>
+    <string name="setup_earbuds_body">Vyberte sluchátka. Pokud se zobrazí Nepřipojeno, připojte je v nastavení Bluetooth.</string>
     <string name="setup_earbuds_none">Nebyla nalezena žádná spárovaná sluchátka.</string>
     <string name="setup_earbuds_pair">Otevřít nastavení Bluetooth</string>
     <string name="setup_earbuds_known">Známý model</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">Řekněte vývojáři, co funguje a co ne. Nic se neodešle, dokud nepoklepete na Odeslat. Oba nástroje jsou v Nastavení.</string>
     <string name="settings_ping_title">Započítat mou instalaci</string>
     <string name="settings_ping_sub">Odesílat denní počet s ID instalace</string>
+    <string name="setup_earbuds_connected">Připojeno</string>
+    <string name="setup_earbuds_disconnected">Nepřipojeno</string>
     <string name="setup_ready_title">Hotovo</string>
     <string name="setup_ready_body">Připojte sluchátka a otevřete QuickBuds. Každá volba zůstává v Nastavení.</string>
 </resources>

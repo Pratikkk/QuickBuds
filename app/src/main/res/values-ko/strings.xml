@@ -465,7 +465,7 @@
     <string name="welcome_body">몇 단계로 QuickBuds를 설정합니다. 모든 선택은 나중에 설정에서 바꿀 수 있습니다.</string>
     <string name="welcome_done">완료</string>
     <string name="setup_perm_title">권한</string>
-    <string name="setup_perm_body">QuickBuds는 이어버드와 통신하려면 블루투스가 필요합니다. 알림은 백그라운드 서비스를 표시합니다.</string>
+    <string name="setup_perm_body">QuickBuds는 이어버드와 통신하려면 Bluetooth가 필요합니다. Android는 백그라운드 서비스에 알림을 요구하므로 알림도 허용하세요.</string>
     <string name="setup_perm_bt">블루투스</string>
     <string name="setup_perm_notif">알림</string>
     <string name="setup_allow">허용</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">스타일 고르기</string>
     <string name="setup_look_body">스타일과 테마를 고르세요. 둘 다 설정에서 바꿀 수 있습니다.</string>
     <string name="setup_earbuds_title">내 이어버드</string>
-    <string name="setup_earbuds_body">QuickBuds가 제어할 이어버드를 고르세요. 먼저 Android에서 페어링하세요.</string>
+    <string name="setup_earbuds_body">이어버드를 고르세요. 연결 안 됨으로 표시되면 Bluetooth 설정에서 연결하세요.</string>
     <string name="setup_earbuds_none">페어링된 이어버드를 찾지 못했습니다.</string>
     <string name="setup_earbuds_pair">Bluetooth 설정 열기</string>
     <string name="setup_earbuds_known">알려진 모델</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">무엇이 되고 안 되는지 개발자에게 알려 주세요. 보내기를 누르기 전에는 아무것도 전송되지 않습니다. 두 도구 모두 설정에 있습니다.</string>
     <string name="settings_ping_title">내 설치 집계</string>
     <string name="settings_ping_sub">설치 ID와 함께 일일 집계 보내기</string>
+    <string name="setup_earbuds_connected">연결됨</string>
+    <string name="setup_earbuds_disconnected">연결 안 됨</string>
     <string name="setup_ready_title">준비 완료</string>
     <string name="setup_ready_body">이어버드를 연결하고 QuickBuds를 여세요. 여기의 모든 선택은 설정에 남습니다.</string>
 </resources>

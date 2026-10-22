@@ -465,7 +465,7 @@
     <string name="welcome_body">Beberapa langkah menyediakan QuickBuds. Setiap pilihan boleh diubah kemudian dalam Tetapan.</string>
     <string name="welcome_done">Selesai</string>
     <string name="setup_perm_title">Kebenaran</string>
-    <string name="setup_perm_body">QuickBuds memerlukan Bluetooth untuk berhubung dengan earbud anda. Pemberitahuan memaparkan perkhidmatan latar belakang.</string>
+    <string name="setup_perm_body">QuickBuds memerlukan Bluetooth untuk berhubung dengan fon telinga anda. Android mewajibkan pemberitahuan untuk perkhidmatan latar belakang, jadi benarkan juga Pemberitahuan.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Pemberitahuan</string>
     <string name="setup_allow">Benarkan</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">Pilih rupa</string>
     <string name="setup_look_body">Pilih gaya dan tema. Kedua-duanya boleh diubah dalam Tetapan.</string>
     <string name="setup_earbuds_title">Fon telinga anda</string>
-    <string name="setup_earbuds_body">Pilih fon telinga yang dikawal QuickBuds. Pasangkan dahulu dalam Android.</string>
+    <string name="setup_earbuds_body">Pilih fon telinga anda. Jika tertera Tidak bersambung, sambungkan dalam tetapan Bluetooth.</string>
     <string name="setup_earbuds_none">Tiada fon telinga berpasangan ditemui.</string>
     <string name="setup_earbuds_pair">Buka tetapan Bluetooth</string>
     <string name="setup_earbuds_known">Model dikenali</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">Beritahu pembangun apa yang berfungsi dan tidak. Tiada apa dihantar sehingga anda mengetik Hantar. Kedua-dua alat ada dalam Tetapan.</string>
     <string name="settings_ping_title">Kira pemasangan saya</string>
     <string name="settings_ping_sub">Hantar kiraan harian dengan ID pemasangan</string>
+    <string name="setup_earbuds_connected">Bersambung</string>
+    <string name="setup_earbuds_disconnected">Tidak bersambung</string>
     <string name="setup_ready_title">Anda sudah sedia</string>
     <string name="setup_ready_body">Sambungkan earbud dan buka QuickBuds. Setiap pilihan kekal dalam Tetapan.</string>
 </resources>

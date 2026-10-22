@@ -465,7 +465,7 @@
     <string name="welcome_body">Pochi passaggi configurano QuickBuds. Puoi cambiare ogni scelta più tardi nelle Impostazioni.</string>
     <string name="welcome_done">Fatto</string>
     <string name="setup_perm_title">Autorizzazioni</string>
-    <string name="setup_perm_body">QuickBuds ha bisogno del Bluetooth per parlare con i tuoi auricolari. Le notifiche mostrano il servizio in background.</string>
+    <string name="setup_perm_body">QuickBuds ha bisogno del Bluetooth per parlare con i tuoi auricolari. Android richiede una notifica per il servizio in background, quindi consenti anche le Notifiche.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Notifiche</string>
     <string name="setup_allow">Consenti</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">Scegli un aspetto</string>
     <string name="setup_look_body">Scegli uno stile e un tema. Puoi cambiare entrambi nelle Impostazioni.</string>
     <string name="setup_earbuds_title">I tuoi auricolari</string>
-    <string name="setup_earbuds_body">Scegli gli auricolari che QuickBuds controlla. Prima associali in Android.</string>
+    <string name="setup_earbuds_body">Scegli i tuoi auricolari. Se risultano Non connesso, collegali nelle impostazioni Bluetooth.</string>
     <string name="setup_earbuds_none">Nessun auricolare associato trovato.</string>
     <string name="setup_earbuds_pair">Apri le impostazioni Bluetooth</string>
     <string name="setup_earbuds_known">Modello noto</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">Dì allo sviluppatore cosa funziona e cosa no. Non viene inviato nulla finché non tocchi Invia. Entrambi gli strumenti sono nelle Impostazioni.</string>
     <string name="settings_ping_title">Conta la mia installazione</string>
     <string name="settings_ping_sub">Invia il conteggio giornaliero con l’ID di installazione</string>
+    <string name="setup_earbuds_connected">Connesso</string>
+    <string name="setup_earbuds_disconnected">Non connesso</string>
     <string name="setup_ready_title">Tutto pronto</string>
     <string name="setup_ready_body">Collega gli auricolari e apri QuickBuds. Ogni scelta resta nelle Impostazioni.</string>
 </resources>

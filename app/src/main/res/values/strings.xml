@@ -553,7 +553,7 @@
     <string name="welcome_body">A few steps set QuickBuds up. You can change every choice later in Settings.</string>
     <string name="welcome_done">Done</string>
     <string name="setup_perm_title">Permissions</string>
-    <string name="setup_perm_body">QuickBuds needs Bluetooth to talk to your earbuds. Notifications show the background service.</string>
+    <string name="setup_perm_body">QuickBuds needs Bluetooth to talk to your earbuds. Android requires a notification for the background service, so please allow Notifications too.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Notifications</string>
     <string name="setup_allow">Allow</string>
@@ -566,7 +566,7 @@
     <string name="setup_look_title">Pick a look</string>
     <string name="setup_look_body">Choose a style and a theme. You can change both in Settings.</string>
     <string name="setup_earbuds_title">Your earbuds</string>
-    <string name="setup_earbuds_body">Pick the earbuds QuickBuds controls. Pair them in Android first.</string>
+    <string name="setup_earbuds_body">Pick your earbuds. If they show Not connected, connect them in Bluetooth settings.</string>
     <string name="setup_earbuds_none">No paired earbuds found.</string>
     <string name="setup_earbuds_pair">Open Bluetooth settings</string>
     <string name="setup_earbuds_known">Known model</string>
@@ -581,6 +581,8 @@
     <string name="setup_feedback_body">Tell the developer what works and what does not. Nothing is sent until you tap Send. Both tools are in Settings.</string>
     <string name="settings_ping_title">Count my install</string>
     <string name="settings_ping_sub">Send the daily count with the install ID</string>
+    <string name="setup_earbuds_connected">Connected</string>
+    <string name="setup_earbuds_disconnected">Not connected</string>
     <string name="setup_ready_title">You are ready</string>
     <string name="setup_ready_body">Connect your earbuds and open QuickBuds. Every choice here stays in Settings.</string>
 </resources>

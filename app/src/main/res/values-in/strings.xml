@@ -467,7 +467,7 @@
     <string name="welcome_body">Beberapa langkah menyiapkan QuickBuds. Setiap pilihan dapat diubah nanti di Pengaturan.</string>
     <string name="welcome_done">Selesai</string>
     <string name="setup_perm_title">Izin</string>
-    <string name="setup_perm_body">QuickBuds memerlukan Bluetooth untuk berbicara dengan earbud Anda. Notifikasi menampilkan layanan latar belakang.</string>
+    <string name="setup_perm_body">QuickBuds memerlukan Bluetooth untuk berbicara dengan earbud kamu. Android mewajibkan notifikasi untuk layanan latar belakang, jadi izinkan juga Notifikasi.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Notifikasi</string>
     <string name="setup_allow">Izinkan</string>
@@ -480,7 +480,7 @@
     <string name="setup_look_title">Pilih tampilan</string>
     <string name="setup_look_body">Pilih gaya dan tema. Keduanya dapat diubah di Pengaturan.</string>
     <string name="setup_earbuds_title">Earbud kamu</string>
-    <string name="setup_earbuds_body">Pilih earbud yang dikendalikan QuickBuds. Pasangkan dulu di Android.</string>
+    <string name="setup_earbuds_body">Pilih earbud kamu. Jika tertulis Tidak terhubung, hubungkan di pengaturan Bluetooth.</string>
     <string name="setup_earbuds_none">Tidak ada earbud terpasang yang ditemukan.</string>
     <string name="setup_earbuds_pair">Buka pengaturan Bluetooth</string>
     <string name="setup_earbuds_known">Model dikenal</string>
@@ -495,6 +495,8 @@
     <string name="setup_feedback_body">Beri tahu pengembang apa yang berfungsi dan tidak. Tidak ada yang dikirim sampai kamu mengetuk Kirim. Kedua alat ada di Pengaturan.</string>
     <string name="settings_ping_title">Hitung instalasi saya</string>
     <string name="settings_ping_sub">Kirim hitungan harian dengan ID instalasi</string>
+    <string name="setup_earbuds_connected">Terhubung</string>
+    <string name="setup_earbuds_disconnected">Tidak terhubung</string>
     <string name="setup_ready_title">Siap</string>
     <string name="setup_ready_body">Sambungkan earbud dan buka QuickBuds. Setiap pilihan tetap ada di Pengaturan.</string>
 </resources>

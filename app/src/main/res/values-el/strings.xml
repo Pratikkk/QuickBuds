@@ -465,7 +465,7 @@
     <string name="welcome_body">Λίγα βήματα ρυθμίζουν το QuickBuds. Κάθε επιλογή αλλάζει αργότερα στις Ρυθμίσεις.</string>
     <string name="welcome_done">Τέλος</string>
     <string name="setup_perm_title">Άδειες</string>
-    <string name="setup_perm_body">Το QuickBuds χρειάζεται Bluetooth για να μιλά με τα ακουστικά σας. Οι ειδοποιήσεις δείχνουν την υπηρεσία παρασκηνίου.</string>
+    <string name="setup_perm_body">Το QuickBuds χρειάζεται Bluetooth για να μιλά με τα ακουστικά σου. Το Android απαιτεί ειδοποίηση για την υπηρεσία παρασκηνίου, γι’ αυτό επίτρεψε και τις Ειδοποιήσεις.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Ειδοποιήσεις</string>
     <string name="setup_allow">Να επιτραπεί</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">Διάλεξε εμφάνιση</string>
     <string name="setup_look_body">Διάλεξε ένα στιλ και ένα θέμα. Και τα δύο αλλάζουν στις Ρυθμίσεις.</string>
     <string name="setup_earbuds_title">Τα ακουστικά σου</string>
-    <string name="setup_earbuds_body">Διάλεξε τα ακουστικά που ελέγχει το QuickBuds. Αντιστοίχισέ τα πρώτα στο Android.</string>
+    <string name="setup_earbuds_body">Διάλεξε τα ακουστικά σου. Αν γράφουν «Μη συνδεδεμένο», σύνδεσέ τα στις ρυθμίσεις Bluetooth.</string>
     <string name="setup_earbuds_none">Δεν βρέθηκαν αντιστοιχισμένα ακουστικά.</string>
     <string name="setup_earbuds_pair">Άνοιγμα ρυθμίσεων Bluetooth</string>
     <string name="setup_earbuds_known">Γνωστό μοντέλο</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">Πες στον προγραμματιστή τι λειτουργεί και τι όχι. Τίποτα δεν στέλνεται πριν πατήσεις Αποστολή. Και τα δύο εργαλεία είναι στις Ρυθμίσεις.</string>
     <string name="settings_ping_title">Μέτρηση της εγκατάστασής μου</string>
     <string name="settings_ping_sub">Αποστολή της ημερήσιας μέτρησης με το αναγνωριστικό εγκατάστασης</string>
+    <string name="setup_earbuds_connected">Συνδεδεμένο</string>
+    <string name="setup_earbuds_disconnected">Μη συνδεδεμένο</string>
     <string name="setup_ready_title">Είστε έτοιμοι</string>
     <string name="setup_ready_body">Συνδέστε τα ακουστικά και ανοίξτε το QuickBuds. Κάθε επιλογή μένει στις Ρυθμίσεις.</string>
 </resources>

@@ -465,7 +465,7 @@
     <string name="welcome_body">কয়েকটি ধাপে QuickBuds সেট আপ হয়। প্রতিটি পছন্দ পরে সেটিংসে বদলানো যায়।</string>
     <string name="welcome_done">শেষ</string>
     <string name="setup_perm_title">অনুমতি</string>
-    <string name="setup_perm_body">ইয়ারবাডের সাথে কথা বলতে QuickBuds-এর ব্লুটুথ লাগে। ব্যাকগ্রাউন্ড সার্ভিস দেখাতে বিজ্ঞপ্তি লাগে।</string>
+    <string name="setup_perm_body">QuickBuds-এর ইয়ারবাডের সঙ্গে কথা বলতে ব্লুটুথ লাগে। ব্যাকগ্রাউন্ড সার্ভিসের জন্য অ্যান্ড্রয়েডে নোটিফিকেশন বাধ্যতামূলক, তাই নোটিফিকেশনও চালু করুন।</string>
     <string name="setup_perm_bt">ব্লুটুথ</string>
     <string name="setup_perm_notif">বিজ্ঞপ্তি</string>
     <string name="setup_allow">অনুমতি দিন</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">একটি লুক বেছে নিন</string>
     <string name="setup_look_body">একটি স্টাইল ও একটি থিম বেছে নিন। দুটোই সেটিংসে বদলানো যায়।</string>
     <string name="setup_earbuds_title">আপনার ইয়ারবাড</string>
-    <string name="setup_earbuds_body">QuickBuds যে ইয়ারবাড নিয়ন্ত্রণ করবে সেটি বেছে নিন। আগে অ্যান্ড্রয়েডে জোড়া লাগান।</string>
+    <string name="setup_earbuds_body">আপনার ইয়ারবাড বেছে নিন। “সংযুক্ত নয়” দেখালে ব্লুটুথ সেটিংসে সংযুক্ত করুন।</string>
     <string name="setup_earbuds_none">কোনো জোড়া ইয়ারবাড পাওয়া যায়নি।</string>
     <string name="setup_earbuds_pair">ব্লুটুথ সেটিংস খুলুন</string>
     <string name="setup_earbuds_known">পরিচিত মডেল</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">কী কাজ করে আর কী করে না, ডেভেলপারকে জানান। পাঠান চাপার আগে কিছুই পাঠানো হয় না। দুটি টুলই সেটিংসে আছে।</string>
     <string name="settings_ping_title">আমার ইনস্টল গণনা করুন</string>
     <string name="settings_ping_sub">ইনস্টল আইডি সহ দৈনিক গণনা পাঠান</string>
+    <string name="setup_earbuds_connected">সংযুক্ত</string>
+    <string name="setup_earbuds_disconnected">সংযুক্ত নয়</string>
     <string name="setup_ready_title">আপনি প্রস্তুত</string>
     <string name="setup_ready_body">আপনার ইয়ারবাড সংযুক্ত করে QuickBuds খুলুন। এখানকার সব পছন্দ সেটিংসে থাকে।</string>
 </resources>

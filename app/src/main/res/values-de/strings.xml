@@ -465,7 +465,7 @@
     <string name="welcome_body">Ein paar Schritte richten QuickBuds ein. Jede Auswahl kannst du später in den Einstellungen ändern.</string>
     <string name="welcome_done">Fertig</string>
     <string name="setup_perm_title">Berechtigungen</string>
-    <string name="setup_perm_body">QuickBuds braucht Bluetooth, um mit deinen Ohrhörern zu sprechen. Benachrichtigungen zeigen den Hintergrunddienst an.</string>
+    <string name="setup_perm_body">QuickBuds braucht Bluetooth, um mit deinen Ohrhörern zu sprechen. Android verlangt für den Hintergrunddienst eine Benachrichtigung, also erlaube auch Benachrichtigungen.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Benachrichtigungen</string>
     <string name="setup_allow">Erlauben</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">Wähle einen Look</string>
     <string name="setup_look_body">Wähle einen Stil und ein Design. Beides kannst du in den Einstellungen ändern.</string>
     <string name="setup_earbuds_title">Deine Ohrhörer</string>
-    <string name="setup_earbuds_body">Wähle die Ohrhörer, die QuickBuds steuert. Koppel sie zuerst in Android.</string>
+    <string name="setup_earbuds_body">Wähle deine Ohrhörer. Zeigen sie „Nicht verbunden“, verbinde sie in den Bluetooth-Einstellungen.</string>
     <string name="setup_earbuds_none">Keine gekoppelten Ohrhörer gefunden.</string>
     <string name="setup_earbuds_pair">Bluetooth-Einstellungen öffnen</string>
     <string name="setup_earbuds_known">Bekanntes Modell</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">Sag dem Entwickler, was funktioniert und was nicht. Nichts wird gesendet, bevor du auf Senden tippst. Beide Werkzeuge sind in den Einstellungen.</string>
     <string name="settings_ping_title">Meine Installation zählen</string>
     <string name="settings_ping_sub">Die tägliche Zählung mit der Installations-ID senden</string>
+    <string name="setup_earbuds_connected">Verbunden</string>
+    <string name="setup_earbuds_disconnected">Nicht verbunden</string>
     <string name="setup_ready_title">Alles bereit</string>
     <string name="setup_ready_body">Verbinde deine Ohrhörer und öffne QuickBuds. Jede Wahl bleibt in den Einstellungen.</string>
 </resources>

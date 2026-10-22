@@ -465,7 +465,7 @@
     <string name="welcome_body">Kilka kroków konfiguruje QuickBuds. Każdy wybór możesz później zmienić w Ustawieniach.</string>
     <string name="welcome_done">Gotowe</string>
     <string name="setup_perm_title">Uprawnienia</string>
-    <string name="setup_perm_body">QuickBuds potrzebuje Bluetooth, aby rozmawiać ze słuchawkami. Powiadomienia pokazują usługę w tle.</string>
+    <string name="setup_perm_body">QuickBuds potrzebuje Bluetooth, aby rozmawiać ze słuchawkami. Android wymaga powiadomienia dla usługi w tle, więc zezwól też na Powiadomienia.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Powiadomienia</string>
     <string name="setup_allow">Zezwól</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">Wybierz wygląd</string>
     <string name="setup_look_body">Wybierz styl i motyw. Oba możesz zmienić w Ustawieniach.</string>
     <string name="setup_earbuds_title">Twoje słuchawki</string>
-    <string name="setup_earbuds_body">Wybierz słuchawki, którymi steruje QuickBuds. Najpierw sparuj je w Androidzie.</string>
+    <string name="setup_earbuds_body">Wybierz słuchawki. Jeśli widać Niepołączone, połącz je w ustawieniach Bluetooth.</string>
     <string name="setup_earbuds_none">Nie znaleziono sparowanych słuchawek.</string>
     <string name="setup_earbuds_pair">Otwórz ustawienia Bluetooth</string>
     <string name="setup_earbuds_known">Znany model</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">Powiedz deweloperowi, co działa, a co nie. Nic nie zostanie wysłane, dopóki nie dotkniesz Wyślij. Oba narzędzia są w Ustawieniach.</string>
     <string name="settings_ping_title">Policz moją instalację</string>
     <string name="settings_ping_sub">Wysyłaj dzienne zliczenie z identyfikatorem instalacji</string>
+    <string name="setup_earbuds_connected">Połączone</string>
+    <string name="setup_earbuds_disconnected">Niepołączone</string>
     <string name="setup_ready_title">Wszystko gotowe</string>
     <string name="setup_ready_body">Połącz słuchawki i otwórz QuickBuds. Każdy wybór zostaje w Ustawieniach.</string>
 </resources>

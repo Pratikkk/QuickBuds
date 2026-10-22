@@ -467,7 +467,7 @@
     <string name="welcome_body">कुछ चरणों में QuickBuds सेट हो जाता है। हर विकल्प बाद में सेटिंग में बदला जा सकता है।</string>
     <string name="welcome_done">हो गया</string>
     <string name="setup_perm_title">अनुमतियाँ</string>
-    <string name="setup_perm_body">ईयरबड से बात करने के लिए QuickBuds को ब्लूटूथ चाहिए। सूचनाएँ बैकग्राउंड सर्विस दिखाती हैं।</string>
+    <string name="setup_perm_body">QuickBuds को आपके इयरबड्स से बात करने के लिए ब्लूटूथ चाहिए। Android बैकग्राउंड सेवा के लिए नोटिफ़िकेशन ज़रूरी मानता है, इसलिए नोटिफ़िकेशन भी अनुमति दें।</string>
     <string name="setup_perm_bt">ब्लूटूथ</string>
     <string name="setup_perm_notif">सूचनाएँ</string>
     <string name="setup_allow">अनुमति दें</string>
@@ -480,7 +480,7 @@
     <string name="setup_look_title">लुक चुनें</string>
     <string name="setup_look_body">एक स्टाइल और एक थीम चुनें। दोनों सेटिंग में बदले जा सकते हैं।</string>
     <string name="setup_earbuds_title">आपके इयरबड्स</string>
-    <string name="setup_earbuds_body">वे इयरबड्स चुनें जिन्हें QuickBuds नियंत्रित करता है। पहले उन्हें Android में पेयर करें।</string>
+    <string name="setup_earbuds_body">अपने इयरबड्स चुनें। अगर “जुड़ा नहीं” दिखे, तो उन्हें ब्लूटूथ सेटिंग में जोड़ें।</string>
     <string name="setup_earbuds_none">कोई पेयर किया हुआ इयरबड्स नहीं मिला।</string>
     <string name="setup_earbuds_pair">ब्लूटूथ सेटिंग खोलें</string>
     <string name="setup_earbuds_known">जाना-पहचाना मॉडल</string>
@@ -495,6 +495,8 @@
     <string name="setup_feedback_body">डेवलपर को बताएँ कि क्या चलता है और क्या नहीं। भेजें दबाने तक कुछ नहीं भेजा जाता। दोनों टूल सेटिंग में हैं।</string>
     <string name="settings_ping_title">मेरा इंस्टॉल गिनें</string>
     <string name="settings_ping_sub">इंस्टॉल आईडी के साथ दैनिक गिनती भेजें</string>
+    <string name="setup_earbuds_connected">जुड़ा है</string>
+    <string name="setup_earbuds_disconnected">जुड़ा नहीं</string>
     <string name="setup_ready_title">आप तैयार हैं</string>
     <string name="setup_ready_body">अपने ईयरबड जोड़ें और QuickBuds खोलें। यहाँ के सभी विकल्प सेटिंग में रहते हैं।</string>
 </resources>

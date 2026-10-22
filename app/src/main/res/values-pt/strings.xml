@@ -465,7 +465,7 @@
     <string name="welcome_body">Alguns passos configuram o QuickBuds. Você pode mudar cada escolha depois em Configurações.</string>
     <string name="welcome_done">Concluído</string>
     <string name="setup_perm_title">Permissões</string>
-    <string name="setup_perm_body">O QuickBuds precisa de Bluetooth para falar com seus fones. As notificações mostram o serviço em segundo plano.</string>
+    <string name="setup_perm_body">O QuickBuds precisa do Bluetooth para falar com seus fones. O Android exige uma notificação para o serviço em segundo plano, então permita também as Notificações.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Notificações</string>
     <string name="setup_allow">Permitir</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">Escolha um visual</string>
     <string name="setup_look_body">Escolha um estilo e um tema. Você pode mudar os dois em Configurações.</string>
     <string name="setup_earbuds_title">Seus fones</string>
-    <string name="setup_earbuds_body">Escolha os fones que o QuickBuds controla. Antes, pareie-os no Android.</string>
+    <string name="setup_earbuds_body">Escolha seus fones. Se aparecer Não conectado, conecte-os nas configurações de Bluetooth.</string>
     <string name="setup_earbuds_none">Nenhum fone pareado encontrado.</string>
     <string name="setup_earbuds_pair">Abrir configurações de Bluetooth</string>
     <string name="setup_earbuds_known">Modelo conhecido</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">Conte ao desenvolvedor o que funciona e o que não funciona. Nada é enviado até você tocar em Enviar. As duas ferramentas estão em Configurações.</string>
     <string name="settings_ping_title">Contar minha instalação</string>
     <string name="settings_ping_sub">Enviar a contagem diária com o ID de instalação</string>
+    <string name="setup_earbuds_connected">Conectado</string>
+    <string name="setup_earbuds_disconnected">Não conectado</string>
     <string name="setup_ready_title">Tudo pronto</string>
     <string name="setup_ready_body">Conecte seus fones e abra o QuickBuds. Cada escolha continua nas Configurações.</string>
 </resources>

@@ -465,7 +465,7 @@
     <string name="welcome_body">Birkaç adım QuickBuds’ı kurar. Her seçimi sonra Ayarlar’dan değiştirebilirsin.</string>
     <string name="welcome_done">Tamam</string>
     <string name="setup_perm_title">İzinler</string>
-    <string name="setup_perm_body">QuickBuds\'ın kulaklıklarınla konuşması için Bluetooth gerekir. Bildirimler arka plan hizmetini gösterir.</string>
+    <string name="setup_perm_body">QuickBuds’ın kulaklıklarınla konuşması için Bluetooth gerekir. Android arka plan hizmeti için bildirim zorunlu tutar, o yüzden Bildirimlere de izin ver.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Bildirimler</string>
     <string name="setup_allow">İzin ver</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">Bir görünüm seç</string>
     <string name="setup_look_body">Bir stil ve bir tema seç. İkisini de Ayarlar’dan değiştirebilirsin.</string>
     <string name="setup_earbuds_title">Kulaklıkların</string>
-    <string name="setup_earbuds_body">QuickBuds’ın kontrol edeceği kulaklığı seç. Önce Android’de eşleştir.</string>
+    <string name="setup_earbuds_body">Kulaklıklarını seç. Bağlı değil yazıyorsa Bluetooth ayarlarından bağla.</string>
     <string name="setup_earbuds_none">Eşleşmiş kulaklık bulunamadı.</string>
     <string name="setup_earbuds_pair">Bluetooth ayarlarını aç</string>
     <string name="setup_earbuds_known">Bilinen model</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">Geliştiriciye neyin çalıştığını ve neyin çalışmadığını söyle. Gönder’e dokunana kadar hiçbir şey gönderilmez. İki araç da Ayarlar’da.</string>
     <string name="settings_ping_title">Kurulumumu say</string>
     <string name="settings_ping_sub">Günlük sayıyı kurulum kimliğiyle gönder</string>
+    <string name="setup_earbuds_connected">Bağlı</string>
+    <string name="setup_earbuds_disconnected">Bağlı değil</string>
     <string name="setup_ready_title">Hazırsın</string>
     <string name="setup_ready_body">Kulaklıklarını bağla ve QuickBuds\'ı aç. Her seçim Ayarlar\'da kalır.</string>
 </resources>

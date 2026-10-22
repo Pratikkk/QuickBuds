@@ -465,7 +465,7 @@
     <string name="welcome_body">数ステップで QuickBuds を設定します。選択はあとで設定から変えられます。</string>
     <string name="welcome_done">完了</string>
     <string name="setup_perm_title">権限</string>
-    <string name="setup_perm_body">QuickBuds はイヤホンと通信するために Bluetooth が必要です。通知はバックグラウンドサービスを表示します。</string>
+    <string name="setup_perm_body">QuickBuds はイヤホンと通信するために Bluetooth が必要です。Android ではバックグラウンドサービスに通知が必須なので、通知も許可してください。</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">通知</string>
     <string name="setup_allow">許可</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">見た目を選ぶ</string>
     <string name="setup_look_body">スタイルとテーマを選びます。どちらも設定で変えられます。</string>
     <string name="setup_earbuds_title">イヤホン</string>
-    <string name="setup_earbuds_body">QuickBuds で操作するイヤホンを選びます。先に Android でペアリングしてください。</string>
+    <string name="setup_earbuds_body">イヤホンを選びます。「未接続」と出たら、Bluetooth 設定で接続してください。</string>
     <string name="setup_earbuds_none">ペアリング済みのイヤホンが見つかりません。</string>
     <string name="setup_earbuds_pair">Bluetooth 設定を開く</string>
     <string name="setup_earbuds_known">対応モデル</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">動くものと動かないものを開発者に伝えます。送信をタップするまで何も送られません。どちらのツールも設定にあります。</string>
     <string name="settings_ping_title">インストールを数える</string>
     <string name="settings_ping_sub">インストール ID と一緒に毎日のカウントを送る</string>
+    <string name="setup_earbuds_connected">接続済み</string>
+    <string name="setup_earbuds_disconnected">未接続</string>
     <string name="setup_ready_title">準備完了</string>
     <string name="setup_ready_body">イヤホンを接続して QuickBuds を開いてください。ここでの選択はすべて設定に残ります。</string>
 </resources>

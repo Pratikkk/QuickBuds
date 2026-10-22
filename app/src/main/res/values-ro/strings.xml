@@ -465,7 +465,7 @@
     <string name="welcome_body">Câțiva pași configurează QuickBuds. Poți schimba fiecare alegere mai târziu în Setări.</string>
     <string name="welcome_done">Gata</string>
     <string name="setup_perm_title">Permisiuni</string>
-    <string name="setup_perm_body">QuickBuds are nevoie de Bluetooth ca să vorbească cu căștile. Notificările arată serviciul din fundal.</string>
+    <string name="setup_perm_body">QuickBuds are nevoie de Bluetooth ca să comunice cu căștile tale. Android cere o notificare pentru serviciul din fundal, așa că permite și Notificările.</string>
     <string name="setup_perm_bt">Bluetooth</string>
     <string name="setup_perm_notif">Notificări</string>
     <string name="setup_allow">Permite</string>
@@ -478,7 +478,7 @@
     <string name="setup_look_title">Alege un aspect</string>
     <string name="setup_look_body">Alege un stil și o temă. Le poți schimba pe amândouă în Setări.</string>
     <string name="setup_earbuds_title">Căștile tale</string>
-    <string name="setup_earbuds_body">Alege căștile pe care le controlează QuickBuds. Asociază-le mai întâi în Android.</string>
+    <string name="setup_earbuds_body">Alege căștile. Dacă scrie Neconectat, conectează-le din setările Bluetooth.</string>
     <string name="setup_earbuds_none">Nu s-au găsit căști asociate.</string>
     <string name="setup_earbuds_pair">Deschide setările Bluetooth</string>
     <string name="setup_earbuds_known">Model cunoscut</string>
@@ -493,6 +493,8 @@
     <string name="setup_feedback_body">Spune dezvoltatorului ce merge și ce nu. Nimic nu se trimite până nu atingi Trimite. Ambele instrumente sunt în Setări.</string>
     <string name="settings_ping_title">Numără instalarea mea</string>
     <string name="settings_ping_sub">Trimite numărătoarea zilnică cu ID-ul de instalare</string>
+    <string name="setup_earbuds_connected">Conectat</string>
+    <string name="setup_earbuds_disconnected">Neconectat</string>
     <string name="setup_ready_title">Totul e gata</string>
     <string name="setup_ready_body">Conectează căștile și deschide QuickBuds. Fiecare alegere rămâne în Setări.</string>
 </resources>

@@ -467,7 +467,7 @@
     <string name="welcome_body">ไม่กี่ขั้นตอนก็ตั้งค่า QuickBuds ได้ คุณเปลี่ยนทุกตัวเลือกได้ภายหลังในการตั้งค่า</string>
     <string name="welcome_done">เสร็จสิ้น</string>
     <string name="setup_perm_title">สิทธิ์</string>
-    <string name="setup_perm_body">QuickBuds ต้องใช้บลูทูธเพื่อสื่อสารกับหูฟังของคุณ การแจ้งเตือนแสดงบริการเบื้องหลัง</string>
+    <string name="setup_perm_body">QuickBuds ต้องใช้ Bluetooth เพื่อคุยกับหูฟังของคุณ Android บังคับให้บริการเบื้องหลังมีการแจ้งเตือน โปรดอนุญาตการแจ้งเตือนด้วย</string>
     <string name="setup_perm_bt">บลูทูธ</string>
     <string name="setup_perm_notif">การแจ้งเตือน</string>
     <string name="setup_allow">อนุญาต</string>
@@ -480,7 +480,7 @@
     <string name="setup_look_title">เลือกรูปลักษณ์</string>
     <string name="setup_look_body">เลือกสไตล์และธีม เปลี่ยนได้ทั้งสองอย่างในการตั้งค่า</string>
     <string name="setup_earbuds_title">หูฟังของคุณ</string>
-    <string name="setup_earbuds_body">เลือกหูฟังที่ QuickBuds ควบคุม จับคู่หูฟังใน Android ก่อน</string>
+    <string name="setup_earbuds_body">เลือกหูฟังของคุณ หากขึ้นว่า ไม่ได้เชื่อมต่อ ให้เชื่อมต่อในการตั้งค่า Bluetooth</string>
     <string name="setup_earbuds_none">ไม่พบหูฟังที่จับคู่ไว้</string>
     <string name="setup_earbuds_pair">เปิดการตั้งค่า Bluetooth</string>
     <string name="setup_earbuds_known">รุ่นที่รู้จัก</string>
@@ -495,6 +495,8 @@
     <string name="setup_feedback_body">บอกผู้พัฒนาว่าอะไรใช้ได้และไม่ได้ จะไม่มีอะไรถูกส่งจนกว่าคุณจะแตะส่ง เครื่องมือทั้งสองอยู่ในการตั้งค่า</string>
     <string name="settings_ping_title">นับการติดตั้งของฉัน</string>
     <string name="settings_ping_sub">ส่งยอดนับรายวันพร้อมรหัสการติดตั้ง</string>
+    <string name="setup_earbuds_connected">เชื่อมต่อแล้ว</string>
+    <string name="setup_earbuds_disconnected">ไม่ได้เชื่อมต่อ</string>
     <string name="setup_ready_title">พร้อมแล้ว</string>
     <string name="setup_ready_body">เชื่อมต่อหูฟังแล้วเปิด QuickBuds ทุกตัวเลือกอยู่ในการตั้งค่า</string>
 </resources>
