@@ -54,7 +54,7 @@ class BudsStatusView(context: Context) : View(context) {
             // Before the first draw nobody saw the old state: no transition.
             if (!drawn || scale == 0f) { conn = to; invalidate(); return }
             connAnim = ValueAnimator.ofFloat(conn, to).apply {
-                duration = 350
+                duration = 175
                 addUpdateListener { conn = it.animatedValue as Float; postInvalidateOnAnimation() }
                 start()
             }
@@ -114,7 +114,7 @@ class BudsStatusView(context: Context) : View(context) {
                 s.level = levels[i]
                 s.anim?.cancel()
                 s.anim = ValueAnimator.ofFloat(s.shown, target).apply {
-                    duration = if (target == 0f) 1000 else 700
+                    duration = if (target == 0f) 500 else 350
                     interpolator = DecelerateInterpolator()
                     addUpdateListener { s.shown = it.animatedValue as Float; postInvalidateOnAnimation() }
                     start()
@@ -149,12 +149,15 @@ class BudsStatusView(context: Context) : View(context) {
         val cy = ring / 2
         val colW = width / 3f
         val scale = ring / dp(104f)
+        // Until a bud reports its wear the buds draw dim, so the case does too (it would be the one bright glyph).
+        val budsKnown = slots[0].status != -1 || slots[2].status != -1
         slots.forEachIndexed { i, s ->
             val cx = colW * i + colW / 2
+            val isCase = i == 1 && budsKnown
             if (nothing) {
                 // One bitmap per animation step (whole percents), so an animation redraws at most 100 of them.
                 val level = if (s.shown > 0f || s.level >= 0) Math.round(s.shown * 100) else -1
-                val tint = androidx.core.graphics.ColorUtils.blendARGB(p.disabled, QuickBudsWidget.nothingTint(p, i == 1, s.status), conn)
+                val tint = androidx.core.graphics.ColorUtils.blendARGB(p.disabled, QuickBudsWidget.nothingTint(p, isCase, s.status), conn)
                 val key = "$level/$tint/${ring.toInt()}"
                 if (s.dotsKey != key) {
                     s.dots = QuickBudsWidget.dotRing(context, p, level, i, tint, ring.toInt().coerceAtLeast(1))
@@ -171,7 +174,7 @@ class BudsStatusView(context: Context) : View(context) {
                 val bw = dp(s.boxW) * scale
                 val bh = dp(s.boxH) * scale
                 val (iw, ih) = if (s.iconRatio < bw / bh) bh * s.iconRatio to bh else bw to bw / s.iconRatio
-                s.icon.setTint(androidx.core.graphics.ColorUtils.blendARGB(p.disabled, wearTint(p, i == 1, s.status, ThemeRes.material(context)), conn))
+                s.icon.setTint(androidx.core.graphics.ColorUtils.blendARGB(p.disabled, wearTint(p, isCase, s.status, ThemeRes.material(context)), conn))
                 s.icon.setBounds((cx - iw / 2).toInt(), (cy - ih / 2).toInt(), (cx + iw / 2).toInt(), (cy + ih / 2).toInt())
                 s.icon.draw(canvas)
             }
