@@ -92,6 +92,8 @@ object WidgetSettings {
      */
     fun palette(c: Context): com.spizganed.quickbuds.ui.Palette {
         val app = ThemeRes.palette(c)
+        // Glass: a widget sits on the launcher, not on the gradient, so its box is a solid deep tone and the surfaces stay translucent whites.
+        if (app.glass) return app.copy(background = 0xFF1E1C4A.toInt(), card = 0xFF1E1C4A.toInt())
         if (!systemRoles(c) || android.os.Build.VERSION.SDK_INT < 31) return app
         fun s(res: Int) = c.getColor(res)
         return if (app.isLight) app.copy(
