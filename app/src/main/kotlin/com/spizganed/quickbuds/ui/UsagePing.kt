@@ -29,8 +29,12 @@ object UsagePing {
     private const val URL_PING = "https://quickbuds-report.spizganed.workers.dev/ping"
     private const val KEY_DAY = "usagePingDay"
 
+    /** Settings and the setup guide: the daily count is on unless the user turns it off. */
+    const val KEY_ENABLED = "usagePingEnabled"
+
     fun send(c: Context) {
         val prefs = c.getSharedPreferences(ThemeRes.PREFS_NAME, Context.MODE_PRIVATE)
+        if (!prefs.getBoolean(KEY_ENABLED, true)) return
         val today = System.currentTimeMillis() / 86_400_000L
         if (prefs.getLong(KEY_DAY, -1L) == today) return
         val body = JSONObject().put("platform", "Android").put("version", UpdateChecker.installed(c)).put("id", appId(c)).toString()

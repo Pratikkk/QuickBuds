@@ -2365,14 +2365,14 @@ component DualPage inherits Rectangle {
 }
 
 // App settings (the phone's Settings and Theme screens): for now the style.
-// App settings › Report a problem (`report.rs`).
+// App settings › Feedback (`report.rs`).
 export global Report {
     in-out property <string> model;
     in-out property <string> description;
     in property <[string]> categories;
     in property <[bool]> picked;
     in-out property <bool> with-log: true;
-    // The exact text Send posts, after See the report; "" hides it.
+    // The exact text Send posts, after See what is sent; "" hides it.
     in property <string> preview;
     in property <string> note;
     in property <bool> busy;
@@ -3480,7 +3480,7 @@ export component MainWindow inherits Window {
         // Themes, colors & styles and Edit preset, opened from App settings (the sidebar shows App settings).
         if root.page == 10: PageIn { ThemePage { back => { root.page = 6; } edit => { root.page = 11; } } }
         if root.page == 11: PageIn { PresetPage { back => { root.page = 10; } } }
-        // Report a problem, opened from App settings (no sidebar entry; the sidebar shows App settings).
+        // Feedback, opened from App settings (no sidebar entry; the sidebar shows App settings).
         if root.page == 9: PageIn { ReportPage { back => { root.page = 6; } } }
         // Test my earbuds, opened from App settings or the launch prompt (no sidebar entry).
         if root.page == 12: PageIn { TestPage { back => { root.page = 6; } } }

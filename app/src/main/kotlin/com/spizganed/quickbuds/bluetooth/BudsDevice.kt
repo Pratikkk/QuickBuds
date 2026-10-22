@@ -39,5 +39,13 @@ object BudsDevice {
             ?: bonded.firstOrNull { isBuds(context, it) }?.also { remember(context, it) }
     }
 
+    /** The paired devices that look like OPPO, OnePlus or realme earbuds, for the setup guide's picker. */
+    fun candidates(context: Context): List<BluetoothDevice> = runCatching {
+        context.getSystemService(BluetoothManager::class.java)?.adapter?.bondedDevices.orEmpty().filter { isBuds(context, it) }
+    }.getOrDefault(emptyList())
+
+    /** The address of the earbuds in use, or null before one was picked or found. */
+    fun savedAddress(context: Context): String? = prefs(context).getString(KEY_ADDRESS, null)
+
     private fun prefs(context: Context) = context.getSharedPreferences(ThemeRes.PREFS_NAME, Context.MODE_PRIVATE)
 }

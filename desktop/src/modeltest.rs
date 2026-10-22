@@ -285,9 +285,9 @@ fn send(a: &mut App) {
                 STATE.with(|s| *s.borrow_mut() = None);
                 g.set_started(false);
                 g.set_preview("".into());
-                g.set_status("Report sent. Thank you!".into());
+                g.set_status("Feedback sent. Thank you!".into());
             } else {
-                g.set_status(refused.unwrap_or_else(|| "Could not send the report. Check the internet connection and try again.".into()).into());
+                g.set_status(refused.unwrap_or_else(|| "Could not send the feedback. Check the internet connection and try again.".into()).into());
             }
         });
     });

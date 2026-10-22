@@ -22,7 +22,7 @@ import com.spizganed.quickbuds.bluetooth.PacketLogger
 import com.spizganed.quickbuds.protocol.ModelCatalog
 
 /**
- * Settings › Report a problem ([ProblemReport]): buds model (filled in, with the model list as suggestions),
+ * Settings › Feedback ([ProblemReport]): buds model (filled in, with the model list as suggestions),
  * categories, a description and the log. See the report shows exactly what Send posts. Nothing goes out
  * without Send. From the crash dialog, [EXTRA_CRASH] fills it in: category Other, and the crash report after the log.
  * Send needs a model from the list, except for a crash report. A log without one RX frame blocks Send: the buds

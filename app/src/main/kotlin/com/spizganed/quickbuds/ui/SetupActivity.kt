@@ -1,28 +1,40 @@
 package com.spizganed.quickbuds.ui
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import com.spizganed.quickbuds.R
+import com.spizganed.quickbuds.bluetooth.BudsDevice
 import com.spizganed.quickbuds.bluetooth.BudsService
+import com.spizganed.quickbuds.protocol.ModelCatalog
+import com.spizganed.quickbuds.widget.AncWidgetProvider
+import com.spizganed.quickbuds.widget.BatteryWidgetProvider
 
 /**
- * First-run setup, once: welcome and protocol, permissions, the background service and the update check, privacy, done.
+ * First-run setup, once: welcome, look, permissions, the earbuds, the background service, widgets, feedback, privacy, done.
  * Every choice stays in Settings. The crash report and the model test keep their own prompts (they depend on what just happened).
  */
 class SetupActivity : Activity() {
 
-    private val total = 5
+    private val total = 9
     private var page = 0
     private lateinit var body: LinearLayout
     private lateinit var back: TextView
@@ -80,6 +92,12 @@ class SetupActivity : Activity() {
 
     override fun onSaveInstanceState(out: Bundle) { super.onSaveInstanceState(out); out.putInt("page", page) }
 
+    /** A permission dialog, the Bluetooth settings or the battery dialog may have changed what a page shows. */
+    override fun onResume() {
+        super.onResume()
+        if (::body.isInitialized && page in listOf(PERMISSIONS, EARBUDS, BACKGROUND)) show(page)
+    }
+
     /** Back goes to the previous page, then leaves the app from the first one. */
     private fun goBack() { if (page > 0) show(page - 1) else finish() }
 
@@ -91,11 +109,15 @@ class SetupActivity : Activity() {
         page = i.coerceIn(0, total - 1)
         body.removeAllViews()
         when (page) {
-            0 -> { heading(R.string.welcome_title, R.string.welcome_body); icon() }
-            1 -> permissions()
-            2 -> background()
-            3 -> { heading(R.string.about_privacy_title, R.string.about_privacy_body) }
-            else -> { heading(R.string.setup_ready_title, R.string.setup_ready_body); icon() }
+            WELCOME -> welcome()
+            LOOK -> look()
+            PERMISSIONS -> permissions()
+            EARBUDS -> earbuds()
+            BACKGROUND -> background()
+            WIDGETS -> widgets()
+            FEEDBACK -> feedback()
+            PRIVACY -> privacy()
+            else -> { icon(); heading(R.string.setup_ready_title, R.string.setup_ready_body) }
         }
         back.visibility = if (page == 0) View.INVISIBLE else View.VISIBLE
         next.setText(if (page == total - 1) R.string.welcome_done else R.string.setup_next)
@@ -112,22 +134,26 @@ class SetupActivity : Activity() {
         layoutParams = LinearLayout.LayoutParams(dp(132f), dp(132f)).apply { gravity = Gravity.CENTER_HORIZONTAL; topMargin = dp(40f) }
     })
 
-    private fun heading(title: Int, text: Int) {
+    private fun heading(title: Int, text: Int, centered: Boolean = false) {
         body.addView(TextView(this).apply {
             setText(title)
             textSize = 26f
             typeface = ThemeRes.headline(context)
             setTextColor(p.text)
+            if (centered) gravity = Gravity.CENTER
             setPadding(dp(4f), dp(24f), dp(4f), dp(8f))
         })
-        body.addView(TextView(this).apply {
+        if (text != 0) body.addView(TextView(this).apply {
             setText(text)
             textSize = 15f
             setTextColor(p.textSecondary)
+            if (centered) gravity = Gravity.CENTER
             setLineSpacing(0f, 1.2f)
             setPadding(dp(4f), 0, dp(4f), dp(16f))
         })
     }
+
+    private fun label(res: Int) = body.addView(SettingRowFactory.sectionLabel(this, res))
 
     private fun switchRow(icon: Int, title: Int, sub: Int, key: String, default: Boolean): View {
         val sw = SettingRowFactory.buildSwitch(this, prefs.getBoolean(key, default))
@@ -135,11 +161,120 @@ class SetupActivity : Activity() {
         return SettingRowFactory.build(this, icon, title, sub, sw) { sw.performClick() }
     }
 
-    private fun background() {
-        heading(R.string.setup_bg_title, R.string.setup_bg_body)
+    /** A pill button for a row's trailing slot. [action] null draws the quiet "done" label. */
+    private fun pillButton(text: Int, action: (() -> Unit)?) = TextView(this).apply {
+        setText(text)
+        textSize = 14f
+        typeface = ThemeRes.bold(context)
+        gravity = Gravity.CENTER
+        isSingleLine = true
+        minWidth = dp(72f)
+        setPadding(dp(14f), 0, dp(14f), 0)
+        if (action == null) setTextColor(p.textSecondary)
+        else {
+            setTextColor(ThemeRes.onFill(this@SetupActivity))
+            background = ThemeRes.ripple(this@SetupActivity, ThemeRes.pill(this@SetupActivity, p.accent, 18f))
+            setOnClickListener { action() }
+        }
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(36f))
+    }
+
+    private fun welcome() {
+        icon()
+        heading(R.string.welcome_title, 0, centered = true)
+        body.addView(TextView(this).apply {
+            setText(R.string.about_tagline)
+            textSize = 16f
+            setTextColor(p.text)
+            gravity = Gravity.CENTER
+            setPadding(dp(4f), 0, dp(4f), dp(8f))
+        })
+        body.addView(TextView(this).apply {
+            setText(R.string.welcome_brands)
+            textSize = 15f
+            setTextColor(p.textSecondary)
+            gravity = Gravity.CENTER
+            setPadding(dp(4f), 0, dp(4f), dp(16f))
+        })
+        body.addView(TextView(this).apply {
+            setText(R.string.welcome_body)
+            textSize = 14f
+            setTextColor(p.textSecondary)
+            gravity = Gravity.CENTER
+            setLineSpacing(0f, 1.2f)
+            setPadding(dp(4f), 0, dp(4f), dp(16f))
+        })
+    }
+
+    /** Style, theme and wallpaper colours: the same controls as Settings > Theme, the first choices shown in one place. */
+    private fun look() {
+        heading(R.string.setup_look_title, R.string.setup_look_body)
+        label(R.string.widget_style_title)
+        // Listed Material, QuickBuds, Pixel art; ORDER maps a segment to the stored style index (as Settings > Theme).
+        val order = intArrayOf(2, 0, 1)
+        body.addView(AncSegmentedView(this, listOf(getString(R.string.widget_style_material), getString(R.string.widget_style_classic),
+            getString(R.string.widget_style_nothing))).apply {
+            selected = order.indexOf(ThemeRes.style(this@SetupActivity))
+            contentDescription = getString(R.string.widget_style_title)
+            onSegmentTapped = { i ->
+                if (i != selected) {
+                    selected = i
+                    ThemeRes.setStyle(this@SetupActivity, order[i])
+                    postDelayed({ ThemeRes.recreateFaded(this@SetupActivity) }, 260)
+                }
+            }
+        })
+
+        label(R.string.theme_builtin)
+        val activeId = PaletteStore.activeId(this)
+        body.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            PaletteStore.builtInIds().forEachIndexed { i, id ->
+                val preset = PaletteStore.builtIn(this@SetupActivity, id)
+                val on = id == activeId
+                addView(LinearLayout(this@SetupActivity).apply {
+                    orientation = LinearLayout.VERTICAL
+                    layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { if (i > 0) marginStart = dp(10f) }
+                    contentDescription = preset.name
+                    ThemeRes.sinkOnPress(this)
+                    setOnClickListener {
+                        if (id == PaletteStore.activeId(this@SetupActivity)) return@setOnClickListener
+                        Haptics.commit(it)
+                        PaletteStore.setActive(this@SetupActivity, id)
+                        ThemeRes.recreateFaded(this@SetupActivity)
+                    }
+                    addView(FrameLayout(this@SetupActivity).apply {
+                        // The picked tile gets an accent outline.
+                        if (on) foreground = GradientDrawable().apply {
+                            setColor(0); setStroke(dp(3f), p.accent); cornerRadius = dp(18f).toFloat()
+                        }
+                        addView(PalettePreviewView(this@SetupActivity, detailed = false).apply { palette = preset })
+                    })
+                    addView(TextView(this@SetupActivity).apply {
+                        text = preset.name
+                        textSize = 13f
+                        gravity = Gravity.CENTER
+                        setPadding(0, dp(8f), 0, 0)
+                        setTextColor(if (on) p.text else p.textSecondary)
+                        if (on) typeface = ThemeRes.medium(context)
+                    })
+                })
+            }
+        })
+
         body.addView(SettingRowFactory.card(this).apply {
-            addView(switchRow(R.drawable.ic_power, R.string.settings_background_title, R.string.settings_background_sub, BudsService.PREF_BACKGROUND, true))
-            addView(switchRow(R.drawable.ic_update, R.string.update_auto_title, R.string.update_auto_sub, UpdateChecker.KEY_AUTO, true))
+            (layoutParams as LinearLayout.LayoutParams).topMargin = dp(18f)
+            // Wallpaper colours (Android 12+): the accent follows the phone's wallpaper.
+            if (PaletteStore.wallpaperSupported()) {
+                val sw = SettingRowFactory.buildSwitch(this@SetupActivity, PaletteStore.wallpaper(this@SetupActivity))
+                sw.setOnCheckedChangeListener { v, on -> PaletteStore.setWallpaper(this@SetupActivity, on); v.postDelayed({ ThemeRes.recreateFaded(this@SetupActivity) }, 260) }
+                val row = SettingRowFactory.build(this@SetupActivity, 0, R.string.theme_wallpaper, 0, sw) { sw.performClick() }
+                SettingRowFactory.subtitle(this@SetupActivity, row).setText(R.string.theme_wallpaper_sub)
+                SettingRowFactory.addRow(this, row)
+            }
+            // The full accent picker and the custom presets stay in Settings > Theme.
+            SettingRowFactory.addRow(this, SettingRowFactory.build(this@SetupActivity, R.drawable.ic_palette, R.string.theme_title, 0,
+                SettingRowFactory.buildChevron(this@SetupActivity)) { startActivity(Intent(this@SetupActivity, ThemeActivity::class.java)) })
         })
     }
 
@@ -156,22 +291,6 @@ class SetupActivity : Activity() {
         heading(R.string.setup_perm_title, R.string.setup_perm_body)
         fun row(title: Int, list: Array<String>, code: Int): View {
             val ok = granted(list)
-            val action = TextView(this).apply {
-                setText(if (ok) R.string.setup_allowed else R.string.setup_allow)
-                textSize = 14f
-                typeface = ThemeRes.bold(context)
-                gravity = Gravity.CENTER
-                isSingleLine = true
-                minWidth = dp(96f)
-                setPadding(dp(16f), 0, dp(16f), 0)
-                if (ok) setTextColor(p.textSecondary)
-                else {
-                    setTextColor(ThemeRes.onFill(this@SetupActivity))
-                    background = ThemeRes.ripple(this@SetupActivity, ThemeRes.pill(this@SetupActivity, p.accent, 18f))
-                    setOnClickListener { requestPermissions(list, code) }
-                }
-                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(36f))
-            }
             return LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
@@ -181,7 +300,7 @@ class SetupActivity : Activity() {
                     textSize = 16f
                     setTextColor(p.text)
                 }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-                addView(action)
+                addView(pillButton(if (ok) R.string.setup_allowed else R.string.setup_allow, if (ok) null else ({ requestPermissions(list, code) })))
             }
         }
         body.addView(SettingRowFactory.card(this).apply {
@@ -192,7 +311,110 @@ class SetupActivity : Activity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (page == 1) show(1)
+        if (page == PERMISSIONS) show(PERMISSIONS)
+    }
+
+    /** The paired earbuds the app can control: pick one, or pair them in Android first. Connecting happens when the guide ends. */
+    @SuppressLint("MissingPermission")
+    private fun earbuds() {
+        heading(R.string.setup_earbuds_title, R.string.setup_earbuds_body)
+        if (!granted(bluetoothPermissions())) {
+            body.addView(TextView(this).apply {
+                setText(R.string.setup_earbuds_need_bt)
+                textSize = 15f
+                setTextColor(p.textSecondary)
+                setPadding(dp(4f), 0, dp(4f), dp(16f))
+            })
+            return
+        }
+        val found = BudsDevice.candidates(this)
+        val picked = BudsDevice.savedAddress(this)?.takeIf { a -> found.any { it.address == a } } ?: found.firstOrNull()?.address
+        if (found.isEmpty()) {
+            body.addView(TextView(this).apply {
+                setText(R.string.setup_earbuds_none)
+                textSize = 15f
+                setTextColor(p.text)
+                setPadding(dp(4f), 0, dp(4f), dp(12f))
+            })
+        } else {
+            val models = ModelCatalog.all(this)
+            val list = SettingRowFactory.splitList(this)
+            for (d in found) {
+                val on = d.address == picked
+                val model = ModelCatalog.find(models, null, d.name)
+                val mark = ImageView(this).apply {
+                    setImageDrawable(ThemeRes.tint(this@SetupActivity, R.drawable.ic_check, p.accent))
+                    visibility = if (on) View.VISIBLE else View.INVISIBLE
+                    layoutParams = LinearLayout.LayoutParams(dp(22f), dp(22f))
+                }
+                val row = SettingRowFactory.build(this, R.drawable.ic_earbud, 0, 0, mark) {
+                    BudsDevice.remember(this, d)
+                    show(EARBUDS)
+                }
+                row.findViewWithTag<TextView>(SettingRowFactory.TITLE_TAG).text = d.name
+                SettingRowFactory.subtitle(this, row).setText(if (model != null) R.string.setup_earbuds_known else R.string.setup_earbuds_unknown)
+                SettingRowFactory.addSplit(list, row)
+            }
+            body.addView(list)
+        }
+        body.addView(SettingRowFactory.card(this).apply {
+            (layoutParams as LinearLayout.LayoutParams).topMargin = dp(12f)
+            addView(SettingRowFactory.build(this@SetupActivity, R.drawable.ic_earbud, R.string.setup_earbuds_pair, 0,
+                SettingRowFactory.buildChevron(this@SetupActivity)) {
+                startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+            })
+        })
+    }
+
+    private fun batteryExempt() = getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
+
+    private fun background() {
+        heading(R.string.setup_bg_title, R.string.setup_bg_body)
+        body.addView(SettingRowFactory.card(this).apply {
+            addView(switchRow(R.drawable.ic_power, R.string.settings_background_title, R.string.settings_background_sub, BudsService.PREF_BACKGROUND, true))
+            val ok = batteryExempt()
+            addView(SettingRowFactory.build(this@SetupActivity, R.drawable.ic_battery, R.string.setup_battery_title, R.string.setup_battery_sub, null,
+                value = pillButton(if (ok) R.string.setup_allowed else R.string.setup_allow, if (ok) null else ({ requestBatteryExemption() }))))
+            addView(switchRow(R.drawable.ic_update, R.string.update_auto_title, R.string.update_auto_sub, UpdateChecker.KEY_AUTO, true))
+        })
+    }
+
+    /** The system dialog for this app only; the full list is the fallback when a phone has none. */
+    @SuppressLint("BatteryLife")
+    private fun requestBatteryExemption() {
+        try {
+            startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
+        } catch (e: Exception) {
+            runCatching { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
+        }
+    }
+
+    private fun widgets() {
+        heading(R.string.setup_widgets_title, R.string.setup_widgets_body)
+        val manager = getSystemService(AppWidgetManager::class.java)
+        val canPin = manager.isRequestPinAppWidgetSupported
+        fun row(name: Int, provider: Class<*>) = SettingRowFactory.build(this, R.drawable.ic_battery, name, 0, null,
+            value = if (canPin) pillButton(R.string.setup_widgets_add) { manager.requestPinAppWidget(ComponentName(this, provider), null, null) } else null)
+        body.addView(SettingRowFactory.card(this).apply {
+            addView(row(R.string.widget_name, AncWidgetProvider::class.java))
+            addView(row(R.string.widget_pages_name, BatteryWidgetProvider::class.java))
+        })
+    }
+
+    /** What the two feedback tools in Settings do. Nothing is sent from here. */
+    private fun feedback() {
+        heading(R.string.setup_feedback_title, R.string.setup_feedback_body)
+        body.addView(SettingRowFactory.card(this).apply {
+            addView(SettingRowFactory.build(this@SetupActivity, R.drawable.ic_dev_tools, R.string.problem_title, R.string.problem_sub, null))
+            addView(SettingRowFactory.build(this@SetupActivity, R.drawable.ic_earbud, R.string.test_title, R.string.test_sub, null))
+        })
+    }
+
+    private fun privacy() {
+        heading(R.string.about_privacy_title, R.string.about_privacy_body)
+        body.addView(SettingRowFactory.card(this).apply {
+            addView(switchRow(R.drawable.ic_info, R.string.settings_ping_title, R.string.settings_ping_sub, UsagePing.KEY_ENABLED, true))
+        })
     }
 
     private fun finishSetup() {
@@ -203,6 +425,14 @@ class SetupActivity : Activity() {
 
     companion object {
         private const val KEY_DONE = "setupDone"
+        private const val WELCOME = 0
+        private const val LOOK = 1
+        private const val PERMISSIONS = 2
+        private const val EARBUDS = 3
+        private const val BACKGROUND = 4
+        private const val WIDGETS = 5
+        private const val FEEDBACK = 6
+        private const val PRIVACY = 7
         fun done(a: Activity) = a.getSharedPreferences(ThemeRes.PREFS_NAME, MODE_PRIVATE).getBoolean(KEY_DONE, false)
     }
 }

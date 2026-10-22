@@ -1,5 +1,5 @@
-//! App settings › Report a problem: the phone's `ProblemReport`, posted with `curl` (as the updater does) to the same
-//! report Worker. Nothing goes out without Send; See the report shows the exact text first.
+//! App settings › Feedback: the phone's `ProblemReport`, posted with `curl` (as the updater does) to the same
+//! report Worker. Nothing goes out without Send; See what is sent shows the exact text first.
 
 use crate::types::*;
 use crate::session::{Line, LOG};
@@ -332,13 +332,13 @@ pub fn setup(main: &MainWindow) {
                 let r = m.global::<Report>();
                 r.set_busy(false);
                 if ok {
-                    r.set_note("Report sent. Thank you!".into());
+                    r.set_note("Feedback sent. Thank you!".into());
                     r.set_description("".into());
                     r.set_preview("".into());
                     r.set_picked(VecModel::from_slice(&[false; 6]));
                     CRASH.lock().unwrap().clear();
                 } else {
-                    r.set_note(refused.unwrap_or_else(|| "Could not send the report. Check the internet connection and try again.".into()).into());
+                    r.set_note(refused.unwrap_or_else(|| "Could not send the feedback. Check the internet connection and try again.".into()).into());
                 }
             });
         });

@@ -9,7 +9,7 @@ welcome too.
 
 The quickest way is in the app: Settings › **Test my earbuds** (desktop: App settings). Mark each
 feature as works, does not work or skip, then tap Send. The report holds a fresh log, without Bluetooth
-addresses. Settings › **Report a problem** sends one problem with your description. For a longer exchange, open an
+addresses. Settings › **Feedback** sends one problem with your description. For a longer exchange, open an
 [issue](https://github.com/spizganed/QuickBuds/issues) with:
 
 1. The earbuds' model, and the phone or PC it runs on (model, Android / Windows / Linux version).
