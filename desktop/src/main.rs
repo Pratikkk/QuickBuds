@@ -13,6 +13,7 @@ mod earbuds;
 mod newproto;
 mod eq;
 mod hearing;
+mod home_logic;
 mod models;
 mod modeltest;
 mod protocol;

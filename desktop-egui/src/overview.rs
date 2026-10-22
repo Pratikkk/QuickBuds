@@ -2,9 +2,10 @@
 
 use crate::glass::{self, white, Trailing};
 use crate::session::{Cmd, Snapshot, Status};
+use crate::home_logic;
 use crate::types::{self, FEATURE_DUAL, FEATURE_HEARING, FEATURE_HIRES, FEATURE_SPATIAL};
 use crate::{icons, t, App, Page};
-use eframe::egui::{Align2, Pos2, Rect, Ui, Vec2};
+use eframe::egui::{self, Align2, Pos2, Rect, Ui, Vec2};
 
 const GAP: f32 = 12.0;
 const ROW: f32 = 72.0;
@@ -21,6 +22,7 @@ pub fn demo_snapshot() -> Snapshot {
         modes: types::AncModes::of(model),
         low_latency: Some(false),
         model,
+        codec: Some(3),
         features: vec![(types::FEATURE_GAME_MODE, 0), (types::FEATURE_GAME_MODE_MAIN, 0), (FEATURE_HIRES, 1), (FEATURE_SPATIAL, 0), (FEATURE_DUAL, 1), (FEATURE_HEARING, 0)],
         ..Default::default()
     }
@@ -57,8 +59,14 @@ pub fn show(app: &mut App, ui: &mut Ui) {
     let content = Rect::from_min_max(Pos2::new(sb.right() + GAP, full.top() + 18.0), Pos2::new(full.right() - 12.0, full.bottom() - 12.0));
     header(app, ui, content);
     let body = Rect::from_min_max(Pos2::new(content.left(), content.top() + 58.0), content.max);
+    confirm_dialog(app, ui);
     match app.page {
-        Page::Overview => overview(app, ui, body),
+        Page::Overview => {
+            // The page scrolls when it is taller than the window: a child ui clipped to the body.
+            let mut page = ui.new_child(egui::UiBuilder::new().max_rect(body));
+            page.set_clip_rect(body.intersect(ui.clip_rect()));
+            overview(app, &mut page, body);
+        }
         _ => placeholder(ui, body),
     }
 }
@@ -127,9 +135,16 @@ fn placeholder(ui: &mut Ui, body: Rect) {
     glass::text(ui, r.center(), Align2::CENTER_CENTER, "This page is not ported to egui yet.", 16.0, 0.8);
 }
 
-struct HomeRow { id: &'static str, icon: &'static str, title: String, sub: String, trailing: Trailing, enabled: bool, page: Option<Page> }
+/// `confirm`: the string asked before the write (the buds reconnect).
+struct HomeRow { id: &'static str, icon: &'static str, title: String, sub: String, trailing: Trailing, enabled: bool, page: Option<Page>, confirm: Option<&'static str> }
 
-fn overview(app: &mut App, ui: &mut Ui, body: Rect) {
+fn overview(app: &mut App, ui: &mut Ui, view: Rect) {
+    // The layout runs from the scrolled top; its height is measured at the end for the next frame's limit.
+    if ui.rect_contains_pointer(view) {
+        let dy = ui.input(|i| i.smooth_scroll_delta.y);
+        if dy != 0.0 { app.scroll = (app.scroll - dy).max(0.0); }
+    }
+    let body = Rect::from_min_max(Pos2::new(view.left(), view.top() - app.scroll), Pos2::new(view.right(), view.bottom()));
     let s = app.snap.clone();
     let on = s.status == Status::On;
     let listed = |id: u8| s.features.iter().find(|f| f.0 == id).map(|f| f.1);
@@ -139,18 +154,24 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) {
     let mut right: Vec<HomeRow> = vec![];
     if types::has_feature(&s.features, s.caps.game_mode_id()) {
         right.push(HomeRow { id: "game", icon: icons::LOW_LATENCY, title: t(tr, "row_game_title").into(), sub: t(tr, "row_game_sub").into(),
-            trailing: Trailing::Switch(s.low_latency.unwrap_or(false)), enabled: on, page: None });
+            trailing: Trailing::Switch(s.low_latency.unwrap_or(false)), enabled: on, page: None, confirm: None });
     }
-    if let Some(v) = listed(FEATURE_HIRES) {
+    let hires_on = listed(FEATURE_HIRES) == Some(1);
+    let picker = home_logic::codec_picker(&s);
+    if listed(FEATURE_HIRES).is_some() || picker {
+        let msg = if !picker && home_logic::spatial_on(&s) && home_logic::exclusive(&s) { "codec_msg_hires_drops_spatial" } else { "codec_msg_reconnect" };
+        // HeyMelody's codec picker: Hi-Res only with LDAC or LHDC V5.
+        let locked = picker && !matches!(s.codec, Some(3 | 8));
         right.push(HomeRow { id: "hires", icon: icons::HIRES, title: t(tr, "row_hires_title").into(),
-            sub: t(tr, if v == 1 { "row_hires_sub" } else { "row_hires_sub_off" }).into(), trailing: Trailing::Switch(v == 1), enabled: false, page: None });
+            sub: t(tr, if hires_on { "row_hires_sub" } else { "row_hires_sub_off" }).into(), trailing: Trailing::Switch(hires_on), enabled: on && !locked, page: None, confirm: Some(msg) });
     }
-    if let Some(v) = listed(FEATURE_SPATIAL) {
+    if listed(FEATURE_SPATIAL).is_some() || home_logic::spatial_by_type(&s) {
+        let msg = if hires_on && home_logic::exclusive(&s) { Some("codec_msg_spatial_drops_hires") } else { None };
         right.push(HomeRow { id: "spatial", icon: icons::SPATIAL, title: t(tr, "row_spatial_title").into(), sub: t(tr, "row_spatial_sub").into(),
-            trailing: Trailing::Switch(v == 1), enabled: false, page: None });
+            trailing: Trailing::Switch(home_logic::spatial_on(&s)), enabled: on, page: None, confirm: msg });
     }
     let mut left: Vec<HomeRow> = vec![];
-    let nav = |id, icon, key: &str, sub: &str, page| HomeRow { id, icon, title: t(tr, key).into(), sub: sub.into(), trailing: Trailing::Chevron, enabled: true, page: Some(page) };
+    let nav = |id, icon, key: &str, sub: &str, page| HomeRow { id, icon, title: t(tr, key).into(), sub: sub.into(), trailing: Trailing::Chevron, enabled: true, page: Some(page), confirm: None };
     if app.has.eq { left.push(nav("eq", icons::EQUALIZER, "eq_title", "", Page::Eq)); }
     if app.has.dual { left.push(nav("dual", icons::DEVICES, "dual_title", "", Page::Dual)); }
     left.push(nav("earbuds", icons::EARBUD, "earbuds_title", "", Page::Earbuds));
@@ -179,6 +200,8 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) {
         nav_r = Rect::from_min_size(Pos2::new(c1.left(), rows_r.bottom() + GAP), Vec2::new(c1.width(), h_left));
     }
 
+    let bottom = [batt.bottom(), anc.bottom(), rows_r.bottom(), nav_r.bottom()].into_iter().fold(f32::MIN, f32::max);
+    app.scroll = app.scroll.min((bottom + app.scroll - view.bottom() + 12.0).max(0.0));
     battery(app, ui, batt);
     noise(app, ui, anc);
     for (rect, list, id) in [(rows_r, right, "right"), (nav_r, left, "left")] {
@@ -190,7 +213,21 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) {
             let tr = match &r.trailing { Trailing::Switch(v) => Trailing::Switch(*v), Trailing::Chevron => Trailing::Chevron, Trailing::Value(v) => Trailing::Value(v.clone()), Trailing::None => Trailing::None };
             let (clicked, toggled) = glass::row_at(ui, (id, r.id), rr, r.icon, &r.title, &r.sub, tr, r.enabled);
             if clicked { if let Some(p) = r.page { app.page = p; } }
-            if toggled && r.id == "game" { app.send(Cmd::LowLatency(!app.snap.low_latency.unwrap_or(false))); }
+            if toggled {
+                let on_now = matches!(r.trailing, Trailing::Switch(true));
+                let cmds = match r.id {
+                    "game" => vec![Cmd::LowLatency(!on_now)],
+                    "hires" => home_logic::feature_cmds(&app.snap, FEATURE_HIRES, !on_now),
+                    "spatial" => home_logic::feature_cmds(&app.snap, FEATURE_SPATIAL, !on_now),
+                    _ => vec![],
+                };
+                // Hi-Res asks both ways, 3D audio only when it turns Hi-Res off (the phone's rules).
+                let ask = r.confirm.filter(|_| r.id == "hires" || !on_now);
+                match ask {
+                    Some(msg) => app.confirm = Some((cmds, msg)),
+                    None => for c in cmds { app.send(c); },
+                }
+            }
         }
     }
 }
@@ -269,5 +306,29 @@ fn noise(app: &mut App, ui: &mut Ui, rect: Rect) {
                 app.send(Cmd::Anc(id.clone()));
             }
         }
+    }
+}
+
+/// The accept dialog before a write that makes the buds reconnect (`ConfirmDialog` on the phone).
+fn confirm_dialog(app: &mut App, ui: &mut Ui) {
+    let Some((cmds, msg)) = app.confirm.take() else { return };
+    let mut decision = None;
+    let tr = &app.tr;
+    let open = glass::dialog(ui.ctx(), "confirm", t(tr, "codec_dialog_title"), Vec2::new(440.0, 230.0), |ui| {
+        let r = ui.max_rect();
+        ui.add(egui::Label::new(egui::RichText::new(t(tr, msg)).size(14.0).color(white(0.85))).wrap());
+        let y = r.bottom() - 44.0;
+        let accept = Rect::from_min_size(Pos2::new(r.right() - 130.0, y), Vec2::new(130.0, 44.0));
+        let cancel = Rect::from_min_size(Pos2::new(accept.left() - 10.0 - 110.0, y), Vec2::new(110.0, 44.0));
+        if glass::button_at(ui, "cancel", cancel, 22.0, false).clicked() { decision = Some(false); }
+        glass::text(ui, cancel.center(), Align2::CENTER_CENTER, t(tr, "dialog_cancel"), 15.0, 1.0);
+        if glass::button_at(ui, "accept", accept, 22.0, true).clicked() { decision = Some(true); }
+        ui.painter().text(accept.center(), Align2::CENTER_CENTER, t(tr, "codec_dialog_accept"), egui::FontId::proportional(15.0), egui::Color32::from_rgb(27, 26, 69));
+    });
+    match decision {
+        Some(true) => for c in cmds { app.send(c); },
+        Some(false) => {}
+        None if open => app.confirm = Some((cmds, msg)),
+        None => {}
     }
 }

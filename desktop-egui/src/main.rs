@@ -5,6 +5,8 @@
 
 #[path = "../../desktop/src/bt.rs"]
 mod bt;
+#[path = "../../desktop/src/home_logic.rs"]
+mod home_logic;
 #[path = "../../desktop/src/protocol.rs"]
 mod protocol;
 #[path = "../../desktop/src/session.rs"]
@@ -144,6 +146,10 @@ pub struct App {
     pub levels_open: bool,
     pub glow: bool,
     pub demo: bool,
+    /// Writes that wait for the user's accept (the buds reconnect), and the string that says why.
+    pub confirm: Option<(Vec<Cmd>, &'static str)>,
+    /// The Overview's scroll offset in points.
+    pub scroll: f32,
 }
 
 impl App {
@@ -163,7 +169,7 @@ impl App {
         let glow = load_settings()["glass_gradient"].as_bool().unwrap_or(true);
         Self {
             snap: Snapshot::default(), tx, tr: translations(chosen_locale()), inbox, page: Page::Overview, has: Has::ALL,
-            modes: AncModes::default(), last_level: None, levels_open: false, glow, demo,
+            modes: AncModes::default(), last_level: None, levels_open: false, glow, demo, confirm: None, scroll: 0.0,
         }
     }
 
