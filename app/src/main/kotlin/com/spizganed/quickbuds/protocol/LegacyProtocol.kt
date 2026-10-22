@@ -811,20 +811,22 @@ object AncEventParser {
      * `02 01` echo fails.
      */
     fun isAncEvent(payload: ByteArray): Boolean {
-        if (payload.size < 5) return false
+        if (payload.size < 4) return false
         return payload[0].toInt() and 0xFF == EVT_ANC &&
             payload[1].toInt() and 0xFF == 0x01 &&
             payload[2].toInt() and 0xFF == 0x01
     }
 
     /**
-     * Raw 16-bit value from the event, little endian, or -1 if too short.
+     * Raw value from the event, little endian, 1-4 bytes (PROTOCOL.md section 9), or -1 if too short.
      * Kept separate from the name lookup so a capture can always be read back as
      * numbers, even when the name table is incomplete.
      */
     fun rawValue(payload: ByteArray): Int {
-        if (payload.size < 5) return -1
-        return OpoProtocol.u16(payload, 3)
+        if (payload.size < 4) return -1
+        var value = 0
+        for (i in minOf(payload.size, 7) - 1 downTo 3) value = (value shl 8) or (payload[i].toInt() and 0xFF)
+        return value
     }
 
     /**

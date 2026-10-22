@@ -346,7 +346,9 @@ Each model's `ancModes` in `assets/models.json` (`protocol/AncModes.kt`) is a tr
 **Adaptive is bit 11 (mask `0x0800`), not 8.** Bit 8 gives `01 01 00 01`, a different mode. Take the
 bit from the model's `slot`, never from a mode's position in a list.
 
-### NOTIFY — push `03 01 01 <LO> <HI>` and the `0x810C 01 01` reply `[CAPTURE]`
+### NOTIFY — push `03 01 01 <mode LE>` and the `0x810C 01 01` reply `[CAPTURE]`
+
+The mode is 1-4 bytes, little endian, in the push and in the reply. Buds 4 sends 2 bytes.
 
 **A different table from SET. They are not supposed to agree.** It is the same model tree reported
 one level down (Buds 4's Off has a child at 3, Transparency one at 8).
@@ -363,7 +365,7 @@ one level down (Buds 4's Off has a child at 3, Transparency one at 8).
 - With no bud in an ear, a SET is refused: ack `0E` (status 14) `[CAPTURE]`. One bud in an ear is enough.
   Both apps then re-read `0x010C 01 01`, so the display shows the real mode, and say to put a bud in.
 - The ANC stop reports **whichever level is active**; it is a bitmask, not an enum.
-- Query: `0x010C 01 01` → `00 01 01 <LO> <HI>` (status, echo, value). Read on every connect, so a
+- Query: `0x010C 01 01` → `00 01 01 <mode LE>` (status, echo, value). Read on every connect, so a
   reconnect corrects the display.
 - `AncEventParser` accepts a push only when bytes 1-2 are `01 01`. A hold-cycle write also raises a
   push `03 02 01 <mask>`: the hold cycle's new mask `[VENDOR]`. It is not a mode (Was: decoded as one,
@@ -373,6 +375,9 @@ one level down (Buds 4's Off has a child at 3, Transparency one at 8).
 - **The level Smart chose** `[VENDOR]`+`[CAPTURE]`: push `03 04 01 <mask LE>`, read `0x010C 04 01` →
   `00 04 01 <mask LE>`. Buds 4 answers the read with ANC Off too, and pushes right after a Smart SET. The lowest set bit is a SET bit: `0x20` Medium, `0x40` Light on Buds 4. The
   ANC label shows it ("ANC S·M"). Read on connect for models with Smart.
+
+- Other reads and writes `[VENDOR]`, not seen on our buds: a level report `01 02 <level>` (the vendor app reads it, our buds never send it), a mode mask
+  `01 05 <mask>` (not decoded `[GUESS]`), and a level write `0x0404 01 02 <level>` (not sent `[GUESS]`).
 
 ### The hold's ANC cycle — `setSupportNoiseReduction`
 

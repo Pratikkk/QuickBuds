@@ -243,7 +243,8 @@ pub fn decode(p: &[u8]) -> Option<Event> {
         EVT_PUSH => match sub? {
             0x01 => Event::Battery(battery(&pl[1..])?),
             0x02 => Event::Wear(wear_bits(pairs(&pl[1..]).filter(valid_wear)?)),
-            0x03 if pl.len() >= 5 && pl[1] == 1 && pl[2] == 1 => Event::AncRaw(u16::from_le_bytes([pl[3], pl[4]]) as u32),
+            // `03 01 01 <mode LE, 1-4 bytes>` (PROTOCOL.md §9)
+            0x03 if pl.len() >= 4 && pl[1] == 1 && pl[2] == 1 => Event::AncRaw(le(&pl[3..])),
             0x03 if pl.len() >= 4 && pl[1] == 4 && pl[2] == 1 => Event::SmartLevel(le(&pl[3..])),
             0x05 if pl.len() >= 2 => Event::GameMode(pl.to_vec()),
             // `04 <dev> <s> <dev> <s>`, dev 01 left / 02 right
@@ -467,6 +468,11 @@ mod tests {
         assert!(matches!(decode(&build_packet(0x8427, 1, &[0, 3])), Some(Event::AlertVolume(3))));
         assert!(matches!(decode(&build_packet(0x8133, 1, &[0, 2, 3])), Some(Event::TapLevel(2, 3))));
         assert!(matches!(decode(&build_packet(EVT_PUSH, 0xFF, &[0x0F, 0x10, 0, 4])), Some(Event::TapPush(4))));
+        // ANC push `03 01 01 <mode LE, 1-4 bytes>`; a hold-cycle echo `03 02 01 <mask>` is no mode
+        for (pl, raw) in [(&[3u8, 1, 1, 0x20, 0][..], 0x20), (&[3, 1, 1, 2][..], 2), (&[3, 1, 1, 0, 8][..], 0x800), (&[3, 1, 1, 1, 2, 3][..], 0x030201)] {
+            assert!(matches!(decode(&build_packet(EVT_PUSH, 0xFF, pl)), Some(Event::AncRaw(r)) if r == raw), "{pl:?}");
+        }
+        assert!(!matches!(decode(&build_packet(EVT_PUSH, 0xFF, &[3, 2, 1, 7, 8])), Some(Event::AncRaw(_))));
         assert!(matches!(decode(&build_packet(EVT_PUSH, 0xFF, &[0x0F, 0x01, 0, 7])), Some(Event::AlertVolume(7))));
         assert!(matches!(decode(&build_packet(EVT_PUSH, 0xFF, &[0x0F, 0x11, 0, 7])), Some(Event::AlertVolume(7))));
         assert!(decode(&build_packet(EVT_PUSH, 0xFF, &[0x0F, 0x04, 0, 7])).is_none());
