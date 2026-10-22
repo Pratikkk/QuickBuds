@@ -6,29 +6,6 @@ pub(crate) use crate::home_logic::*;
 use crate::{icons, svg, t, with_app, App, Choice, Earbuds, FeatureItem, MainWindow};
 use slint::{ComponentHandle, ModelRc, VecModel};
 
-/// (feature id, `models.json` flag, icon, title, subtitle, confirm text, confirm turning off too), in the
-/// phone's order. A row shows when the buds list its id in `0x810D`, or the model picked by hand has the
-/// flag (`Capabilities.offered`).
-// ponytail: Personalized ANC (0x0C) needs the phone's test flow, game sound and head gestures their type
-// pickers; they come with those.
-const ROWS: &[(u8, Option<&str>, &str, &str, &str, Option<&str>, bool)] = &[
-    // Wear detection: the buds' own auto play/pause. The phone's smart auto-pause needs its media session.
-    (0x04, None, icons::EARBUD, "wear_firmware_title", "wear_firmware_sub", None, false),
-    (0x09, Some("voiceBoost"), icons::EQUALIZER, "row_vocal_title", "row_vocal_sub", None, false),
-    (0x27, Some("gameSoundFx"), icons::LOW_LATENCY, "row_game_sound_title", "row_game_sound_sub", None, false),
-    (0x1C, Some("autoVolume"), icons::VOLUME, "row_smart_volume_title", "row_smart_volume_sub", None, false),
-    (0x30, None, icons::VOLUME, "row_adaptive_volume_title", "row_adaptive_volume_sub", None, false),
-    (0x31, None, icons::EARBUD, "row_adaptive_ear_title", "row_adaptive_ear_sub", None, false),
-    (0x3A, None, icons::EARBUD, "row_sleep_title", "row_sleep_sub", None, false),
-    (0x16, None, icons::FIND_BUDS, "row_lost_title", "row_lost_sub", None, false),
-    (0x32, None, icons::TRANSPARENCY, "row_speech_title", "row_speech_sub", None, false),
-    // Adaptive sound costs battery: asks only to turn on. Power saving restarts the buds: asks both ways.
-    (FEATURE_HEARING_OPTIMIZE, None, icons::HEARING, "row_hearing_optimize_title", "row_hearing_optimize_sub", Some("hearing_optimize_confirm"), false),
-    (0x35, Some("holdVolume"), icons::VOLUME, "row_long_press_volume_title", "row_long_press_volume_sub", None, false),
-    (0x3B, None, icons::GESTURE, "row_head_motion_title", "row_head_motion_sub", None, false),
-    (0x37, Some("fastPair"), icons::DEVICES, "row_swift_pair_title", "row_swift_pair_sub", None, false),
-    (FEATURE_POWER_SAVING, None, icons::POWER, "row_power_saving_title", "row_power_saving_sub", Some("power_saving_confirm"), true),
-];
 
 pub fn setup(main: &MainWindow) {
     let e = main.global::<Earbuds>();

@@ -115,7 +115,7 @@ fn lines(log: &[Line]) -> String {
     log.iter().map(|l| if device_bytes(l) {
         format!("{} {} {} [device data removed]\n", l.at, l.dir, hex(&l.bytes[..l.bytes.len() - payload_of(&l.bytes).len()]))
     } else {
-        crate::devtools::raw(l) + "\n"
+        crate::devlog::raw(l) + "\n"
     }).collect()
 }
 

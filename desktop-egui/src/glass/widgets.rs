@@ -6,9 +6,9 @@ use eframe::egui::{self, load::Bytes, Align2, Color32, Context, FontId, Id, Imag
 pub fn white(a: f32) -> Color32 { Color32::from_white_alpha((a * 255.0) as u8) }
 
 /// 1 = the midnight glow behind the glass, 0 = pitch black (the Colorful background switch).
-pub fn set_glow(ctx: &Context, glow: f32) { ctx.data_mut(|d| d.insert_temp(Id::new("glass-glow"), glow)); }
+pub fn set_glow(ctx: &Context, glow: f32) { ctx.data_mut(|d| d.insert_temp(Id::NULL.with("glass-glow"), glow)); }
 
-fn glow(ctx: &Context) -> f32 { ctx.data(|d| d.get_temp(Id::new("glass-glow"))).unwrap_or(1.0) }
+fn glow(ctx: &Context) -> f32 { ctx.data(|d| d.get_temp(Id::NULL.with("glass-glow"))).unwrap_or(1.0) }
 
 /// The window backdrop. Call first in the central panel.
 pub fn backdrop(ui: &Ui) {
@@ -30,13 +30,23 @@ pub fn text(ui: &Ui, pos: Pos2, align: Align2, s: &str, size: f32, alpha: f32) {
     ui.painter().text(pos, align, s, FontId::proportional(size), white(alpha));
 }
 
-/// An SVG icon (white in the file), tinted.
-pub fn icon_at(ui: &Ui, svg: &'static str, rect: Rect, tint: Color32) {
-    let uri = format!("bytes://icon-{:p}.svg", svg.as_ptr());
-    egui::Image::new(ImageSource::Bytes { uri: uri.into(), bytes: Bytes::Static(svg.as_bytes()) }).tint(tint).paint_at(ui, rect);
+/// The aspect (width / height) of an icon from its `viewBox`.
+fn aspect(svg: &str) -> f32 {
+    let vb = svg.find("viewBox=\"").map(|i| &svg[i + 9..]).and_then(|s| s.split('"').next());
+    let n: Vec<f32> = vb.map(|v| v.split_whitespace().filter_map(|x| x.parse().ok()).collect()).unwrap_or_default();
+    if n.len() == 4 && n[3] > 0.0 { n[2] / n[3] } else { 1.0 }
 }
 
-fn wid(ui: &Ui, id: impl std::hash::Hash + std::fmt::Debug) -> Id { ui.id().with(Id::new(id)) }
+/// An SVG icon (white in the file), tinted, fitted into `rect` with its own aspect (the buds and the case are not square).
+pub fn icon_at(ui: &Ui, svg: &'static str, rect: Rect, tint: Color32) {
+    let uri = format!("bytes://icon-{:p}.svg", svg.as_ptr());
+    let a = aspect(svg);
+    let size = if a >= rect.width() / rect.height() { Vec2::new(rect.width(), rect.width() / a) } else { Vec2::new(rect.height() * a, rect.height()) };
+    let fitted = Rect::from_center_size(rect.center(), size);
+    egui::Image::new(ImageSource::Bytes { uri: uri.into(), bytes: Bytes::Static(svg.as_bytes()) }).tint(tint).paint_at(ui, fitted);
+}
+
+fn wid(ui: &Ui, id: impl std::hash::Hash + std::fmt::Debug) -> Id { ui.scope_id().with(egui::IdSalt::new(id)) }
 
 fn square(c: Pos2, s: f32) -> Rect { Rect::from_center_size(c, Vec2::splat(s)) }
 
@@ -166,7 +176,7 @@ pub fn ring_at(ui: &Ui, center: Pos2, radius: f32, frac: Option<f32>, glyph: Opt
         }).collect();
         ui.painter().add(Shape::line(pts, Stroke::new(5.0, Color32::from_rgba_unmultiplied(232, 236, 255, (255.0 * a) as u8))));
     }
-    if let Some(g) = glyph { icon_at(ui, g, square(center, radius * 0.8), white(a)); }
+    if let Some(g) = glyph { icon_at(ui, g, square(center, radius * 1.0), white(a)); }
 }
 
 /// What a slider did this frame.
@@ -222,7 +232,23 @@ pub fn vslider_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, rect:
 pub fn text_field_at(ui: &mut Ui, rect: Rect, text: &mut String, max_len: usize) -> Response {
     glass_at(ui, rect, rect.height() / 2.0, 1.0);
     let inner = rect.shrink2(Vec2::new(18.0, 6.0));
-    ui.put(inner, egui::TextEdit::singleline(text).frame(egui::Frame::NONE).char_limit(max_len).text_color(Color32::WHITE).vertical_align(egui::Align::Center))
+    ui.put(inner, egui::TextEdit::singleline(text).frame(egui::Frame::NONE).char_limit(max_len).text_color(Color32::WHITE).align(egui::Align2::LEFT_CENTER))
+}
+
+/// A list of choices in a dialog. `Pick(i)` on a click, `Close` when dismissed, `Open` otherwise.
+pub enum Choice { Open, Pick(usize), Close }
+
+pub fn choice_dialog(ctx: &Context, id: &str, title: &str, options: &[String], current: usize) -> Choice {
+    let h = 60.0 + 52.0 * options.len() as f32 + 24.0;
+    let mut pick = None;
+    let open = dialog(ctx, id, title, Vec2::new(420.0, h.min(ctx.content_rect().height() - 40.0)), |ui| {
+        let r = ui.max_rect();
+        for (i, o) in options.iter().enumerate() {
+            let row = Rect::from_min_size(Pos2::new(r.left() - 12.0, r.top() + 52.0 * i as f32 - 8.0), Vec2::new(r.width() + 24.0, 52.0));
+            if list_item_at(ui, ("choice", i), row, o, i == current, false).clicked() { pick = Some(i); }
+        }
+    });
+    match (pick, open) { (Some(i), _) => Choice::Pick(i), (None, true) => Choice::Open, (None, false) => Choice::Close }
 }
 
 /// Cancel and Accept at the bottom of a dialog's content area. Some(true) accept, Some(false) cancel.
@@ -234,8 +260,10 @@ pub fn dialog_buttons(ui: &mut Ui, cancel: &str, accept: &str) -> Option<bool> {
     let mut out = None;
     if button_at(ui, "cancel", can, 22.0, false).clicked() { out = Some(false); }
     text(ui, can.center(), Align2::CENTER_CENTER, cancel, 15.0, 1.0);
-    if button_at(ui, "accept", acc, 22.0, true).clicked() { out = Some(true); }
-    ui.painter().text(acc.center(), Align2::CENTER_CENTER, accept, FontId::proportional(15.0), Color32::from_rgb(27, 26, 69));
+    if !accept.is_empty() {
+        if button_at(ui, "accept", acc, 22.0, true).clicked() { out = Some(true); }
+        ui.painter().text(acc.center(), Align2::CENTER_CENTER, accept, FontId::proportional(15.0), Color32::from_rgb(27, 26, 69));
+    }
     out
 }
 
@@ -243,13 +271,13 @@ pub fn dialog_buttons(ui: &mut Ui, cancel: &str, accept: &str) -> Option<bool> {
 pub fn dialog(ctx: &Context, id: &str, title: &str, size: Vec2, content: impl FnOnce(&mut Ui)) -> bool {
     let screen = ctx.content_rect();
     let mut open = true;
-    egui::Area::new(Id::new(id).with("scrim")).order(egui::Order::Foreground).fixed_pos(screen.min).show(ctx, |ui| {
+    egui::Area::new(Id::NULL.with(id).with("scrim")).order(egui::Order::Foreground).fixed_pos(screen.min).show(ctx, |ui| {
         let r = ui.allocate_rect(screen, Sense::click());
         ui.painter().rect_filled(screen, 0.0, Color32::from_black_alpha(140));
         if r.clicked() { open = false; }
     });
     let rect = Rect::from_center_size(screen.center(), size);
-    egui::Area::new(Id::new(id)).order(egui::Order::Tooltip).fixed_pos(rect.min).show(ctx, |ui| {
+    egui::Area::new(Id::NULL.with(id)).order(egui::Order::Tooltip).fixed_pos(rect.min).show(ctx, |ui| {
         ui.set_clip_rect(screen);
         let (_, resp) = ui.allocate_exact_size(size, Sense::click());
         let _ = resp;

@@ -42,7 +42,7 @@ const STRINGS: &[&str] = &[
     "status_in_ear", "status_in_case", "status_out", "row_game_title", "row_game_sub", "row_eq_title", "row_eq_sub", "row_dual_sub", "row_earbuds_sub",
     "eq_title", "eq_not_connected", "eq_recommended", "eq_basswave", "eq_basswave_sub", "eq_custom",
     "eq_rename", "eq_delete", "eq_add", "eq_save", "widget_style_title", "widget_style_classic", "widget_style_nothing", "widget_style_material",
-    "earbuds_title", "earbuds_section_features", "earbuds_section_about", "row_firmware_title", "firmware_dialog_title",
+    "theme_glass_gradient", "theme_glass_gradient_sub", "earbuds_title", "earbuds_section_features", "earbuds_section_about", "row_firmware_title", "firmware_dialog_title",
     "firmware_dialog_body", "dialog_close", "dialog_cancel", "dual_add_ok",
     "row_vocal_title", "row_vocal_sub", "row_wind_noise_title", "row_wind_noise_sub", "row_game_sound_title", "row_game_sound_sub", "row_smart_volume_title",
     "row_smart_volume_sub", "row_adaptive_volume_title", "row_adaptive_volume_sub", "row_adaptive_ear_title",

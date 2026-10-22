@@ -4,4 +4,5 @@ mod shader;
 mod widgets;
 
 pub use shader::install;
+pub use eframe::egui::Ui;
 pub use widgets::*;

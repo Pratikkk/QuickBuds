@@ -5,6 +5,12 @@
 
 #[path = "../../desktop/src/bt.rs"]
 mod bt;
+#[path = "../../desktop/src/devlog.rs"]
+mod devlog;
+#[path = "../../desktop/src/gesture_logic.rs"]
+mod gesture_logic;
+#[path = "../../desktop/src/hearing_logic.rs"]
+mod hearing_logic;
 #[path = "../../desktop/src/home_logic.rs"]
 mod home_logic;
 #[path = "../../desktop/src/protocol.rs"]
@@ -14,8 +20,16 @@ mod session;
 #[path = "../../desktop/src/types.rs"]
 mod types;
 
+mod dev;
+mod dual;
+mod earbuds;
 mod eq;
+mod fonts;
+mod gestures;
 mod glass;
+mod hearing;
+mod models;
+mod settings;
 mod overview;
 
 pub use buds_core::{cmd, msg, wire};
@@ -115,7 +129,7 @@ pub fn t<'a>(tr: &'a [String], key: &str) -> &'a str {
 // ---- app ----
 
 #[derive(Clone, Copy, PartialEq)]
-pub enum Page { Overview, Eq, Gestures, Hearing, Dual, Earbuds, Settings, Dev }
+pub enum Page { Overview, Eq, Gestures, Hearing, Dual, Earbuds, Models, Settings, Dev }
 
 /// What the connected buds offer; decides which sidebar entries are ready.
 #[derive(Clone, Copy, PartialEq)]
@@ -126,7 +140,7 @@ impl Has {
     fn of(s: &Snapshot) -> Has {
         Has {
             eq: types::eq_has(s.model, &s.caps),
-            controls: s.caps.supports(types::CMD_SET_KEY_FUNCTION),
+            controls: gestures::available(s),
             hearing: types::has_feature(&s.features, types::FEATURE_HEARING),
             dual: types::has_feature(&s.features, types::FEATURE_DUAL),
         }
@@ -148,17 +162,27 @@ pub struct App {
     pub glow: bool,
     pub demo: bool,
     /// Writes that wait for the user's accept (the buds reconnect), and the string that says why.
-    pub confirm: Option<(Vec<Cmd>, &'static str)>,
+    pub confirm: Option<Confirm>,
     /// The Overview's scroll offset in points.
     pub scroll: f32,
     pub shown_page: Page,
     pub eq: eq::State,
+    pub dual: dual::State,
+    pub earbuds: earbuds::State,
+    pub dev: dev::State,
+    pub gestures: gestures::State,
+    pub settings: settings::State,
+    pub hearing: hearing::State,
 }
+
+/// A write that waits for the user's accept: the buds reconnect, or it makes a sound in the ears.
+pub struct Confirm { pub cmds: Vec<Cmd>, pub title: &'static str, pub msg: &'static str, pub accept: &'static str }
 
 impl App {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
         glass::install(cc);
         egui_extras::install_image_loaders(&cc.egui_ctx);
+        fonts::install(&cc.egui_ctx);
         let inbox = Arc::new(Mutex::new(None));
         let demo = std::env::var_os("QB_DEMO").is_some();
         let tx = if demo {
@@ -172,7 +196,7 @@ impl App {
         let glow = load_settings()["glass_gradient"].as_bool().unwrap_or(true);
         Self {
             snap: Snapshot::default(), tx, tr: translations(chosen_locale()), inbox, page: Page::Overview, has: Has::ALL,
-            modes: AncModes::default(), last_level: None, levels_open: false, glow, demo, confirm: None, scroll: 0.0, shown_page: Page::Overview, eq: Default::default(),
+            modes: AncModes::default(), last_level: None, levels_open: false, glow, demo, confirm: None, scroll: 0.0, shown_page: Page::Overview, eq: Default::default(), dual: Default::default(), earbuds: Default::default(), dev: Default::default(), gestures: Default::default(), settings: Default::default(), hearing: Default::default(),
         }
     }
 

@@ -23,6 +23,14 @@ pub fn demo_snapshot() -> Snapshot {
         low_latency: Some(false),
         model,
         codec: Some(3),
+        devices: vec![
+            types::PairedDevice { mac: [1, 2, 3, 4, 5, 6], name: "This computer".into(), connected: true, this_device: true },
+            types::PairedDevice { mac: [1, 2, 3, 4, 5, 7], name: "Phone".into(), connected: true, this_device: false },
+        ],
+        keyfn: Some(vec![[1, 1, 1, 0x01], [2, 1, 1, 0x01], [1, 1, 2, 0x06], [2, 1, 2, 0x05], [1, 1, 3, 0x00], [2, 1, 3, 0x00], [1, 1, 5, 0x07], [2, 1, 5, 0x07], [1, 1, 4, 0x08], [2, 1, 4, 0x08]]),
+        hold_masks: vec![(types::HOLD_TYPE_SHARED, 0x0807)],
+        alert_volume: Some(6),
+        firmware: Some("138.138.105".into()),
         bass_on: Some(true),
         bass_level: Some(2),
         eq_current: Some(21),
@@ -52,7 +60,7 @@ fn level_info(id: &str) -> (&'static str, usize) {
 const LEVEL_NAMES: [&str; 4] = ["anc_mode_low", "anc_mode_medium", "anc_mode_high", "anc_mode_smart"];
 
 /// Without an "in ear" seen, "out" may only mean the model has no sensor: shown as in the ear (the app's rule).
-fn wear_sensor_seen(s: &Snapshot, demo: bool) -> bool {
+pub fn wear_sensor_seen(s: &Snapshot, demo: bool) -> bool {
     if demo { return true; }
     let Some(id) = s.model.and_then(|m| m["id"].as_str()) else { return true };
     let mut seen = crate::load_settings()["wear_seen"].clone();
@@ -71,8 +79,14 @@ pub fn show(app: &mut App, ui: &mut Ui) {
     header(app, ui, content);
     let body = Rect::from_min_max(Pos2::new(content.left(), content.top() + 58.0), content.max);
     confirm_dialog(app, ui);
-    if app.page != app.shown_page { app.shown_page = app.page; app.scroll = 0.0; }
-    if matches!(app.page, Page::Overview | Page::Eq) {
+    if app.page != app.shown_page {
+        app.shown_page = app.page;
+        app.scroll = 0.0;
+        if !app.demo {
+            match app.page { Page::Dual => crate::dual::opened(app), Page::Earbuds => app.send(Cmd::EarbudReads), Page::Gestures => crate::gestures::opened(app), Page::Hearing => crate::hearing::opened(app), _ => {} }
+        }
+    }
+    if matches!(app.page, Page::Overview | Page::Eq | Page::Dual | Page::Earbuds | Page::Dev | Page::Gestures | Page::Hearing | Page::Settings | Page::Models) {
         // A page scrolls when it is taller than the window: a child ui clipped to the body.
         let mut page = ui.new_child(egui::UiBuilder::new().max_rect(body));
         page.set_clip_rect(body.intersect(ui.clip_rect()));
@@ -81,7 +95,17 @@ pub fn show(app: &mut App, ui: &mut Ui) {
             if dy != 0.0 { app.scroll = (app.scroll - dy).max(0.0); }
         }
         let shifted = Rect::from_min_max(Pos2::new(body.left(), body.top() - app.scroll), body.max);
-        let bottom = match app.page { Page::Eq => crate::eq::show(app, &mut page, shifted), _ => overview(app, &mut page, shifted) };
+        let bottom = match app.page {
+            Page::Eq => crate::eq::show(app, &mut page, shifted),
+            Page::Dual => crate::dual::show(app, &mut page, shifted),
+            Page::Earbuds => crate::earbuds::show(app, &mut page, shifted),
+            Page::Dev => crate::dev::show(app, &mut page, shifted),
+            Page::Gestures => crate::gestures::show(app, &mut page, shifted),
+            Page::Hearing => crate::hearing::show(app, &mut page, shifted),
+            Page::Models => crate::models::show(app, &mut page, shifted),
+            Page::Settings => crate::settings::show(app, &mut page, shifted),
+            _ => overview(app, &mut page, shifted),
+        };
         app.scroll = app.scroll.min((bottom + app.scroll - body.bottom() + 12.0).max(0.0));
     } else {
         placeholder(ui, body);
@@ -105,7 +129,7 @@ fn sidebar(app: &mut App, ui: &mut Ui, sb: Rect) {
     let mut go = None;
     for (page, icon, key, ready) in top {
         let r = Rect::from_min_size(Pos2::new(sb.left() + 12.0, y), Vec2::new(sb.width() - 24.0, 44.0));
-        if glass::nav_item_at(ui, key, r, icon, t(&app.tr, key), app.page == page, ready).clicked() && ready { go = Some(page); }
+        if glass::nav_item_at(ui, key, r, icon, t(&app.tr, key), app.page == page || (page == Page::Earbuds && app.page == Page::Models), ready).clicked() && ready { go = Some(page); }
         y += 46.0;
     }
     let bottom = [(Page::Settings, icons::SETTINGS_COG, "desktop_nav_app_settings"), (Page::Dev, icons::DEV_TOOLS, "action_dev_tools")];
@@ -235,7 +259,7 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
                 // Hi-Res asks both ways, 3D audio only when it turns Hi-Res off (the phone's rules).
                 let ask = r.confirm.filter(|_| r.id == "hires" || !on_now);
                 match ask {
-                    Some(msg) => app.confirm = Some((cmds, msg)),
+                    Some(msg) => app.confirm = Some(crate::Confirm { cmds, title: "codec_dialog_title", msg, accept: "codec_dialog_accept" }),
                     None => for c in cmds { app.send(c); },
                 }
             }
@@ -322,20 +346,18 @@ fn noise(app: &mut App, ui: &mut Ui, rect: Rect) {
 }
 
 /// The accept dialog before a write that makes the buds reconnect (`ConfirmDialog` on the phone).
-fn confirm_dialog(app: &mut App, ui: &mut Ui) {
-    let Some((cmds, msg)) = app.confirm.take() else { return };
+pub fn confirm_dialog(app: &mut App, ui: &mut Ui) {
+    let Some(c) = app.confirm.take() else { return };
     let mut decision = None;
     let tr = &app.tr;
-    let open = glass::dialog(ui.ctx(), "confirm", t(tr, "codec_dialog_title"), Vec2::new(440.0, 230.0), |ui| {
-        let r = ui.max_rect();
-        ui.add(egui::Label::new(egui::RichText::new(t(tr, msg)).size(14.0).color(white(0.85))).wrap());
-        let _ = r;
-        decision = glass::dialog_buttons(ui, t(tr, "dialog_cancel"), t(tr, "codec_dialog_accept"));
+    let open = glass::dialog(ui.ctx(), "confirm", t(tr, c.title), Vec2::new(440.0, 230.0), |ui| {
+        ui.add(egui::Label::new(egui::RichText::new(t(tr, c.msg)).size(14.0).color(white(0.85))).wrap());
+        decision = glass::dialog_buttons(ui, t(tr, "dialog_cancel"), t(tr, c.accept));
     });
     match decision {
-        Some(true) => for c in cmds { app.send(c); },
+        Some(true) => for cmd in c.cmds { app.send(cmd); },
         Some(false) => {}
-        None if open => app.confirm = Some((cmds, msg)),
+        None if open => app.confirm = Some(c),
         None => {}
     }
 }

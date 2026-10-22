@@ -5,6 +5,7 @@ mod bt;
 #[cfg(test)]
 mod core_tests;
 mod controls;
+mod devlog;
 mod devtools;
 mod dots;
 mod dual;
@@ -12,7 +13,9 @@ mod earbuds;
 #[cfg(test)]
 mod newproto;
 mod eq;
+mod gesture_logic;
 mod hearing;
+mod hearing_logic;
 mod home_logic;
 mod models;
 mod modeltest;

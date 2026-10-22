@@ -98,7 +98,7 @@ pub fn install(cc: &eframe::CreationContext<'_>) {
         for sh in shaders { gl.detach_shader(program, sh); gl.delete_shader(sh); }
         Program { program, vao: gl.create_vertex_array().expect("vao") }
     };
-    cc.egui_ctx.data_mut(|d| d.insert_temp(Id::new("glass-program"), Arc::new(Mutex::new(p))));
+    cc.egui_ctx.data_mut(|d| d.insert_temp(Id::NULL.with("glass-program"), Arc::new(Mutex::new(p))));
 }
 
 /// The window backdrop over `rect` (the whole window). `glow`: 1 midnight glow, 0 pitch black.
@@ -112,7 +112,7 @@ pub fn surface(ctx: &Context, rect: Rect, radius: f32, k: f32, glow: f32) -> Pai
 }
 
 fn callback(ctx: &Context, rect: Rect, kind: i32, radius: f32, k: f32, glow_amount: f32) -> PaintCallback {
-    let program: Arc<Mutex<Program>> = ctx.data(|d| d.get_temp(Id::new("glass-program"))).expect("glass::install was not called");
+    let program: Arc<Mutex<Program>> = ctx.data(|d| d.get_temp(Id::NULL.with("glass-program"))).expect("glass::install was not called");
     PaintCallback {
         rect,
         callback: Arc::new(egui_glow::CallbackFn::new(move |info, painter| {
