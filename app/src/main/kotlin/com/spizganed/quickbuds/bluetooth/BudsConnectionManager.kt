@@ -428,6 +428,8 @@ class BudsConnectionManager(private val context: Context) {
         Thread {
             try {
                 sendRawBlocking(OpoProtocol.setFeature(Capabilities.gameModeId(context), on), "GameMode")
+                // The buds apply the switch about a second after the ack: an earlier read returns the old value and the switch jumps back.
+                Thread.sleep(1500)
                 sendRawBlocking(statusQuery(), "verify features")
             } catch (e: Exception) {
                 log("GAME MODE write failed: ${e.message}")
