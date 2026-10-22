@@ -33,6 +33,7 @@
     <string name="row_hires_title">উচ্চমানের অডিও</string>
     <string name="row_hires_sub">192 kHz, 400 kbps পর্যন্ত</string>
     <string name="row_hires_sub_off">সাধারণ মান (48 kHz)</string>
+    <string name="row_hires_sub_codec">ফোন LHDC নয়, %1$s ব্যবহার করছে। মানে পরিবর্তন নেই</string>
     <string name="codec_dialog_title">ইয়ারবাড আবার সংযুক্ত হবে</string>
     <string name="codec_dialog_accept">গ্রহণ করুন</string>
     <string name="codec_msg_reconnect">অডিওর মান বদলালে ইয়ারবাড আবার সংযুক্ত হওয়ার সময় কয়েক সেকেন্ডের জন্য বিচ্ছিন্ন থাকে।</string>

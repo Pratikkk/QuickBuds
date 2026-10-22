@@ -33,6 +33,7 @@
     <string name="row_hires_title">高音质音频</string>
     <string name="row_hires_sub">最高 192 kHz，400 kbps</string>
     <string name="row_hires_sub_off">标准音质（48 kHz）</string>
+    <string name="row_hires_sub_codec">手机正在使用 %1$s，而不是 LHDC。音质不会改变</string>
     <string name="codec_dialog_title">耳机将重新连接</string>
     <string name="codec_dialog_accept">确定</string>
     <string name="codec_msg_reconnect">切换音质会使耳机断开几秒钟，然后重新连接。</string>

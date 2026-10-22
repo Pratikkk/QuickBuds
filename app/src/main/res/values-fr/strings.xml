@@ -33,6 +33,7 @@
     <string name="row_hires_title">Audio haute qualité</string>
     <string name="row_hires_sub">Jusqu\'à 192 kHz, 400 kbit/s</string>
     <string name="row_hires_sub_off">Qualité standard (48 kHz)</string>
+    <string name="row_hires_sub_codec">Le téléphone utilise %1$s, pas LHDC. La qualité ne change pas</string>
     <string name="codec_dialog_title">Les écouteurs vont se reconnecter</string>
     <string name="codec_dialog_accept">Accepter</string>
     <string name="codec_msg_reconnect">Changer la qualité audio déconnecte les écouteurs pendant quelques secondes, le temps qu\'ils se reconnectent.</string>

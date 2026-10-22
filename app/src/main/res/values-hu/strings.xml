@@ -33,6 +33,7 @@
     <string name="row_hires_title">Kiváló minőségű hang</string>
     <string name="row_hires_sub">Legfeljebb 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Normál minőség (48 kHz)</string>
+    <string name="row_hires_sub_codec">A telefon %1$s kodeket használ, nem LHDC-t. A minőség nem változik</string>
     <string name="codec_dialog_title">A fülhallgató újracsatlakozik</string>
     <string name="codec_dialog_accept">Elfogadás</string>
     <string name="codec_msg_reconnect">A hangminőség váltásakor a fülhallgató néhány másodpercre leválik, amíg újracsatlakozik.</string>

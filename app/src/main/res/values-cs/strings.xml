@@ -33,6 +33,7 @@
     <string name="row_hires_title">Vysoce kvalitní zvuk</string>
     <string name="row_hires_sub">Až 192 kHz, 400 kb/s</string>
     <string name="row_hires_sub_off">Standardní kvalita (48 kHz)</string>
+    <string name="row_hires_sub_codec">Telefon používá %1$s, ne LHDC. Kvalita se nezmění</string>
     <string name="codec_dialog_title">Sluchátka se znovu připojí</string>
     <string name="codec_dialog_accept">Přijmout</string>
     <string name="codec_msg_reconnect">Změna kvality zvuku sluchátka na několik sekund odpojí, než se znovu připojí.</string>

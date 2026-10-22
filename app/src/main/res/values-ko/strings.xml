@@ -33,6 +33,7 @@
     <string name="row_hires_title">고음질 오디오</string>
     <string name="row_hires_sub">최대 192kHz, 400kbps</string>
     <string name="row_hires_sub_off">표준 음질(48kHz)</string>
+    <string name="row_hires_sub_codec">휴대폰이 LHDC가 아닌 %1$s를 사용 중입니다. 음질이 바뀌지 않습니다</string>
     <string name="codec_dialog_title">이어버드가 다시 연결됩니다</string>
     <string name="codec_dialog_accept">확인</string>
     <string name="codec_msg_reconnect">음질을 바꾸면 이어버드가 다시 연결되는 동안 몇 초간 연결이 끊깁니다.</string>

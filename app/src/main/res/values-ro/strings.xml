@@ -33,6 +33,7 @@
     <string name="row_hires_title">Audio de înaltă calitate</string>
     <string name="row_hires_sub">Până la 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Calitate standard (48 kHz)</string>
+    <string name="row_hires_sub_codec">Telefonul folosește %1$s, nu LHDC. Calitatea nu se schimbă</string>
     <string name="codec_dialog_title">Căștile se vor reconecta</string>
     <string name="codec_dialog_accept">Accept</string>
     <string name="codec_msg_reconnect">Schimbarea calității audio deconectează căștile câteva secunde, cât timp se reconectează.</string>

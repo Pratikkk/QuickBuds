@@ -33,6 +33,7 @@
     <string name="row_hires_title">Audio berkualiti tinggi</string>
     <string name="row_hires_sub">Sehingga 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Kualiti standard (48 kHz)</string>
+    <string name="row_hires_sub_codec">Telefon guna %1$s, bukan LHDC. Kualiti tidak berubah</string>
     <string name="codec_dialog_title">Fon telinga akan bersambung semula</string>
     <string name="codec_dialog_accept">Terima</string>
     <string name="codec_msg_reconnect">Menukar kualiti audio memutuskan fon telinga selama beberapa saat semasa ia bersambung semula.</string>

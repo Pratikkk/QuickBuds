@@ -33,6 +33,7 @@
     <string name="row_hires_title">Dźwięk wysokiej jakości</string>
     <string name="row_hires_sub">Do 192 kHz, 400 kb/s</string>
     <string name="row_hires_sub_off">Standardowa jakość (48 kHz)</string>
+    <string name="row_hires_sub_codec">Telefon używa %1$s, nie LHDC. Jakość się nie zmieni</string>
     <string name="codec_dialog_title">Słuchawki połączą się ponownie</string>
     <string name="codec_dialog_accept">Akceptuj</string>
     <string name="codec_msg_reconnect">Zmiana jakości dźwięku rozłącza słuchawki na kilka sekund, po czym łączą się ponownie.</string>

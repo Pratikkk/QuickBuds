@@ -33,6 +33,7 @@
     <string name="row_hires_title">Ljud med hög kvalitet</string>
     <string name="row_hires_sub">Upp till 192 kHz, 400 kbit/s</string>
     <string name="row_hires_sub_off">Standardkvalitet (48 kHz)</string>
+    <string name="row_hires_sub_codec">Telefonen använder %1$s, inte LHDC. Kvaliteten ändras inte</string>
     <string name="codec_dialog_title">Hörlurarna ansluter igen</string>
     <string name="codec_dialog_accept">Godkänn</string>
     <string name="codec_msg_reconnect">När ljudkvaliteten byts kopplas hörlurarna från i några sekunder medan de ansluter igen.</string>

@@ -33,6 +33,7 @@
     <string name="row_hires_title">Audio van hoge kwaliteit</string>
     <string name="row_hires_sub">Tot 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Standaardkwaliteit (48 kHz)</string>
+    <string name="row_hires_sub_codec">De telefoon gebruikt %1$s, geen LHDC. De kwaliteit verandert niet</string>
     <string name="codec_dialog_title">De oordopjes maken opnieuw verbinding</string>
     <string name="codec_dialog_accept">Accepteren</string>
     <string name="codec_msg_reconnect">Bij het wisselen van audiokwaliteit wordt de verbinding met de oordopjes een paar seconden verbroken terwijl ze opnieuw verbinden.</string>

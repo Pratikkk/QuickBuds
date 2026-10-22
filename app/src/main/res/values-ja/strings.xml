@@ -33,6 +33,7 @@
     <string name="row_hires_title">高音質オーディオ</string>
     <string name="row_hires_sub">最大 192 kHz、400 kbps</string>
     <string name="row_hires_sub_off">標準音質（48 kHz）</string>
+    <string name="row_hires_sub_codec">スマホは LHDC ではなく %1$s を使用中です。音質は変わりません</string>
     <string name="codec_dialog_title">イヤホンが再接続されます</string>
     <string name="codec_dialog_accept">OK</string>
     <string name="codec_msg_reconnect">音質を切り替えると、再接続のためイヤホンが数秒間切断されます。</string>

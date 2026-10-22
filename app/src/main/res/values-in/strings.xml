@@ -33,6 +33,7 @@
     <string name="row_hires_title">Audio kualitas tinggi</string>
     <string name="row_hires_sub">Hingga 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Kualitas standar (48 kHz)</string>
+    <string name="row_hires_sub_codec">Ponsel memakai %1$s, bukan LHDC. Kualitas tidak berubah</string>
     <string name="codec_dialog_title">Earbud akan terhubung ulang</string>
     <string name="codec_dialog_accept">Terima</string>
     <string name="codec_msg_reconnect">Mengganti kualitas audio memutus earbud beberapa detik lalu menghubungkannya kembali.</string>

@@ -33,6 +33,7 @@
     <string name="row_hires_title">Yüksek kaliteli ses</string>
     <string name="row_hires_sub">192 kHz, 400 kbps\'ye kadar</string>
     <string name="row_hires_sub_off">Standart kalite (48 kHz)</string>
+    <string name="row_hires_sub_codec">Telefon LHDC değil, %1$s kullanıyor. Kalite değişmez</string>
     <string name="codec_dialog_title">Kulaklıklar yeniden bağlanacak</string>
     <string name="codec_dialog_accept">Kabul et</string>
     <string name="codec_msg_reconnect">Ses kalitesini değiştirmek, kulaklıkların yeniden bağlanırken birkaç saniye bağlantısını keser.</string>

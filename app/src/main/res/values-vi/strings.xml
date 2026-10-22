@@ -33,6 +33,7 @@
     <string name="row_hires_title">Âm thanh chất lượng cao</string>
     <string name="row_hires_sub">Tối đa 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Chất lượng chuẩn (48 kHz)</string>
+    <string name="row_hires_sub_codec">Điện thoại dùng %1$s, không phải LHDC. Chất lượng không đổi</string>
     <string name="codec_dialog_title">Tai nghe sẽ kết nối lại</string>
     <string name="codec_dialog_accept">Đồng ý</string>
     <string name="codec_msg_reconnect">Đổi chất lượng âm thanh sẽ ngắt tai nghe vài giây rồi kết nối lại.</string>

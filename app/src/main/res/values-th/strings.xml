@@ -33,6 +33,7 @@
     <string name="row_hires_title">เสียงคุณภาพสูง</string>
     <string name="row_hires_sub">สูงสุด 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">คุณภาพมาตรฐาน (48 kHz)</string>
+    <string name="row_hires_sub_codec">โทรศัพท์ใช้ %1$s ไม่ใช่ LHDC คุณภาพจะไม่เปลี่ยน</string>
     <string name="codec_dialog_title">หูฟังจะเชื่อมต่อใหม่</string>
     <string name="codec_dialog_accept">ยอมรับ</string>
     <string name="codec_msg_reconnect">การเปลี่ยนคุณภาพเสียงจะตัดการเชื่อมต่อหูฟังสักครู่แล้วเชื่อมต่อใหม่</string>

@@ -33,6 +33,7 @@
     <string name="row_hires_title">Audio di alta qualità</string>
     <string name="row_hires_sub">Fino a 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Qualità standard (48 kHz)</string>
+    <string name="row_hires_sub_codec">Il telefono usa %1$s, non LHDC. La qualità non cambia</string>
     <string name="codec_dialog_title">Gli auricolari si riconnetteranno</string>
     <string name="codec_dialog_accept">Accetta</string>
     <string name="codec_msg_reconnect">Cambiare la qualità audio disconnette gli auricolari per qualche secondo mentre si riconnettono.</string>

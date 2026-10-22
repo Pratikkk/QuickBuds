@@ -33,6 +33,7 @@
     <string name="row_hires_title">Ήχος υψηλής ποιότητας</string>
     <string name="row_hires_sub">Έως 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Τυπική ποιότητα (48 kHz)</string>
+    <string name="row_hires_sub_codec">Το τηλέφωνο χρησιμοποιεί %1$s, όχι LHDC. Η ποιότητα δεν αλλάζει</string>
     <string name="codec_dialog_title">Τα ακουστικά θα επανασυνδεθούν</string>
     <string name="codec_dialog_accept">Αποδοχή</string>
     <string name="codec_msg_reconnect">Η αλλαγή ποιότητας ήχου αποσυνδέει τα ακουστικά για λίγα δευτερόλεπτα, όσο επανασυνδέονται.</string>

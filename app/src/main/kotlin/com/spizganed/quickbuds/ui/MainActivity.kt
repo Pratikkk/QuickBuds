@@ -1125,6 +1125,10 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         }
         val codec = manager.codec.takeIf { codecPicker() }
         if (codec != null) hiresSubtitle?.text = codecName(codec)
+        // Quality switch on, but the phone plays another codec than LHDC: the buds take the switch and nothing changes (report #17).
+        val played = manager.codec
+        if (codec == null && played != null && played != 7 && played != 8 && states[Feature.HIRES_CODEC] == 1)
+            hiresSubtitle?.text = getString(R.string.row_hires_sub_codec, codecName(played))
         hiresSwitch?.isEnabled = codec == null || codec == 3 || codec == 8
         paintSpatial()
         states[Feature.GOLDEN_SOUND]?.let { v ->

@@ -33,6 +33,7 @@
     <string name="row_hires_title">Hochwertiger Klang</string>
     <string name="row_hires_sub">Bis zu 192 kHz, 400 kbit/s</string>
     <string name="row_hires_sub_off">Standardqualität (48 kHz)</string>
+    <string name="row_hires_sub_codec">Das Handy nutzt %1$s, nicht LHDC. Die Qualität ändert sich nicht</string>
     <string name="codec_dialog_title">Die Earbuds verbinden sich neu</string>
     <string name="codec_dialog_accept">Akzeptieren</string>
     <string name="codec_msg_reconnect">Beim Wechsel der Audioqualität werden die Earbuds für einige Sekunden getrennt und verbinden sich dann neu.</string>
