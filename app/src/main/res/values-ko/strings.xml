@@ -474,7 +474,6 @@
     <string name="setup_back">뒤로</string>
     <string name="setup_bg_title">연결 유지</string>
     <string name="setup_bg_body">백그라운드 서비스는 위젯을 작동시키고 이어버드를 다시 연결합니다. 휴대폰이 잠겨 있으면 대기합니다.</string>
-    <string name="welcome_brands">OnePlus, OPPO, realme 이어버드와 함께 작동합니다.</string>
     <string name="setup_look_title">스타일 고르기</string>
     <string name="setup_look_body">스타일과 테마를 고르세요. 둘 다 설정에서 바꿀 수 있습니다.</string>
     <string name="setup_earbuds_title">내 이어버드</string>

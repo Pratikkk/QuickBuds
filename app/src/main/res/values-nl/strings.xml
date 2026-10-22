@@ -474,7 +474,6 @@
     <string name="setup_back">Terug</string>
     <string name="setup_bg_title">Blijf verbonden</string>
     <string name="setup_bg_body">De achtergrondservice houdt de widgets werkend en verbindt de oortjes opnieuw. Hij slaapt bij een vergrendelde telefoon.</string>
-    <string name="welcome_brands">Werkt met oordopjes van OnePlus, OPPO en realme.</string>
     <string name="setup_look_title">Kies een look</string>
     <string name="setup_look_body">Kies een stijl en een thema. Beide kun je wijzigen in Instellingen.</string>
     <string name="setup_earbuds_title">Je oordopjes</string>

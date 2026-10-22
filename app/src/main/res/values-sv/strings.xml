@@ -474,7 +474,6 @@
     <string name="setup_back">Tillbaka</string>
     <string name="setup_bg_title">Håll dig ansluten</string>
     <string name="setup_bg_body">Bakgrundstjänsten håller widgetarna igång och ansluter hörlurarna igen. Den sover när telefonen är låst.</string>
-    <string name="welcome_brands">Fungerar med hörlurar från OnePlus, OPPO och realme.</string>
     <string name="setup_look_title">Välj ett utseende</string>
     <string name="setup_look_body">Välj en stil och ett tema. Du kan ändra båda i Inställningar.</string>
     <string name="setup_earbuds_title">Dina hörlurar</string>

@@ -562,7 +562,6 @@
     <string name="setup_back">Back</string>
     <string name="setup_bg_title">Stay connected</string>
     <string name="setup_bg_body">The background service keeps the widgets working and reconnects the earbuds. It sleeps while the phone is locked.</string>
-    <string name="welcome_brands">Works with OnePlus, OPPO and realme earbuds.</string>
     <string name="setup_look_title">Pick a look</string>
     <string name="setup_look_body">Choose a style and a theme. You can change both in Settings.</string>
     <string name="setup_earbuds_title">Your earbuds</string>

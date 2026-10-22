@@ -397,7 +397,9 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 // rings' dot pitch, so the big icon keeps the app's case details (lid cut, LED).
                 val caseDp = if (paged) caseRowDp(context, id) else 32f - 2 * geo(context).row
                 icon(context, v, R.id.w_case_icon, R.drawable.ic_case, caseDp, if (paged) ringCellDp(context, id) else fit.ring / RING_CELLS)
-                v.setInt(R.id.w_case_icon, "setColorFilter", glyphTint(context, p, 1, -1, k))
+                // A colour filter keeps its alpha as a lightening of the glyph, so the fading ghost colour is laid on the panel first.
+                v.setInt(R.id.w_case_icon, "setColorFilter",
+                    androidx.core.graphics.ColorUtils.compositeColors(glyphTint(context, p, 1, -1, k), p.card))
                 v.setImageViewBitmap(R.id.w_case_bar, bar(context, p, levels[1], id, caseDp))
                 // The level is drawn into the bar ([bar]); the bar reads it out.
                 v.setViewVisibility(R.id.w_pct_case, View.GONE)

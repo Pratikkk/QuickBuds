@@ -74,6 +74,10 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
 
     /** Last connection state shown in the pill, so a redundant notify does nothing. */
     private var lastConnShown: Boolean? = null
+    /** Whether the pill was drawn after the buds' first data arrived (connected, but still reading, shows Connecting). */
+    private var lastReadyShown = true
+    /** Set 8 s after the link came up, so buds that never report a battery level do not stay on Connecting. */
+    private var readyForced = false
 
     // Status card + noise control, both custom-drawn: see BudsStatusView and
     // AncSegmentedView.
@@ -124,16 +128,24 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
      * would change meaning with the theme. The pill's own background IS themed, so
      * the container still matches the app.
      */
-    private fun renderConnectionPill(connected: Boolean) {
-        if (lastConnShown == connected) return
+    private fun renderConnectionPill(connected: Boolean, ready: Boolean = true) {
+        // The link is up but the buds have told nothing yet: "Connecting" until the first level arrives or 8 s pass.
+        val reading = connected && !ready && !readyForced
+        if (!connected) readyForced = false
+        if (lastConnShown == connected && lastReadyShown == !reading) return
+        if (reading) connPill.postDelayed({
+            readyForced = true
+            renderConnectionPill(WidgetStateStore.read(this).connected, true)
+        }, 8_000)
         val first = lastConnShown == null
         lastConnShown = connected
+        lastReadyShown = !reading
 
         fun apply() {
             // SPEC 3.1 / 3.2: accent dot + text label when connected, grey ring + grey label when not.
             val p = ThemeRes.palette(this)
-            val dotRes = if (connected) R.drawable.ic_status_dot_filled else R.drawable.ic_status_dot_empty
-            val dotColor = if (connected) p.accent else p.textSecondary
+            val dotRes = if (connected && !reading) R.drawable.ic_status_dot_filled else R.drawable.ic_status_dot_empty
+            val dotColor = if (connected && !reading) p.accent else p.textSecondary
             if (ThemeRes.nothing(this)) {
                 connDot.colorFilter = null
                 connDot.setImageDrawable(ThemeRes.tint(this, dotRes, dotColor))
@@ -142,9 +154,9 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
                 connDot.setColorFilter(dotColor)
             }
             // The word is the ACTION (the pill is a button); the dot and colour carry the state.
-            connText.setText(if (connected) R.string.conn_action_disconnect else R.string.conn_action_connect)
-            connText.setTextColor(if (connected) p.text else p.textSecondary)
-            connPill.contentDescription = getString(if (connected) R.string.conn_on else R.string.conn_off) +
+            connText.setText(if (reading) R.string.conn_connecting else if (connected) R.string.conn_action_disconnect else R.string.conn_action_connect)
+            connText.setTextColor(if (connected && !reading) p.text else p.textSecondary)
+            connPill.contentDescription = getString(if (reading) R.string.conn_connecting else if (connected) R.string.conn_on else R.string.conn_off) +
                 ". " + connText.text
         }
 
@@ -301,7 +313,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     private fun renderWear(state: WidgetStateStore.State) {
         setConnectedUi(state.connected)
         // The header pill shows the same state, with its own transition.
-        renderConnectionPill(state.connected)
+        renderConnectionPill(state.connected, state.leftBattery >= 0 || state.caseBattery >= 0 || state.rightBattery >= 0)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -474,7 +474,6 @@
     <string name="setup_back">Zurück</string>
     <string name="setup_bg_title">Verbunden bleiben</string>
     <string name="setup_bg_body">Der Hintergrunddienst hält die Widgets am Laufen und verbindet die Ohrhörer neu. Bei gesperrtem Telefon schläft er.</string>
-    <string name="welcome_brands">Funktioniert mit Ohrhörern von OnePlus, OPPO und realme.</string>
     <string name="setup_look_title">Wähle einen Look</string>
     <string name="setup_look_body">Wähle einen Stil und ein Design. Beides kannst du in den Einstellungen ändern.</string>
     <string name="setup_earbuds_title">Deine Ohrhörer</string>

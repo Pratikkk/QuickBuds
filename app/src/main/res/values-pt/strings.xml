@@ -474,7 +474,6 @@
     <string name="setup_back">Voltar</string>
     <string name="setup_bg_title">Fique conectado</string>
     <string name="setup_bg_body">O serviço em segundo plano mantém os widgets e reconecta os fones. Ele dorme com o telefone bloqueado.</string>
-    <string name="welcome_brands">Funciona com fones OnePlus, OPPO e realme.</string>
     <string name="setup_look_title">Escolha um visual</string>
     <string name="setup_look_body">Escolha um estilo e um tema. Você pode mudar os dois em Configurações.</string>
     <string name="setup_earbuds_title">Seus fones</string>

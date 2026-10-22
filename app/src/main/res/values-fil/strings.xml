@@ -474,7 +474,6 @@
     <string name="setup_back">Bumalik</string>
     <string name="setup_bg_title">Manatiling konektado</string>
     <string name="setup_bg_body">Pinapagana ng background service ang mga widget at muling kinokonekta ang earbuds. Natutulog ito kapag naka-lock ang telepono.</string>
-    <string name="welcome_brands">Gumagana sa mga earbuds ng OnePlus, OPPO at realme.</string>
     <string name="setup_look_title">Pumili ng hitsura</string>
     <string name="setup_look_body">Pumili ng istilo at tema. Pareho itong mababago sa Settings.</string>
     <string name="setup_earbuds_title">Ang iyong earbuds</string>

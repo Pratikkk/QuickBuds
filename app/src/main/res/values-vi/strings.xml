@@ -476,7 +476,6 @@
     <string name="setup_back">Quay lại</string>
     <string name="setup_bg_title">Luôn kết nối</string>
     <string name="setup_bg_body">Dịch vụ nền giữ cho widget hoạt động và kết nối lại tai nghe. Dịch vụ ngủ khi điện thoại bị khóa.</string>
-    <string name="welcome_brands">Hoạt động với tai nghe OnePlus, OPPO và realme.</string>
     <string name="setup_look_title">Chọn giao diện</string>
     <string name="setup_look_body">Chọn một kiểu và một chủ đề. Bạn có thể đổi cả hai trong Cài đặt.</string>
     <string name="setup_earbuds_title">Tai nghe của bạn</string>

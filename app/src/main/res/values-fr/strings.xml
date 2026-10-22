@@ -474,7 +474,6 @@
     <string name="setup_back">Retour</string>
     <string name="setup_bg_title">Restez connecté</string>
     <string name="setup_bg_body">Le service en arrière-plan fait fonctionner les widgets et reconnecte les écouteurs. Il dort quand le téléphone est verrouillé.</string>
-    <string name="welcome_brands">Fonctionne avec les écouteurs OnePlus, OPPO et realme.</string>
     <string name="setup_look_title">Choisissez un style</string>
     <string name="setup_look_body">Choisissez un style et un thème. Vous pouvez changer les deux dans les Réglages.</string>
     <string name="setup_earbuds_title">Vos écouteurs</string>

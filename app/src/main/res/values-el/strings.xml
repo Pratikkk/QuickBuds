@@ -474,7 +474,6 @@
     <string name="setup_back">Πίσω</string>
     <string name="setup_bg_title">Μείνετε συνδεδεμένοι</string>
     <string name="setup_bg_body">Η υπηρεσία παρασκηνίου κρατά τα widget σε λειτουργία και επανασυνδέει τα ακουστικά. Κοιμάται όταν το τηλέφωνο είναι κλειδωμένο.</string>
-    <string name="welcome_brands">Λειτουργεί με ακουστικά OnePlus, OPPO και realme.</string>
     <string name="setup_look_title">Διάλεξε εμφάνιση</string>
     <string name="setup_look_body">Διάλεξε ένα στιλ και ένα θέμα. Και τα δύο αλλάζουν στις Ρυθμίσεις.</string>
     <string name="setup_earbuds_title">Τα ακουστικά σου</string>

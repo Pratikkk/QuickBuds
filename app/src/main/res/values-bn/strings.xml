@@ -474,7 +474,6 @@
     <string name="setup_back">পেছনে</string>
     <string name="setup_bg_title">সংযুক্ত থাকুন</string>
     <string name="setup_bg_body">ব্যাকগ্রাউন্ড সার্ভিস উইজেট চালু রাখে এবং ইয়ারবাড আবার সংযুক্ত করে। ফোন লক থাকলে এটি ঘুমায়।</string>
-    <string name="welcome_brands">OnePlus, OPPO ও realme ইয়ারবাডের সঙ্গে কাজ করে।</string>
     <string name="setup_look_title">একটি লুক বেছে নিন</string>
     <string name="setup_look_body">একটি স্টাইল ও একটি থিম বেছে নিন। দুটোই সেটিংসে বদলানো যায়।</string>
     <string name="setup_earbuds_title">আপনার ইয়ারবাড</string>

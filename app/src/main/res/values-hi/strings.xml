@@ -476,7 +476,6 @@
     <string name="setup_back">पीछे</string>
     <string name="setup_bg_title">जुड़े रहें</string>
     <string name="setup_bg_body">बैकग्राउंड सर्विस विजेट चालू रखती है और ईयरबड दोबारा जोड़ती है। फ़ोन लॉक होने पर यह सो जाती है।</string>
-    <string name="welcome_brands">OnePlus, OPPO और realme इयरबड्स के साथ काम करता है।</string>
     <string name="setup_look_title">लुक चुनें</string>
     <string name="setup_look_body">एक स्टाइल और एक थीम चुनें। दोनों सेटिंग में बदले जा सकते हैं।</string>
     <string name="setup_earbuds_title">आपके इयरबड्स</string>

@@ -476,7 +476,6 @@
     <string name="setup_back">返回</string>
     <string name="setup_bg_title">保持連線</string>
     <string name="setup_bg_body">背景服務讓小工具正常運作並重新連線耳機。手機鎖定時它會休眠。</string>
-    <string name="welcome_brands">適用於 OnePlus、OPPO 和 realme 耳機。</string>
     <string name="setup_look_title">選擇外觀</string>
     <string name="setup_look_body">選擇樣式和主題。兩者都可以在設定中變更。</string>
     <string name="setup_earbuds_title">你的耳機</string>

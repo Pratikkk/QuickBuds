@@ -474,7 +474,6 @@
     <string name="setup_back">Wstecz</string>
     <string name="setup_bg_title">Zostań połączony</string>
     <string name="setup_bg_body">Usługa w tle utrzymuje widżety i ponownie łączy słuchawki. Przy zablokowanym telefonie śpi.</string>
-    <string name="welcome_brands">Działa ze słuchawkami OnePlus, OPPO i realme.</string>
     <string name="setup_look_title">Wybierz wygląd</string>
     <string name="setup_look_body">Wybierz styl i motyw. Oba możesz zmienić w Ustawieniach.</string>
     <string name="setup_earbuds_title">Twoje słuchawki</string>

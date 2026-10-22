@@ -476,7 +476,6 @@
     <string name="setup_back">ย้อนกลับ</string>
     <string name="setup_bg_title">เชื่อมต่อต่อเนื่อง</string>
     <string name="setup_bg_body">บริการเบื้องหลังทำให้วิดเจ็ตทำงานและเชื่อมต่อหูฟังใหม่ บริการจะพักเมื่อล็อกโทรศัพท์</string>
-    <string name="welcome_brands">ใช้ได้กับหูฟังของ OnePlus, OPPO และ realme</string>
     <string name="setup_look_title">เลือกรูปลักษณ์</string>
     <string name="setup_look_body">เลือกสไตล์และธีม เปลี่ยนได้ทั้งสองอย่างในการตั้งค่า</string>
     <string name="setup_earbuds_title">หูฟังของคุณ</string>

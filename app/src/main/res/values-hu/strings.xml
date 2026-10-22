@@ -474,7 +474,6 @@
     <string name="setup_back">Vissza</string>
     <string name="setup_bg_title">Maradj csatlakozva</string>
     <string name="setup_bg_body">A háttérszolgáltatás működteti a widgeteket és újracsatlakoztatja a fülhallgatót. Zárolt telefonnál alszik.</string>
-    <string name="welcome_brands">OnePlus, OPPO és realme fülhallgatókkal működik.</string>
     <string name="setup_look_title">Válassz kinézetet</string>
     <string name="setup_look_body">Válassz stílust és témát. Mindkettőt módosíthatod a Beállításokban.</string>
     <string name="setup_earbuds_title">A fülhallgatód</string>

@@ -474,7 +474,6 @@
     <string name="setup_back">Назад</string>
     <string name="setup_bg_title">Оставайтесь на связи</string>
     <string name="setup_bg_body">Фоновая служба поддерживает виджеты и заново подключает наушники. Пока телефон заблокирован, она спит.</string>
-    <string name="welcome_brands">Работает с наушниками OnePlus, OPPO и realme.</string>
     <string name="setup_look_title">Выберите внешний вид</string>
     <string name="setup_look_body">Выберите стиль и тему. Оба можно изменить в настройках.</string>
     <string name="setup_earbuds_title">Ваши наушники</string>

@@ -476,7 +476,6 @@
     <string name="setup_back">Kembali</string>
     <string name="setup_bg_title">Tetap terhubung</string>
     <string name="setup_bg_body">Layanan latar belakang menjaga widget berfungsi dan menyambungkan ulang earbud. Layanan tidur saat ponsel terkunci.</string>
-    <string name="welcome_brands">Berfungsi dengan earbud OnePlus, OPPO, dan realme.</string>
     <string name="setup_look_title">Pilih tampilan</string>
     <string name="setup_look_body">Pilih gaya dan tema. Keduanya dapat diubah di Pengaturan.</string>
     <string name="setup_earbuds_title">Earbud kamu</string>

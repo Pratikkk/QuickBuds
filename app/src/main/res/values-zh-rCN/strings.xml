@@ -476,7 +476,6 @@
     <string name="setup_back">返回</string>
     <string name="setup_bg_title">保持连接</string>
     <string name="setup_bg_body">后台服务让小组件正常工作并重新连接耳机。手机锁定时它会休眠。</string>
-    <string name="welcome_brands">适用于 OnePlus、OPPO 和 realme 耳机。</string>
     <string name="setup_look_title">选择外观</string>
     <string name="setup_look_body">选择样式和主题。两者都可以在设置中更改。</string>
     <string name="setup_earbuds_title">你的耳机</string>

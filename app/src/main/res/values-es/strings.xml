@@ -474,7 +474,6 @@
     <string name="setup_back">Atrás</string>
     <string name="setup_bg_title">Mantente conectado</string>
     <string name="setup_bg_body">El servicio en segundo plano mantiene los widgets y reconecta los auriculares. Se duerme con el teléfono bloqueado.</string>
-    <string name="welcome_brands">Funciona con auriculares OnePlus, OPPO y realme.</string>
     <string name="setup_look_title">Elige un aspecto</string>
     <string name="setup_look_body">Elige un estilo y un tema. Puedes cambiar ambos en Ajustes.</string>
     <string name="setup_earbuds_title">Tus auriculares</string>

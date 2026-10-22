@@ -221,13 +221,6 @@ class SetupActivity : Activity() {
             setPadding(dp(4f), 0, dp(4f), dp(8f))
         })
         body.addView(TextView(this).apply {
-            setText(R.string.welcome_brands)
-            textSize = 15f
-            setTextColor(p.textSecondary)
-            gravity = Gravity.CENTER
-            setPadding(dp(4f), 0, dp(4f), dp(16f))
-        })
-        body.addView(TextView(this).apply {
             setText(R.string.welcome_body)
             textSize = 14f
             setTextColor(p.textSecondary)

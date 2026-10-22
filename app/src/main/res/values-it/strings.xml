@@ -474,7 +474,6 @@
     <string name="setup_back">Indietro</string>
     <string name="setup_bg_title">Resta connesso</string>
     <string name="setup_bg_body">Il servizio in background mantiene attivi i widget e riconnette gli auricolari. Va in pausa con il telefono bloccato.</string>
-    <string name="welcome_brands">Funziona con gli auricolari OnePlus, OPPO e realme.</string>
     <string name="setup_look_title">Scegli un aspetto</string>
     <string name="setup_look_body">Scegli uno stile e un tema. Puoi cambiare entrambi nelle Impostazioni.</string>
     <string name="setup_earbuds_title">I tuoi auricolari</string>
