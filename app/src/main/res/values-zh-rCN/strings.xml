@@ -283,6 +283,8 @@
     <string name="theme_auto_sub">浅色模式用%1$s，深色模式用%2$s</string>
     <string name="theme_wallpaper">壁纸颜色</string>
     <string name="theme_wallpaper_sub">内置主题使用壁纸的颜色</string>
+    <string name="theme_glass_gradient">彩色背景</string>
+    <string name="theme_glass_gradient_sub">玻璃后方的柔和渐变</string>
     <string name="theme_oled_black">OLED 纯黑</string>
     <string name="theme_classic_dark">经典深色</string>
     <string name="theme_white">白色</string>

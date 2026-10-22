@@ -52,6 +52,7 @@ data class Palette(
      * on pure red (#FF0000: black 5.3, white 4.0), which reads as a mistake.
      */
     val onAccent: Int get() {
+        if (glass) return 0xFF14123A.toInt()   // the background is transparent there: the deep base of the gradient
         val (light, dark) = if (luminance(text) > luminance(background)) text to background else background to text
         return if (contrast(light, accent) >= 3.0 || contrast(light, accent) >= contrast(dark, accent)) light else dark
     }
@@ -111,7 +112,9 @@ data class Palette(
             return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
         }
 
-        fun blend(from: Int, to: Int, t: Float): Int = Color.rgb(
+        /** Alpha included, so a translucent glass surface keeps its alpha when it is blended. */
+        fun blend(from: Int, to: Int, t: Float): Int = Color.argb(
+            (Color.alpha(from) + (Color.alpha(to) - Color.alpha(from)) * t).toInt(),
             (Color.red(from) + (Color.red(to) - Color.red(from)) * t).toInt(),
             (Color.green(from) + (Color.green(to) - Color.green(from)) * t).toInt(),
             (Color.blue(from) + (Color.blue(to) - Color.blue(from)) * t).toInt()

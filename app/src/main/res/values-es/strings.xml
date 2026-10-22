@@ -283,6 +283,8 @@
     <string name="theme_auto_sub">%1$s en modo claro, %2$s en modo oscuro</string>
     <string name="theme_wallpaper">Colores del fondo</string>
     <string name="theme_wallpaper_sub">Los temas integrados toman los colores de tu fondo de pantalla</string>
+    <string name="theme_glass_gradient">Fondo de color</string>
+    <string name="theme_glass_gradient_sub">Un degradado suave detrás del cristal</string>
     <string name="theme_oled_black">Negro OLED</string>
     <string name="theme_classic_dark">Oscuro clásico</string>
     <string name="theme_white">Blanco</string>

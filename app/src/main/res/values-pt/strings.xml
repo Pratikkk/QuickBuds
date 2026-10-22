@@ -283,6 +283,8 @@
     <string name="theme_auto_sub">%1$s no modo claro, %2$s no modo escuro</string>
     <string name="theme_wallpaper">Cores do papel de parede</string>
     <string name="theme_wallpaper_sub">Os temas integrados usam as cores do seu papel de parede</string>
+    <string name="theme_glass_gradient">Fundo colorido</string>
+    <string name="theme_glass_gradient_sub">Um degradê suave atrás do vidro</string>
     <string name="theme_oled_black">Preto OLED</string>
     <string name="theme_classic_dark">Escuro clássico</string>
     <string name="theme_white">Branco</string>

@@ -283,6 +283,8 @@
     <string name="theme_auto_sub">%1$s im hellen Modus, %2$s im dunklen Modus</string>
     <string name="theme_wallpaper">Hintergrundfarben</string>
     <string name="theme_wallpaper_sub">Integrierte Designs übernehmen die Farben deines Hintergrunds</string>
+    <string name="theme_glass_gradient">Farbiger Hintergrund</string>
+    <string name="theme_glass_gradient_sub">Ein weicher Verlauf hinter dem Glas</string>
     <string name="theme_oled_black">OLED-Schwarz</string>
     <string name="theme_classic_dark">Klassisch dunkel</string>
     <string name="theme_white">Weiß</string>

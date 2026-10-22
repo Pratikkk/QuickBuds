@@ -283,6 +283,8 @@
     <string name="theme_auto_sub">Világos módban %1$s, sötét módban %2$s</string>
     <string name="theme_wallpaper">Háttérkép színei</string>
     <string name="theme_wallpaper_sub">A beépített témák a háttérképed színeit használják</string>
+    <string name="theme_glass_gradient">Színes háttér</string>
+    <string name="theme_glass_gradient_sub">Lágy színátmenet az üveg mögött</string>
     <string name="theme_oled_black">OLED fekete</string>
     <string name="theme_classic_dark">Klasszikus sötét</string>
     <string name="theme_white">Fehér</string>

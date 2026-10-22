@@ -150,6 +150,13 @@ class ThemeActivity : Activity() {
                 SettingRowFactory.subtitle(this@ThemeActivity, wallRow).setText(R.string.theme_wallpaper_sub)
                 SettingRowFactory.addRow(this, wallRow)
             }
+            // Glass: the soft gradient behind the glass is optional; the window is pitch black without it.
+            if (ThemeRes.glass(this@ThemeActivity)) {
+                val gradSwitch = SettingRowFactory.buildSwitch(this@ThemeActivity, ThemeRes.glassGradient(this@ThemeActivity))
+                gradSwitch.setOnCheckedChangeListener { v, on -> ThemeRes.setGlassGradient(this@ThemeActivity, on); v.postDelayed({ ThemeRes.recreateFaded(this@ThemeActivity) }, 260) }
+                val gradRow = SettingRowFactory.build(this@ThemeActivity, 0, R.string.theme_glass_gradient, R.string.theme_glass_gradient_sub, gradSwitch) { gradSwitch.performClick() }
+                SettingRowFactory.addRow(this, gradRow)
+            }
         })
 
         // --- Accent of the applied built-in preset ---

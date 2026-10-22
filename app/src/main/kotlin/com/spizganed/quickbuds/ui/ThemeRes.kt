@@ -127,6 +127,7 @@ object ThemeRes {
 
     /** The window behind the glass: a deep base with soft colour blobs, tinted by the accent. */
     fun glassBackground(context: Context, accent: Int): Drawable {
+        if (!glassGradient(context)) return ColorDrawable(Color.BLACK)
         val dm = context.resources.displayMetrics
         val r = maxOf(dm.widthPixels, dm.heightPixels) * 0.75f
         fun blob(color: Int, cx: Float, cy: Float) = android.graphics.drawable.GradientDrawable().apply {
@@ -152,7 +153,7 @@ object ThemeRes {
 
     // The language is part of it so a language change below Android 13 rebuilds open screens too.
     // The style too, so a Classic / Nothing change rebuilds open screens.
-    private fun signature(context: Context, p: Palette) = p.id + p.tokens.contentToString() + language(context) + nothing(context) + material(context) + glass(context)
+    private fun signature(context: Context, p: Palette) = p.id + p.tokens.contentToString() + language(context) + nothing(context) + material(context) + glass(context) + glassGradient(context)
 
     private const val KEY_NOTHING = "styleNothing"
 
@@ -172,6 +173,14 @@ object ThemeRes {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).also { PaletteStore.defaults(it) }.getBoolean(KEY_MATERIAL, false)
 
     const val KEY_GLASS = "styleGlass"
+    private const val KEY_GLASS_GRADIENT = "styleGlassGradient"
+
+    /** Glass: a soft colour gradient behind the glass. Off (the default): a pitch black window. */
+    fun glassGradient(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_GLASS_GRADIENT, false)
+
+    fun setGlassGradient(context: Context, on: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_GLASS_GRADIENT, on).apply()
+    }
 
     /** Glass style: Material's shapes on translucent surfaces over a gradient window. Implies [material]. */
     fun glass(context: Context) = material(context) &&

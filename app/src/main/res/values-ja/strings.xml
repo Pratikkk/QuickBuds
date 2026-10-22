@@ -283,6 +283,8 @@
     <string name="theme_auto_sub">ライトモードでは%1$s、ダークモードでは%2$s</string>
     <string name="theme_wallpaper">壁紙の色</string>
     <string name="theme_wallpaper_sub">内蔵テーマが壁紙の色を使います</string>
+    <string name="theme_glass_gradient">カラフルな背景</string>
+    <string name="theme_glass_gradient_sub">ガラスの後ろにやわらかなグラデーション</string>
     <string name="theme_oled_black">OLED ブラック</string>
     <string name="theme_classic_dark">クラシックダーク</string>
     <string name="theme_white">ホワイト</string>

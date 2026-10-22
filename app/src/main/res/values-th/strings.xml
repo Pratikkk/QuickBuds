@@ -283,6 +283,8 @@
     <string name="theme_auto_sub">%1$s ในโหมดสว่าง %2$s ในโหมดมืด</string>
     <string name="theme_wallpaper">สีจากวอลเปเปอร์</string>
     <string name="theme_wallpaper_sub">ธีมในตัวใช้สีจากวอลเปเปอร์ของคุณ</string>
+    <string name="theme_glass_gradient">พื้นหลังสี</string>
+    <string name="theme_glass_gradient_sub">ไล่เฉดสีนุ่มนวลหลังกระจก</string>
     <string name="theme_oled_black">ดำ OLED</string>
     <string name="theme_classic_dark">มืดคลาสสิก</string>
     <string name="theme_white">ขาว</string>
