@@ -84,8 +84,6 @@ mod msg {
         for map in maps {
             let (new, old) = (Bitmap::parse(&map).unwrap(), old::Caps::parse(&map).unwrap());
             for cmd in 0..=0x0FFFu16 {
-                // Old table lacks the bits added in this spec (35, 64, 67, 68 payload names): compare the rest.
-                if [0x0419, 0x0136, 0x0433, 0x0432, 0x0135, 0x0435, 0x0117].contains(&cmd) { continue; }
                 assert_eq!(new.allows(cmd), old.supports(cmd), "{map:02X?} cmd {cmd:04X}");
             }
         }

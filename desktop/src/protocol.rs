@@ -251,8 +251,13 @@ pub fn decode(p: &[u8]) -> Option<Event> {
                 Event::FitResult(of(1), of(2))
             }
             0xF5 if pl.len() >= 2 => Event::HeadMotion(pl[1]),
-            // `0F <flags u16 LE> <level>`, flag bit 4 = tap level; other flags are not decoded.
-            0x0F if pl.len() >= 4 && pl[1] == 0x10 && pl[2] == 0 => Event::TapPush(pl[3]),
+            // `0F <flags u16 LE> <data>` (PROTOCOL.md §5): the first flag wins. Bit 0 alert-sound volume; bits 1 and 2 are not used here; bit 4 tap level.
+            0x0F if pl.len() >= 4 => {
+                let flags = pl[1] as u16 | (pl[2] as u16) << 8;
+                if flags & 1 != 0 { Event::AlertVolume(pl[3]) }
+                else if flags & 6 == 0 && flags & 0x10 != 0 { Event::TapPush(pl[3]) }
+                else { return None }
+            }
             0x0B if pl.len() >= 2 => Event::PncResult(pl[1]),
             0x06 => Event::Devices(parse_devices(&pl[1..])?),
             0x08 if pl.len() >= 3 => Event::Hearing(HearingEv::Status(pl[1], pl[2])),
@@ -455,6 +460,9 @@ mod tests {
         assert!(matches!(decode(&build_packet(0x8427, 1, &[0, 3])), Some(Event::AlertVolume(3))));
         assert!(matches!(decode(&build_packet(0x8133, 1, &[0, 2, 3])), Some(Event::TapLevel(2, 3))));
         assert!(matches!(decode(&build_packet(EVT_PUSH, 0xFF, &[0x0F, 0x10, 0, 4])), Some(Event::TapPush(4))));
+        assert!(matches!(decode(&build_packet(EVT_PUSH, 0xFF, &[0x0F, 0x01, 0, 7])), Some(Event::AlertVolume(7))));
+        assert!(matches!(decode(&build_packet(EVT_PUSH, 0xFF, &[0x0F, 0x11, 0, 7])), Some(Event::AlertVolume(7))));
+        assert!(decode(&build_packet(EVT_PUSH, 0xFF, &[0x0F, 0x04, 0, 7])).is_none());
         // A failed read (status not 0) is no value.
         assert!(decode(&build_packet(0x8130, 1, &[1, 6])).is_none());
         assert!(matches!(decode(&build_packet(0x812B, 1, &[0, 3, 2, 0, 3])), Some(Event::GameSound(3, t)) if t == [0, 3]));

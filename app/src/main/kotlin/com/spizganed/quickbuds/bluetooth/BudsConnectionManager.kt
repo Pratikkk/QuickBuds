@@ -1564,12 +1564,22 @@ class BudsConnectionManager(private val context: Context) {
             handler.post { listeners.forEach { it.onTapLevel(payload[1].toInt(), payload[2].toInt()) } }
             return
         }
-        // The buds report a tap level change as push `0F <flags LE> <level>` (flag bit 4).
-        if (cmd == OpoProtocol.CMD_ACTIVE_REPORT && payload.size >= 4 && payload[0].toInt() == OpoProtocol.EVT_PUBLIC &&
-            (payload[1].toInt() and 0xFF) and OpoProtocol.PUBLIC_FLAG_TAP_LEVEL != 0) {
-            log("TAP LEVEL push: ${payload[3]} RAW=[${OpoProtocol.bytesToHex(payload)}]")
-            handler.post { listeners.forEach { it.onTapLevel(payload[3].toInt(), tapLevelDefault) } }
-            return
+        // Public event `0F <flags u16 LE> <data>` (PROTOCOL.md section 5): the first flag that matches wins. Bit 0: the alert-sound
+        // volume changed on the buds; bit 1: nothing; bit 2: handheld-device info (not used here); bit 4: a tap level change.
+        if (cmd == OpoProtocol.CMD_ACTIVE_REPORT && payload.size >= 4 && payload[0].toInt() == OpoProtocol.EVT_PUBLIC) {
+            val flags = (payload[1].toInt() and 0xFF) or ((payload[2].toInt() and 0xFF) shl 8)
+            if (flags and OpoProtocol.PUBLIC_FLAG_ALERT_VOLUME != 0) {
+                val level = payload[3].toInt() and 0xFF
+                alertVolume = level
+                log("ALERT VOLUME push: $level RAW=[${OpoProtocol.bytesToHex(payload)}]")
+                handler.post { listeners.forEach { it.onAlertVolume(level) } }
+                return
+            }
+            if (flags and 0x06 == 0 && flags and OpoProtocol.PUBLIC_FLAG_TAP_LEVEL != 0) {
+                log("TAP LEVEL push: ${payload[3]} RAW=[${OpoProtocol.bytesToHex(payload)}]")
+                handler.post { listeners.forEach { it.onTapLevel(payload[3].toInt(), tapLevelDefault) } }
+                return
+            }
         }
         if ((cmd == 0x840D || cmd == 0x840E) && payload.isNotEmpty() && payload[0].toInt() != 0) {
             val status = payload[0].toInt() and 0xFF

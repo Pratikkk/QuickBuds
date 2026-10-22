@@ -209,7 +209,7 @@ keep-alive poll. Is: none; no stale link seen `[TESTED]`.
 
 - **`0x8100` (handshake reply) is a command bitmap** `[VENDOR]`: `00`, then bytes read LSB first; bit n
   enables a fixed list of commands (bit 3 = `0x0108` `0x0401` `0x0416`; bit 8 = `0x010C` `0x0404`;
-  bit 57 = `0x0427` `0x0130`; 69 bits; bits 35, 64, 67 and 68 add `0x0419`, `0x0135`, `0x0136`, `0x0432`, `0x0433`, `0x0435`, `0x0117`, payloads unknown). Always allowed without a bit: `0x0100`-`0x0104`, `0x0106`,
+  bit 57 = `0x0427` `0x0130`; 69 bits, the full table is in `Capabilities.kt` and `types.rs` and in PROTOCOL.md section 4; bits 35, 64, 67 and 68 enable `0x0419`, `0x0136`, `0x0433`, `0x0432`, `0x0135`, `0x0435`, `0x0117`, which QuickBuds never sends: payloads unknown). Always allowed without a bit: `0x0100`-`0x0104`, `0x0106`,
   `0x010B`, `0x010D`, `0x0F00`, `0x0F03`, `0x0F04`. HeyMelody sends nothing else, and neither do we
   (`protocol/Capabilities.kt`). Buds 4 `[CAPTURE]`: `00 FF 77 5A EA 67 0E 20 07` — every command the
   app uses, not `0x0422` / `0x012A`.
@@ -270,15 +270,17 @@ one `0x012F`. A later status read goes alone.
 | `F3` | Content unknown. HeyMelody ignores it `[VENDOR]` | in the `0x8200` list |
 | `F4` | Diagnostic JSON `[VENDOR]`, acked (§9) | pushed, not in the list |
 | `F5` | Head gesture type `[VENDOR]` | — |
-| `0A` | One state byte `[VENDOR]`; meaning unknown | — |
-| `0D` | Multi-device link info `[GUESS]`; layout unread | — |
-| `0F` | Public event `[VENDOR]`: `<flags u16 LE> <data>`. Flag bit 0: alert-sound volume byte at `payload[3]` `[VENDOR]`; bit 2: handheld-device info; bit 4: tap level setting | — |
-| `10` | One-shot state `[VENDOR]`; layout unread | — |
-| `11` | List of records `[VENDOR]`; layout unread | — |
+| `0A` | Zen-mode switch state `<state>` `[VENDOR]`. Not built (tone files come from the vendor's servers) | — |
+| `0D` | Related-device info `[VENDOR]`: `<flags u16 LE>` then the fields whose flag is set, in this order: bit 0 capability `<u8>`, bit 1 version `<u8>`, bit 2 wear `<u8>`, bit 3 status `<u8>`, bit 4 name `<len> <bytes>`. Status bits: 0 phone has no active command, 1 connected by the related device, 2 HFP busy, 3 A2DP busy, 4 the other device's auto switch is closed. A field whose bytes are missing is absent. Not used | — |
+| `0F` | Public event `[VENDOR]`: `<flags u16 LE> <data>`. The first match wins: bit 0 alert-sound volume `<v>` (the app updates the slider), bit 1 nothing, bit 2 handheld device `<mode> [<MAC 6, reversed>]` (mode `00` = automatic, no MAC; not used), bit 4 tap level `<v>` (the app updates the slider). Needs at least 1 data byte | — |
+| `10` | One-shot state `[VENDOR]`: the voice-wakeup audio stream setup (flags, sample-rate type, format, channels, codec, frame size u16 LE, session state, VAD state). Decided against (voice wakeup) | — |
+| `11` | Tone-change list `[VENDOR]`: tone records. Not built (tone files come from the vendor's servers) | — |
 | `F6` | Head-motion try result: one byte `[VENDOR]` | — |
-| `F7` | Voice-assist control type `[VENDOR]`; layout unread | — |
-| `F8` | LE / BR link switch state `[VENDOR]`; layout unread | — |
+| `F7` | Voice-assist control type `[VENDOR]`: `<bits>`, bit 0 type 0, bit 1 type 1, bit 2 type 2 (highest set bit wins), bit 7 a support flag. Not built | — |
+| `F8` | LE / BR link switch state `[VENDOR]`: `<bits>`, bit 0 state, bit 1 owner, bit 2 reset flag. Not built | — |
 | `F9` | AI translation audio focus: one byte `[VENDOR]`; online feature, not built | — |
+
+Codes `07` and `0C` have no handler in the vendor app. Code `09` goes to a separate parser for a list of records (not read, unused).
 
 ### Subscribing — `0x0205`
 
