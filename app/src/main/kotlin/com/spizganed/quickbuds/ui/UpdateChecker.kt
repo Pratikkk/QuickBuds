@@ -11,7 +11,7 @@ import java.io.File
 
 /**
  * GitHub release lookup for the in-app updater, shared by [UpdateActivity] and the check on start.
- * The updater needs the release's `.apk` asset; the `.aab` alone is invisible to it (CLAUDE.md).
+ * The updater needs the release's `.apk` asset; the `.aab` alone is invisible to it.
  */
 object UpdateChecker {
 
