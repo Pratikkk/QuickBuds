@@ -13,11 +13,19 @@ out=local/release/$ver
 mkdir -p "$out"
 
 python3 scripts/check-locales.py
-./gradlew -q assembleRelease bundleRelease
+
+# The desktop tests and the desktop archives build in the background while Gradle builds the APK and the AAB.
+log=$(mktemp -d)
+# Own target dir: cargo locks a target dir, so the tests would wait for the Windows build in desktop/target.
+(cd desktop && CARGO_TARGET_DIR=target/test cargo test -q) >"$log/test.txt" 2>&1 & tpid=$!
+scripts/desktop-dist.sh "$dver" >"$log/dist.txt" 2>&1 & dpid=$!
+fail=0
+./gradlew -q assembleRelease bundleRelease || fail=1
+wait $tpid || { fail=1; cat "$log/test.txt"; }
+wait $dpid || { fail=1; cat "$log/dist.txt"; }
+[ $fail = 0 ] || exit 1
+tail -3 "$log/test.txt"
 cp app/build/outputs/apk/release/app-release.apk "$out/QuickBuds$ver.apk"
 cp app/build/outputs/bundle/release/app-release.aab "$out/QuickBuds$ver.aab"
-
-(cd desktop && cargo test -q)
-scripts/desktop-dist.sh "$dver"
 cp desktop/dist/* "$out/"
 ls -la "$out"

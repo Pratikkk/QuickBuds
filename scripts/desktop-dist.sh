@@ -6,6 +6,7 @@
 #                                        No version in the name: releases/latest/download/ always finds it.
 # Usage: scripts/desktop-dist.sh <version>   (e.g. 4.3.0). QB_APPIMAGE_ONLY=1 builds the AppImage only.
 # Needs: rustup target x86_64-pc-windows-gnu, mingw-w64-gcc, podman (unless QB_NATIVE=1), zip, python3.
+# The Windows build and the Linux build run at the same time. The podman image (scripts/desktop-build.Containerfile) is built once.
 # Linux builds in Ubuntu 22.04 (glibc 2.35) so the binary runs on older distros than the build PC.
 set -euo pipefail
 ver=${1:?version}
@@ -13,27 +14,37 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 dist=$root/desktop/dist
 rm -rf "$dist" && mkdir -p "$dist"
 
-# Windows
+# Windows, in the background while Linux builds; its output goes to a log.
 if [ -z "${QB_APPIMAGE_ONLY:-}" ]; then
-  (cd "$root/desktop" && cargo build --release --target x86_64-pc-windows-gnu)
-  (cd "$root/desktop/target/x86_64-pc-windows-gnu/release" && zip -q "$dist/QuickBuds$ver-windows-x64.zip" quickbuds.exe)
+  winlog=$root/desktop/target/windows-build.log
+  mkdir -p "$root/desktop/target"
+  (
+    cd "$root/desktop" && cargo build --release --target x86_64-pc-windows-gnu
+    cd "$root/desktop/target/x86_64-pc-windows-gnu/release" && zip -q "$dist/QuickBuds$ver-windows-x64.zip" quickbuds.exe
+  ) >"$winlog" 2>&1 &
+  winpid=$!
 fi
 
-# Linux, in a container; the cargo registry and target dir persist between runs. QB_NATIVE=1 builds in place
+# The build image: rebuilt only when the Containerfile changes.
+if [ -z "${QB_NATIVE:-}" ]; then
+  img=quickbuds-build:22.04
+  want=$(sha256sum "$root/scripts/desktop-build.Containerfile" | cut -c1-12)
+  [ "$(podman image inspect -f '{{index .Labels "cf"}}' "$img" 2>/dev/null)" = "$want" ] ||
+    podman build -q -t "$img" --label "cf=$want" -f "$root/scripts/desktop-build.Containerfile" "$root/scripts" >/dev/null
+fi
+
+# Linux, in the build image; the cargo registry and target dir persist between runs. QB_NATIVE=1 builds in place
 # instead, for CI, which already runs in Ubuntu 22.04 with the packages below.
 if [ -n "${QB_NATIVE:-}" ]; then
   (cd "$root/desktop" && CARGO_TARGET_DIR="$root/desktop/target/ubuntu22" cargo build --release)
 else
-podman run --rm --userns=keep-id -v "$root:/repo" -v quickbuds-cargo:/cargo -w /repo/desktop \
-  -e CARGO_HOME=/cargo -e RUSTUP_HOME=/cargo/rustup -e CARGO_TARGET_DIR=/repo/desktop/target/ubuntu22 \
-  --user root docker.io/library/ubuntu:22.04 bash -c '
+podman run --rm --userns=keep-id -v "$root:/repo" -v quickbuds-cargo:/cargo-reg -w /repo/desktop \
+  -e CARGO_HOME=/cargo-reg -e CARGO_TARGET_DIR=/repo/desktop/target/ubuntu22 \
+  --user root "$img" bash -c '
     set -e
-    export DEBIAN_FRONTEND=noninteractive PATH=/cargo/bin:$PATH
-    apt-get update -qq && apt-get install -y -qq curl build-essential pkg-config libdbus-1-dev libgtk-3-dev \
-      libayatana-appindicator3-dev libfontconfig1-dev libxkbcommon-dev >/dev/null
-    command -v cargo >/dev/null || curl -sSf https://sh.rustup.rs | sh -s -- -y -q --profile minimal --no-modify-path
+    export PATH=/cargo/bin:$PATH
     cargo build --release
-    chown -R '"$(id -u):$(id -g)"' /repo/desktop/target/ubuntu22'
+    chown -R '"$(id -u):$(id -g)"' /repo/desktop/target/ubuntu22 /cargo-reg'
 fi
 
 pkg=$dist/QuickBuds$ver-linux-x64
@@ -77,13 +88,11 @@ appimage=QuickBuds-linux-x64.AppImage
 if [ -n "${QB_NATIVE:-}" ]; then
   "$root/scripts/desktop-appimage.sh" "$pkg" "$dist/$appimage"
 else
-podman run --rm --userns=keep-id -v "$root:/repo" -w /repo --user root docker.io/library/ubuntu:22.04 bash -c '
+podman run --rm --userns=keep-id -v "$root:/repo" -w /repo --user root "$img" bash -c '
     set -e
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update -qq && apt-get install -y -qq curl ca-certificates file pkg-config libgtk-3-dev \
-      libayatana-appindicator3-dev libxkbcommon-x11-0 dpkg-dev >/dev/null
     scripts/desktop-appimage.sh "desktop/dist/'"$(basename "$pkg")"'" "desktop/dist/'"$appimage"'"
     chown -R '"$(id -u):$(id -g)"' desktop/dist desktop/target/appimage-tools'
 fi
 rm -rf "$pkg"
+if [ -n "${winpid:-}" ]; then wait "$winpid" || { cat "$winlog"; exit 1; }; tail -2 "$winlog"; fi
 ls -la "$dist"
