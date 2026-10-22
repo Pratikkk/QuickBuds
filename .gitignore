@@ -23,6 +23,7 @@ local/
 
 # Desktop (Rust)
 desktop/target/
+desktop-egui/target/
 desktop/dist/
 
 # Screenshots are taken by hand; the script and its output stay local

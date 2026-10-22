@@ -1,0 +1,273 @@
+//! The window: sidebar, header and the Overview page, on the glass widgets.
+
+use crate::glass::{self, white, Trailing};
+use crate::session::{Cmd, Snapshot, Status};
+use crate::types::{self, FEATURE_DUAL, FEATURE_HEARING, FEATURE_HIRES, FEATURE_SPATIAL};
+use crate::{icons, t, App, Page};
+use eframe::egui::{Align2, Pos2, Rect, Ui, Vec2};
+
+const GAP: f32 = 12.0;
+const ROW: f32 = 72.0;
+
+/// A fixed snapshot of Buds 4 for screenshots and UI tests (`QB_DEMO=1`): no link, no settings written.
+pub fn demo_snapshot() -> Snapshot {
+    let model = types::models().iter().find(|m| m["name"].as_str() == Some("OnePlus Buds 4"));
+    Snapshot {
+        status: Status::On,
+        name: "OnePlus Buds 4".into(),
+        battery: [Some((80, false)), Some((90, false)), Some((60, false))],
+        wear: [3, 3, 0],
+        anc: Some("Off".into()),
+        modes: types::AncModes::of(model),
+        low_latency: Some(false),
+        model,
+        features: vec![(types::FEATURE_GAME_MODE, 0), (types::FEATURE_GAME_MODE_MAIN, 0), (FEATURE_HIRES, 1), (FEATURE_SPATIAL, 0), (FEATURE_DUAL, 1), (FEATURE_HEARING, 0)],
+        ..Default::default()
+    }
+}
+
+/// (mode id, icon, index into the level names)
+fn level_info(id: &str) -> (&'static str, usize) {
+    match id {
+        "ANC-Light" => (icons::MODE_ANC_LOW, 0),
+        "ANC-Deep" => (icons::MODE_ANC_HIGH, 2),
+        "ANC-Smart" => (icons::MODE_ANC_SMART, 3),
+        _ => (icons::MODE_ANC_MEDIUM, 1),
+    }
+}
+
+const LEVEL_NAMES: [&str; 4] = ["anc_mode_low", "anc_mode_medium", "anc_mode_high", "anc_mode_smart"];
+
+/// Without an "in ear" seen, "out" may only mean the model has no sensor: shown as in the ear (the app's rule).
+fn wear_sensor_seen(s: &Snapshot, demo: bool) -> bool {
+    if demo { return true; }
+    let Some(id) = s.model.and_then(|m| m["id"].as_str()) else { return true };
+    let mut seen = crate::load_settings()["wear_seen"].clone();
+    if seen[id] == true { return true; }
+    if !s.wear.iter().any(|w| matches!(w, 3 | 7)) { return false; }
+    seen[id] = true.into();
+    crate::save_setting("wear_seen", seen);
+    true
+}
+
+pub fn show(app: &mut App, ui: &mut Ui) {
+    let full = ui.max_rect();
+    let sb = Rect::from_min_size(full.min + Vec2::splat(12.0), Vec2::new(236.0, full.height() - 24.0));
+    sidebar(app, ui, sb);
+    let content = Rect::from_min_max(Pos2::new(sb.right() + GAP, full.top() + 18.0), Pos2::new(full.right() - 12.0, full.bottom() - 12.0));
+    header(app, ui, content);
+    let body = Rect::from_min_max(Pos2::new(content.left(), content.top() + 58.0), content.max);
+    match app.page {
+        Page::Overview => overview(app, ui, body),
+        _ => placeholder(ui, body),
+    }
+}
+
+fn sidebar(app: &mut App, ui: &mut Ui, sb: Rect) {
+    glass::glass_at(ui, sb, 32.0, 1.0);
+    glass::icon_at(ui, icons::BUD_LEFT, Rect::from_center_size(Pos2::new(sb.left() + 34.0, sb.top() + 38.0), Vec2::new(18.0, 24.0)), white(1.0));
+    glass::text(ui, Pos2::new(sb.left() + 52.0, sb.top() + 38.0), Align2::LEFT_CENTER, "QuickBuds", 17.0, 1.0);
+    let h = app.has;
+    let top = [
+        (Page::Overview, icons::LAYOUT, "desktop_nav_overview", true),
+        (Page::Eq, icons::EQUALIZER, "eq_title", h.eq),
+        (Page::Gestures, icons::GESTURE, "gesture_title", h.controls),
+        (Page::Hearing, icons::HEARING, "row_golden_title", h.hearing),
+        (Page::Dual, icons::DEVICES, "dual_title", h.dual),
+        (Page::Earbuds, icons::EARBUD, "earbuds_title", true),
+    ];
+    let mut y = sb.top() + 76.0;
+    let mut go = None;
+    for (page, icon, key, ready) in top {
+        let r = Rect::from_min_size(Pos2::new(sb.left() + 12.0, y), Vec2::new(sb.width() - 24.0, 44.0));
+        if glass::nav_item_at(ui, key, r, icon, t(&app.tr, key), app.page == page, ready).clicked() && ready { go = Some(page); }
+        y += 46.0;
+    }
+    let bottom = [(Page::Settings, icons::SETTINGS_COG, "desktop_nav_app_settings"), (Page::Dev, icons::DEV_TOOLS, "action_dev_tools")];
+    let mut y = sb.bottom() - 12.0 - 44.0 * bottom.len() as f32 - 2.0;
+    for (page, icon, key) in bottom {
+        let r = Rect::from_min_size(Pos2::new(sb.left() + 12.0, y), Vec2::new(sb.width() - 24.0, 44.0));
+        if glass::nav_item_at(ui, key, r, icon, t(&app.tr, key), app.page == page, true).clicked() { go = Some(page); }
+        y += 46.0;
+    }
+    if let Some(p) = go { app.page = p; }
+}
+
+fn header(app: &mut App, ui: &mut Ui, c: Rect) {
+    let s = &app.snap;
+    let title = if s.name.is_empty() { "QuickBuds" } else { s.name.as_str() };
+    glass::text(ui, Pos2::new(c.left() + 4.0, c.top() + 23.0), Align2::LEFT_CENTER, title, 30.0, 1.0);
+    let mut x = c.right();
+    let icon_btn = |ui: &mut Ui, x: &mut f32, id: &str, svg: &'static str| {
+        *x -= 46.0;
+        let r = Rect::from_min_size(Pos2::new(*x, c.top()), Vec2::splat(46.0));
+        *x -= 10.0;
+        glass::icon_button_at(ui, id, r, svg).clicked()
+    };
+    if icon_btn(ui, &mut x, "settings", icons::SETTINGS_COG) { app.page = Page::Settings; }
+    if icon_btn(ui, &mut x, "dev", icons::DEV_TOOLS) { app.page = Page::Dev; }
+    let label = match app.snap.status {
+        Status::On => t(&app.tr, "conn_action_disconnect"),
+        Status::Connecting => t(&app.tr, "conn_connecting"),
+        Status::Off => t(&app.tr, "conn_action_connect"),
+    };
+    let w = 56.0 + label.chars().count() as f32 * 9.0;
+    let r = Rect::from_min_size(Pos2::new(x - w, c.top()), Vec2::new(w, 46.0));
+    if glass::button_at(ui, "conn", r, 23.0, false).clicked() {
+        app.send(if app.snap.status == Status::Off { Cmd::Connect } else { Cmd::Disconnect });
+    }
+    let dot = if app.snap.status == Status::On { 1.0 } else { 0.45 };
+    ui.painter().circle_filled(Pos2::new(r.left() + 24.0, r.center().y), 10.0, white(dot));
+    glass::text(ui, Pos2::new(r.left() + 44.0, r.center().y), Align2::LEFT_CENTER, label, 16.0, 1.0);
+}
+
+fn placeholder(ui: &mut Ui, body: Rect) {
+    let r = Rect::from_min_size(body.min, Vec2::new(body.width(), 120.0));
+    glass::glass_at(ui, r, 32.0, 1.0);
+    glass::text(ui, r.center(), Align2::CENTER_CENTER, "This page is not ported to egui yet.", 16.0, 0.8);
+}
+
+struct HomeRow { id: &'static str, icon: &'static str, title: String, sub: String, trailing: Trailing, enabled: bool, page: Option<Page> }
+
+fn overview(app: &mut App, ui: &mut Ui, body: Rect) {
+    let s = app.snap.clone();
+    let on = s.status == Status::On;
+    let listed = |id: u8| s.features.iter().find(|f| f.0 == id).map(|f| f.1);
+    let tr = &app.tr;
+
+    // Rows on the right: the switches the buds list. Hi-Res and 3D audio show their state; their writes come with the Earbud settings port.
+    let mut right: Vec<HomeRow> = vec![];
+    if types::has_feature(&s.features, s.caps.game_mode_id()) {
+        right.push(HomeRow { id: "game", icon: icons::LOW_LATENCY, title: t(tr, "row_game_title").into(), sub: t(tr, "row_game_sub").into(),
+            trailing: Trailing::Switch(s.low_latency.unwrap_or(false)), enabled: on, page: None });
+    }
+    if let Some(v) = listed(FEATURE_HIRES) {
+        right.push(HomeRow { id: "hires", icon: icons::HIRES, title: t(tr, "row_hires_title").into(),
+            sub: t(tr, if v == 1 { "row_hires_sub" } else { "row_hires_sub_off" }).into(), trailing: Trailing::Switch(v == 1), enabled: false, page: None });
+    }
+    if let Some(v) = listed(FEATURE_SPATIAL) {
+        right.push(HomeRow { id: "spatial", icon: icons::SPATIAL, title: t(tr, "row_spatial_title").into(), sub: t(tr, "row_spatial_sub").into(),
+            trailing: Trailing::Switch(v == 1), enabled: false, page: None });
+    }
+    let mut left: Vec<HomeRow> = vec![];
+    let nav = |id, icon, key: &str, sub: &str, page| HomeRow { id, icon, title: t(tr, key).into(), sub: sub.into(), trailing: Trailing::Chevron, enabled: true, page: Some(page) };
+    if app.has.eq { left.push(nav("eq", icons::EQUALIZER, "eq_title", "", Page::Eq)); }
+    if app.has.dual { left.push(nav("dual", icons::DEVICES, "dual_title", "", Page::Dual)); }
+    left.push(nav("earbuds", icons::EARBUD, "earbuds_title", "", Page::Earbuds));
+
+    // Layout: two columns when wide, one when narrow.
+    let wide = body.width() >= 820.0;
+    let (c1, c2) = if wide {
+        let w1 = ((body.width() - GAP) * 0.535).floor();
+        (Rect::from_min_size(body.min, Vec2::new(w1, body.height())), Rect::from_min_max(Pos2::new(body.left() + w1 + GAP, body.top()), body.max))
+    } else {
+        (body, body)
+    };
+    let h_batt = 224.0;
+    let h_anc = 114.0;
+    let h_right = ROW * right.len() as f32;
+    let h_left = ROW * left.len() as f32;
+    let batt = Rect::from_min_size(c1.min, Vec2::new(c1.width(), h_batt));
+    let (anc, rows_r, nav_r);
+    if wide {
+        anc = Rect::from_min_size(c2.min, Vec2::new(c2.width(), h_anc));
+        rows_r = Rect::from_min_size(Pos2::new(c2.left(), anc.bottom() + GAP), Vec2::new(c2.width(), h_right));
+        nav_r = Rect::from_min_size(Pos2::new(c1.left(), batt.bottom() + GAP), Vec2::new(c1.width(), h_left));
+    } else {
+        anc = Rect::from_min_size(Pos2::new(c1.left(), batt.bottom() + GAP), Vec2::new(c1.width(), h_anc));
+        rows_r = Rect::from_min_size(Pos2::new(c1.left(), anc.bottom() + GAP), Vec2::new(c1.width(), h_right));
+        nav_r = Rect::from_min_size(Pos2::new(c1.left(), rows_r.bottom() + GAP), Vec2::new(c1.width(), h_left));
+    }
+
+    battery(app, ui, batt);
+    noise(app, ui, anc);
+    for (rect, list, id) in [(rows_r, right, "right"), (nav_r, left, "left")] {
+        if list.is_empty() { continue; }
+        glass::glass_at(ui, rect, 32.0, 1.0);
+        for (i, r) in list.iter().enumerate() {
+            let rr = Rect::from_min_size(Pos2::new(rect.left(), rect.top() + ROW * i as f32), Vec2::new(rect.width(), ROW));
+            if i > 0 { glass::divider_at(ui, rect.left(), rect.right(), rr.top()); }
+            let tr = match &r.trailing { Trailing::Switch(v) => Trailing::Switch(*v), Trailing::Chevron => Trailing::Chevron, Trailing::Value(v) => Trailing::Value(v.clone()), Trailing::None => Trailing::None };
+            let (clicked, toggled) = glass::row_at(ui, (id, r.id), rr, r.icon, &r.title, &r.sub, tr, r.enabled);
+            if clicked { if let Some(p) = r.page { app.page = p; } }
+            if toggled && r.id == "game" { app.send(Cmd::LowLatency(!app.snap.low_latency.unwrap_or(false))); }
+        }
+    }
+}
+
+fn battery(app: &mut App, ui: &mut Ui, rect: Rect) {
+    glass::glass_at(ui, rect, 32.0, 1.0);
+    let s = &app.snap;
+    let on = s.status == Status::On;
+    let blind = !wear_sensor_seen(s, app.demo);
+    let tr = &app.tr;
+    // §8: 3/7 in ear, 4 in case, 1/5 out; "out" may only mean the model has no sensor.
+    let wear = |i: usize| match s.wear[i] { 3 | 7 => t(tr, "status_in_ear"), 4 => t(tr, "status_in_case"), 1 | 5 => if blind { t(tr, "status_in_ear") } else { t(tr, "status_out") }, _ => "" };
+    // Left, case, right.
+    let cols = [(0usize, icons::BUD_LEFT), (2, icons::CASE), (1, icons::BUD_RIGHT)];
+    for (n, (i, glyph)) in cols.into_iter().enumerate() {
+        let cx = rect.left() + rect.width() * (1.0 / 6.0 + n as f32 / 3.0);
+        let b = s.battery[i];
+        let frac = b.map(|x| x.0 as f32 / 100.0);
+        glass::ring_at(ui, Pos2::new(cx, rect.top() + 66.0), 40.0, if on { frac } else { None }, Some(glyph), !on);
+        let pct = match (b, on) { (Some(x), true) => format!("{}%", x.0), _ => "—".into() };
+        glass::text(ui, Pos2::new(cx, rect.top() + 134.0), Align2::CENTER_CENTER, &pct, 21.0, if on { 1.0 } else { 0.5 });
+        let sub = if i == 2 { t(tr, "status_case") } else { wear(i) };
+        glass::text(ui, Pos2::new(cx, rect.top() + 160.0), Align2::CENTER_CENTER, sub, 13.0, 0.72);
+    }
+    if !s.name.is_empty() {
+        glass::text(ui, Pos2::new(rect.center().x, rect.top() + 196.0), Align2::CENTER_CENTER, &s.name, 14.0, 0.72);
+    }
+}
+
+fn noise(app: &mut App, ui: &mut Ui, rect: Rect) {
+    glass::glass_at(ui, rect, 32.0, 1.0);
+    let on = app.snap.status == Status::On;
+    let anc = app.snap.anc.clone().unwrap_or_default();
+    let is_level = types::LEVELS.contains(&anc.as_str());
+    let modes = app.modes.clone();
+    let levels = modes.levels();
+    let cy = rect.top() + 46.0;
+
+    if app.levels_open && on {
+        let n = levels.len().max(1);
+        for (i, id) in levels.iter().enumerate() {
+            let (icon, li) = level_info(id);
+            let cx = rect.left() + rect.width() * (i as f32 + 0.5) / n as f32;
+            let r = glass::disc_at(ui, ("level", i), Pos2::new(cx, cy), 54.0, icon, t(&app.tr, LEVEL_NAMES[li]), anc == *id);
+            if r.clicked() {
+                app.send(Cmd::Anc(if anc == *id { types::OFF.into() } else { id.to_string() }));
+                app.levels_open = false;
+            }
+        }
+        return;
+    }
+
+    // (mode id, icon, label)
+    let mut items: Vec<(String, &'static str, String)> = vec![];
+    if modes.supports(types::OFF) { items.push((types::OFF.into(), icons::MODE_OFF, t(&app.tr, "anc_seg_off").into())); }
+    if !levels.is_empty() {
+        let (icon, li) = level_info(if is_level { &anc } else { "" });
+        let mut label = t(&app.tr, "anc_seg_anc").to_string();
+        if is_level {
+            if let Some(c) = t(&app.tr, LEVEL_NAMES[li]).chars().next() { label = format!("{label} {}", c.to_uppercase()); }
+        }
+        items.push(("ANC".into(), icon, label));
+    }
+    if modes.supports(types::ADAPTIVE) { items.push((types::ADAPTIVE.into(), icons::MODE_ADAPTIVE, t(&app.tr, "anc_seg_adapt").into())); }
+    if modes.supports(types::TRANSPARENCY) { items.push((types::TRANSPARENCY.into(), icons::MODE_TRANSPARENCY, t(&app.tr, "anc_seg_trans").into())); }
+    let n = items.len().max(1);
+    for (i, (id, icon, label)) in items.iter().enumerate() {
+        let cx = rect.left() + rect.width() * (i as f32 + 0.5) / n as f32;
+        let selected = if id == "ANC" { is_level } else { anc == *id };
+        let r = glass::disc_at(ui, ("mode", i), Pos2::new(cx, cy), 54.0, icon, label, selected && on);
+        if r.clicked() && on {
+            if id == "ANC" {
+                if levels.len() > 1 { app.levels_open = true; }
+                else if let Some(l) = levels.first() { app.send(Cmd::Anc(l.to_string())); }
+            } else {
+                app.send(Cmd::Anc(id.clone()));
+            }
+        }
+    }
+}
