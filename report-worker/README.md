@@ -23,7 +23,7 @@ npx wrangler deploy
 ## Read the reports
 
 - In a browser: `https://quickbuds-report.<subdomain>.workers.dev/?key=<READ_KEY>`
-- For an agent: add `&format=json`.
+- For a script: add `&format=json`.
 - Only newer reports: `&after=<id>`. More reports: `&limit=100`.
 
 The key is the only access control. Keep the link private.

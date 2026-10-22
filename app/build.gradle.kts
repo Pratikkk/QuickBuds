@@ -1,6 +1,6 @@
 import java.util.Properties
 
-// Plain desktop Gradle — see CLAUDE.md.
+// Plain desktop Gradle — see docs/CONTRIBUTING.md.
 //
 // This was a CodeAssist project up to v1.1.0 (built from app/module.toml, which
 // is now retired from the repo). From here the build is ordinary Gradle.

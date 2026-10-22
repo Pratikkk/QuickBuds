@@ -1138,7 +1138,7 @@ mod tests {
         assert_eq!(find_model(Some("065414"), Some("My buds")).unwrap()["name"], "OnePlus Buds 4");
         assert_eq!(find_model(Some("060C12"), Some("OPPO Enco Buds2")).unwrap()["id"], "064810");
         assert_eq!(find_model(None, Some("OnePlus Buds 4")).unwrap()["id"], "065414");
-        // Adaptive's SET bit is 11, `01 01 00 08` (CLAUDE.md); Off is reported as bit 3, Off's child.
+        // Adaptive's SET bit is 11, `01 01 00 08`; Off is reported as bit 3, Off's child.
         assert_eq!(anc.bit(OFF), Some(0));
         assert_eq!(anc_payload(anc.bit(ADAPTIVE).unwrap()), [1, 1, 0x00, 0x08]);
         assert_eq!(anc.mode_for_raw(1 << 3, None).as_deref(), Some(OFF));

@@ -1,4 +1,4 @@
-// Plain desktop Gradle — see CLAUDE.md.
+// Plain desktop Gradle — see docs/CONTRIBUTING.md.
 
 pluginManagement {
     repositories {
