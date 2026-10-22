@@ -667,8 +667,8 @@ the active record; the phone keeps the list. A record: 4-byte id (big-endian, ch
 | Read active record | `0x0115` → `00 03 0C <12 values> <id> <name ASCII>`; `0x011E` → `00 03 A8 00 <168 scan> <id>` |
 | Ear scan | `0x040D 04 01 <id>` start, `04 00 <id>` stop; result pushed ~8 s later: `0E 03 A8 00 <168> <id>` |
 | Hearing test | `0x040D 02 01` start, `02 00` stop |
-| Tone | `0x040E 03 01 <value>`; `0x040E 04` stops it, sent before each new level |
-| Apply | `0x040E 03 0C <12 values> <id> <name>` (name = date, "2026/09/29 01:53"), `0x0411 01 01 01 00 0B`, `0x0415 03 A8 00 <scan> <id>`, then `0x0403 0B 01` |
+| Tone | `0x040E 03 01 <side> <freq> <value>`; `0x040E 04` stops it, sent before each new level |
+| Apply | `0x0411 01 01 01 00 <desc>` (when the record has a description id; `0B` in the capture), `0x040E 03 0C <12 values> <id> <name>` (name = date, "2026/09/29 01:53"), `0x0415 03 A8 00 <scan> <id>` (when there is a scan), then `0x0403 0B 01` |
 | Clear | `0x040E 02` + `0x0415 02`; after the test `0x040E 01 00 00000000` + `0x0415 01 00 00 00000000` |
 | Status push | `08 <2 test / 4 scan> <s>`: 1/3 audio playing, 2/4 resumed, 5 a bud out, 6 back in, 7 timed out |
 | Filters | `0x0116 0C <12 values> <id>` → `00 <id> 04 <count LE> <packet> <type> <floats>`; `0x011F A8 00 <scan> <id>` → `00 <id> 04 <rate LE 44100> <count LE> <packet> <floats>`. Floats LE, left ear then right, biquads `a0 a1 a2 b0 b1 b2` (60 = 5 per ear, 72 = 6) |
@@ -826,6 +826,11 @@ commands exist for features that need the vendor's servers or account, so the ap
 `0x0425` AI summary type, `0x0426` AI prompt sound, `0x0428` AI translation state, `0x041C` account key
 (`01 01 <len> <key>` binds, `02` clears), `0x0410` and `0x0417` tone and zen-mode file checks, and the
 `0x03xx` firmware upgrade. Push `F9` belongs to the same set.
+Also not built, by decision: the camera state and shutter (`0x040F`, `0x0501`, `0x0502`, feature `0D`), the spine-health range `0x0421`, the multi-conversation
+switch `0x042E` `[GUESS]`, the LE Audio action `0x0424`, the voice-wakeup stream (push `10`), and the zen-mode state (push `0A`).
+Commands that share a bitmap bit with these and that no QuickBuds feature reads (queries `0x0117`, `0x0125`-`0x0127`, `0x0129`, `0x012E`, `0x0135`, `0x0136`;
+writes `0x0408`, `0x0414`, `0x0419`, `0x041D`, `0x041F`, `0x042B`, `0x042C`, `0x0430`, `0x0432`-`0x0435`) have layouts and meanings that are `[GUESS]`.
+QuickBuds never sends them.
 
 ---
 
