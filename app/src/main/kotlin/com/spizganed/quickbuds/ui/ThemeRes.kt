@@ -471,6 +471,8 @@ object ThemeRes {
         if (nothing(context)) return DotArt.Box(context, fill ?: p.card, p.outline, radiusDp, topOnly, solid, base)
         // Glass: a translucent surface with a light edge; a sheet is nearly opaque, or its content would show through.
         if (p.glass) return shape(context, if (topOnly) 0xF21E1C4A.toInt() else if (fill == null || fill == p.card) p.container else fill, p.outline, radiusDp).apply {
+            // A sheen from the top-left, as light on glass.
+            if (!topOnly && (fill == null || fill == p.card)) { orientation = GradientDrawable.Orientation.TL_BR; colors = intArrayOf(0x3DFFFFFF, 0x14FFFFFF) }
             if (topOnly) { val r = dp(context, radiusDp).toFloat(); cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f) }
         }
         // Material: a tonal surface, no outline.

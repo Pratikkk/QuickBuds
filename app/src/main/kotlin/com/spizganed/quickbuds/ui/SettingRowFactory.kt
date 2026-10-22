@@ -192,8 +192,10 @@ object SettingRowFactory {
                 val dp = { v: Float -> ThemeRes.dp(context, v) }
                 val checkedState = intArrayOf(android.R.attr.state_checked)
                 trackDrawable = android.graphics.drawable.StateListDrawable().apply {
-                    addState(checkedState, ThemeRes.shape(context, p.accent, null, ThemeRes.FULL).apply { setSize(dp(52f), dp(32f)) })
-                    addState(intArrayOf(), ThemeRes.shape(context, p.container, p.textSecondary, ThemeRes.FULL, 2f).apply { setSize(dp(52f), dp(32f)) })
+                    // Glass: a tinted track and a white thumb that keeps its size, as the system's own glass switch.
+                    addState(checkedState, ThemeRes.shape(context, if (p.glass) Palette.blend(p.accent, 0xFF14123A.toInt(), 0.35f) else p.accent, null, ThemeRes.FULL).apply { setSize(dp(52f), dp(32f)) })
+                    addState(intArrayOf(), (if (p.glass) ThemeRes.shape(context, 0x4D0A0A28, p.outline, ThemeRes.FULL, 1f)
+                        else ThemeRes.shape(context, p.container, p.textSecondary, ThemeRes.FULL, 2f)).apply { setSize(dp(52f), dp(32f)) })
                 }
                 // A plain disc with no padding: Switch shifts a thumb outward by its padding (an inset
                 // drawable's knob passed the track's end). The box is half the track wide, as Switch makes
@@ -211,8 +213,8 @@ object SettingRowFactory {
                     override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
                 }
                 thumbDrawable = android.graphics.drawable.StateListDrawable().apply {
-                    addState(checkedState, knob(p.onAccent, 24f, atEnd = true))
-                    addState(intArrayOf(), knob(p.textSecondary, 16f, atEnd = false))
+                    addState(checkedState, knob(if (p.glass) android.graphics.Color.WHITE else p.onAccent, if (p.glass) 26f else 24f, atEnd = true))
+                    addState(intArrayOf(), knob(if (p.glass) android.graphics.Color.WHITE else p.textSecondary, if (p.glass) 26f else 16f, atEnd = false))
                 }
                 thumbTintList = null
                 trackTintList = null
