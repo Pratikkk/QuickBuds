@@ -19,8 +19,8 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
     the state back now. Retest on a T310.
   - realme Buds T500 Pro (report #21): the buds do not answer the `0x040E` tones of the hearing test.
     Needs the realme Link command.
-  - realme Buds Air8 (report #20): no known command for announcement and tap sounds. The buds list
-    `0x0131` and `0x0132`; nothing reads them yet.
+  - realme Buds Air8 (report #20): no known command for announcement and tap sounds. `0x0131` and `0x0132`
+    belong to the device manager, not to these sounds. Needs the realme Link command.
 - **Glass style as a fourth style, on every platform.** Parked. Source: the fork
   [ayush04-op/QuickBuds-Glass](https://github.com/ayush04-op/QuickBuds-Glass) (GPL-3.0). Keep its credit.
   Build it after the desktop Material style, on the same style choice.
