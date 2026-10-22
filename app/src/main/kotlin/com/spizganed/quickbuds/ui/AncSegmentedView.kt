@@ -86,7 +86,7 @@ class AncSegmentedView(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         // Nothing: taller, for the bigger unscaled dot icons.
-        if (material) { setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), dp(if (icons.isEmpty()) 44f else 72f).toInt()); return }
+        if (material) { setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), dp(if (icons.isEmpty()) 44f else if (glass) 80f else 72f).toInt()); return }
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), dp(if (icons.isEmpty()) 48f else if (dots.isNotEmpty()) 72f else 62f).toInt())
     }
 
@@ -98,6 +98,39 @@ class AncSegmentedView(
      * every option keeps one shape. The fill fades between options instead of sliding.
      */
     private val material = ThemeRes.material(context)
+
+    /** Glass: the noise control is one glass bar; the selected mode is a brighter glass disc inside it. */
+    private val glass = p.glass && !ThemeRes.nothing(context) && iconRes.isNotEmpty()
+    private val glassBar = ThemeRes.glassSurface(context, 30f)
+    private val glassDisc = ThemeRes.glassSurface(context, 26f, selected = true)
+
+    private fun drawGlass(canvas: Canvas) {
+        val n = labels.size
+        glassBar.setBounds(0, 0, width, height)
+        glassBar.draw(canvas)
+        val pad = dp(6f)
+        val segW = (width - pad * 2) / n
+        val r = dp(26f)
+        textPaint.getTextBounds("H", 0, 1, capBounds)
+        for (i in 0 until n) {
+            val on = if (pos < 0f) 0f else (1f - kotlin.math.abs(pos - i)).coerceIn(0f, 1f)
+            val cx = pad + segW * i + segW / 2
+            val cy = pad + r
+            if (on > 0f) {
+                glassDisc.setBounds((cx - r).toInt(), (cy - r).toInt(), (cx + r).toInt(), (cy + r).toInt())
+                glassDisc.alpha = (on * 255).toInt()
+                glassDisc.draw(canvas)
+            }
+            icons.getOrNull(i)?.run {
+                setTint(Palette.blend(p.textSecondary, p.text, on))
+                val s = dp(12f).toInt()
+                setBounds((cx - s).toInt(), (cy - s).toInt(), (cx + s).toInt(), (cy + s).toInt())
+                draw(canvas)
+            }
+            textPaint.color = Palette.blend(p.textSecondary, p.text, on)
+            canvas.drawText(labels[i], cx, cy + r + dp(6f) + capBounds.height(), textPaint)
+        }
+    }
 
     private fun drawMaterial(canvas: Canvas) {
         val n = labels.size
@@ -175,6 +208,7 @@ class AncSegmentedView(
     }
 
     override fun onDraw(canvas: Canvas) {
+        if (glass) { drawGlass(canvas); return }
         if (material) { drawMaterial(canvas); return }
         val h = height.toFloat()
         if (nothing) DotArt.draw(context, canvas, width, height) { track(it) } else track(canvas)

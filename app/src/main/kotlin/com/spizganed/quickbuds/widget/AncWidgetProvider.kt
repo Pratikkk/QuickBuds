@@ -298,8 +298,9 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         /** Widget [id]'s box; Material without [WidgetSettings.background]: none, the content on the wallpaper. */
         private fun boxBg(c: Context, v: RemoteViews, p: Palette, id: Int) {
             if (!WidgetSettings.background(c, id)) return v.setImageViewResource(R.id.w_bg, android.R.color.transparent)
-            v.setImageViewResource(R.id.w_bg, bgRes(c))
-            v.setInt(R.id.w_bg, "setColorFilter", boxColor(p))
+            // Glass: its own lit, translucent pane with a rim; the rest of the style tints the plain box.
+            v.setImageViewResource(R.id.w_bg, if (p.glass) R.drawable.widget_bg_glass else bgRes(c))
+            v.setInt(R.id.w_bg, "setColorFilter", if (p.glass) android.graphics.Color.TRANSPARENT else boxColor(p))
         }
 
         /** A battery panel or the case row's panel. Material draws none (one background). */

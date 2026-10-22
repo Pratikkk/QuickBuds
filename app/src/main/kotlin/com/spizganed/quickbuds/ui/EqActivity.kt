@@ -407,7 +407,6 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = ThemeRes.sheet(context)
             setPadding(dp(8f), dp(14f), dp(8f), dp(18f))
         }
 
@@ -477,6 +476,7 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         // Same window as BottomSheetDialog, so the two sheets look like one family.
         d.window?.let { w ->
             w.setBackgroundDrawable(ColorDrawable(0x00000000))
+            ThemeRes.sheetWindow(this, w, root)
             w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             w.setDimAmount(0.45f)
             w.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)

@@ -117,12 +117,13 @@ object ThemeRes {
     }
 
     /**
-     * Glass: always dark text on a deep gradient, so a light preset is not used; the surfaces are translucent whites
-     * ([Palette.container]); the accent stays the preset's (or the wallpaper's).
+     * Glass: white text on a dark window, so a light preset gives way to black. The content layer keeps the Material
+     * surfaces ([Palette.container]); glass is only for the functional layer ([glassSurface]). The accent stays the
+     * preset's (or the wallpaper's).
      */
     private fun glassify(p: Palette) = p.copy(
-        glass = true, background = Color.TRANSPARENT, card = Palette.GLASS_FILL, text = Color.WHITE,
-        textSecondary = 0xB8FFFFFF.toInt(), outline = 0x40FFFFFF
+        glass = true, background = Color.TRANSPARENT, card = if (p.isLight) Color.BLACK else p.card, text = Color.WHITE,
+        textSecondary = 0xB8FFFFFF.toInt(), outline = if (p.isLight) 0x33FFFFFF else p.outline
     )
 
     /** The window behind the glass: a deep base with soft colour blobs, tinted by the accent. */
@@ -383,12 +384,6 @@ object ThemeRes {
         private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = fill }
         private val path = android.graphics.Path()
         private val box = android.graphics.RectF()
-        // Glass: a light edge round each tile.
-        private val edge = palette(context).takeIf { it.glass }?.let { p ->
-            android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-                style = android.graphics.Paint.Style.STROKE; strokeWidth = dp(context, 1f).toFloat(); color = p.outline
-            }
-        }
 
         override fun draw(canvas: android.graphics.Canvas) {
             val group = callback as? android.view.ViewGroup ?: return
@@ -416,7 +411,6 @@ object ThemeRes {
                 path.reset()
                 path.addRoundRect(box, floatArrayOf(rt, rt, rt, rt, rb, rb, rb, rb), android.graphics.Path.Direction.CW)
                 canvas.drawPath(path, paint)
-                edge?.let { canvas.drawPath(path, it) }
             }
         }
 
@@ -475,15 +469,11 @@ object ThemeRes {
         }
     }
 
-    fun card(context: Context, radiusDp: Float = 24f, fill: Int? = null, solid: Boolean = false, topOnly: Boolean = false, base: Int? = null): Drawable {
+    fun card(context: Context, radiusDp: Float = 24f, fill: Int? = null, solid: Boolean = false, topOnly: Boolean = false, base: Int? = null, glassy: Boolean = false): Drawable {
         val p = palette(context)
         if (nothing(context)) return DotArt.Box(context, fill ?: p.card, p.outline, radiusDp, topOnly, solid, base)
-        // Glass: a translucent surface with a light edge; a sheet is nearly opaque, or its content would show through.
-        if (p.glass) return shape(context, if (topOnly) 0xF21E1C4A.toInt() else if (fill == null || fill == p.card) p.container else fill, p.outline, radiusDp).apply {
-            // A sheen from the top-left, as light on glass.
-            if (!topOnly && (fill == null || fill == p.card)) { orientation = GradientDrawable.Orientation.TL_BR; colors = intArrayOf(0x3DFFFFFF, 0x14FFFFFF) }
-            if (topOnly) { val r = dp(context, radiusDp).toFloat(); cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f) }
-        }
+        // Glass is for the functional layer only (header buttons, sheets); the content layer is Material.
+        if (p.glass && (glassy || topOnly)) return glassSurface(context, radiusDp, topOnly = topOnly)
         // Material: a tonal surface, no outline.
         if (material(context)) return shape(context, if (fill == null || fill == p.card) p.container else fill, null, radiusDp).apply {
             if (topOnly) { val r = dp(context, radiusDp).toFloat(); cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f) }
@@ -493,8 +483,43 @@ object ThemeRes {
         }
     }
 
+    /** True when the system asks for more contrast: glass gets a stronger rim and a more opaque fill. */
+    fun highContrast(context: Context): Boolean = try {
+        android.provider.Settings.Secure.getInt(context.contentResolver, "high_text_contrast_enabled", 0) == 1
+    } catch (_: Exception) { false }
+
+    /** True when the system removes animations: glass drops the press effect. */
+    fun reduceMotion(context: Context): Boolean = try {
+        android.provider.Settings.Global.getFloat(context.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    } catch (_: Exception) { false }
+
+    /**
+     * Glass, the functional layer: a translucent white surface lit from the top, a light rim, no colour of its own.
+     * A sheet is more opaque and inset from the screen edge, as a floating pane; with [blur] it lets the blur of the
+     * window behind it show. [selected] is the brighter glass.
+     */
+    fun glassSurface(context: Context, radiusDp: Float, selected: Boolean = false, topOnly: Boolean = false, blur: Boolean = false): GradientDrawable {
+        val contrast = highContrast(context)
+        val r = dp(context, radiusDp).toFloat()
+        return GradientDrawable().apply {
+            if (topOnly) {
+                // The sheet: the same near-black for the content layer behind it, lit at the top.
+                val base = Palette.withAlpha(if (glassGradient(context)) 0xFF1E1C4A.toInt() else 0xFF181818.toInt(), if (blur && !contrast) 0.72f else 0.95f)
+                orientation = GradientDrawable.Orientation.TOP_BOTTOM
+                colors = intArrayOf(Palette.blend(base, Color.WHITE, 0.10f), base)
+                cornerRadius = r
+            } else {
+                orientation = GradientDrawable.Orientation.TOP_BOTTOM
+                val lo = if (selected) 0x47FFFFFF else Palette.GLASS_FILL
+                colors = intArrayOf(Palette.blend(lo, 0x40FFFFFF, 0.5f), Palette.blend(lo, 0, 0.35f))
+                cornerRadius = r
+            }
+            setStroke(dp(context, if (contrast) 2f else 1f), if (contrast) 0xCCFFFFFF.toInt() else 0x4DFFFFFF)
+        }
+    }
+
     /** Icon button / framed control: `card` fill, `outline` stroke, 14dp radius (SPEC section 2). */
-    fun iconButton(context: Context, radiusDp: Float = 14f): Drawable = card(context, if (material(context)) FULL else radiusDp)
+    fun iconButton(context: Context, radiusDp: Float = 14f): Drawable = card(context, if (material(context)) FULL else radiusDp, glassy = true)
 
     /** Material style: a list's outer and inner corners, and a selected list item's corners (M3 expressive list). */
     const val LIST_OUTER = 16f
@@ -569,6 +594,24 @@ object ThemeRes {
         // Material: an M3 filter chip, 8dp corners.
         if (material(context)) return if (active) shape(context, p.accent, null, 8f) else shape(context, p.container, p.outline, 8f)
         return if (active) shape(context, p.accent, null, 10f) else shape(context, p.card, p.outline, 10f)
+    }
+
+    /** Window blur behind a glass sheet: Android 12 and newer, when the system allows it. */
+    fun windowBlur(activity: Activity): Boolean =
+        Build.VERSION.SDK_INT >= 31 && !highContrast(activity) && activity.windowManager.isCrossWindowBlurEnabled
+
+    /**
+     * The window of a bottom sheet. Glass: an inset, rounded pane (the sheet is the window's background, so the blur takes
+     * its shape) that blurs what is behind it. Other styles: the sheet drawable on [root].
+     */
+    fun sheetWindow(activity: Activity, w: android.view.Window, root: View) {
+        if (!palette(activity).glass || nothing(activity)) { root.background = sheet(activity); return }
+        val inset = dp(activity, 10f)
+        val blur = windowBlur(activity)
+        root.background = null
+        root.setPadding(root.paddingLeft + inset, root.paddingTop, root.paddingRight + inset, root.paddingBottom + inset)
+        w.setBackgroundDrawable(android.graphics.drawable.InsetDrawable(glassSurface(activity, 26f, topOnly = true, blur = blur), inset, 0, inset, inset))
+        if (blur) w.setBackgroundBlurRadius(dp(activity, 28f))
     }
 
     /** Bottom sheet window: rounded top corners only. */

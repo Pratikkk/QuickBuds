@@ -27,7 +27,7 @@ data class Palette(
     val text: Int,
     val textSecondary: Int,
     val outline: Int,
-    /** Glass style: the surfaces are translucent whites over the gradient window ([ThemeRes.glassify]). */
+    /** Glass style: the window is transparent, the content layer uses the Material surfaces, and only the functional layer is glass ([ThemeRes.glassSurface]). */
     val glass: Boolean = false
 ) {
     val isLight get() = luminance(background) > 0.5
@@ -52,7 +52,7 @@ data class Palette(
      * on pure red (#FF0000: black 5.3, white 4.0), which reads as a mistake.
      */
     val onAccent: Int get() {
-        if (glass) return 0xFF14123A.toInt()   // the background is transparent there: the deep base of the gradient
+        if (glass) return Color.BLACK   // the background is transparent there
         val (light, dark) = if (luminance(text) > luminance(background)) text to background else background to text
         return if (contrast(light, accent) >= 3.0 || contrast(light, accent) >= contrast(dark, accent)) light else dark
     }
@@ -77,10 +77,10 @@ data class Palette(
      * Material style: a card's tonal surface (M3 surface container), the card tinted by the accent.
      * A black card (OLED Black) is also lifted toward the text, or the cards vanish into the page.
      */
-    val container get() = if (glass) GLASS_FILL else blend(blend(card, text, if (!isLight && luminance(card) < 0.005) 0.09f else 0f), accent, if (isLight) 0.05f else 0.08f)
+    val container get() = blend(blend(card, text, if (!isLight && luminance(card) < 0.005) 0.09f else 0f), accent, if (isLight) 0.05f else 0.08f)
 
     /** Material style: a selected element's fill (M3 secondary container); its label is [text]. */
-    val tonal get() = if (glass) GLASS_SELECTED else blend(container, accent, if (isLight) 0.18f else 0.28f)
+    val tonal get() = blend(container, accent, if (isLight) 0.18f else 0.28f)
 
     fun toJson(): JSONObject = JSONObject()
         .put("id", id).put("name", name)
@@ -88,7 +88,7 @@ data class Palette(
         .put("text", text).put("textSecondary", textSecondary).put("outline", outline)
 
     companion object {
-        /** Glass: a surface (white at 14%) and a selected surface (white at 28%). */
+        /** Glass material of the functional layer: a surface (white at 14%) and a selected surface (white at 28%). */
         const val GLASS_FILL = 0x24FFFFFF
         const val GLASS_SELECTED = 0x47FFFFFF
         fun fromJson(o: JSONObject) = Palette(

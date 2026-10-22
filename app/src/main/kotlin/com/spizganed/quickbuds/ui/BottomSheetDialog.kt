@@ -145,7 +145,6 @@ class BottomSheetDialog(private val activity: Activity) {
 
         val root = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
-            background = ThemeRes.sheet(activity)
             setPadding(dp(6f), dp(14f), dp(6f), dp(14f))
         }
 
@@ -260,6 +259,7 @@ class BottomSheetDialog(private val activity: Activity) {
 
         d.window?.let { w ->
             w.setBackgroundDrawable(ColorDrawable(0x00000000))
+            ThemeRes.sheetWindow(activity, w, root)
             w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             // A light dim: the sheet is a chooser over content the user is still
             // looking at (the ANC circles, the gesture list), not a modal that
