@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import com.spizganed.quickbuds.R
+import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.widget.QuickBudsWidget
 import kotlin.math.min
 
@@ -122,6 +123,7 @@ class BudsStatusView(context: Context) : View(context) {
             }
         }
         // The wear state is read out too: the Nothing style does not draw it.
+        noWearLabel = !ModelCatalog.wearSensorSeen(context)
         val wear = { st: Int -> if (connected) wearLabel(st)?.let { " $it" } ?: "" else "" }
         contentDescription = "${names[0]} ${pctText(left)}${wear(leftStatus)}, ${names[1]} ${pctText(case)}, ${names[2]} ${pctText(right)}${wear(rightStatus)}"
         invalidate()
@@ -136,7 +138,10 @@ class BudsStatusView(context: Context) : View(context) {
 
     private fun pctText(level: Int) = if (level < 0 || !connected) "—" else if (nothing) "$level" else "$level%"
 
-    private fun wearLabel(status: Int) = when (status) {
+    /** Before the model's first "in ear" the "in ear" shown may be a stand-in: no label. */
+    private var noWearLabel = false
+
+    private fun wearLabel(status: Int) = if (noWearLabel && status == 3) null else when (status) {
         3, 7 -> context.getString(R.string.status_in_ear)
         4, 0 -> context.getString(R.string.status_in_case)
         -1 -> null

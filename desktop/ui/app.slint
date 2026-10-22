@@ -337,6 +337,8 @@ export global Buds {
     in property <bool> case-charging;
     // 0 unknown, 1 out of ear, 2 in ear, 3 in case
     in property <int> left-wear;
+    // No "in ear" seen yet from this model: it may have no sensor, so "in ear" shown is a stand-in and has no label.
+    in property <bool> no-wear;
     in property <int> right-wear;
     in property <string> anc;
     // Counts ANC writes the buds refused with no bud in an ear.
@@ -489,7 +491,7 @@ component Batteries inherits HorizontalLayout {
     in property <bool> labels: true;
     alignment: space-around;
     pure function wear-label(wear: int, side: string) -> string {
-        if wear == 2 { return Tr.in-ear; }
+        if wear == 2 { return Buds.no-wear ? side : Tr.in-ear; }
         if wear == 3 { return Tr.in-case; }
         if wear == 1 { return Tr.out-of-ear; }
         return side;

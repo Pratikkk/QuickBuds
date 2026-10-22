@@ -18,6 +18,7 @@ object ModelCatalog {
     const val KEY_DEVICE_NAME = "budsDeviceName"
     /** A model id picked by hand in the model list; unset = detected. */
     const val KEY_MANUAL = "budsModelManual"
+    private const val KEY_WEAR_SEEN = "wearSensorSeen_"
 
     @Volatile private var cache: List<Model>? = null
 
@@ -60,6 +61,20 @@ object ModelCatalog {
     /** The manual pick if there is one, else [detected]. */
     fun current(context: Context): Model? =
         manual(context)?.let { id -> all(context).firstOrNull { it.id == id } } ?: detected(context)
+
+    /**
+     * True once this model's buds have reported "in ear". Some models have no in-ear sensor and always report "out"
+     * (report #46); until the first "in ear" the app shows "out" as in the ear, with no wear label.
+     */
+    fun wearSensorSeen(context: Context): Boolean {
+        val id = current(context)?.id ?: return true
+        return prefs(context).getBoolean(KEY_WEAR_SEEN + id, false)
+    }
+
+    fun markWearSensorSeen(context: Context) {
+        val id = current(context)?.id ?: return
+        prefs(context).edit().putBoolean(KEY_WEAR_SEEN + id, true).apply()
+    }
 
     fun manual(context: Context): String? = prefs(context).getString(KEY_MANUAL, null)
 

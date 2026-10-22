@@ -1,5 +1,6 @@
 package com.spizganed.quickbuds.bluetooth
 
+import com.spizganed.quickbuds.protocol.ModelCatalog
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -363,7 +364,13 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         AncWidgetProvider.refreshAll(this)
     }
 
-    override fun onWearState(left: Int, right: Int, caseSt: Int) {
+    override fun onWearState(leftRaw: Int, rightRaw: Int, caseSt: Int) {
+        val firstWorn = (isWorn(leftRaw) || isWorn(rightRaw)) && !ModelCatalog.wearSensorSeen(this)
+        if (firstWorn) ModelCatalog.markWearSensorSeen(this)
+        // No "in ear" seen yet: "out" may only mean the model has no sensor, so it counts as in the ear (the fit test and the like need that).
+        val blind = !ModelCatalog.wearSensorSeen(this)
+        val left = if (blind && (leftRaw == 1 || leftRaw == 5)) 3 else leftRaw
+        val right = if (blind && (rightRaw == 1 || rightRaw == 5)) 3 else rightRaw
         val st = WidgetStateStore.read(this)
         val wasWorn = isWorn(st.leftStatus) || isWorn(st.rightStatus)
         var changed = false
@@ -377,7 +384,7 @@ class BudsService : Service(), BudsConnectionManager.Listener {
             st.rightInBox = (right == 4)
             changed = true
         }
-        if (changed) {
+        if (changed || firstWorn) {
             statusLog("[SVC] Wear state: L=$left R=$right case=$caseSt")
             WidgetStateStore.write(this, st)
             AncWidgetProvider.refreshAll(this)

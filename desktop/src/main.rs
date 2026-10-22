@@ -146,6 +146,18 @@ fn portal_accent() -> Option<slint::Color> {
 #[cfg(windows)]
 fn portal_accent() -> Option<slint::Color> { None }
 
+/// True once this model's buds have reported "in ear" (kept in the settings). A model with no in-ear sensor always
+/// reports "out" (report #46); until the first "in ear" the window shows "out" as in the ear, with no label.
+fn wear_sensor_seen(s: &session::Snapshot) -> bool {
+    let Some(id) = s.model.and_then(|m| m["id"].as_str()) else { return true };
+    let mut seen = load_settings()["wear_seen"].clone();
+    if seen[id] == true { return true; }
+    if !s.wear.iter().any(|w| matches!(w, 3 | 7)) { return false; }
+    seen[id] = true.into();
+    save_setting("wear_seen", seen);
+    true
+}
+
 fn settings_path() -> Option<std::path::PathBuf> {
     #[cfg(windows)]
     let dir = std::env::var_os("APPDATA").map(|d| std::path::PathBuf::from(d).join("QuickBuds"));
@@ -661,7 +673,10 @@ impl App {
             b.set_right_charging(chg(1));
             b.set_case_charging(chg(2));
             // §8: 3/7 in ear, 4 in case, 1/5 out
-            let wear = |i: usize| match s.wear[i] { 3 | 7 => 2, 4 => 3, 1 | 5 => 1, _ => 0 };
+            let blind = !wear_sensor_seen(&s);
+            // Without an "in ear" seen, "out" may only mean the model has no sensor: shown as in the ear.
+            let wear = |i: usize| match s.wear[i] { 3 | 7 => 2, 4 => 3, 1 | 5 => if blind { 2 } else { 1 }, _ => 0 };
+            b.set_no_wear(blind);
             b.set_left_wear(wear(0));
             b.set_right_wear(wear(1));
             b.set_anc(anc.as_str().into());

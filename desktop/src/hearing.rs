@@ -136,7 +136,8 @@ fn show(a: &App, title: &str, message: Option<&str>, button: Button, slider: boo
 
 fn start(a: &App) {
     let w = a.snap.wear;
-    if ![w[0], w[1]].iter().all(|x| *x == 3 || *x == 7) {
+    let blind = !crate::wear_sensor_seen(&a.snap);
+    if ![w[0], w[1]].iter().all(|x| matches!(x, 3 | 7) || blind && matches!(x, 1 | 5)) {
         a.main.global::<Hearing>().set_test_title(t(&a.tr, "fit_insert").into());
         return;
     }

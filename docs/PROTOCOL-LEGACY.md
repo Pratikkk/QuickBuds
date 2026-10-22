@@ -547,6 +547,7 @@ HeyMelody calls "safe remind". Both apps clear bit 3, so only the codes below re
 | `3`, `7` | **in ear** (lid closed / open) |
 | `4` | **in case**, lid open |
 
+- **No in-ear sensor** `[CAPTURE]` (report #46, and the logs of the T200, T200x and Nord Buds 3r): these models answer `1` (out) for a bud in every state, and `0` or `4` when it sits in the case. The vendor's `wearDetection` flag does not tell: the Bullets Wireless Z3 and the Buds Ace lack it and report `3`. The app therefore shows `1` and `5` as in the ear, with no wear label, until the model's buds report `3` or `7` once; it remembers that per model.
 - Query replies sometimes prepend a status byte; `WearingStatusParser` tries offsets 0 and 1
   `[CAPTURE]`.
 - **Lid close** `[CAPTURE]`: ~1 s before the socket drops, pushes fall to 0, ending all-zero
@@ -604,7 +605,7 @@ speechPerception, `34` meetingAssistant, `35` longPressVolume, `37` swiftPair, `
 | `11` | Dual connection | see below `[CAPTURE]` |
 | `17` | Power saving | restarts the buds, see below `[CAPTURE]` |
 | `18` | Hi-Res | quality switch, drops the link, see below `[CAPTURE]` |
-| `1A` | Wind noise reduction | realme Link's "anti wind noise" row writes `0x0403 1A <01/00>` `[VENDOR]`; asked in `0x010D` only for models with flag `windMode` (Air7 Pro); no capture `[GUESS]` that every `windMode` model answers |
+| `1A` | Wind noise reduction | realme Link's "anti wind noise" row writes `0x0403 1A <01/00>` `[VENDOR]`; asked in `0x010D` only for models with flag `windMode` (Air7 Pro, T310: its realme Link item list has the wind noise row, and report #46 says the vendor app shows it); no capture `[GUESS]` that every `windMode` model answers |
 | `1B` | Spatial sound | on models without `0x012A` `[CAPTURE]` |
 | `1C` | Smart volume | flag `autoVolume` |
 | `1D` | BassWave | `[CAPTURE]`; realme Link's "dynamic sound mode" row (a switch and three bars) writes the same id `[VENDOR]` |
