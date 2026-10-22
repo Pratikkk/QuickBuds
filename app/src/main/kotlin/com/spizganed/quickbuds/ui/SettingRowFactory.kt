@@ -142,8 +142,6 @@ object SettingRowFactory {
         val context = row.context
         if (!ThemeRes.material(context)) return
         val dp = { v: Float -> ThemeRes.dp(context, v) }
-        // Glass: the control is its own glass bar, no content card behind it.
-        if (ThemeRes.palette(context).glass && !ThemeRes.nothing(context)) { row.background = null; row.setPadding(0, dp(4f), 0, dp(4f)); return }
         row.background = ThemeRes.card(context, ThemeRes.LIST_OUTER)
         row.setPadding(dp(4f), dp(12f), dp(4f), dp(12f))
     }
@@ -194,22 +192,19 @@ object SettingRowFactory {
                 val dp = { v: Float -> ThemeRes.dp(context, v) }
                 val checkedState = intArrayOf(android.R.attr.state_checked)
                 trackDrawable = android.graphics.drawable.StateListDrawable().apply {
-                    addState(checkedState, ThemeRes.shape(context, p.accent, null, ThemeRes.FULL).apply { setSize(dp(52f), dp(32f)) })
-                    addState(intArrayOf(), ThemeRes.shape(context, p.container, p.textSecondary, ThemeRes.FULL, 2f).apply { setSize(dp(52f), dp(32f)) })
+                    // Glass: a tinted track and a white thumb that keeps its size, as the system's own glass switch.
+                    addState(checkedState, ThemeRes.shape(context, if (p.glass) Palette.blend(p.accent, 0xFF14123A.toInt(), 0.35f) else p.accent, null, ThemeRes.FULL).apply { setSize(dp(52f), dp(32f)) })
+                    addState(intArrayOf(), (if (p.glass) ThemeRes.shape(context, 0x4D0A0A28, p.outline, ThemeRes.FULL, 1f)
+                        else ThemeRes.shape(context, p.container, p.textSecondary, ThemeRes.FULL, 2f)).apply { setSize(dp(52f), dp(32f)) })
                 }
                 // A plain disc with no padding: Switch shifts a thumb outward by its padding (an inset
                 // drawable's knob passed the track's end). The box is half the track wide, as Switch makes
                 // itself twice the thumb's width; the disc's centre is 16dp from the track end it sits at.
-                fun knob(color: Int, sizeDp: Float, atEnd: Boolean, glassLook: Boolean = false) = object : android.graphics.drawable.Drawable() {
+                fun knob(color: Int, sizeDp: Float, atEnd: Boolean) = object : android.graphics.drawable.Drawable() {
                     private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
-                    private val rim = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-                        style = android.graphics.Paint.Style.STROKE; strokeWidth = dp(1f).toFloat(); this.color = 0xE6FFFFFF.toInt()
-                    }
-                    override fun draw(c: android.graphics.Canvas) {
-                        val cx = if (atEnd) bounds.right - dp(16f).toFloat() else bounds.left + dp(16f).toFloat()
-                        c.drawCircle(cx, bounds.exactCenterY(), dp(sizeDp) / 2f, paint)
-                        if (glassLook) c.drawCircle(cx, bounds.exactCenterY(), dp(sizeDp) / 2f - rim.strokeWidth / 2, rim)
-                    }
+                    override fun draw(c: android.graphics.Canvas) = c.drawCircle(
+                        if (atEnd) bounds.right - dp(16f).toFloat() else bounds.left + dp(16f).toFloat(),
+                        bounds.exactCenterY(), dp(sizeDp) / 2f, paint)
                     override fun getIntrinsicWidth() = dp(26f)
                     override fun getIntrinsicHeight() = dp(32f)
                     override fun setAlpha(alpha: Int) { paint.alpha = alpha }
@@ -218,14 +213,8 @@ object SettingRowFactory {
                     override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
                 }
                 thumbDrawable = android.graphics.drawable.StateListDrawable().apply {
-                    // Glass: while pressed the thumb grows and turns to glass, as Apple's controls do during interaction.
-                    if (p.glass && !ThemeRes.reduceMotion(context)) {
-                        val pressed = android.R.attr.state_pressed
-                        addState(intArrayOf(pressed, android.R.attr.state_checked), knob(0x99FFFFFF.toInt(), 34f, atEnd = true, glassLook = true))
-                        addState(intArrayOf(pressed), knob(0x66FFFFFF, 34f, atEnd = false, glassLook = true))
-                    }
-                    addState(checkedState, knob(p.onAccent, 24f, atEnd = true))
-                    addState(intArrayOf(), knob(p.textSecondary, 16f, atEnd = false))
+                    addState(checkedState, knob(if (p.glass) android.graphics.Color.WHITE else p.onAccent, if (p.glass) 26f else 24f, atEnd = true))
+                    addState(intArrayOf(), knob(if (p.glass) android.graphics.Color.WHITE else p.textSecondary, if (p.glass) 26f else 16f, atEnd = false))
                 }
                 thumbTintList = null
                 trackTintList = null
