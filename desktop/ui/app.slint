@@ -27,11 +27,11 @@ export global Palette {
     // An outline that stands out a little more: lighter on a dark theme, darker on a light one.
     out property <color> outline-strong: light ? outline.darker(0.15) : outline.brighter(0.3);
 
-    // Wear shade: in ear full, out of ear secondary, in case faint (like the phone's rings).
+    // Wear shade (the phone's `wearTint`): the accent in the ear, darker out of the ear, darkest in the case.
     public pure function wear-tint(wear: int) -> color {
-        if wear == 2 { return text; }
-        if wear == 3 { return text.transparentize(0.83); }
-        return text2;
+        if wear == 2 { return accent; }
+        if wear == 3 { return accent.mix(card, 0.28); }
+        return accent.mix(card, 0.55);
     }
     // The Dot matrix glyph shade (the widget's `nothingTint`): opaque blends, the dots have no alpha.
     public pure function dot-tint(wear: int) -> color {
@@ -506,6 +506,7 @@ component Batteries inherits HorizontalLayout {
     Ring {
         size: root.size; level: Buds.case; charging: Buds.case-charging; label: labels ? Tr.case : ""; slot: 1;
         glyph: Buds.icon-case; glyph-w: root.size * 0.5; glyph-h: root.size * 0.4;
+        tint: Palette.accent;
     }
     Ring {
         size: root.size; level: Buds.right; charging: Buds.right-charging; slot: 2; wear: Buds.right-wear;
@@ -1161,10 +1162,13 @@ component HSlider inherits Rectangle {
         width: max(16px, frac * (parent.width - 12px) + 2px);
         background: Palette.accent;
     }
+    // The handle thins from 4 px to 2 px while it is dragged (the gap stays 2 px on both sides).
     if Dots.material: Rectangle {
-        x: frac * (parent.width - 8px); y: track-y - 13px; width: 8px; height: 26px; border-radius: 4px;
+        property <length> thin: ta.pressed ? 1px : 0px;
+        x: frac * (parent.width - 8px) + thin; y: track-y - 13px; width: 8px - 2 * thin; height: 26px; border-radius: self.width / 2;
         background: Palette.container;
-        Rectangle { x: 2px; width: 4px; border-radius: 2px; background: Palette.accent; }
+        animate x, width { duration: Motion.fast; easing: ease-out; }
+        Rectangle { x: 2px; width: parent.width - 4px; border-radius: self.width / 2; background: Palette.accent; }
     }
     if !Dots.on && !Dots.material: Rectangle {
         x: frac * (parent.width - knob); y: track-y - knob / 2;
@@ -1181,7 +1185,7 @@ component HSlider inherits Rectangle {
     function set-from(x: length) {
         root.value = clamp(round(minimum + (x - knob / 2) / (root.width - knob) * (maximum - minimum)), minimum, maximum);
     }
-    TouchArea {
+    ta := TouchArea {
         enabled: Buds.on;
         mouse-cursor: pointer;
         pointer-event(ev) => {
