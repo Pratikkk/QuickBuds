@@ -246,7 +246,7 @@ mod imp {
 
     fn flag(dev: &PropMap, key: &str) -> bool { prop_cast::<bool>(dev, key).copied().unwrap_or(false) }
 
-    /// "AA:BB:CC:DD:EE:FF" -> 0xAABBCCDDEEFF, the same number Windows uses.
+    /// "01:02:03:04:05:06" -> 0x010203040506, the same number Windows uses.
     fn parse_addr(s: &str) -> Option<u64> {
         let hex: String = s.split(':').collect();
         if hex.len() != 12 { return None; }
@@ -349,9 +349,9 @@ mod imp {
 
         #[test]
         fn address_round_trip() {
-            let a = parse_addr("AA:BB:CC:DD:EE:FF").unwrap();
-            assert_eq!(a, 0xAABBCCDDEEFF);
-            assert_eq!(bdaddr(a), [0x25, 0xC1, 0x92, 0xE8, 0xE6, 0xA8]);
+            let a = parse_addr("01:02:03:04:05:06").unwrap();
+            assert_eq!(a, 0x010203040506);
+            assert_eq!(bdaddr(a), [0x06, 0x05, 0x04, 0x03, 0x02, 0x01]);
         }
 
         /// Needs connected buds: `cargo test live_battery -- --ignored --nocapture`.

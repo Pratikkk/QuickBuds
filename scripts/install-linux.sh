@@ -39,7 +39,7 @@ rm -rf "$work"
 cat > "$bin/quickbuds" <<EOF
 #!/bin/sh
 # Starts QuickBuds. Without FUSE, the AppImage runs extracted.
-if [ -e /dev/fuse ] && command -v fusermount3 >/dev/null 2>&1 || command -v fusermount >/dev/null 2>&1; then
+if [ -e /dev/fuse ] && { command -v fusermount3 || command -v fusermount; } >/dev/null 2>&1; then
   exec "$app/QuickBuds.AppImage" "\$@"
 fi
 APPIMAGE_EXTRACT_AND_RUN=1 exec "$app/QuickBuds.AppImage" "\$@"

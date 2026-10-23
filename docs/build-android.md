@@ -19,4 +19,4 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 Versions: Gradle 9.6.0, AGP 9.4.0, Kotlin 2.4.0, `compileSdk` / `targetSdk` 37, `minSdk` 26. AGP 9
 compiles Kotlin itself. Do not add the `org.jetbrains.kotlin.android` plugin.
 
-The Android app has no unit tests. Run `python3 scripts/check-locales.py`, then test on real buds.
+Run `./gradlew :app:testDebugUnitTest` and `python3 scripts/check-locales.py`, then test on real buds.
