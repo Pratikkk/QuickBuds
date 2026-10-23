@@ -108,7 +108,7 @@ class BudsStatusView(context: Context) : View(context) {
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         // Nothing style: no label line (the glyph's shade shows wear, as on the Nothing widget).
-        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), dp(if (nothing) 127f else 148f).toInt())
+        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), dp(if (nothing) 131f else 152f).toInt())
     }
 
     /** Feed the current store values; rings animate only when a level actually changes. */
@@ -167,7 +167,9 @@ class BudsStatusView(context: Context) : View(context) {
     override fun onDraw(canvas: Canvas) {
         drawn = true
         val ring = ringSize
-        val cy = ring / 2
+        // Top padding keeps the outer glow of the arc inside the view.
+        val top = dp(4f)
+        val cy = top + ring / 2
         val colW = width / 3f
         val scale = ring / dp(104f)
         // Until a bud reports its wear the buds draw dim, so the case does too (it would be the one bright glyph).
@@ -184,7 +186,7 @@ class BudsStatusView(context: Context) : View(context) {
                     s.dots = QuickBudsWidget.dotRing(context, p, level, i, tint, ring.toInt().coerceAtLeast(1))
                     s.dotsKey = key
                 }
-                canvas.drawBitmap(s.dots!!, cx - ring / 2, 0f, null)
+                canvas.drawBitmap(s.dots!!, cx - ring / 2, top, null)
             } else {
                 val r = ring / 2 - trackPaint.strokeWidth / 2
                 arcBox.set(cx - r, cy - r, cx + r, cy + r)
@@ -224,7 +226,7 @@ class BudsStatusView(context: Context) : View(context) {
             }
 
             pctPaint.color = p.text
-            canvas.drawText(pctFor(s), cx, ring + dp(30f), pctPaint)
+            canvas.drawText(pctFor(s), cx, top + ring + dp(30f), pctPaint)
 
             if (nothing) return@forEachIndexed
             val wear = if (i == 1 || !connected) null else wearLabel(s.status)
@@ -237,7 +239,7 @@ class BudsStatusView(context: Context) : View(context) {
             val room = colW - dp(6f)
             val w = labelPaint.measureText(label)
             if (w > room) labelPaint.textSize = dp(13f) * room / w
-            canvas.drawText(label, cx, ring + dp(51f), labelPaint)
+            canvas.drawText(label, cx, top + ring + dp(51f), labelPaint)
         }
     }
 

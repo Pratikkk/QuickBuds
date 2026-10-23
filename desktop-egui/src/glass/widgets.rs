@@ -257,7 +257,7 @@ pub fn divider_at(ui: &Ui, x0: f32, x1: f32, y: f32) {
 
 /// A gradient arc as a mesh: `c0` at the start to `c1` at the end, round caps.
 fn arc(ui: &Ui, center: Pos2, radius: f32, width: f32, frac: f32, c0: Color32, c1: Color32) {
-    let n = (frac * 120.0).ceil().max(2.0) as usize;
+    let n = (frac * 360.0).ceil().max(2.0) as usize;
     let mut mesh = egui::epaint::Mesh::default();
     let lerp = |t: f32| Color32::from_rgba_unmultiplied(
         (c0.r() as f32 + (c1.r() as f32 - c0.r() as f32) * t) as u8,
@@ -269,12 +269,18 @@ fn arc(ui: &Ui, center: Pos2, radius: f32, width: f32, frac: f32, c0: Color32, c
         let ang = -std::f32::consts::FRAC_PI_2 + frac * std::f32::consts::TAU * t;
         let d = Vec2::angled(ang);
         let col = lerp(t);
+        // Four vertices per step: a transparent fringe outside, the arc, a fringe inside. The fringe anti-aliases the edge.
+        let fe = 1.0 / ui.ctx().pixels_per_point();
+        mesh.colored_vertex(center + d * (radius - width / 2.0 - fe), Color32::TRANSPARENT);
         mesh.colored_vertex(center + d * (radius - width / 2.0), col);
         mesh.colored_vertex(center + d * (radius + width / 2.0), col);
+        mesh.colored_vertex(center + d * (radius + width / 2.0 + fe), Color32::TRANSPARENT);
         if i > 0 {
-            let k = (i * 2) as u32;
-            mesh.add_triangle(k - 2, k - 1, k);
-            mesh.add_triangle(k - 1, k + 1, k);
+            let k = (i * 4) as u32;
+            for j in 0..3 {
+                mesh.add_triangle(k - 4 + j, k - 3 + j, k + j);
+                mesh.add_triangle(k - 3 + j, k + 1 + j, k + j);
+            }
         }
     }
     ui.painter().add(Shape::mesh(mesh));

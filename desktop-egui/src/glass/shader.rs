@@ -78,15 +78,19 @@ void main() {
   float edge = 22.0 * u_dpi;
   float f = pow(clamp(1.0 - d / edge, 0.0, 1.0), 2.0);
   vec2 sp = p + n * f * edge * 0.9;
-  // blur: 13 taps over two rings of the captured backdrop
-  vec3 col = back(sp);
+  // blur: 48 taps on a golden-angle spiral, a gaussian weight, the spiral turned per pixel so no pattern shows
   float rad = 16.0 * u_dpi;
-  for (int i = 0; i < 6; i++) {
-    float a = 6.2831853 * float(i) / 6.0;
-    col += back(sp + vec2(cos(a), sin(a)) * rad * 0.5);
-    col += back(sp + vec2(cos(a + 0.5), sin(a + 0.5)) * rad);
+  float turn = 6.2831853 * fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715))));
+  vec3 col = vec3(0.0);
+  float wsum = 0.0;
+  for (int i = 0; i < 48; i++) {
+    float r01 = (float(i) + 0.5) / 48.0;
+    float a = 2.3999632 * float(i) + turn;
+    float w = exp(-2.0 * r01 * r01);
+    col += back(sp + vec2(cos(a), sin(a)) * rad * sqrt(r01)) * w;
+    wsum += w;
   }
-  col /= 13.0;
+  col /= wsum;
   col = mix(vec3(dot(col, vec3(0.299, 0.587, 0.114))), col, 1.8);
   float t = clamp(0.5 * ((p.x - u_rect.x) / u_rect.z + 1.0 - (p.y - u_rect.y) / u_rect.w), 0.0, 1.0);
   // Only a light veil: the black behind a button shows through it.
