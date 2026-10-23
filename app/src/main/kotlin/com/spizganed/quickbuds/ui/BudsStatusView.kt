@@ -201,10 +201,8 @@ class BudsStatusView(context: Context) : View(context) {
                     trackPaint.color = 0x38FFFFFF
                     canvas.drawOval(arcBox, trackPaint)
                     if (s.shown > 0f) {
-                        // A soft halo: two wide strokes, the outer fainter, so it fades instead of ending in an edge.
-                        glowPaint.strokeWidth = dp(17f); glowPaint.color = withA(0x0EFFFFFF, a)
-                        canvas.drawArc(arcBox, -90f, 360f * s.shown, false, glowPaint)
-                        glowPaint.strokeWidth = dp(12f); glowPaint.color = withA(0x1CFFFFFF, a)
+                        // A faint halo just wider than the arc.
+                        glowPaint.strokeWidth = dp(10f); glowPaint.color = withA(0x16FFFFFF, a)
                         canvas.drawArc(arcBox, -90f, 360f * s.shown, false, glowPaint)
                         sweepMatrix.setRotate(-90f, cx, cy)
                         val sweep = android.graphics.SweepGradient(cx, cy, intArrayOf(0xFFF0F3FF.toInt(), 0xFFFFFFFF.toInt(), 0xFFF0F3FF.toInt()), floatArrayOf(0f, 0.5f, 1f))

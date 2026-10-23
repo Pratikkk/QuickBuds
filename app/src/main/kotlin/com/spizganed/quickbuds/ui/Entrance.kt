@@ -13,7 +13,7 @@ import com.spizganed.quickbuds.R
 import java.util.WeakHashMap
 
 /**
- * Glass motion for every screen: the screen rises and fades in, its cards follow one after the other, and a tapped
+ * Glass motion for every screen in every style but the dot style: the screen rises and fades in, its cards follow one after the other, and a tapped
  * row sinks a little under the finger. Other styles keep the platform's. Nothing runs when the system removes animations.
  */
 object Entrance : Application.ActivityLifecycleCallbacks {
@@ -21,7 +21,7 @@ object Entrance : Application.ActivityLifecycleCallbacks {
 
     fun install(app: Application) = app.registerActivityLifecycleCallbacks(this)
 
-    private fun on(a: Activity) = ThemeRes.glass(a) && !ThemeRes.nothing(a) && android.provider.Settings.Global.getFloat(
+    private fun on(a: Activity) = !ThemeRes.nothing(a) && android.provider.Settings.Global.getFloat(
         a.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) != 0f
 
     override fun onActivityCreated(a: Activity, b: Bundle?) {
