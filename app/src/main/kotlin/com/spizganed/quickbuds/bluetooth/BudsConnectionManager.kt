@@ -1648,7 +1648,7 @@ class BudsConnectionManager(private val context: Context) {
         if (prefs.getString(Capabilities.KEY_PRODUCT_ID, null) != id) edit.remove(ModelCatalog.KEY_MANUAL)
         edit.apply()
         val anc = AncModes.of(context)
-        log("PRODUCT ID: $id, model: ${ModelCatalog.current(context)?.name ?: "unknown"}, ANC: " + (listOf(AncModes.OFF, AncModes.TRANSPARENCY, AncModes.ADAPTIVE) +
+        log("PRODUCT ID: $id, model: ${ModelCatalog.current(context)?.name ?: "unknown"} (${if (ModelCatalog.manual(context) != null) "picked by hand" else ModelCatalog.rule(context)}), ANC: " + (listOf(AncModes.OFF, AncModes.TRANSPARENCY, AncModes.ADAPTIVE) +
             AncModes.LEVELS).filter { anc.supports(it) }.joinToString { "$it=${anc.bit(it)}" }.ifEmpty { "none" })
         handler.post { listeners.forEach { it.onCapabilities() } }
     }

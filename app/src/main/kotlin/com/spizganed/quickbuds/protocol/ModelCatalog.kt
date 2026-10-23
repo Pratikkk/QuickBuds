@@ -50,6 +50,25 @@ object ModelCatalog {
         val byId = { m: Model -> id != null && m.id.equals(id, ignoreCase = true) }
         val byName = { m: Model -> name != null && m.name == name }
         return models.firstOrNull { byName(it) && byId(it) } ?: models.firstOrNull(byName) ?: models.firstOrNull(byId)
+            ?: models.firstOrNull { name != null && squash(it.name) == squash(name) }
+    }
+
+    /** A name without case, spaces and punctuation, so "OnePlus Buds3" and "oneplus buds 3" compare equal. Last resort only. */
+    private fun squash(s: String) = s.lowercase().filter { it.isLetterOrDigit() }
+
+    /** Which rule of [find] chose the detected model, for the log: "name+id", "name", "id", "squashed name" or "none". */
+    fun rule(context: Context): String {
+        val p = prefs(context)
+        val id = p.getString(Capabilities.KEY_PRODUCT_ID, null)
+        val name = p.getString(KEY_DEVICE_NAME, null)
+        val models = all(context)
+        return when {
+            models.any { it.name == name && id != null && it.id.equals(id, ignoreCase = true) } -> "name+id"
+            models.any { it.name == name } -> "name"
+            models.any { id != null && it.id.equals(id, ignoreCase = true) } -> "id"
+            find(models, id, name) != null -> "squashed name"
+            else -> "none"
+        }
     }
 
     /** The detected model, ignoring a manual pick. Null = nothing read yet, or not in the list. */
