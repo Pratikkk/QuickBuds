@@ -88,12 +88,12 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
     class Fit(val shape: Shape, val ring: Float = 0f, val font: Float = 0f, val tiles: Int = 4, val units: Int = 3, val tileW: Float = 0f, val tileH: Float = 99f)
 
     override fun onUpdate(context: Context, mgr: AppWidgetManager, ids: IntArray) {
-        for (id in ids) update(context, mgr, id, kind)
+        for (id in ids) update(context, mgr, id, kind, force = true)
     }
 
     /** Resized or first sized: the layout and every size follow the real size ([fit]). */
     override fun onAppWidgetOptionsChanged(context: Context, mgr: AppWidgetManager, id: Int, options: android.os.Bundle) {
-        update(context, mgr, id, kind)
+        update(context, mgr, id, kind, force = true)
     }
 
     override fun onDeleted(context: Context, ids: IntArray) {
@@ -167,11 +167,21 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
          * only in the update that changes that flipper's child: `w_slide0` / `w_slide1` slide the pages,
          * `w_pages` fades the mode list in and out. Shown child: 0 battery, 1 controls, 2 list.
          */
-        private fun update(context: Context, mgr: AppWidgetManager, id: Int, declared: Kind) {
+        /** What each widget last showed: an update that would draw the same is not sent (a resend made the widget blink). */
+        private val lastSig = java.util.concurrent.ConcurrentHashMap<Int, String>()
+
+        private fun update(context: Context, mgr: AppWidgetManager, id: Int, declared: Kind, force: Boolean = false) {
             val kind = declared
             // A throw here would leave the host showing "Can't load widget" with no trace.
             try {
                 val fit = fit(context, kind, id)
+                if (sweepK < 0f) {
+                    val sig = listOf(kind, fit.shape, fit.ring, fit.tiles, fit.units, WidgetStateStore.read(context), WidgetSettings.palette(context).tokens.toList(),
+                        context.getSharedPreferences(ThemeRes.PREFS_NAME, Context.MODE_PRIVATE).all.toSortedMap().toString(),
+                        connecting, connectTick, awaitLevels).joinToString("|")
+                    if (!force && lastSig[id] == sig) return
+                    lastSig[id] = sig
+                } else lastSig.remove(id)
                 if (sweepPartial && sweepK >= 0f && fit.shape.paged) {
                     // A sweep frame changes only the rings, the numbers, the case bar and the page's dimming: a partial update is much lighter.
                     val state = WidgetStateStore.read(context)
@@ -300,12 +310,56 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         private fun boxBg(c: Context, v: RemoteViews, p: Palette, id: Int) {
             if (!WidgetSettings.background(c, id)) return v.setImageViewResource(R.id.w_bg, android.R.color.transparent)
             if (p.glass) {
-                // Glass: a translucent plate with a rim, drawn as it is (no tint).
-                v.setImageViewResource(R.id.w_bg, if (p.glassLight) R.drawable.widget_bg_glass_l else if (p.id == com.spizganed.quickbuds.ui.PaletteStore.DARK) R.drawable.widget_bg_glass_d else R.drawable.widget_bg_glass)
+                // Glass: the plate drawn at the widget's size: translucent, in the app's chosen background colours, with a rim.
+                v.setImageViewBitmap(R.id.w_bg, glassPlate(c, p, id))
                 return v.setInt(R.id.w_bg, "setColorFilter", 0)
             }
             v.setImageViewResource(R.id.w_bg, bgRes(c))
             v.setInt(R.id.w_bg, "setColorFilter", boxColor(p))
+        }
+
+        /**
+         * Glass: the widget's plate at its real size (so the corners stay round), about 0.7 of the screen's pixels to keep the
+         * RemoteViews bitmap small: a see-through base, the app's background colours as soft blobs (tinted by the accent for the Accent
+         * background), a diagonal sheen and a hairline rim. A launcher gives no blur behind a widget, so the wallpaper shows through.
+         */
+        private fun glassPlate(c: Context, p: Palette, id: Int): Bitmap {
+            val o = AppWidgetManager.getInstance(c).getAppWidgetOptions(id)
+            val wDp = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH).takeIf { it > 0 } ?: 160
+            val hDp = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT).takeIf { it > 0 } ?: 160
+            val k = c.resources.displayMetrics.density * 0.7f
+            val w = (wDp * k).toInt().coerceIn(40, 900); val h = (hDp * k).toInt().coerceIn(40, 900)
+            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val cv = Canvas(bmp)
+            val rad = 26f * k
+            val shape = RectF(0.5f, 0.5f, w - 0.5f, h - 0.5f)
+            val clip = android.graphics.Path().apply { addRoundRect(shape, rad, rad, android.graphics.Path.Direction.CW) }
+            cv.save(); cv.clipPath(clip)
+            val light = p.glassLight
+            val oled = p.id == com.spizganed.quickbuds.ui.PaletteStore.OLED
+            val base = if (light) 0xDCF7F8FF.toInt() else if (oled) 0xB8000004.toInt() else 0xB82A2D3B.toInt()
+            cv.drawColor(base)
+            val bg = ThemeRes.glassBg(c)
+            val blobs = bg.blobs ?: if (bg == ThemeRes.GlassBg.ACCENT) intArrayOf(p.accent, Palette.blend(p.accent, 0xFF4A6DFF.toInt(), 0.5f), Palette.blend(p.accent, 0xFFFF9D6B.toInt(), 0.5f), Palette.blend(p.accent, Color.WHITE, 0.35f)) else null
+            if (blobs != null) {
+                val at = arrayOf(floatArrayOf(0.12f, 0.18f), floatArrayOf(0.88f, 0.12f), floatArrayOf(0.78f, 0.92f), floatArrayOf(0.08f, 0.95f))
+                val alpha = if (light) floatArrayOf(0.5f, 0.42f, 0.36f, 0.4f) else floatArrayOf(0.42f, 0.3f, 0.24f, 0.28f)
+                val r = maxOf(w, h) * 0.8f
+                for (i in 0..3) {
+                    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        shader = android.graphics.RadialGradient(at[i][0] * w, at[i][1] * h, r, Palette.withAlpha(blobs[i], alpha[i]), Palette.withAlpha(blobs[i], 0f), android.graphics.Shader.TileMode.CLAMP)
+                    }
+                    cv.drawRect(0f, 0f, w.toFloat(), h.toFloat(), paint)
+                }
+            }
+            val sheen = Paint().apply {
+                shader = android.graphics.LinearGradient(0f, 0f, w * 0.8f, h * 0.8f, if (light) 0x55FFFFFF else 0x22FFFFFF, 0, android.graphics.Shader.TileMode.CLAMP)
+            }
+            cv.drawRect(0f, 0f, w.toFloat(), h.toFloat(), sheen)
+            cv.restore()
+            val rim = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = k; color = if (light) 0x2814152B else 0x40FFFFFF }
+            cv.drawRoundRect(shape, rad, rad, rim)
+            return bmp
         }
 
         /** A battery panel or the case row's panel. Material draws none (one background). */
