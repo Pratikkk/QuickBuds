@@ -108,9 +108,7 @@ fn drag_strip(ui: &mut Ui, id: &str, rect: Rect) {
 pub fn show(app: &mut App, ui: &mut Ui) {
     resize_edges(ui);
     let full = ui.max_rect();
-    let sb = Rect::from_min_size(full.min + Vec2::splat(12.0), Vec2::new(236.0, full.height() - 24.0));
-    sidebar(app, ui, sb);
-    let content = Rect::from_min_max(Pos2::new(sb.right() + GAP, full.top() + 18.0), Pos2::new(full.right() - 12.0, full.bottom() - 12.0));
+    let content = Rect::from_min_max(Pos2::new(full.left() + 24.0, full.top() + 20.0), Pos2::new(full.right() - 24.0, full.bottom() - 22.0));
     header(app, ui, content);
     let body = Rect::from_min_max(Pos2::new(content.left(), content.top() + 58.0), content.max);
     confirm_dialog(app, ui);
@@ -159,43 +157,27 @@ pub fn show(app: &mut App, ui: &mut Ui) {
     }
 }
 
-fn sidebar(app: &mut App, ui: &mut Ui, sb: Rect) {
-    glass::glass_at(ui, sb, 32.0, 1.0);
-    drag_strip(ui, "drag-sidebar", Rect::from_min_size(sb.min, Vec2::new(sb.width(), 70.0)));
-    glass::icon_at(ui, icons::BUD_LEFT, Rect::from_center_size(Pos2::new(sb.left() + 34.0, sb.top() + 38.0), Vec2::new(18.0, 24.0)), white(1.0));
-    glass::text(ui, Pos2::new(sb.left() + 52.0, sb.top() + 38.0), Align2::LEFT_CENTER, "QuickBuds", 17.0, 1.0);
-    let h = app.has;
-    let top = [
-        (Page::Overview, icons::LAYOUT, "desktop_nav_overview", true),
-        (Page::Eq, icons::EQUALIZER, "eq_title", h.eq),
-        (Page::Gestures, icons::GESTURE, "gesture_title", h.controls),
-        (Page::Hearing, icons::HEARING, "row_golden_title", h.hearing),
-        (Page::Dual, icons::DEVICES, "dual_title", h.dual),
-        (Page::Earbuds, icons::EARBUD, "earbuds_title", true),
-    ];
-    let mut items: Vec<(Page, &'static str, &'static str, bool, Rect)> = vec![];
-    for (i, (page, icon, key, ready)) in top.into_iter().enumerate() {
-        items.push((page, icon, key, ready, Rect::from_min_size(Pos2::new(sb.left() + 12.0, sb.top() + 76.0 + 46.0 * i as f32), Vec2::new(sb.width() - 24.0, 44.0))));
-    }
-    let on_page = |p: Page| p == app.page || (p == Page::Earbuds && app.page == Page::Models);
-    // The lit pill slides to the selected entry.
-    if let Some(sel) = items.iter().find(|i| on_page(i.0)).map(|i| i.4) {
-        let ty = ui.ctx().animate_value_with_time(egui::Id::NULL.with("nav-pill"), sel.top(), 0.22);
-        ui.painter().rect_filled(Rect::from_min_size(Pos2::new(sel.left(), ty), sel.size()), 22.0, glass::sel_fill(1.0));
-    }
-    let mut go = None;
-    for (page, icon, key, ready, r) in &items {
-        if glass::nav_item_at(ui, *key, *r, icon, t(&app.tr, key), on_page(*page), *ready).clicked() && *ready { go = Some(*page); }
-    }
-    if let Some(p) = go { app.page = p; }
-}
-
 fn header(app: &mut App, ui: &mut Ui, c: Rect) {
     let s = &app.snap;
     let title = if s.name.is_empty() { "QuickBuds" } else { s.name.as_str() };
     // The window has no title bar: the header and the top of the sidebar move it.
     drag_strip(ui, "drag-header", Rect::from_min_max(Pos2::new(c.left(), c.top() - 18.0), Pos2::new(c.right(), c.top() + 52.0)));
-    glass::text(ui, Pos2::new(c.left() + 4.0, c.top() + 23.0), Align2::LEFT_CENTER, title, 30.0, 1.0);
+    // Pages other than the Overview get a back button and their own title.
+    let mut tx = c.left() + 4.0;
+    let mut title = title;
+    if app.page != Page::Overview {
+        let r = Rect::from_min_size(Pos2::new(c.left(), c.top()), Vec2::splat(46.0));
+        if glass::button_at(ui, "back", r, 23.0, false).clicked() { app.page = if app.page == Page::Models { Page::Earbuds } else { Page::Overview }; }
+        let m = r.center() + Vec2::new(1.5, 0.0);
+        let st = egui::Stroke::new(2.4, white(1.0));
+        ui.painter().line_segment([m + Vec2::new(-3.0, -8.0), m + Vec2::new(-11.0, 0.0)], st);
+        ui.painter().line_segment([m + Vec2::new(-11.0, 0.0), m + Vec2::new(-3.0, 8.0)], st);
+        ui.painter().line_segment([m + Vec2::new(-11.0, 0.0), m + Vec2::new(8.0, 0.0)], st);
+        tx = c.left() + 60.0;
+        title = t(&app.tr, match app.page { Page::Eq => "eq_title", Page::Gestures => "gesture_title", Page::Hearing => "row_golden_title", Page::Dual => "dual_title",
+            Page::Earbuds | Page::Models => "earbuds_title", Page::Settings => "desktop_nav_app_settings", Page::Dev => "action_dev_tools", Page::Overview => "earbuds_title" });
+    }
+    glass::text(ui, Pos2::new(tx, c.top() + 23.0), Align2::LEFT_CENTER, title, 30.0, 1.0);
     let mut x = c.right();
     // Our own close button, top right; the other buttons sit left of it.
     {
@@ -275,36 +257,43 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     if app.has.dual { left.push(nav("dual", icons::DEVICES, "dual_title", t(tr, "row_dual_sub"), Page::Dual)); }
     left.push(nav("earbuds", icons::EARBUD, "earbuds_title", t(tr, "row_earbuds_sub"), Page::Earbuds));
 
-    // Layout: a grid that fills the window. Row 1: battery and noise control. Row 2: the switch tiles. Row 3: the page tiles.
-    // Row 1: battery. Row 2: noise control, under it. Row 3: the switch tiles. Row 4: the page tiles.
-    let h_min = [176.0, 136.0, 138.0, 104.0];
-    let n_rows = if right.is_empty() { 3 } else { 4 };
-    let min_total: f32 = if right.is_empty() { h_min[0] + h_min[1] + h_min[3] } else { h_min.iter().sum() } + GAP * (n_rows as f32 - 1.0);
-    let extra = (body.height() - min_total).max(0.0);
-    let h1 = h_min[0] + extra * 0.28;
-    let h_anc = h_min[1] + extra * 0.22;
-    let h2 = h_min[2] + extra * 0.26;
-    let h3 = h_min[3] + extra * if right.is_empty() { 0.50 } else { 0.24 };
-    let wide = true;
-    let batt = Rect::from_min_size(body.min, Vec2::new(body.width(), h1));
-    let anc = Rect::from_min_size(Pos2::new(body.left(), batt.bottom() + GAP), Vec2::new(body.width(), h_anc));
-    let _ = wide;
-    let mut y = anc.bottom() + GAP;
-    let mut bottom = anc.bottom();
+    // Layout A: on the left the battery, the noise control and the Equalizer; on the right the switch and page tiles.
+    let mut tiles: Vec<HomeRow> = right;
+    let eq_tile = left.iter().position(|r| r.id == "eq").map(|i| left.remove(i));
+    if app.has.controls { tiles.push(nav("gestures", icons::GESTURE, "gesture_title", t(tr, "row_gesture_sub"), Page::Gestures)); }
+    tiles.extend(left);
+    let wide = body.width() >= 900.0;
+    let lw = if wide { 520.0_f32.min(body.width() * 0.45).floor() } else { body.width() };
+    let h_batt = 300.0_f32.min(body.height() * 0.42);
+    let h_anc = 160.0;
+    let batt = Rect::from_min_size(body.min, Vec2::new(lw, h_batt));
+    let anc = Rect::from_min_size(Pos2::new(body.left(), batt.bottom() + GAP), Vec2::new(lw, h_anc));
     battery(app, ui, batt);
     noise(app, ui, anc);
-    let grid = |app: &mut App, ui: &mut Ui, list: Vec<HomeRow>, y: f32, h: f32, id: &'static str| -> f32 {
-        let n = list.len();
-        if n == 0 { return y; }
-        let cols = if body.width() >= 560.0 { n } else { n.min(2) };
+    let mut bottom = anc.bottom();
+    let (tx0, ty0, tw) = if wide { (body.left() + lw + GAP, body.top(), body.width() - lw - GAP) } else { (body.left(), anc.bottom() + GAP, body.width()) };
+    let mut ty = if wide { ty0 } else { ty0 };
+    if let Some(eqr) = eq_tile {
+        let h = if wide { (body.bottom() - anc.bottom() - GAP).max(100.0) } else { 104.0 };
+        let rect = Rect::from_min_size(Pos2::new(body.left(), anc.bottom() + GAP), Vec2::new(lw, h));
+        let (clicked, _) = glass::tile_at(ui, ("eqtile", 0), rect, eqr.icon, &eqr.title, &eqr.sub, Trailing::Chevron, true);
+        if clicked { app.page = Page::Eq; }
+        bottom = rect.bottom();
+    }
+    if !tiles.is_empty() {
+        let n = tiles.len();
+        let cols = 2usize;
         let rows_n = (n + cols - 1) / cols;
-        let th = if cols == n { h } else { ((h - GAP * (rows_n as f32 - 1.0)) / rows_n as f32).max(104.0) };
-        let w = ((body.width() - GAP * (cols as f32 - 1.0)) / cols as f32).floor();
-        for (i, r) in list.iter().enumerate() {
+        let avail = if wide { body.bottom() - ty } else { 160.0 * rows_n as f32 + GAP * (rows_n as f32 - 1.0) };
+        let th = ((avail - GAP * (rows_n as f32 - 1.0)) / rows_n as f32).clamp(104.0, 170.0);
+        let w = ((tw - GAP) / 2.0).floor();
+        if !wide { ty = bottom + GAP; }
+        for (i, r) in tiles.iter().enumerate() {
             let (cx, cy) = ((i % cols) as f32, (i / cols) as f32);
-            let rect = Rect::from_min_size(Pos2::new(body.left() + cx * (w + GAP), y + cy * (th + GAP)), Vec2::new(w, th));
-            let tr = match &r.trailing { Trailing::Switch(v) => Trailing::Switch(*v), Trailing::Chevron => Trailing::Chevron, Trailing::Value(v) => Trailing::Value(v.clone()), Trailing::None => Trailing::None };
-            let (clicked, toggled) = glass::tile_at(ui, (id, r.id), rect, r.icon, &r.title, &r.sub, tr, r.enabled);
+            let last_odd = i == n - 1 && n % 2 == 1;
+            let rect = Rect::from_min_size(Pos2::new(tx0 + cx * (w + GAP), ty + cy * (th + GAP)), Vec2::new(if last_odd { tw } else { w }, th));
+            let tr2 = match &r.trailing { Trailing::Switch(v) => Trailing::Switch(*v), Trailing::Chevron => Trailing::Chevron, Trailing::Value(v) => Trailing::Value(v.clone()), Trailing::None => Trailing::None };
+            let (clicked, toggled) = glass::tile_at(ui, ("tile", r.id), rect, r.icon, &r.title, &r.sub, tr2, r.enabled);
             if clicked { if let Some(p) = r.page { app.page = p; } }
             if toggled {
                 let on_now = matches!(r.trailing, Trailing::Switch(true));
@@ -321,14 +310,10 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
                     None => for c in cmds { app.send(c); },
                 }
             }
+            bottom = bottom.max(rect.bottom());
         }
-        y + rows_n as f32 * th + GAP * (rows_n as f32 - 1.0)
-    };
-    let end = grid(app, ui, right, y, h2, "right");
-    if end > y { bottom = end; y = end + GAP; }
-    let end = grid(app, ui, left, y, h3, "left");
-    if end > y { bottom = end; }
-    bottom.max(batt.bottom()).max(anc.bottom())
+    }
+    bottom
 }
 
 fn battery(app: &mut App, ui: &mut Ui, rect: Rect) {
@@ -341,18 +326,20 @@ fn battery(app: &mut App, ui: &mut Ui, rect: Rect) {
     let wear = |i: usize| match s.wear[i] { 3 | 7 => t(tr, "status_in_ear"), 4 => t(tr, "status_in_case"), 1 | 5 => if blind { t(tr, "status_in_ear") } else { t(tr, "status_out") }, _ => "" };
     // Left, case, right.
     let cols = [(0usize, icons::BUD_LEFT), (2, icons::CASE), (1, icons::BUD_RIGHT)];
-    // The content block is 224 points tall; it sits in the middle of the card.
-    let oy = ((rect.height() - 160.0) / 2.0).max(0.0);
+    // A tall card draws big rings; a short one the compact set. The block sits in the middle of the card.
+    let big = rect.height() >= 250.0;
+    let (block, ring_r, ring_y, pct_y, sub_y, pct_size) = if big { (210.0, 52.0, 62.0, 150.0, 180.0, 26.0) } else { (160.0, 40.0, 46.0, 112.0, 138.0, 21.0) };
+    let oy = ((rect.height() - block) / 2.0).max(0.0);
     let rect = Rect::from_min_max(rect.min + Vec2::new(0.0, oy), rect.max);
     for (n, (i, glyph)) in cols.into_iter().enumerate() {
         let cx = rect.left() + rect.width() * (1.0 / 6.0 + n as f32 / 3.0);
         let b = s.battery[i];
         let frac = b.map(|x| x.0 as f32 / 100.0);
-        glass::ring_at(ui, ("ring", n), Pos2::new(cx, rect.top() + 46.0), 40.0, if on { frac } else { None }, Some(glyph), !on);
+        glass::ring_at(ui, ("ring", n), Pos2::new(cx, rect.top() + ring_y), ring_r, if on { frac } else { None }, Some(glyph), !on);
         let pct = match (b, on) { (Some(x), true) => format!("{}%", x.0), _ => "—".into() };
-        glass::text(ui, Pos2::new(cx, rect.top() + 112.0), Align2::CENTER_CENTER, &pct, 21.0, if on { 1.0 } else { 0.5 });
+        glass::text(ui, Pos2::new(cx, rect.top() + pct_y), Align2::CENTER_CENTER, &pct, pct_size, if on { 1.0 } else { 0.5 });
         let sub = if i == 2 { t(tr, "status_case") } else { wear(i) };
-        glass::text(ui, Pos2::new(cx, rect.top() + 138.0), Align2::CENTER_CENTER, sub, 13.0, 0.72);
+        glass::text(ui, Pos2::new(cx, rect.top() + sub_y), Align2::CENTER_CENTER, sub, 13.0, 0.72);
     }
 }
 
@@ -365,7 +352,7 @@ fn noise(app: &mut App, ui: &mut Ui, rect: Rect) {
     let levels = modes.levels();
     // Up to four modes: one row for two, a 2x2 grid for three or four.
     let place = |i: usize, n: usize| -> Pos2 {
-        if n <= 2 || rect.width() > 560.0 { return Pos2::new(rect.left() + rect.width() * (i as f32 + 0.5) / n.max(1) as f32, rect.center().y - 10.0); }
+        if n <= 2 || rect.height() < 200.0 { return Pos2::new(rect.left() + rect.width() * (i as f32 + 0.5) / n.max(1) as f32, rect.center().y - 10.0); }
         let (c, r) = ((i % 2) as f32, (i / 2) as f32);
         Pos2::new(rect.left() + rect.width() * (0.25 + 0.5 * c), rect.top() + rect.height() * (0.29 + 0.43 * r))
     };
