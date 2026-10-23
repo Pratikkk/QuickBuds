@@ -16,11 +16,14 @@ class FindBudsSheet(private val activity: Activity, private val send: (Boolean) 
     private var playing = false
 
     fun show() {
-        sheet.title(activity.getString(R.string.find_title))
-            .message(activity.getString(R.string.find_hint))
-            .onDismiss { if (playing) send(false) }
-        render()
+        sheet.onDismiss { if (playing) send(false) }
+        showFind()
         sheet.show()
+    }
+
+    private fun showFind() {
+        sheet.title(activity.getString(R.string.find_title)).message(activity.getString(R.string.find_hint))
+        render()
     }
 
     private fun render() {
@@ -29,14 +32,13 @@ class FindBudsSheet(private val activity: Activity, private val send: (Boolean) 
         }
     }
 
+    /** The warning takes the place of the sheet's own text and button: one sheet, updated in place, not a second one on top. */
     private fun startWithWarning() {
         val st = WidgetStateStore.read(activity)
         if (listOf(st.leftStatus, st.rightStatus).none { it == 3 || it == 7 }) return setTone(true)
-        val warn = BottomSheetDialog(activity)
-        warn.title(activity.getString(R.string.find_warn_title))
+        sheet.title(activity.getString(R.string.find_warn_title))
             .message(activity.getString(R.string.find_warn_msg))
-            .confirm(activity.getString(R.string.find_warn_play)) { warn.close(); setTone(true) }
-            .show()
+            .confirm(activity.getString(R.string.find_warn_play)) { showFind(); setTone(true) }
     }
 
     private fun setTone(on: Boolean) {
