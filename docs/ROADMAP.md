@@ -21,9 +21,13 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
     Needs the realme Link command.
   - realme Buds Air8 (report #20): no known command for announcement and tap sounds. `0x0131` and `0x0132`
     belong to the device manager, not to these sounds. Needs the realme Link command.
-- **Glass style as a fourth style, on every platform.** Parked. Source: the fork
-  [ayush04-op/QuickBuds-Glass](https://github.com/ayush04-op/QuickBuds-Glass) (GPL-3.0). Keep its credit.
-  Build it after the desktop Material style, on the same style choice.
+- **Desktop UI rewrite (egui).** The code is on the branch `desktop-rework-ui`: layout without a sidebar, the four styles
+  including Glass with real blur, a frameless rounded window. Missing there: the Feedback, Model test and Update pages, the
+  custom preset editor, the tray and quick panel, and a bundled UI font. The shipping desktop stays on Slint until then.
+- **Desktop setup guide and Known issues page.** The phone has a ten-page guide. The desktop has the Known issues dialog and
+  the reply dialog only.
+- **Captures wanted.** Buds push `0x050E` and answer `0x012C` (realme Air6, Air7 Pro and Air8 owners): the layouts are
+  unknown, so QuickBuds does not use them. A Detailed log of these frames, with a note of what you did, decodes them.
 
 ## Parked
 
