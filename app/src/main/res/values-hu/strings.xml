@@ -272,7 +272,7 @@
     <string name="settings_update_sub">Telepítve: %1$s</string>
     <string name="settings_about_title">Névjegy</string>
     <string name="settings_about_sub">Verzió, licencek, GitHub</string>
-    <string name="about_tagline">Vezérelje OnePlus, OPPO és realme fülhallgatóit közvetlenül Bluetooth-on. Gyártói alkalmazás és root nélkül.</string>
+    <string name="about_tagline">Vezérelje OnePlus, OPPO és realme fülhallgatóit közvetlenül Bluetooth-on. Alternatíva a HeyMelody és a realme Link helyett.</string>
     <string name="about_version">Verzió: %1$s</string>
     <string name="about_kofi_desc">Támogatás a Ko-fin</string>
     <string name="about_github_desc">Forráskód a GitHubon</string>

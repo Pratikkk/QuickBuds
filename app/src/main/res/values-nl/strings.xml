@@ -272,7 +272,7 @@
     <string name="settings_update_sub">Geïnstalleerd: %1$s</string>
     <string name="settings_about_title">Over</string>
     <string name="settings_about_sub">Versie, licenties, GitHub</string>
-    <string name="about_tagline">Bedien oordopjes van OnePlus, OPPO en realme rechtstreeks via Bluetooth. Geen fabrikantenapp, geen root.</string>
+    <string name="about_tagline">Bedien oordopjes van OnePlus, OPPO en realme rechtstreeks via Bluetooth. Een alternatief voor HeyMelody en realme Link.</string>
     <string name="about_version">Versie %1$s</string>
     <string name="about_kofi_desc">Steunen op Ko-fi</string>
     <string name="about_github_desc">Broncode op GitHub</string>

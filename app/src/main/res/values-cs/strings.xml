@@ -272,7 +272,7 @@
     <string name="settings_update_sub">Nainstalováno %1$s</string>
     <string name="settings_about_title">O aplikaci</string>
     <string name="settings_about_sub">Verze, licence, GitHub</string>
-    <string name="about_tagline">Ovládejte sluchátka OnePlus, OPPO a realme přímo přes Bluetooth. Bez aplikace výrobce, bez rootu.</string>
+    <string name="about_tagline">Ovládejte sluchátka OnePlus, OPPO a realme přímo přes Bluetooth. Alternativa k HeyMelody a realme Link.</string>
     <string name="about_version">Verze %1$s</string>
     <string name="about_kofi_desc">Podpořit na Ko-fi</string>
     <string name="about_github_desc">Zdrojový kód na GitHubu</string>

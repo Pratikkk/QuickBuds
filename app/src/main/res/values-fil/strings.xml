@@ -272,7 +272,7 @@
     <string name="settings_update_sub">Naka-install ang %1$s</string>
     <string name="settings_about_title">Tungkol dito</string>
     <string name="settings_about_sub">Bersyon, mga lisensya, GitHub</string>
-    <string name="about_tagline">Kontrolin ang OnePlus, OPPO at realme earbuds nang direkta sa Bluetooth. Walang vendor app, walang root.</string>
+    <string name="about_tagline">Kontrolin ang OnePlus, OPPO at realme earbuds nang direkta sa Bluetooth. Alternatibo sa HeyMelody at realme Link.</string>
     <string name="about_version">Bersyon %1$s</string>
     <string name="about_kofi_desc">Suportahan sa Ko-fi</string>
     <string name="about_github_desc">Source code sa GitHub</string>

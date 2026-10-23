@@ -272,7 +272,7 @@
     <string name="settings_update_sub">ইনস্টল করা %1$s</string>
     <string name="settings_about_title">সম্পর্কে</string>
     <string name="settings_about_sub">সংস্করণ, লাইসেন্স, GitHub</string>
-    <string name="about_tagline">OnePlus, OPPO ও realme ইয়ারবাড সরাসরি Bluetooth-এ নিয়ন্ত্রণ করুন। কোনো নির্মাতার অ্যাপ নয়, root নয়।</string>
+    <string name="about_tagline">OnePlus, OPPO ও realme ইয়ারবাড সরাসরি Bluetooth-এ নিয়ন্ত্রণ করুন। HeyMelody ও realme Link-এর বিকল্প।</string>
     <string name="about_version">সংস্করণ %1$s</string>
     <string name="about_kofi_desc">Ko-fi-তে সমর্থন করুন</string>
     <string name="about_github_desc">GitHub-এ সোর্স কোড</string>

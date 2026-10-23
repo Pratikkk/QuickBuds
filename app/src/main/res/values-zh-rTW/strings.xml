@@ -272,7 +272,7 @@
     <string name="settings_update_sub">已安裝 %1$s</string>
     <string name="settings_about_title">關於</string>
     <string name="settings_about_sub">版本、授權、GitHub</string>
-    <string name="about_tagline">直接透過藍牙控制 OnePlus、OPPO 和 realme 耳機。無需官方應用程式，無需 root。</string>
+    <string name="about_tagline">直接透過藍牙控制 OnePlus、OPPO 和 realme 耳機。HeyMelody 和 realme Link 的替代方案。</string>
     <string name="about_version">版本 %1$s</string>
     <string name="about_kofi_desc">在 Ko-fi 上支持</string>
     <string name="about_github_desc">GitHub 上的原始碼</string>

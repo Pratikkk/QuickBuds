@@ -272,7 +272,7 @@
     <string name="settings_update_sub">Встановлено %1$s</string>
     <string name="settings_about_title">Про застосунок</string>
     <string name="settings_about_sub">Версія, ліцензії, GitHub</string>
-    <string name="about_tagline">Керуйте навушниками OnePlus, OPPO і realme напряму через Bluetooth. Без застосунку виробника і без root.</string>
+    <string name="about_tagline">Керуйте навушниками OnePlus, OPPO і realme напряму через Bluetooth. Альтернатива HeyMelody і realme Link.</string>
     <string name="about_version">Версія %1$s</string>
     <string name="about_kofi_desc">Підтримати на Ko-fi</string>
     <string name="about_github_desc">Вихідний код на GitHub</string>

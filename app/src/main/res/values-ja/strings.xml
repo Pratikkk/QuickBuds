@@ -272,7 +272,7 @@
     <string name="settings_update_sub">インストール済み %1$s</string>
     <string name="settings_about_title">このアプリについて</string>
     <string name="settings_about_sub">バージョン、ライセンス、GitHub</string>
-    <string name="about_tagline">OnePlus、OPPO、realme のイヤホンを Bluetooth で直接操作。メーカーアプリも root も不要です。</string>
+    <string name="about_tagline">OnePlus、OPPO、realme のイヤホンを Bluetooth で直接操作。HeyMelody と realme Link の代替アプリです。</string>
     <string name="about_version">バージョン %1$s</string>
     <string name="about_kofi_desc">Ko-fi で支援</string>
     <string name="about_github_desc">GitHub のソースコード</string>

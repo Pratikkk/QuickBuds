@@ -272,7 +272,7 @@
     <string name="settings_update_sub">Yüklü: %1$s</string>
     <string name="settings_about_title">Hakkında</string>
     <string name="settings_about_sub">Sürüm, lisanslar, GitHub</string>
-    <string name="about_tagline">OnePlus, OPPO ve realme kulaklıkları doğrudan Bluetooth ile kontrol edin. Üretici uygulaması yok, root yok.</string>
+    <string name="about_tagline">OnePlus, OPPO ve realme kulaklıkları doğrudan Bluetooth ile kontrol edin. HeyMelody ve realme Link için bir alternatif.</string>
     <string name="about_version">Sürüm %1$s</string>
     <string name="about_kofi_desc">Ko-fi\'da destekle</string>
     <string name="about_github_desc">GitHub\'da kaynak kodu</string>

@@ -272,7 +272,7 @@
     <string name="settings_update_sub">Instalada %1$s</string>
     <string name="settings_about_title">Acerca de</string>
     <string name="settings_about_sub">Versión, licencias, GitHub</string>
-    <string name="about_tagline">Controla auriculares OnePlus, OPPO y realme directamente por Bluetooth. Sin app del fabricante, sin root.</string>
+    <string name="about_tagline">Controla auriculares OnePlus, OPPO y realme directamente por Bluetooth. Una alternativa a HeyMelody y realme Link.</string>
     <string name="about_version">Versión %1$s</string>
     <string name="about_kofi_desc">Apoyar en Ko-fi</string>
     <string name="about_github_desc">Código fuente en GitHub</string>

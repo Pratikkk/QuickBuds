@@ -272,7 +272,7 @@
     <string name="settings_update_sub">Đã cài %1$s</string>
     <string name="settings_about_title">Giới thiệu</string>
     <string name="settings_about_sub">Phiên bản, giấy phép, GitHub</string>
-    <string name="about_tagline">Điều khiển tai nghe OnePlus, OPPO và realme trực tiếp qua Bluetooth. Không cần ứng dụng hãng, không cần root.</string>
+    <string name="about_tagline">Điều khiển tai nghe OnePlus, OPPO và realme trực tiếp qua Bluetooth. Một lựa chọn thay thế cho HeyMelody và realme Link.</string>
     <string name="about_version">Phiên bản %1$s</string>
     <string name="about_kofi_desc">Ủng hộ trên Ko-fi</string>
     <string name="about_github_desc">Mã nguồn trên GitHub</string>

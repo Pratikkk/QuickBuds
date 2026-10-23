@@ -272,7 +272,7 @@
     <string name="settings_update_sub">Installerad %1$s</string>
     <string name="settings_about_title">Om</string>
     <string name="settings_about_sub">Version, licenser, GitHub</string>
-    <string name="about_tagline">Styr hörlurar från OnePlus, OPPO och realme direkt via Bluetooth. Ingen tillverkarapp, ingen root.</string>
+    <string name="about_tagline">Styr hörlurar från OnePlus, OPPO och realme direkt via Bluetooth. Ett alternativ till HeyMelody och realme Link.</string>
     <string name="about_version">Version %1$s</string>
     <string name="about_kofi_desc">Stöd på Ko-fi</string>
     <string name="about_github_desc">Källkod på GitHub</string>

@@ -272,7 +272,7 @@
     <string name="settings_update_sub">Zainstalowana %1$s</string>
     <string name="settings_about_title">O aplikacji</string>
     <string name="settings_about_sub">Wersja, licencje, GitHub</string>
-    <string name="about_tagline">Steruj słuchawkami OnePlus, OPPO i realme bezpośrednio przez Bluetooth. Bez aplikacji producenta, bez roota.</string>
+    <string name="about_tagline">Steruj słuchawkami OnePlus, OPPO i realme bezpośrednio przez Bluetooth. Alternatywa dla HeyMelody i realme Link.</string>
     <string name="about_version">Wersja %1$s</string>
     <string name="about_kofi_desc">Wesprzyj na Ko-fi</string>
     <string name="about_github_desc">Kod źródłowy na GitHubie</string>

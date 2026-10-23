@@ -272,7 +272,7 @@
     <string name="settings_update_sub">설치됨 %1$s</string>
     <string name="settings_about_title">정보</string>
     <string name="settings_about_sub">버전, 라이선스, GitHub</string>
-    <string name="about_tagline">OnePlus, OPPO, realme 이어버드를 Bluetooth로 직접 제어하세요. 제조사 앱도, 루팅도 필요 없습니다.</string>
+    <string name="about_tagline">OnePlus, OPPO, realme 이어버드를 Bluetooth로 직접 제어하세요. HeyMelody와 realme Link의 대안입니다.</string>
     <string name="about_version">버전 %1$s</string>
     <string name="about_kofi_desc">Ko-fi에서 후원하기</string>
     <string name="about_github_desc">GitHub 소스 코드</string>

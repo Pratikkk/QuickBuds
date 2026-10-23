@@ -272,7 +272,7 @@
     <string name="settings_update_sub">ติดตั้ง %1$s แล้ว</string>
     <string name="settings_about_title">เกี่ยวกับ</string>
     <string name="settings_about_sub">เวอร์ชัน สัญญาอนุญาต GitHub</string>
-    <string name="about_tagline">ควบคุมหูฟัง OnePlus, OPPO และ realme ผ่านบลูทูธโดยตรง ไม่ต้องใช้แอปของแบรนด์ ไม่ต้องรูท</string>
+    <string name="about_tagline">ควบคุมหูฟัง OnePlus, OPPO และ realme ผ่านบลูทูธโดยตรง ทางเลือกแทน HeyMelody และ realme Link</string>
     <string name="about_version">เวอร์ชัน %1$s</string>
     <string name="about_kofi_desc">สนับสนุนบน Ko-fi</string>
     <string name="about_github_desc">ซอร์สโค้ดบน GitHub</string>

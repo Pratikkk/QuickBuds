@@ -2,7 +2,7 @@
 
 # QuickBuds
 
-**Control your OnePlus, OPPO and realme earbuds. No vendor app, no root.**
+**An alternative to HeyMelody and realme Link for your OnePlus, OPPO and realme earbuds.**
 
 Android · Windows · Linux
 
@@ -33,7 +33,7 @@ Pair your earbuds in the system's Bluetooth settings first. QuickBuds connects t
 curl -fsSL https://raw.githubusercontent.com/spizganed/QuickBuds/main/scripts/install-linux.sh | sh
 ```
 
-The command puts the AppImage in `~/.local/share/quickbuds`, adds a `quickbuds` command and a menu entry, and needs no root.
+The command puts the AppImage in `~/.local/share/quickbuds`, adds a `quickbuds` command and a menu entry, and needs no administrator rights.
 The app updates itself. To remove it, run the same script with `uninstall`:
 `curl -fsSL https://raw.githubusercontent.com/spizganed/QuickBuds/main/scripts/install-linux.sh | sh -s uninstall`.
 If you prefer, download `QuickBuds-linux-x64.AppImage` or the tarball `QuickBuds<version>-linux-x64.tar.gz` from the release. The tarball needs BlueZ, GTK 3 and libayatana-appindicator.

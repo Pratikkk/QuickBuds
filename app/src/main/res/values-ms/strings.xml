@@ -272,7 +272,7 @@
     <string name="settings_update_sub">Dipasang %1$s</string>
     <string name="settings_about_title">Perihal</string>
     <string name="settings_about_sub">Versi, lesen, GitHub</string>
-    <string name="about_tagline">Kawal fon telinga OnePlus, OPPO dan realme terus melalui Bluetooth. Tiada aplikasi pengeluar, tiada root.</string>
+    <string name="about_tagline">Kawal fon telinga OnePlus, OPPO dan realme terus melalui Bluetooth. Alternatif kepada HeyMelody dan realme Link.</string>
     <string name="about_version">Versi %1$s</string>
     <string name="about_kofi_desc">Sokong di Ko-fi</string>
     <string name="about_github_desc">Kod sumber di GitHub</string>

@@ -272,7 +272,7 @@
     <string name="settings_update_sub">Instalată %1$s</string>
     <string name="settings_about_title">Despre</string>
     <string name="settings_about_sub">Versiune, licențe, GitHub</string>
-    <string name="about_tagline">Controlează căștile OnePlus, OPPO și realme direct prin Bluetooth. Fără aplicația producătorului, fără root.</string>
+    <string name="about_tagline">Controlează căștile OnePlus, OPPO și realme direct prin Bluetooth. O alternativă la HeyMelody și realme Link.</string>
     <string name="about_version">Versiunea %1$s</string>
     <string name="about_kofi_desc">Susține pe Ko-fi</string>
     <string name="about_github_desc">Cod sursă pe GitHub</string>

@@ -272,7 +272,7 @@
     <string name="settings_update_sub">Εγκατεστημένη %1$s</string>
     <string name="settings_about_title">Σχετικά</string>
     <string name="settings_about_sub">Έκδοση, άδειες, GitHub</string>
-    <string name="about_tagline">Ελέγξτε ακουστικά OnePlus, OPPO και realme απευθείας μέσω Bluetooth. Χωρίς εφαρμογή κατασκευαστή, χωρίς root.</string>
+    <string name="about_tagline">Ελέγξτε ακουστικά OnePlus, OPPO και realme απευθείας μέσω Bluetooth. Εναλλακτική στο HeyMelody και το realme Link.</string>
     <string name="about_version">Έκδοση %1$s</string>
     <string name="about_kofi_desc">Υποστήριξη στο Ko-fi</string>
     <string name="about_github_desc">Πηγαίος κώδικας στο GitHub</string>
