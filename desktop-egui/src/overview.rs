@@ -71,42 +71,13 @@ pub fn wear_sensor_seen(s: &Snapshot, demo: bool) -> bool {
     true
 }
 
-/// The undecorated window's edges: the cursor and the system resize on a press near an edge.
-fn resize_edges(ui: &Ui) {
-    use egui::{CursorIcon as C, ResizeDirection as D};
-    let ctx = ui.ctx();
-    if ctx.input(|i| i.viewport().maximized.unwrap_or(false) || i.viewport().fullscreen.unwrap_or(false)) { return; }
-    let Some(p) = ctx.input(|i| i.pointer.hover_pos()) else { return };
-    let r = ctx.content_rect();
-    let e = 6.0;
-    let (l, rt, t, b) = (p.x - r.left() < e, r.right() - p.x < e, p.y - r.top() < e, r.bottom() - p.y < e);
-    let (dir, cursor) = match (l, rt, t, b) {
-        (true, _, true, _) => (D::NorthWest, C::ResizeNwSe),
-        (_, true, true, _) => (D::NorthEast, C::ResizeNeSw),
-        (true, _, _, true) => (D::SouthWest, C::ResizeNeSw),
-        (_, true, _, true) => (D::SouthEast, C::ResizeNwSe),
-        (true, ..) => (D::West, C::ResizeHorizontal),
-        (_, true, ..) => (D::East, C::ResizeHorizontal),
-        (_, _, true, _) => (D::North, C::ResizeVertical),
-        (_, _, _, true) => (D::South, C::ResizeVertical),
-        _ => return,
-    };
-    ctx.set_cursor_icon(cursor);
-    if ctx.input(|i| i.pointer.primary_pressed()) { ctx.send_viewport_cmd(egui::ViewportCommand::BeginResize(dir)); }
-}
-
-/// A strip that moves the window when dragged and maximizes it on a double click.
+/// A strip that moves the window when dragged. The window has a fixed size: no resize edges, no maximize.
 fn drag_strip(ui: &mut Ui, id: &str, rect: Rect) {
     let r = ui.interact(rect, ui.scope_id().with(id), egui::Sense::click_and_drag());
     if r.drag_started_by(egui::PointerButton::Primary) { ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag); }
-    if r.double_clicked() {
-        let max = ui.ctx().input(|i| i.viewport().maximized.unwrap_or(false));
-        ui.ctx().send_viewport_cmd(egui::ViewportCommand::Maximized(!max));
-    }
 }
 
 pub fn show(app: &mut App, ui: &mut Ui) {
-    resize_edges(ui);
     let full = ui.max_rect();
     let content = Rect::from_min_max(Pos2::new(full.left() + 24.0, full.top() + 20.0), Pos2::new(full.right() - 24.0, full.bottom() - 22.0));
     header(app, ui, content);

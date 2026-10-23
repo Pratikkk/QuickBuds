@@ -249,7 +249,8 @@ fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1180.0, 760.0])
-            .with_min_inner_size([760.0, 560.0])
+            .with_resizable(false)
+            .with_maximize_button(false)
             .with_decorations(false)
             .with_transparent(true)
             .with_title("QuickBuds")

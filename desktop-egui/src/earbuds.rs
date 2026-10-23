@@ -63,13 +63,35 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let on = s.status == Status::On;
     let flagged = |flag: Option<&str>| s.manual && flag.is_some_and(|f| s.model.is_some_and(|m| m[f] == 1));
 
-    // The model row: Automatic with what was detected, or the pick.
-    {
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW));
+    // Sounds: the alert volume, the tap sensitivity.
+    let has_alert = s.caps.supports(CMD_SET_ALERT_VOLUME) && s.alert_volume.is_some();
+    let has_tap = s.model.is_some_and(|m| m["tapLevel"] == 1) && (s.manual || s.caps.supports(CMD_SET_TAP_LEVEL) && s.tap_level.is_some());
+    if has_alert || has_tap {
+        if !two { label(ui, x0, y, t(&tr, "earbuds_section_sounds")); y += 34.0; }
+        let n = has_alert as usize + has_tap as usize;
+        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 96.0 * n as f32));
         glass::flat_at(ui, card, 28.0, 1.0);
-        let (clicked, _) = glass::row_at(ui, "model", card, icons::EARBUD, t(&tr, "model_title"), &crate::models::summary(app), Trailing::Chevron, true);
-        if clicked { app.page = crate::Page::Models; }
-        y += ROW + 18.0;
+        let mut cy = y;
+        if has_alert {
+            let mut v = app.earbuds.alert.unwrap_or(s.alert_volume.unwrap_or(5) as f32);
+            glass::text(ui, Pos2::new(x0 + 24.0, cy + 26.0), Align2::LEFT_CENTER, t(&tr, "row_alert_title"), 15.0, 1.0);
+            glass::icon_at(ui, if v <= 1.0 { icons::VOLUME_OFF } else { icons::VOLUME }, Rect::from_center_size(Pos2::new(x0 + 36.0, cy + 66.0), Vec2::splat(22.0)), glass::white(1.0));
+            let sr = Rect::from_min_size(Pos2::new(x0 + 60.0, cy + 46.0), Vec2::new(w - 90.0, 40.0));
+            let sl = glass::slider_at(ui, "alert", sr, &mut v, 1.0, 10.0, true);
+            if sl.changed { app.earbuds.alert = Some(v); }
+            if sl.released { app.send(Cmd::AlertVolume(v as u8)); app.earbuds.alert = None; }
+            cy += 96.0;
+        }
+        if has_tap {
+            let mut v = app.earbuds.tap.unwrap_or(s.tap_level.map_or(3, |t| t.0) as f32);
+            glass::text(ui, Pos2::new(x0 + 24.0, cy + 26.0), Align2::LEFT_CENTER, t(&tr, "tap_level_title"), 15.0, 1.0);
+            let sr = Rect::from_min_size(Pos2::new(x0 + 24.0, cy + 46.0), Vec2::new(w - 90.0, 40.0));
+            let sl = glass::slider_at(ui, "tap", sr, &mut v, 1.0, 5.0, true);
+            glass::text(ui, Pos2::new(sr.right() + 16.0, sr.center().y), Align2::LEFT_CENTER, &format!("{}", v as i32), 15.0, 1.0);
+            if sl.changed { app.earbuds.tap = Some(v); }
+            if sl.released { app.send(Cmd::TapLevel(v as u8)); app.earbuds.tap = None; }
+        }
+        y += card.height() + 18.0;
     }
 
     // Feature switches, in the phone's order.
@@ -133,47 +155,14 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     {
     let x0 = xr;
     if two { std::mem::swap(&mut y, &mut yr); }
-    // Sounds: the alert volume, the tap sensitivity.
-    let has_alert = s.caps.supports(CMD_SET_ALERT_VOLUME) && s.alert_volume.is_some();
-    let has_tap = s.model.is_some_and(|m| m["tapLevel"] == 1) && (s.manual || s.caps.supports(CMD_SET_TAP_LEVEL) && s.tap_level.is_some());
-    if has_alert || has_tap {
-        if !two { label(ui, x0, y, t(&tr, "earbuds_section_sounds")); y += 34.0; }
-        let n = has_alert as usize + has_tap as usize;
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 96.0 * n as f32));
-        glass::flat_at(ui, card, 28.0, 1.0);
-        let mut cy = y;
-        if has_alert {
-            let mut v = app.earbuds.alert.unwrap_or(s.alert_volume.unwrap_or(5) as f32);
-            glass::text(ui, Pos2::new(x0 + 24.0, cy + 26.0), Align2::LEFT_CENTER, t(&tr, "row_alert_title"), 15.0, 1.0);
-            glass::icon_at(ui, if v <= 1.0 { icons::VOLUME_OFF } else { icons::VOLUME }, Rect::from_center_size(Pos2::new(x0 + 36.0, cy + 66.0), Vec2::splat(22.0)), glass::white(1.0));
-            let sr = Rect::from_min_size(Pos2::new(x0 + 60.0, cy + 46.0), Vec2::new(w - 90.0, 40.0));
-            let sl = glass::slider_at(ui, "alert", sr, &mut v, 1.0, 10.0, true);
-            if sl.changed { app.earbuds.alert = Some(v); }
-            if sl.released { app.send(Cmd::AlertVolume(v as u8)); app.earbuds.alert = None; }
-            cy += 96.0;
-        }
-        if has_tap {
-            let mut v = app.earbuds.tap.unwrap_or(s.tap_level.map_or(3, |t| t.0) as f32);
-            glass::text(ui, Pos2::new(x0 + 24.0, cy + 26.0), Align2::LEFT_CENTER, t(&tr, "tap_level_title"), 15.0, 1.0);
-            let sr = Rect::from_min_size(Pos2::new(x0 + 24.0, cy + 46.0), Vec2::new(w - 90.0, 40.0));
-            let sl = glass::slider_at(ui, "tap", sr, &mut v, 1.0, 5.0, true);
-            glass::text(ui, Pos2::new(sr.right() + 16.0, sr.center().y), Align2::LEFT_CENTER, &format!("{}", v as i32), 15.0, 1.0);
-            if sl.changed { app.earbuds.tap = Some(v); }
-            if sl.released { app.send(Cmd::TapLevel(v as u8)); app.earbuds.tap = None; }
-        }
-        y += card.height() + 18.0;
-    }
-
     // Fit test and Find my earbuds: each opens its dialog.
     let mut has_rows = vec![];
     if s.caps.supports(CMD_FIT_TEST) { has_rows.push(0); }
     if s.caps.supports(CMD_FIND_BUDS) { has_rows.push(1); }
     if !has_rows.is_empty() {
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * has_rows.len() as f32));
-        glass::flat_at(ui, card, 28.0, 1.0);
         for (n, kind) in has_rows.iter().enumerate() {
-            let r = Rect::from_min_size(Pos2::new(x0, y + ROW * n as f32), Vec2::new(w, ROW));
-            if n > 0 { glass::divider_at(ui, x0, x0 + w, r.top()); }
+            let r = Rect::from_min_size(Pos2::new(x0, y + (ROW + 12.0) * n as f32), Vec2::new(w, ROW));
+            glass::flat_at(ui, r, 28.0, 1.0);
             let (clicked, _) = if *kind == 0 {
                 glass::row_at(ui, "fit", r, icons::EARBUD, t(&tr, "fit_title"), t(&tr, "fit_sub"), Trailing::Chevron, on)
             } else {
@@ -181,10 +170,16 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
             };
             if clicked { if *kind == 0 { app.earbuds.fit_open = true; app.earbuds.fit_state = 0; app.earbuds.fit_shown = false; app.earbuds.fit_seq = s.fit.2; } else { app.earbuds.find_open = true; app.earbuds.find_warn = false; } }
         }
-        y += card.height() + 18.0;
+        y += (ROW + 12.0) * has_rows.len() as f32 + 6.0;
     }
 
-    if two { std::mem::swap(&mut y, &mut yr); }
+    // The model row: Automatic with what was detected, or the pick.
+    {
+        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW));
+        glass::flat_at(ui, card, 28.0, 1.0);
+        let (clicked, _) = glass::row_at(ui, "model", card, icons::EARBUD, t(&tr, "model_title"), &crate::models::summary(app), Trailing::Chevron, true);
+        if clicked { app.page = crate::Page::Models; }
+        y += ROW + 18.0;
     }
 
     // About: the firmware. No updates here: a failed flash can brick the buds, so it points to HeyMelody.
@@ -194,6 +189,9 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         glass::flat_at(ui, card, 28.0, 1.0);
         glass::row_at(ui, "fw", card, icons::INFO, t(&tr, "row_firmware_title"), s.firmware.as_deref().unwrap_or("—"), Trailing::None, true);
         y += ROW + 18.0;
+    }
+
+    if two { std::mem::swap(&mut y, &mut yr); }
     }
 
     // The picker dialog.
