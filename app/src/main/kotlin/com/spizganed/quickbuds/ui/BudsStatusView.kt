@@ -36,10 +36,7 @@ class BudsStatusView(context: Context) : View(context) {
         var anim: ValueAnimator? = null
         var dots: android.graphics.Bitmap? = null   // Nothing: the dot-matrix ring, redrawn when [dotsKey] changes
         var dotsKey = ""
-        var mask: android.graphics.Bitmap? = null   // Glass: the glyph's alpha mask and its blurred shadow
-        var shadow: android.graphics.Bitmap? = null
-        var shadowOff = IntArray(2)
-        var maskKey = ""
+        val glyph = GlassArt.Glyph(icon)   // Glass: the glyph with depth
     }
 
     private fun dp(v: Float) = ThemeRes.dp(context, v).toFloat()
@@ -169,38 +166,6 @@ class BudsStatusView(context: Context) : View(context) {
         else -> context.getString(R.string.status_out)
     }
 
-    private val glyphPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val blurPaint = Paint().apply { maskFilter = android.graphics.BlurMaskFilter(dp(3f), android.graphics.BlurMaskFilter.Blur.NORMAL) }
-
-    /**
-     * Glass: the glyph has depth. A soft shadow below, then the body as a vertical gradient (lit top, dimmer bottom).
-     * The glyph's alpha mask is cached per size.
-     */
-    private fun drawGlassGlyph(canvas: Canvas, s: Slot, x: Float, y: Float, w: Float, h: Float, tint: Int) {
-        val iw = w.toInt().coerceAtLeast(1); val ih = h.toInt().coerceAtLeast(1)
-        val key = "$iw/$ih"
-        if (s.maskKey != key) {
-            val bmp = android.graphics.Bitmap.createBitmap(iw, ih, android.graphics.Bitmap.Config.ARGB_8888)
-            s.icon.setTint(Color.WHITE)
-            s.icon.setBounds(0, 0, iw, ih)
-            s.icon.draw(Canvas(bmp))
-            val off = IntArray(2)
-            s.mask = bmp.extractAlpha()
-            s.shadow = bmp.extractAlpha(blurPaint, off)
-            s.shadowOff = off
-            s.maskKey = key
-            bmp.recycle()
-        }
-        val a = (tint ushr 24) / 255f
-        shadowPaint.color = Color.argb((90 * a).toInt(), 0, 0, 0)
-        canvas.drawBitmap(s.shadow!!, x + s.shadowOff[0], y + s.shadowOff[1] + dp(2.5f), shadowPaint)
-        val top = tint
-        val bottom = Palette.withAlpha(tint, 0.62f)
-        glyphPaint.shader = android.graphics.LinearGradient(0f, y, 0f, y + h, top, bottom, android.graphics.Shader.TileMode.CLAMP)
-        canvas.drawBitmap(s.mask!!, x, y, glyphPaint)
-    }
-
     override fun onDraw(canvas: Canvas) {
         drawn = true
         val ring = ringSize
@@ -228,20 +193,7 @@ class BudsStatusView(context: Context) : View(context) {
                 val r = ring / 2 - trackPaint.strokeWidth / 2
                 arcBox.set(cx - r, cy - r, cx + r, cy + r)
                 if (glass) {
-                    val a = conn
-                    // Flat like the rest of the screen: a faint disc, a thin track and a white arc, no light effects.
-                    val inner = r - trackPaint.strokeWidth / 2 - dp(1f)
-                    discPaint.shader = null
-                    discPaint.color = withA(if (p.glassLight) 0x1A14152B else 0x14FFFFFF, a)
-                    canvas.drawCircle(cx, cy, inner, discPaint)
-                    trackPaint.color = if (p.glassLight) 0x2614152B else 0x2EFFFFFF
-                    canvas.drawOval(arcBox, trackPaint)
-                    if (s.shown > 0f) {
-                        arcPaint.shader = null
-                        arcPaint.color = withA(p.accent, a)
-                        arcPaint.alpha = (255 * (0.35f + 0.65f * a)).toInt()
-                        if (s.shown >= 0.995f) canvas.drawOval(arcBox, arcPaint) else canvas.drawArc(arcBox, -90f, 360f * s.shown, false, arcPaint)
-                    }
+                    GlassArt.ring(canvas, cx, cy, ring, s.shown, p.accent, p.ink, p.glassLight, conn)
                 } else {
                     canvas.drawOval(arcBox, trackPaint)
                     if (s.shown > 0f) canvas.drawArc(arcBox, -90f, 360f * s.shown, false, arcPaint)
@@ -254,7 +206,7 @@ class BudsStatusView(context: Context) : View(context) {
                 val (iw, ih) = if (s.iconRatio < bw / bh) bh * s.iconRatio to bh else bw to bw / s.iconRatio
                 val tint = androidx.core.graphics.ColorUtils.blendARGB(p.disabled, if (glass) glassTint(isCase, s.status) else wearTint(p, isCase, s.status, ThemeRes.material(context)), conn)
                 if (glass) {
-                    drawGlassGlyph(canvas, s, cx - iw / 2, cy - ih / 2, iw, ih, tint)
+                    s.glyph.draw(canvas, cx, cy, iw, ih, tint, ring / 90f, p.glassLight)
                 } else {
                     s.icon.setTint(tint)
                     s.icon.setBounds((cx - iw / 2).toInt(), (cy - ih / 2).toInt(), (cx + iw / 2).toInt(), (cy + ih / 2).toInt())

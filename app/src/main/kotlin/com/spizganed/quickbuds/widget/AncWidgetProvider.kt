@@ -25,6 +25,7 @@ import com.spizganed.quickbuds.bluetooth.WidgetActions
 import com.spizganed.quickbuds.ui.BudsStatusView
 import com.spizganed.quickbuds.ui.MainActivity
 import com.spizganed.quickbuds.ui.Palette
+import com.spizganed.quickbuds.ui.GlassArt
 import com.spizganed.quickbuds.ui.ThemeRes
 
 /**
@@ -310,10 +311,8 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         /** A battery panel or the case row's panel. Material draws none (one background). */
         private fun panelBg(c: Context, v: RemoteViews, id: Int, p: Palette) {
             if (p.glass) {
-                // Glass: the battery panels melt into the plate; the case bar is a faint capsule.
-                if (id != R.id.w_bar_bg) return v.setImageViewResource(id, android.R.color.transparent)
-                v.setImageViewResource(id, if (p.glassLight) R.drawable.widget_pill_glass_l else R.drawable.widget_pill_glass)
-                return v.setInt(id, "setColorFilter", 0)
+                // Glass: the battery panels and the case row melt into the plate; the bar draws its own capsule.
+                return v.setImageViewResource(id, android.R.color.transparent)
             }
             if (WidgetSettings.materialStyle(c)) return v.setImageViewResource(id, android.R.color.transparent)
             v.setImageViewResource(id, panelRes(c))
@@ -425,9 +424,18 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 // The case icon takes all the height the rings leave ([caseRowDp]); TALL's case row is 32dp. Nothing: at the
                 // rings' dot pitch, so the big icon keeps the app's case details (lid cut, LED).
                 val caseDp = if (paged) caseRowDp(context, id) else 32f - 2 * geo(context).row
+                if (p.glass) {
+                    val hpx = ThemeRes.dp(context, caseDp).coerceAtLeast(1)
+                    val wpx = Math.round(hpx * 496f / 400f)
+                    val gb = Bitmap.createBitmap(wpx + 12, hpx + 12, Bitmap.Config.ARGB_8888)
+                    GlassArt.Glyph(context.getDrawable(R.drawable.ic_case)!!.mutate())
+                        .draw(Canvas(gb), gb.width / 2f, gb.height / 2f - 2f, wpx.toFloat(), hpx.toFloat(), glyphTint(context, p, 1, -1, k), hpx / 42f, p.glassLight)
+                    v.setImageViewBitmap(R.id.w_case_icon, gb)
+                    v.setInt(R.id.w_case_icon, "setColorFilter", 0)
+                } else
                 icon(context, v, R.id.w_case_icon, R.drawable.ic_case, caseDp, if (paged) ringCellDp(context, id) else fit.ring / RING_CELLS)
                 // A colour filter keeps its alpha as a lightening of the glyph, so the fading ghost colour is laid on the panel first.
-                v.setInt(R.id.w_case_icon, "setColorFilter",
+                if (!p.glass) v.setInt(R.id.w_case_icon, "setColorFilter",
                     androidx.core.graphics.ColorUtils.compositeColors(glyphTint(context, p, 1, -1, k), p.card))
                 v.setImageViewBitmap(R.id.w_case_bar, bar(context, p, levels[1], id, caseDp))
                 // The level is drawn into the bar ([bar]); the bar reads it out.
@@ -746,21 +754,20 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         /** Outline track, accent arc from 12 o'clock, and the glyph in [tint] at its true ratio, in a [size] square. */
         /** [fill] scales the glyph's box: Nothing's thin ring sits closer around a bigger glyph. */
         private fun drawRing(context: Context, c: Canvas, size: Float, p: Palette, level: Int, slot: Int, tint: Int, stroke: Float = size * 0.085f, track: Int = p.outline, fill: Float = 1f): android.graphics.Rect {
-            val glass = p.glass
-            // Glass: a thinner ring on a faint disc, as the app's.
-            val stroke = if (glass) size * 0.06f else stroke
+            if (p.glass) {
+                // Glass: the same ring and glyph as the app's home tile.
+                GlassArt.ring(c, size / 2, size / 2, size, if (level in 1..100) level / 100f else 0f, p.accent, p.ink, p.glassLight)
+                val bud = slot != 1
+                val d = context.getDrawable(when (slot) { 0 -> R.drawable.ic_bud_left; 1 -> R.drawable.ic_case; else -> R.drawable.ic_bud_right })!!.mutate()
+                val gw = size * (if (bud) 31f else 52f) / 90f * fill
+                val gh = size * 42f / 90f * fill
+                GlassArt.Glyph(d).draw(c, size / 2, size / 2, gw, gh, tint, size / 90f, p.glassLight)
+                return android.graphics.Rect(((size - gw) / 2).toInt(), ((size - gh) / 2).toInt(), ((size + gw) / 2).toInt(), ((size + gh) / 2).toInt())
+            }
             val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = stroke; strokeCap = Paint.Cap.ROUND }
             val box = RectF(stroke / 2, stroke / 2, size - stroke / 2, size - stroke / 2)
-            if (glass) {
-                val disc = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Palette.withAlpha(p.ink, 0.07f) }
-                c.drawCircle(size / 2, size / 2, size / 2 - stroke, disc)
-                paint.color = Palette.withAlpha(p.ink, 0.16f)
-            } else paint.color = track
+            paint.color = track
             c.drawOval(box, paint)
-            if (level in 1..100) {
-                paint.color = p.accent
-                c.drawArc(box, -90f, 360f * level / 100f, false, paint)
-            }
             val isCase = slot == 1
             val glyph = context.getDrawable(
                 when (slot) { 0 -> R.drawable.ic_bud_left; 1 -> R.drawable.ic_case; else -> R.drawable.ic_bud_right }
@@ -771,22 +778,6 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             val boxW = size * (if (isCase) 0.62f else 0.42f) * fill
             val (w, h) = if (ratio < boxW / boxH) boxH * ratio to boxH else boxW to boxW / ratio
             val gl = android.graphics.Rect(((size - w) / 2).toInt(), ((size - h) / 2).toInt(), ((size + w) / 2).toInt(), ((size + h) / 2).toInt())
-            if (glass && gl.width() > 0 && gl.height() > 0) {
-                // Glass: depth as in the app: a soft shadow below, the glyph lit at the top and dimmer at the bottom.
-                val mask = Bitmap.createBitmap(gl.width(), gl.height(), Bitmap.Config.ARGB_8888)
-                glyph.setTint(Color.WHITE); glyph.setBounds(0, 0, gl.width(), gl.height()); glyph.draw(Canvas(mask))
-                val off = IntArray(2)
-                val blur = Paint().apply { maskFilter = android.graphics.BlurMaskFilter(size * 0.02f + 1f, android.graphics.BlurMaskFilter.Blur.NORMAL) }
-                val shadow = mask.extractAlpha(blur, off)
-                val sp = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(90, 0, 0, 0) }
-                c.drawBitmap(shadow, gl.left + off[0].toFloat(), gl.top + off[1] + size * 0.02f, sp)
-                val gp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    shader = android.graphics.LinearGradient(0f, gl.top.toFloat(), 0f, gl.bottom.toFloat(), tint, Palette.withAlpha(tint, 0.62f), android.graphics.Shader.TileMode.CLAMP)
-                }
-                c.drawBitmap(mask.extractAlpha(), gl.left.toFloat(), gl.top.toFloat(), gp)
-                mask.recycle(); shadow.recycle()
-                return gl
-            }
             glyph.setTint(tint)
             glyph.setBounds(gl)
             glyph.draw(c)
@@ -1017,6 +1008,38 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
          * lit column by column up to the level, the corner dots left out so the corners are round. Drawn exactly as wide as its slot ([barDp]), so the dots
          * are never scaled.
          */
+        /** Glass: the case level as a capsule like the app's ring track: faint with a hairline rim, the accent fill, the number in the ink. */
+        private fun glassBar(context: Context, p: Palette, level: Int, w: Int, h: Int): Bitmap {
+            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val c = Canvas(bmp)
+            val d = context.resources.displayMetrics.density
+            val box = RectF(d, d, w - d, h - d)
+            val rad = (h - 2 * d) / 2f
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+            paint.color = if (p.glassLight) 0x1A14152B else 0x14FFFFFF
+            c.drawRoundRect(box, rad, rad, paint)
+            val fillW = if (level in 1..100) box.left + box.width() * level / 100f else 0f
+            if (fillW > 0f) {
+                c.save(); c.clipRect(0f, 0f, maxOf(fillW, h / 2f), h.toFloat())
+                paint.color = p.accent
+                c.drawRoundRect(box, rad, rad, paint)
+                c.restore()
+            }
+            paint.style = Paint.Style.STROKE; paint.strokeWidth = d
+            paint.color = if (p.glassLight) 0x2614152B else 0x2EFFFFFF
+            c.drawRoundRect(box, rad, rad, paint)
+            val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+                textSize = h * 0.52f; textAlign = Paint.Align.CENTER; color = p.text
+            }
+            val y = h / 2f - (text.fontMetrics.ascent + text.fontMetrics.descent) / 2
+            val label = pctLabel(context, level)
+            c.save(); c.clipRect(maxOf(fillW, 0f), 0f, w.toFloat(), h.toFloat()); c.drawText(label, w / 2f, y, text); c.restore()
+            text.color = p.onAccent
+            c.save(); c.clipRect(0f, 0f, fillW, h.toFloat()); c.drawText(label, w / 2f, y, text); c.restore()
+            return bmp
+        }
+
         private fun bar(context: Context, p: Palette, level: Int, id: Int, caseDp: Float): Bitmap {
             val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = if (p.glass) Palette.withAlpha(p.ink, 0.14f) else p.outline }
             if (WidgetSettings.nothingStyle(context)) {
@@ -1052,6 +1075,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 }
                 return bmp
             }
+            if (p.glass) return glassBar(context, p, level, ThemeRes.dp(context, barDp(context, id, caseDp)).coerceAtLeast(1), ThemeRes.dp(context, caseDp * 0.7f).coerceAtLeast(1))
             // Classic (the Nothing layout's ideas, smooth): as wide as its slot, the number knocked out.
             val w = ThemeRes.dp(context, barDp(context, id, caseDp)).coerceAtLeast(1)
             val h = ThemeRes.dp(context, caseDp * 0.7f).coerceAtLeast(1)
