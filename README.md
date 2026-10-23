@@ -55,7 +55,7 @@ If you prefer, download `QuickBuds-linux-x64.AppImage` or the tarball `QuickBuds
 | **Per model** | QuickBuds reads the model and shows only what that model supports. |
 | **Android** | Home screen widgets (battery and controls, 2×2 or 4×2) and a first-run setup. |
 | **PC** | A tray icon with quick controls (Windows) or a battery menu (Linux). |
-| **Looks** | Material, QuickBuds and Pixel art styles. OLED Black, Classic Dark and White themes, your own accent and presets. The same on the phone, the widgets and the PC. |
+| **Looks** | Material, QuickBuds, Pixel art and Glass styles. OLED Black, Classic Dark and White themes, wallpaper colours, your own accent and palettes. Glass has six backgrounds. The phone and its widgets have all four styles; the PC app has the first three. |
 | **Languages and updates** | 27 languages, switchable in the app. Updates from GitHub releases; the PC app updates itself. |
 
 <div align="center">
