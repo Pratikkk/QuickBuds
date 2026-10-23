@@ -498,8 +498,9 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                         .draw(Canvas(gb), gb.width / 2f, gb.height / 2f - 2f, wpx.toFloat(), hpx.toFloat(), glyphTint(context, p, 1, -1, k), hpx / 42f, p.glassLight)
                     v.setImageViewBitmap(R.id.w_case_icon, gb)
                     v.setInt(R.id.w_case_icon, "setColorFilter", 0)
-                } else
-                icon(context, v, R.id.w_case_icon, R.drawable.ic_case, caseDp, if (paged) ringCellDp(context, id) else fit.ring / RING_CELLS)
+                } else {
+                    icon(context, v, R.id.w_case_icon, R.drawable.ic_case, caseDp, if (paged) ringCellDp(context, id) else fit.ring / RING_CELLS)
+                }
                 // A colour filter keeps its alpha as a lightening of the glyph, so the fading ghost colour is laid on the panel first.
                 if (!p.glass) v.setInt(R.id.w_case_icon, "setColorFilter",
                     androidx.core.graphics.ColorUtils.compositeColors(glyphTint(context, p, 1, -1, k), p.card))
