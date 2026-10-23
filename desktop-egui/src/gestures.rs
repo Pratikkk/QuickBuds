@@ -9,6 +9,7 @@ use crate::{icons, t, App};
 use eframe::egui::{self, Align2, Pos2, Rect, Ui, Vec2};
 
 const ROW: f32 = 64.0;
+const GAP: f32 = 10.0;
 const MAX_W: f32 = 760.0;
 
 /// Where a pick goes.
@@ -46,16 +47,28 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     if m.one_button { app.gestures.side = 1; }
     let side = app.gestures.side;
 
-    // Left / Right
+    // Left / Right: a flat plate with a lit pill that glides to the chosen side.
     if !m.one_button {
-        for (i, label) in ["status_left", "status_right"].iter().enumerate() {
-            let sw = if two { w } else { w };
-            let r = Rect::from_min_size(Pos2::new(x0 + i as f32 * (sw / 2.0 + 4.0), y), Vec2::new(sw / 2.0 - 4.0, 46.0));
+        let plate = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 56.0));
+        glass::flat_at(ui, plate, 28.0, 1.0);
+        let inner = plate.shrink(6.0);
+        let seg_w = inner.width() / 2.0;
+        let px = ui.ctx().animate_value_with_time(egui::Id::NULL.with("side-pill"), inner.left() + seg_w * (side as f32 - 1.0), 0.22);
+        let pill = Rect::from_min_size(Pos2::new(px, inner.top()), Vec2::new(seg_w, inner.height()));
+        ui.painter().rect_filled(pill.expand(2.0), 24.0, glass::white(0.08));
+        ui.painter().rect_filled(pill, 22.0, glass::white(0.34));
+        ui.painter().rect_stroke(pill, 22.0, egui::Stroke::new(1.2, glass::white(0.75)), egui::StrokeKind::Inside);
+        for (i, (label, icon)) in [("status_left", icons::BUD_LEFT), ("status_right", icons::BUD_RIGHT)].iter().enumerate() {
+            let seg = Rect::from_min_size(Pos2::new(inner.left() + seg_w * i as f32, inner.top()), Vec2::new(seg_w, inner.height()));
+            let r = ui.interact(seg, egui::Id::NULL.with(("side-seg", i)), egui::Sense::click());
             let lit = side == i as u8 + 1;
-            if glass::button_at(ui, ("side", i), r, 23.0, lit).clicked() { app.gestures.side = i as u8 + 1; }
-            ui.painter().text(r.center(), Align2::CENTER_CENTER, t(&tr, label), egui::FontId::proportional(15.0), if lit { glass::on_accent() } else { glass::white(1.0) });
+            if r.clicked() { app.gestures.side = i as u8 + 1; }
+            if r.hovered() { ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand); }
+            let a = if lit { 1.0 } else { 0.8 };
+            glass::icon_at(ui, icon, Rect::from_center_size(seg.center() - Vec2::new(34.0, 0.0), Vec2::new(14.0, 20.0)), glass::white(a));
+            glass::text(ui, seg.center() + Vec2::new(6.0, 0.0), Align2::CENTER_CENTER, t(&tr, label), 15.0, a);
         }
-        y += 46.0 + 18.0;
+        y += 56.0 + 18.0;
     }
 
     // The gesture rows
@@ -63,11 +76,10 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let mut n_rows = m.rows.len();
     if m.both_hold { n_rows += 1; }
     if n_rows > 0 {
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * n_rows as f32));
-        glass::flat_at(ui, card, 28.0, 1.0);
+        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, (ROW + GAP) * n_rows as f32 - GAP));
         for (i, (g, _)) in m.rows.iter().enumerate() {
-            let r = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
-            if i > 0 { glass::divider_at(ui, x0, x0 + w, r.top()); }
+            let r = Rect::from_min_size(Pos2::new(x0, y + (ROW + GAP) * i as f32), Vec2::new(w, ROW));
+            glass::flat_at(ui, r, 28.0, 1.0);
             let value = current(&s, &m, side, *g).map_or("—".into(), |c| describe(&tr, &c));
             let (clicked, _) = glass::row_at(ui, ("g", i), r, GESTURES[*g].4, t(&tr, GESTURES[*g].0), "", Trailing::Value(value), on);
             if clicked {
@@ -78,8 +90,8 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         }
         if m.both_hold {
             let i = m.rows.len();
-            let r = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
-            glass::divider_at(ui, x0, x0 + w, r.top());
+            let r = Rect::from_min_size(Pos2::new(x0, y + (ROW + GAP) * i as f32), Vec2::new(w, ROW));
+            glass::flat_at(ui, r, 28.0, 1.0);
             let v = both_hold_on(&s).map_or("—", |on| t(&tr, if on { "gesture_action_game" } else { "gesture_action_none" }));
             let (clicked, _) = glass::row_at(ui, "bothhold", r, icons::HOLD, t(&tr, "gesture_both_hold"), "", Trailing::Value(v.into()), on);
             if clicked { app.gestures.target = Some(Target::BothHold); }
@@ -92,14 +104,13 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         // Wide: the label sits beside the Left / Right buttons, so both cards start on one line.
         let aligned = two && !m.one_button;
         let (cx, mut cy) = if two { (x0 + w + 14.0, y_top) } else { (x0, y) };
-        let label_y = if aligned { y_top - 18.0 - 46.0 / 2.0 } else { cy };
+        let label_y = if aligned { y_top - 18.0 - 28.0 } else { cy };
         glass::text(ui, Pos2::new(cx + 6.0, label_y + if aligned { 0.0 } else { 14.0 }), Align2::LEFT_CENTER, t(&tr, "gesture_section_on_call"), 14.0, 0.72);
         if !aligned { cy += 34.0; }
-        let card = Rect::from_min_size(Pos2::new(cx, cy), Vec2::new(w, ROW * m.on_call.len() as f32));
-        glass::flat_at(ui, card, 28.0, 1.0);
+        let card = Rect::from_min_size(Pos2::new(cx, cy), Vec2::new(w, (ROW + GAP) * m.on_call.len() as f32 - GAP));
         for (i, k) in m.on_call.iter().enumerate() {
-            let r = Rect::from_min_size(Pos2::new(cx, cy + ROW * i as f32), Vec2::new(w, ROW));
-            if i > 0 { glass::divider_at(ui, cx, cx + w, r.top()); }
+            let r = Rect::from_min_size(Pos2::new(cx, cy + (ROW + GAP) * i as f32), Vec2::new(w, ROW));
+            glass::flat_at(ui, r, 28.0, 1.0);
             let v = call_on(&s, *k).map_or("—", |on| t(&tr, if on { ON_CALL[*k].1 } else { "gesture_action_none" }));
             let (clicked, _) = glass::row_at(ui, ("call", i), r, ON_CALL[*k].5, t(&tr, ON_CALL[*k].0), "", Trailing::Value(v.into()), on);
             if clicked { app.gestures.target = Some(Target::Call(*k)); }
