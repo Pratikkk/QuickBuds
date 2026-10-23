@@ -83,7 +83,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     // AncSegmentedView.
     private lateinit var statusView: BudsStatusView
     private lateinit var ancView: AncSegmentedView
-    /** The ANC level picker: the widget's, in the mode pill's place while open ([openLevels]). */
+    /** The ANC level chooser: under the modes while an ANC level is on ([openLevels]). */
     private lateinit var levelView: AncSegmentedView
     private lateinit var tiles: LinearLayout
 
@@ -146,7 +146,17 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
             val p = ThemeRes.palette(this)
             val dotRes = if (connected && !reading) R.drawable.ic_status_dot_filled else R.drawable.ic_status_dot_empty
             val dotColor = if (connected && !reading) p.accent else p.textSecondary
-            if (ThemeRes.nothing(this)) {
+            if (ThemeRes.glass(this) && !ThemeRes.nothing(this)) {
+                // Glass: a small state dot (mint connected, amber connecting, grey ring off); "Connect" is the lit, inviting pill.
+                val on = connected && !reading
+                val state = if (on) 0xFF5BE49B.toInt() else if (reading) 0xFFFFC857.toInt() else p.textSecondary
+                connDot.colorFilter = null
+                connDot.setImageDrawable(ThemeRes.tint(this, dotRes, state))
+                connDot.layoutParams = (connDot.layoutParams as LinearLayout.LayoutParams).apply { width = ThemeRes.dp(this@MainActivity, 12f); height = width }
+                connPill.minimumWidth = 0
+                connPill.setPadding(ThemeRes.dp(this, 16f), 0, ThemeRes.dp(this, 18f), 0)
+                connPill.background = ThemeRes.ripple(this, ThemeRes.GlassDrawable(this, ThemeRes.FULL, selected = !connected, flat = true))
+            } else if (ThemeRes.nothing(this)) {
                 connDot.colorFilter = null
                 connDot.setImageDrawable(ThemeRes.tint(this, dotRes, dotColor))
             } else {
@@ -665,6 +675,17 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
      */
     private fun applyThemeTints() {
         ThemeRes.screenPadding(mainLayout)
+        // The bottom padding belongs to the scrolling content, not to the screen: a card scrolls under the edge instead of being
+        // cut off above a gap, and the last card clears the system bar.
+        val scroll = findViewById<android.widget.ScrollView>(R.id.mainScroll)
+        scroll.clipToPadding = false
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(mainLayout) { v, insets ->
+            val bars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            val side = ThemeRes.dp(this, 16f)
+            v.setPadding(side + bars.left, ThemeRes.dp(this, 16f) + bars.top, side + bars.right, 0)
+            scroll.setPadding(0, 0, 0, ThemeRes.dp(this, 20f) + bars.bottom)
+            insets
+        }
         connPill.background = ThemeRes.ripple(this, ThemeRes.iconButton(this, 16f))
         btnDevTools.background = ThemeRes.ripple(this, ThemeRes.iconButton(this))
         btnSettings.background = ThemeRes.ripple(this, ThemeRes.iconButton(this))
@@ -701,27 +722,15 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
             closeLevels(animate = false)
             return
         }
-        ancView.selected = ancSegments.indexOfFirst { it.first == circleFor(mode) }
         val level = ancModes.levels.indexOf(mode)
+        // ANC tapped, no strength picked yet: ANC stays lit and the chooser stays up with nothing lit; nothing was sent.
+        val waiting = ancAwaitingPick && level < 0
+        if (!waiting) ancAwaitingPick = false
+        ancView.selected = if (waiting) ancSegments.indexOfFirst { it.first == "ANC" } else ancSegments.indexOfFirst { it.first == circleFor(mode) }
         levelView.selected = level
+        // The chooser is up while ANC is lit, and gone for Off, Transparency and Adaptive.
+        if ((level >= 0 || waiting) && ancModes.levels.size > 1) openLevels(animate = ancView.width > 0) else closeLevels(animate = ancView.width > 0)
         if (level >= 0) lastAncLevel = mode
-        // The ANC segment shows the current level as the widget's button does: its icon and "ANC L" / "ANC M"...
-        val seg = ancSegments.indexOfFirst { it.first == "ANC" }
-        if (seg >= 0) {
-            val m = WidgetSettings.MODES.firstOrNull { it.store == mode && level >= 0 }
-            ancView.setSegment(
-                seg,
-                if (m == null) getString(ancSegments[seg].second) else getString(ancSegments[seg].second) + " " + getString(m.short).take(1).uppercase() + smartSuffix(mode),
-                m?.icon ?: ancSegments[seg].third
-            )
-        }
-    }
-
-    /** Smart adds the level it chose: "ANC S·M". */
-    private fun smartSuffix(mode: String): String {
-        val level = if (mode == AncModes.SMART && ::manager.isInitialized) manager.smartLevel else null
-        val m = WidgetSettings.MODES.firstOrNull { it.store == level } ?: return ""
-        return "·" + getString(m.short).take(1).uppercase()
     }
 
     override fun onSmartLevel() = renderAnc(activeAncMode)
@@ -750,47 +759,37 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         val levels = ancModes.levels.map { m -> WidgetSettings.MODES.first { it.store == m } }
         levelView = AncSegmentedView(this, levels.map { getString(it.short) }, levels.map { it.icon }).apply {
             visibility = View.GONE
-            onSegmentTapped = { i ->
-                val mode = ancModes.levels[i]
-                levelView.removeCallbacks(autoClose)
-                closeLevels(animate = true)
-                selectAnc(if (mode == activeAncMode) "Off" else mode)
-            }
+            onSegmentTapped = { i -> selectAnc(ancModes.levels[i]) }
         }
-        findViewById<android.widget.FrameLayout>(R.id.ancSlot).apply { removeAllViews(); addView(ancView); addView(levelView) }
+        // The mode control with the level chooser under it: the chooser drops down when ANC is tapped, and folds away when not needed.
+        findViewById<android.widget.FrameLayout>(R.id.ancSlot).apply {
+            removeAllViews()
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(ancView, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+                addView(levelView, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                    .apply { topMargin = ThemeRes.dp(this@MainActivity, 8f) })
+            })
+        }
     }
 
-    /** Slides the level picker in from the left, the mode pill out to the right (the widget's carousel). */
-    private fun openLevels() {
-        val w = ancView.width.toFloat()
-        val ms = resources.getInteger(R.integer.widget_anim_ms).toLong()
-        levelView.animate().cancel(); ancView.animate().cancel()
-        levelView.translationX = -w
-        levelView.visibility = View.VISIBLE
-        levelView.animate().translationX(0f).setDuration(ms).withEndAction(null)
-        ancView.animate().translationX(w).setDuration(ms).withEndAction { ancView.visibility = View.INVISIBLE }
-        // No pick within 2 s after the slide: back by itself (1 s was too fast).
-        levelView.removeCallbacks(autoClose)
-        levelView.postDelayed(autoClose, ms + 2000)
+    private var levelsOpen = false
+
+    /** ANC was tapped and no strength is picked yet. */
+    private var ancAwaitingPick = false
+
+    /** The level chooser drops down under the modes. */
+    private fun openLevels(animate: Boolean) {
+        if (levelsOpen) return
+        levelsOpen = true
+        if (animate) Motion.slide(levelView, true) else levelView.visibility = View.VISIBLE
     }
 
-    private val autoClose = Runnable { closeLevels(animate = true) }
-
-    /** The picker leaves to the right, the mode pill comes back from the left. */
+    /** The chooser folds up. */
     private fun closeLevels(animate: Boolean) {
-        if (!::levelView.isInitialized) return
-        levelView.removeCallbacks(autoClose)
-        if (levelView.visibility != View.VISIBLE) return
-        levelView.animate().cancel(); ancView.animate().cancel()
-        ancView.visibility = View.VISIBLE
-        if (!animate) {
-            levelView.visibility = View.GONE; ancView.translationX = 0f; return
-        }
-        val w = ancView.width.toFloat()
-        val ms = resources.getInteger(R.integer.widget_anim_ms).toLong()
-        ancView.translationX = -w
-        ancView.animate().translationX(0f).setDuration(ms).withEndAction(null)
-        levelView.animate().translationX(w).setDuration(ms).withEndAction { levelView.visibility = View.GONE }
+        if (!::levelView.isInitialized || !levelsOpen) return
+        levelsOpen = false
+        if (animate) Motion.slide(levelView, false) else levelView.visibility = View.GONE
     }
 
     /**
@@ -820,7 +819,10 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         when (circle) {
             // ANC opens the level picker unconditionally, lit or not, as the widget's button does.
             // More than one level: the widget's picker. One: apply it.
-            "ANC" -> if (ancModes.levels.size > 1) openLevels() else selectAnc(lastAncLevel)
+            // ANC lights up and the strength chooser drops down; nothing is sent until a strength is picked.
+            "ANC" -> if (ancModes.levels.size > 1) {
+                if (activeAncMode !in ancModes.levels) { ancAwaitingPick = true; renderAnc(activeAncMode) }
+            } else selectAnc(lastAncLevel)
             "Off" -> selectAnc("Off")
             // Adaptive is a plain state, not a chooser: unlike ANC it has no
             // strengths to pick between, so the tap applies it directly.
@@ -844,6 +846,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
      * different bits (0x0800 vs 0x0080) and report them differently too.
      */
     private fun selectAnc(mode: String) {
+        ancAwaitingPick = false
         manager.sendAnc(mode)
         activeAncMode = mode
         syncWidgetState()
@@ -1111,6 +1114,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         sheet.title(getString(R.string.codec_dialog_title))
             .message(getString(messageRes))
             .confirm(getString(R.string.codec_dialog_accept)) { sheet.close(); onAccept() }
+            .cancel(getString(R.string.codec_dialog_deny)) { sheet.close() }
             .show()
     }
 

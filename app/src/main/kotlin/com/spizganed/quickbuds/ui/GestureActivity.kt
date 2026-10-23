@@ -48,6 +48,8 @@ class GestureActivity : Activity() {
 
     private lateinit var btnLeft: Button
     private lateinit var btnRight: Button
+    private lateinit var sideSeg: AncSegmentedView
+    private val glass get() = ThemeRes.glass(this) && !ThemeRes.nothing(this)
     private lateinit var sideRow: View
     private lateinit var gestureList: LinearLayout
     private lateinit var onCallList: LinearLayout
@@ -79,8 +81,18 @@ class GestureActivity : Activity() {
 
         btnLeft = sideButton(R.string.gesture_bud_left) { selectSide(GestureSide.LEFT) }
         btnRight = sideButton(R.string.gesture_bud_right) { selectSide(GestureSide.RIGHT) }
-        sideRow.addView(btnLeft)
-        sideRow.addView(btnRight)
+        if (glass) {
+            // Glass: the two buds as icons in a compact selector.
+            sideSeg = AncSegmentedView(this, listOf("", ""), listOf(R.drawable.ic_bud_left, R.drawable.ic_bud_right)).apply {
+                selected = if (side == GestureSide.LEFT) 0 else 1
+                contentDescription = getString(R.string.gesture_bud_left) + ", " + getString(R.string.gesture_bud_right)
+                onSegmentTapped = { selectSide(if (it == 0) GestureSide.LEFT else GestureSide.RIGHT) }
+            }
+            sideRow.addView(sideSeg, LinearLayout.LayoutParams(dp(170f), LinearLayout.LayoutParams.WRAP_CONTENT))
+        } else {
+            sideRow.addView(btnLeft)
+            sideRow.addView(btnRight)
+        }
         root.addView(sideRow)
         this.sideRow = sideRow
 
@@ -253,8 +265,11 @@ class GestureActivity : Activity() {
         if (model.oneButton) side = GestureSide.LEFT
         sideRow.visibility = if (model.oneButton) View.GONE else View.VISIBLE
 
-        paintSideButton(btnLeft, side == GestureSide.LEFT)
-        paintSideButton(btnRight, side == GestureSide.RIGHT)
+        if (glass) sideSeg.selected = if (side == GestureSide.LEFT) 0 else 1
+        else {
+            paintSideButton(btnLeft, side == GestureSide.LEFT)
+            paintSideButton(btnRight, side == GestureSide.RIGHT)
+        }
 
         gestureList.removeAllViews()
         for ((index, gesture) in model.rows.keys.withIndex()) {
@@ -281,6 +296,13 @@ class GestureActivity : Activity() {
     private fun paintSideButton(button: Button, active: Boolean) {
         // The chosen side is an outline, like every other selection.
         val accent = ThemeRes.color(this, R.attr.appColorAccent)
+        // Glass: the control is glass; the chosen side is lit, its label white.
+        if (ThemeRes.glass(this)) {
+            button.background = ThemeRes.GlassDrawable(this, ThemeRes.FULL, selected = active, strong = active)
+            button.foreground = null
+            button.setTextColor(if (active) android.graphics.Color.WHITE else ThemeRes.color(this, R.attr.appColorTextSecondary))
+            return
+        }
         // Material: 12dp tiles, the chosen side filled, as the Style picker.
         if (ThemeRes.material(this)) {
             button.background = if (active) ThemeRes.shape(this, accent, null, 12f) else ThemeRes.card(this, 12f)
@@ -350,26 +372,30 @@ class GestureActivity : Activity() {
         ) { showOnCallDialog(gesture) }
     }
 
+    /**
+     * A single-choice dialog with Done and Cancel: a tap only moves the lit row; [onDone] gets the chosen index on Done
+     * (never when it is unchanged and [always] is false), Cancel and a tap outside change nothing.
+     */
+    private fun choose(title: String, labels: List<String>, current: Int, always: Boolean = false, onDone: (Int) -> Unit) {
+        var pick = current
+        val sheet = BottomSheetDialog(this)
+        fun refresh() { sheet.items(labels.mapIndexed { i, l ->
+            BottomSheetDialog.Item(l, selected = i == pick, onClick = { pick = i; refresh() })
+        }) }
+        sheet.title(title)
+            .dismissOnSelect(false)
+            .confirm(getString(R.string.gesture_done)) { sheet.close(); if (always || pick != current) onDone(pick) }
+            .cancel(getString(R.string.dialog_cancel)) { sheet.close() }
+        refresh()
+        sheet.show()
+    }
+
     /** Two-item sheet (None / the one action HeyMelody offers this row), single-select. */
     private fun showOnCallDialog(gesture: OnCallGesture) {
         val enabled = OnCallConfigStore.isEnabled(this, gesture)
-        BottomSheetDialog(this)
-            .title(getString(gesture.rowLabelRes))
-            .items(
-                listOf(
-                    BottomSheetDialog.Item(
-                        label = getString(R.string.gesture_action_none),
-                        selected = !enabled,
-                        onClick = { setOnCall(gesture, false) }
-                    ),
-                    BottomSheetDialog.Item(
-                        label = getString(gesture.enabledLabelRes),
-                        selected = enabled,
-                        onClick = { setOnCall(gesture, true) }
-                    )
-                )
-            )
-            .show()
+        choose(getString(gesture.rowLabelRes), listOf(getString(R.string.gesture_action_none), getString(gesture.enabledLabelRes)), if (enabled) 1 else 0) {
+            setOnCall(gesture, it == 1)
+        }
     }
 
     /**
@@ -397,7 +423,7 @@ class GestureActivity : Activity() {
         Gesture.SINGLE_TAP -> R.drawable.ic_tap_single
         Gesture.DOUBLE_TAP -> R.drawable.ic_tap_double
         Gesture.TRIPLE_TAP -> R.drawable.ic_tap_triple
-        Gesture.SLIDE -> R.drawable.ic_chevron_right
+        Gesture.SLIDE -> R.drawable.ic_slide
         Gesture.LONG_PRESS, Gesture.EXTRA_LONG_PRESS, Gesture.TAP_HOLD -> R.drawable.ic_hold
     }
 
@@ -424,20 +450,11 @@ class GestureActivity : Activity() {
         val selected = GestureConfigStore.load(this, side, gesture).toMutableList()
 
         if (!gesture.multiSelect) {
-            BottomSheetDialog(this)
-                .title(getString(gesture.labelRes))
-                .items(options.map { action ->
-                    BottomSheetDialog.Item(
-                        label = getString(action.labelRes),
-                        selected = selected.contains(action),
-                        onClick = {
-                            GestureConfigStore.save(this, side, gesture, listOf(action))
-                            writeToBuds(gesture, listOf(action))
-                            render()
-                        }
-                    )
-                })
-                .show()
+            choose(getString(gesture.labelRes), options.map { getString(it.labelRes) }, options.indexOfFirst { selected.contains(it) }) { i ->
+                GestureConfigStore.save(this, side, gesture, listOf(options[i]))
+                writeToBuds(gesture, listOf(options[i]))
+                render()
+            }
             return
         }
 
@@ -460,6 +477,7 @@ class GestureActivity : Activity() {
                 sheet.close()
                 render()
             }
+            .cancel(getString(R.string.dialog_cancel)) { sheet.close() }
 
         fun refresh() {
             sheet.items(options.map { action ->
@@ -488,26 +506,22 @@ class GestureActivity : Activity() {
     private fun showHoldChoiceDialog() {
         val current = GestureConfigStore.load(this, side, Gesture.TAP_HOLD)
         val noise = current.any { it.holdModeType >= 0 }
-        BottomSheetDialog(this)
-            .title(getString(Gesture.TAP_HOLD.labelRes))
-            .items(model.holdChoices.map { bit ->
-                if (bit == GestureModel.HOLD_NOISE) BottomSheetDialog.Item(
-                    label = getString(R.string.anc_section),
-                    selected = noise,
-                    onClick = { showActionDialog(Gesture.TAP_HOLD, noiseModes = true) }
-                ) else {
-                    val action = GestureAction.values().first { it.supportBit == bit }
-                    BottomSheetDialog.Item(
-                        label = getString(action.labelRes),
-                        selected = current == listOf(action),
-                        onClick = {
-                            GestureConfigStore.save(this, side, Gesture.TAP_HOLD, listOf(action))
-                            writeToBuds(Gesture.TAP_HOLD, listOf(action))
-                            render()
-                        }
-                    )
-                }
-            })
-            .show()
+        val choices = model.holdChoices
+        choose(
+            getString(Gesture.TAP_HOLD.labelRes),
+            choices.map { bit -> if (bit == GestureModel.HOLD_NOISE) getString(R.string.anc_section) else getString(GestureAction.values().first { it.supportBit == bit }.labelRes) },
+            choices.indexOfFirst { bit -> if (bit == GestureModel.HOLD_NOISE) noise else current == listOf(GestureAction.values().first { it.supportBit == bit }) },
+            always = true
+        ) { i ->
+            val bit = choices[i]
+            // Noise control opens the mode dialog; the others commit here.
+            if (bit == GestureModel.HOLD_NOISE) showActionDialog(Gesture.TAP_HOLD, noiseModes = true)
+            else {
+                val action = GestureAction.values().first { it.supportBit == bit }
+                GestureConfigStore.save(this, side, Gesture.TAP_HOLD, listOf(action))
+                writeToBuds(Gesture.TAP_HOLD, listOf(action))
+                render()
+            }
+        }
     }
 }

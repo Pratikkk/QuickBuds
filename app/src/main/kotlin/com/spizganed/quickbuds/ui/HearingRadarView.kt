@@ -17,7 +17,29 @@ class HearingRadarView(context: Context) : View(context) {
 
     /** Radii 0..10 per axis, null = not read yet. */
     var values: FloatArray? = null
-        set(v) { field = v; invalidate() }
+        set(v) {
+            val old = field
+            if (v != null && old != null && v.contentEquals(old)) return
+            field = v
+            morph?.cancel()
+            // A new set of values (the other ear): the shape grows from the old one into the new one, it does not snap.
+            if (v == null || shown == null || shown!!.size != v.size || width == 0) { shown = v?.copyOf(); invalidate(); return }
+            val from = shown!!.copyOf()
+            morph = android.animation.ValueAnimator.ofFloat(0f, 1f).apply {
+                duration = 320
+                interpolator = android.view.animation.OvershootInterpolator(1.1f)
+                addUpdateListener { a ->
+                    val t = a.animatedValue as Float
+                    shown = FloatArray(v.size) { i -> from[i] + (v[i] - from[i]) * t }
+                    postInvalidateOnAnimation()
+                }
+                start()
+            }
+        }
+
+    /** What is drawn: [values] while it morphs from the last ones. */
+    private var shown: FloatArray? = null
+    private var morph: android.animation.ValueAnimator? = null
 
     private fun dp(v: Float) = ThemeRes.dp(context, v).toFloat()
     private val nothing = ThemeRes.nothing(context)
@@ -94,7 +116,7 @@ class HearingRadarView(context: Context) : View(context) {
             val (x, y) = point(i, 10f)
             canvas.drawLine(cx, cy, x, y, gridPaint)
         }
-        val path = polygon(values ?: return)
+        val path = polygon(shown ?: values ?: return)
         shapePaint.style = Paint.Style.FILL
         shapePaint.color = accent and 0x00FFFFFF or 0x40000000
         canvas.drawPath(path, shapePaint)

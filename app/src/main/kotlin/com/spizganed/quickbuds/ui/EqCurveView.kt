@@ -46,7 +46,7 @@ class EqCurveView(context: Context) : View(context) {
     }
     private val nothing = ThemeRes.nothing(context)
     private val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = accent; textSize = dp(14f); textAlign = Paint.Align.CENTER
+        color = if (ThemeRes.palette(context).glass && !nothing) ThemeRes.palette(context).text else accent; textSize = dp(14f); textAlign = Paint.Align.CENTER
         if (nothing) typeface = ThemeRes.headline(context) else isFakeBoldText = true
     }
 
@@ -114,7 +114,39 @@ class EqCurveView(context: Context) : View(context) {
         }
     }
 
+    /** Glass: Apple's slider, one vertical track per band: a translucent line, a white fill from 0 dB to the thumb, a round white thumb. */
+    private val glass = ThemeRes.palette(context).glass && !nothing
+    private val glassPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND; strokeWidth = dp(5f) }
+    private val thumbShadow = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    private fun iosShapes(canvas: Canvas) {
+        for (i in gains.indices) {
+            glassPaint.strokeWidth = dp(5f); glassPaint.color = if (ThemeRes.palette(context).glassLight) 0x2614152B else 0x40FFFFFF
+            canvas.drawLine(x(i), top, x(i), bottom, glassPaint)
+            glassPaint.color = accent
+            canvas.drawLine(x(i), y(0f), x(i), y(pos[i]), glassPaint)
+        }
+        curve.reset()
+        curve.moveTo(x(0), y(pos[0]))
+        for (i in 1 until pos.size) {
+            val mx = (x(i - 1) + x(i)) / 2
+            curve.cubicTo(mx, y(pos[i - 1]), mx, y(pos[i]), x(i), y(pos[i]))
+        }
+        glassPaint.strokeWidth = dp(2f); glassPaint.color = Palette.withAlpha(accent, 0.55f)
+        canvas.drawPath(curve, glassPaint)
+        for (i in gains.indices) {
+            val r = if (i == active) dp(13f) else dp(11f)
+            val cx = x(i); val cy = y(pos[i])
+            thumbShadow.shader = android.graphics.RadialGradient(cx, cy + dp(2f), r + dp(7f),
+                intArrayOf(0x59000000, 0x59000000, 0), floatArrayOf(0f, r / (r + dp(7f)), 1f), Shader.TileMode.CLAMP)
+            canvas.drawCircle(cx, cy + dp(2f), r + dp(7f), thumbShadow)
+            fillPaint.shader = null; fillPaint.color = android.graphics.Color.WHITE
+            canvas.drawCircle(cx, cy, r, fillPaint)
+        }
+    }
+
     private fun shapes(canvas: Canvas) {
+        if (glass) { iosShapes(canvas); return }
         // Nothing style: each line on one dot column's centre; between two it lit both under the fill (the "bleed").
         val pitch = DotArt.pitchPx(context)
         for (i in gains.indices) {

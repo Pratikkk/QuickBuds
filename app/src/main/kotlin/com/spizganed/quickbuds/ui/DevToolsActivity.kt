@@ -202,12 +202,12 @@ class DevToolsActivity : Activity() {
             })
             addView(TextView(this@DevToolsActivity).apply {
                 text = label
-                textSize = 11.5f
+                textSize = 10.5f
                 maxLines = 1
                 gravity = Gravity.CENTER
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
                 setTextColor(ThemeRes.color(this@DevToolsActivity, R.attr.appColorTextPrimary))
-                setPadding(0, dp(5f), 0, 0)
+                setPadding(dp(2f), dp(5f), dp(2f), 0)
             })
         }
     }

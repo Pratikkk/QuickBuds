@@ -28,9 +28,14 @@ data class Palette(
     val textSecondary: Int,
     val outline: Int,
     /** Glass style: the surfaces are translucent whites over the gradient window ([ThemeRes.glassify]). */
-    val glass: Boolean = false
+    val glass: Boolean = false,
+    /** Glass in light mode: dark text over a light gradient ([ThemeRes.glassify]). */
+    val glassLight: Boolean = false
 ) {
-    val isLight get() = luminance(background) > 0.5
+    val isLight get() = if (glass) glassLight else luminance(background) > 0.5
+
+    /** Glass: the ink the surfaces, tracks and rims are drawn in: white on dark, deep blue-black on light. */
+    val ink: Int get() = if (glassLight) 0xFF14152B.toInt() else Color.WHITE
 
     /** The six tokens in display order, for swatches and the colour editor. */
     val tokens get() = intArrayOf(background, card, accent, text, textSecondary, outline)
@@ -52,7 +57,7 @@ data class Palette(
      * on pure red (#FF0000: black 5.3, white 4.0), which reads as a mistake.
      */
     val onAccent: Int get() {
-        if (glass) return 0xFF14123A.toInt()   // the background is transparent there: the deep base of the gradient
+        if (glass) return glassOnAccent(accent)   // the background is transparent there
         val (light, dark) = if (luminance(text) > luminance(background)) text to background else background to text
         return if (contrast(light, accent) >= 3.0 || contrast(light, accent) >= contrast(dark, accent)) light else dark
     }
@@ -61,6 +66,9 @@ data class Palette(
      * Toggle track: outline, lightened a little on dark themes (mockup #2E2E30 -> #3A3A3C). On a
      * light theme the outline is too faint to hold a white thumb, so it is darkened toward text.
      */
+    /** Glass: the label on an accent fill: white when it reads (3:1), else the deep ink. */
+    private fun glassOnAccent(a: Int) = if (contrast(Color.WHITE, a) >= 3.0) Color.WHITE else 0xFF14152B.toInt()
+
     val track get() = if (isLight) blend(outline, text, 0.14f) else blend(outline, text, 0.06f)
 
     /** Toggle thumb when off: text on dark themes; the card colour on light ones (a near-black
@@ -77,10 +85,10 @@ data class Palette(
      * Material style: a card's tonal surface (M3 surface container), the card tinted by the accent.
      * A black card (OLED Black) is also lifted toward the text, or the cards vanish into the page.
      */
-    val container get() = if (glass) GLASS_FILL else blend(blend(card, text, if (!isLight && luminance(card) < 0.005) 0.09f else 0f), accent, if (isLight) 0.05f else 0.08f)
+    val container get() = if (glass) (if (glassLight) 0x80FFFFFF.toInt() else GLASS_FILL) else blend(blend(card, text, if (!isLight && luminance(card) < 0.005) 0.09f else 0f), accent, if (isLight) 0.05f else 0.08f)
 
     /** Material style: a selected element's fill (M3 secondary container); its label is [text]. */
-    val tonal get() = if (glass) GLASS_SELECTED else blend(container, accent, if (isLight) 0.18f else 0.28f)
+    val tonal get() = if (glass) withAlpha(accent, 0.4f) else blend(container, accent, if (isLight) 0.18f else 0.28f)
 
     fun toJson(): JSONObject = JSONObject()
         .put("id", id).put("name", name)
@@ -88,9 +96,9 @@ data class Palette(
         .put("text", text).put("textSecondary", textSecondary).put("outline", outline)
 
     companion object {
-        /** Glass: a surface (white at 14%) and a selected surface (white at 28%). */
-        const val GLASS_FILL = 0x24FFFFFF
-        const val GLASS_SELECTED = 0x47FFFFFF
+        /** Glass: a surface (white at 10%) and a selected surface (white at 22%). */
+        const val GLASS_FILL = 0x1AFFFFFF
+        const val GLASS_SELECTED = 0x38FFFFFF
         fun fromJson(o: JSONObject) = Palette(
             o.getString("id"), o.getString("name"), false,
             o.getInt("background"), o.getInt("card"), o.getInt("accent"),
@@ -137,6 +145,7 @@ object PaletteStore {
     private const val KEY_ACTIVE = "paletteActive"
     private const val KEY_CUSTOM = "paletteCustom"
     private const val KEY_ACCENT = "paletteAccent_"
+    private const val KEY_ACCENT_LAST = "paletteAccentLast"
     /** Match system: White in light mode, [KEY_AUTO_DARK] in dark mode. */
     private const val KEY_AUTO = "paletteAuto"
     private const val KEY_AUTO_DARK = "paletteAutoDark"
@@ -269,6 +278,8 @@ object PaletteStore {
     /** The user's accent for a built-in preset, or null for the style's own. */
     fun accentOverride(c: Context, id: String): Int? {
         val p = prefs(c)
+        // The last accent the user set follows them across the built-in themes; a theme's own override is the fallback.
+        if (p.contains(KEY_ACCENT_LAST)) return p.getInt(KEY_ACCENT_LAST, 0)
         val key = KEY_ACCENT + id
         return if (p.contains(key)) p.getInt(key, 0) else null
     }
@@ -276,10 +287,10 @@ object PaletteStore {
     /** Sets a built-in preset's accent; null (or the style's own value) removes the override. */
     fun setAccentOverride(c: Context, id: String, color: Int?) {
         val key = KEY_ACCENT + id
-        prefs(c).edit().remove(key).apply()
+        prefs(c).edit().remove(key).remove(KEY_ACCENT_LAST).apply()
         // Read after the removal, so this is the style's own accent.
         val styleAccent = builtIn(c, id).accent
-        if (color != null && color != styleAccent) prefs(c).edit().putInt(key, color).apply()
+        if (color != null && color != styleAccent) prefs(c).edit().putInt(key, color).putInt(KEY_ACCENT_LAST, color).apply()
         ThemeRes.invalidate()
         com.spizganed.quickbuds.widget.AncWidgetProvider.refreshAll(c)
     }

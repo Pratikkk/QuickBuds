@@ -2,6 +2,7 @@ package com.spizganed.quickbuds.ui
 
 import android.app.Activity
 import android.app.Dialog
+import android.graphics.Shader
 import android.graphics.drawable.ColorDrawable
 import android.text.InputFilter
 import android.view.Gravity
@@ -142,32 +143,24 @@ class BottomSheetDialog(private val activity: Activity) {
 
         val dp = { v: Float -> ThemeRes.dp(activity, v) }
         val primary = ThemeRes.color(activity, R.attr.appColorTextPrimary)
+        // Glass: Apple's floating sheet, centred text, capsule buttons.
+        val glass = ThemeRes.glass(activity) && !ThemeRes.nothing(activity)
+        val blur = glass && ThemeRes.windowBlur(activity)
 
         val root = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
-            background = ThemeRes.sheet(activity)
-            setPadding(dp(6f), dp(14f), dp(6f), dp(14f))
+            background = if (glass) ThemeRes.floatingSheet(activity) else ThemeRes.card(activity, 28f, solid = true, base = ThemeRes.palette(activity).background)
+            if (glass) setPadding(dp(14f), dp(22f), dp(14f), dp(16f)) else setPadding(dp(6f), dp(22f), dp(6f), dp(14f))
         }
-
-        // Grab handle: the conventional affordance that this came up from the bottom
-        // and can be dismissed. Without it the sheet reads as a panel that merely
-        // happens to sit low on the screen.
-        root.addView(View(activity).apply {
-            layoutParams = LinearLayout.LayoutParams(dp(36f), dp(4f)).apply {
-                gravity = Gravity.CENTER_HORIZONTAL
-                bottomMargin = dp(12f)
-            }
-            setBackgroundColor(ThemeRes.color(activity, R.attr.appColorOutline))
-            alpha = 0.7f
-        })
 
         titleText?.let {
             root.addView(TextView(activity).apply {
                 titleView = this
                 setText(it)
                 setTextColor(primary)
-                textSize = 16f
+                textSize = if (glass) 17f else 16f
                 typeface = ThemeRes.bold(context)
+                if (glass) gravity = Gravity.CENTER_HORIZONTAL
                 setPadding(dp(14f), 0, dp(14f), dp(4f))
             })
         }
@@ -178,8 +171,9 @@ class BottomSheetDialog(private val activity: Activity) {
         // has a view to write into without rebuilding the sheet.
         val msgView = TextView(activity).apply {
             setTextColor(ThemeRes.color(activity, R.attr.appColorTextSecondary))
-            textSize = 13f
-            setPadding(dp(14f), dp(4f), dp(14f), dp(8f))
+            textSize = if (glass) 14f else 13f
+            if (glass) gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(14f), dp(4f), dp(14f), dp(if (glass) 14f else 8f))
         }
         messageView = msgView
         renderMessage(msgView)
@@ -222,71 +216,42 @@ class BottomSheetDialog(private val activity: Activity) {
             field.requestFocus()
         }
 
-        confirmText?.let { label ->
-            root.addView(TextView(activity).apply {
-                confirmView = this
-                setText(label)
-                textSize = 15f
-                typeface = ThemeRes.bold(context)
-                gravity = Gravity.CENTER
-                setTextColor(ThemeRes.onFill(activity))
-                background = ThemeRes.chip(activity, true)
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(46f)
-                ).apply {
-                    topMargin = dp(10f)
-                    marginStart = dp(10f)
-                    marginEnd = dp(10f)
-                }
-                setOnClickListener { onConfirm?.invoke() }
-            })
+        // The two buttons sit side by side, Cancel on the left and the main one on the right; one alone fills the row.
+        val buttons = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                .apply { topMargin = dp(10f); marginStart = dp(10f); marginEnd = dp(10f) }
         }
+        val buttonH = dp(if (glass) 50f else 46f)
         cancelText?.let { label ->
-            root.addView(TextView(activity).apply {
+            buttons.addView(TextView(activity).apply {
                 setText(label)
                 textSize = 15f
                 typeface = ThemeRes.bold(context)
                 gravity = Gravity.CENTER
                 setTextColor(primary)
-                background = ThemeRes.chip(activity, false)
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(46f))
-                    .apply { topMargin = dp(8f); marginStart = dp(10f); marginEnd = dp(10f) }
+                background = if (glass) ThemeRes.GlassDrawable(activity, ThemeRes.FULL, flat = true) else ThemeRes.chip(activity, false)
+                layoutParams = LinearLayout.LayoutParams(0, buttonH, 1f).apply { marginEnd = if (confirmText != null) dp(4f) else 0 }
                 setOnClickListener { onCancel?.invoke() }
             })
         }
-
-        d.setContentView(root)
-        d.setCanceledOnTouchOutside(true)
-
-        d.window?.let { w ->
-            w.setBackgroundDrawable(ColorDrawable(0x00000000))
-            // Glass on Android 12+: the window blurs what is behind it, and the sheet is the window's own background so
-            // the blur takes its rounded shape.
-            if (ThemeRes.glass(activity) && !ThemeRes.nothing(activity) && ThemeRes.windowBlur(activity)) {
-                root.background = null
-                w.setBackgroundDrawable(ThemeRes.sheet(activity))
-                w.setBackgroundBlurRadius(dp(28f))
-            }
-            w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-            // A light dim: the sheet is a chooser over content the user is still
-            // looking at (the ANC circles, the gesture list), not a modal that
-            // should blank the screen.
-            w.setDimAmount(0.45f)
-            w.setLayout(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.WRAP_CONTENT
-            )
-            w.setGravity(Gravity.BOTTOM)
-            w.setWindowAnimations(R.style.SheetAnimation)
-            // With a text field, open the keyboard and push the sheet up above it.
-            // ADJUST_RESIZE is deprecated in favour of hand-written IME-inset handling, but it
-            // still works for a dialog window, and the replacement would need retesting.
-            @Suppress("DEPRECATION")
-            if (inputInitial != null) w.setSoftInputMode(
-                WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE or
-                    WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
-            )
+        confirmText?.let { label ->
+            buttons.addView(TextView(activity).apply {
+                confirmView = this
+                setText(label)
+                textSize = 15f
+                typeface = ThemeRes.bold(context)
+                gravity = Gravity.CENTER
+                setTextColor(if (glass) ThemeRes.palette(activity).onAccent else ThemeRes.onFill(activity))
+                // Glass: the prominent capsule is lit glass.
+                background = if (glass) ThemeRes.shape(activity, ThemeRes.palette(activity).accent, null, ThemeRes.FULL) else ThemeRes.chip(activity, true)
+                layoutParams = LinearLayout.LayoutParams(0, buttonH, 1f).apply { marginStart = if (cancelText != null) dp(4f) else 0 }
+                setOnClickListener { onConfirm?.invoke() }
+            })
         }
+        if (buttons.childCount > 0) root.addView(buttons)
+
+        present(activity, d, root, keyboard = inputInitial != null)
 
         d.setOnDismissListener { dialog = null; open--; onDismiss?.invoke() }
         dialog = d
@@ -296,61 +261,147 @@ class BottomSheetDialog(private val activity: Activity) {
 
     private fun renderMessage(view: TextView) {
         val text = messageText
-        if (text == null || text.isEmpty()) {
-            view.visibility = View.GONE
+        val empty = text == null || text.isEmpty()
+        if (dialog == null) {
+            // Not showing yet: no animation.
+            view.visibility = if (empty) View.GONE else View.VISIBLE
+            if (!empty) view.text = text
+            return
+        }
+        // Showing: the message grows open or folds away, it does not pop in and out (that moved the whole dialog).
+        if (empty) {
+            if (view.visibility == View.VISIBLE) Motion.slide(view, false)
         } else {
-            view.visibility = View.VISIBLE
             view.text = text
+            if (view.visibility != View.VISIBLE) Motion.slide(view, true)
         }
     }
 
     private fun renderItems(column: LinearLayout) {
+        // Same rows as before (a multi-select toggled): update them in place, so nothing flashes and the change can animate.
+        if (column.childCount == itemList.size && column.childCount > 0) {
+            itemList.forEachIndexed { i, item -> bindRow(column.getChildAt(i) as LinearLayout, item, animate = true) }
+            return
+        }
         column.removeAllViews()
         for (item in itemList) column.addView(buildRow(item))
     }
 
     private fun buildRow(item: Item): View {
         val dp = { v: Float -> ThemeRes.dp(activity, v) }
-        val primary = ThemeRes.color(activity, R.attr.appColorTextPrimary)
-        val secondary = ThemeRes.color(activity, R.attr.appColorTextSecondary)
-        val accent = ThemeRes.color(activity, R.attr.appColorAccent)
-
         val row = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(52f)
-            )
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(52f))
             setPadding(dp(14f), 0, dp(14f), 0)
-            isClickable = item.enabled
-            if (item.enabled && item.onClick != null) {
-                setOnClickListener {
-                    Haptics.commit(it)
-                    item.onClick.invoke()
-                    if (dismissOnSelect) close()
-                }
-            }
-            // A disabled row is dimmed rather than hidden, so a rule-restricted
-            // option is visible as something that exists but is not currently
-            // allowed. Hiding it would look like a missing option.
-            alpha = if (item.enabled) 1f else 0.4f
+            addView(TextView(activity).apply {
+                textSize = 15f
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            })
         }
-
-        row.addView(TextView(activity).apply {
-            setText(item.label)
-            setTextColor(if (item.selected && item.enabled) accent else primary)
-            textSize = 15f
-            layoutParams = LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f
-            )
-        })
-
-        if (item.selected) row.foreground = ThemeRes.selectedBorder(activity, if (item.enabled) accent else secondary)
-
+        bindRow(row, item, animate = false)
         return row
     }
 
+    /** Sets a row's text, click, and selection look. With [animate] a change of selection fades. */
+    private fun bindRow(row: LinearLayout, item: Item, animate: Boolean) {
+        val primary = ThemeRes.color(activity, R.attr.appColorTextPrimary)
+        val secondary = ThemeRes.color(activity, R.attr.appColorTextSecondary)
+        val accent = ThemeRes.color(activity, R.attr.appColorAccent)
+        val glassRows = ThemeRes.glass(activity) && !ThemeRes.nothing(activity)
+        val label = row.getChildAt(0) as TextView
+        if (label.text.toString() != item.label) label.text = item.label
+
+        row.isClickable = item.enabled
+        row.setOnClickListener(null)
+        if (item.enabled && item.onClick != null) {
+            row.setOnClickListener {
+                Haptics.commit(it)
+                item.onClick.invoke()
+                if (dismissOnSelect) close()
+            }
+        }
+        // A disabled row is dimmed rather than hidden, so a rule-restricted option is visible as something that exists
+        // but is not currently allowed.
+        row.alpha = if (item.enabled) 1f else 0.4f
+
+        val sel = item.selected
+        val was = row.tag as? Boolean
+        val toColor = if (sel && item.enabled && !glassRows) accent else primary
+        if (was == sel) { label.setTextColor(toColor); return }
+        row.tag = sel
+        val fade = animate && was != null
+        if (!fade) label.setTextColor(toColor)
+        else android.animation.ValueAnimator.ofArgb(label.currentTextColor, toColor).apply {
+            duration = 180
+            addUpdateListener { label.setTextColor(it.animatedValue as Int) }
+            start()
+        }
+        when {
+            // Glass: a selected row is a lit capsule, not an outline.
+            glassRows -> {
+                val lit = ThemeRes.GlassDrawable(activity, ThemeRes.FULL, selected = true, flat = true)
+                val none = android.graphics.drawable.ColorDrawable(0)
+                if (!fade) row.background = if (sel) lit else null
+                else row.background = android.graphics.drawable.TransitionDrawable(if (sel) arrayOf(none, lit) else arrayOf(lit, none)).apply { isCrossFadeEnabled = true; startTransition(180) }
+            }
+            sel -> row.foreground = ThemeRes.selectedBorder(activity, if (item.enabled) accent else secondary)
+            else -> row.foreground = null
+        }
+    }
+
     companion object {
+        /**
+         * Shows [root] as a centred dialog window: a rounded card (Glass: a floating Liquid Glass plate with a blurred backdrop
+         * on Android 12+), 24dp from the screen's sides, entering with a quick overshoot. Shared by every dialog in the app.
+         */
+        fun present(activity: Activity, d: Dialog, root: View, keyboard: Boolean = false) {
+            val dp = { v: Float -> ThemeRes.dp(activity, v) }
+            val glass = ThemeRes.glass(activity) && !ThemeRes.nothing(activity)
+            val blur = glass && ThemeRes.windowBlur(activity)
+            val max = dp(420f)
+            val frame = android.widget.FrameLayout(activity).apply {
+                setPadding(dp(24f), dp(24f), dp(24f), dp(24f))
+                clipChildren = false
+                addView(root, android.widget.FrameLayout.LayoutParams(
+                    minOf(activity.resources.displayMetrics.widthPixels - dp(48f), max), android.view.ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
+            }
+            d.setContentView(frame)
+            d.setCanceledOnTouchOutside(true)
+            d.window?.let { w ->
+                Haptics.watch(activity, w)
+                w.setBackgroundDrawable(ColorDrawable(0x00000000))
+                if (blur) {
+                    root.background = null
+                    w.setBackgroundDrawable(android.graphics.drawable.InsetDrawable(ThemeRes.floatingSheet(activity), dp(24f)))
+                    w.setBackgroundBlurRadius(dp(28f))
+                }
+                w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+                w.setDimAmount(0.45f)
+                w.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
+                w.setGravity(Gravity.CENTER)
+                w.setWindowAnimations(android.R.style.Animation_Dialog)
+                @Suppress("DEPRECATION")
+                if (keyboard) w.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE or WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+            }
+            // Glass: the screen behind blurs while the dialog is open (an in-app effect, so it needs no compositor support).
+            if (glass && android.os.Build.VERSION.SDK_INT >= 31) {
+                val decor = activity.window.decorView
+                decor.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(dp(10f).toFloat(), dp(10f).toFloat(), Shader.TileMode.CLAMP))
+                d.window?.decorView?.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                    override fun onViewAttachedToWindow(v: View) {}
+                    override fun onViewDetachedFromWindow(v: View) { decor.setRenderEffect(null) }
+                })
+            }
+            // Quick, with a spring: the card grows from 92% and settles. Nothing runs when the system removes animations.
+            if (android.provider.Settings.Global.getFloat(activity.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) != 0f) {
+                frame.alpha = 0f
+                frame.scaleX = 0.92f; frame.scaleY = 0.92f
+                frame.post { frame.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(260)
+                    .setInterpolator(android.view.animation.OvershootInterpolator(1.6f)).start() }
+            }
+        }
+
         /** Sheets showing now, in every screen. A launch prompt waits while one is open (MainActivity). */
         var open = 0
             private set

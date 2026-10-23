@@ -31,6 +31,9 @@ object Entrance : Application.ActivityLifecycleCallbacks {
     override fun onActivityResumed(a: Activity) {
         if (!on(a)) return
         val content = a.findViewById<ViewGroup>(android.R.id.content) ?: return
+        // A screen rebuilt by a theme change fades in from its own picture: no second entrance on top of it.
+        val rebuilt = ThemeRes.justRecreated
+        if (rebuilt) { ThemeRes.justRecreated = false; staged[a] = true }
         content.post {
             if (staged.put(a, true) == null) stagger(a, content)
             content.postDelayed({ feel(content) }, 450)
@@ -40,13 +43,15 @@ object Entrance : Application.ActivityLifecycleCallbacks {
     /** The cards of the first scrolling column fade and rise in turn. */
     private fun stagger(a: Activity, content: ViewGroup) {
         val column = firstColumn(content) ?: return
-        val rise = ThemeRes.dp(a, 22f).toFloat()
-        val kids = (0 until column.childCount).map { column.getChildAt(it) }.filter { it.visibility == View.VISIBLE }.take(16)
+        val rise = ThemeRes.dp(a, 28f).toFloat()
+        // Quick: the whole entrance ends in about half a second. Each card rises past its place and settles (the wow), and the first cards lead.
+        val kids = (0 until column.childCount).map { column.getChildAt(it) }.filter { it.visibility == View.VISIBLE }.take(10)
         kids.forEachIndexed { i, v ->
             v.alpha = 0f
             v.translationY = rise
-            v.animate().alpha(1f).translationY(0f).setStartDelay(60L + i * 45L).setDuration(340)
-                .setInterpolator(DecelerateInterpolator(1.8f)).start()
+            v.scaleX = 0.96f; v.scaleY = 0.96f
+            v.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f).setStartDelay(i * 28L).setDuration(300)
+                .setInterpolator(OvershootInterpolator(1.4f)).start()
         }
     }
 
@@ -69,7 +74,7 @@ object Entrance : Application.ActivityLifecycleCallbacks {
             v.setOnTouchListener { view, e ->
                 when (e.actionMasked) {
                     MotionEvent.ACTION_DOWN -> view.animate().scaleX(to).scaleY(to).setDuration(90).setInterpolator(DecelerateInterpolator()).start()
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> view.animate().scaleX(1f).scaleY(1f).setDuration(280).setInterpolator(OvershootInterpolator(2.4f)).start()
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> view.animate().scaleX(1f).scaleY(1f).setDuration(220).setInterpolator(OvershootInterpolator(2.8f)).start()
                 }
                 false
             }

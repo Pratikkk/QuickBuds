@@ -94,43 +94,56 @@ class ThemeActivity : Activity() {
             }
         })
 
-        // --- Built-in: 3-column grid of preview tiles ---
-        root.addView(SettingRowFactory.sectionLabel(this, R.string.theme_builtin))
-        val grid = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            clipChildren = false
-            clipToPadding = false
-        }
-        PaletteStore.builtInIds().forEachIndexed { i, id ->
-            val preset = PaletteStore.builtIn(this, id)
-            val isActive = id == activeId
-            val column = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                clipChildren = false
-                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-                    .apply { if (i > 0) marginStart = dp(10f) }
-                ThemeRes.sinkOnPress(this)
-                setOnClickListener { apply(id, it) }
-                contentDescription = preset.name
+        // --- Where the colours come from: the wallpaper, one accent on a built-in set, or a palette of six colours ---
+        // Every style takes all three. Glass takes from a preset its accent and whether it is light or dark; its surfaces, its text and its
+        // background are its own.
+        val wallpaperOk = PaletteStore.wallpaperSupported()
+        val sources = if (wallpaperOk) intArrayOf(0, 1, 2) else intArrayOf(1, 2)
+        val mode = if (PaletteStore.wallpaper(this)) 0 else if (!ThemeRes.palette(this).builtIn) 2 else 1
+        root.addView(SettingRowFactory.sectionLabel(this, R.string.theme_colors_title))
+        root.addView(AncSegmentedView(this, sources.map { getString(when (it) { 0 -> R.string.colors_wallpaper; 1 -> R.string.colors_accent; else -> R.string.colors_palette }) }).apply {
+            selected = sources.indexOf(mode)
+            contentDescription = getString(R.string.theme_colors_title)
+            onSegmentTapped = tapped@{ i ->
+                if (i != selected) {
+                    selected = i
+                    Haptics.commit(this)
+                    when (sources[i]) {
+                        0 -> PaletteStore.setWallpaper(this@ThemeActivity, true)
+                        1 -> {
+                            PaletteStore.setWallpaper(this@ThemeActivity, false)
+                            if (!ThemeRes.palette(this@ThemeActivity).builtIn) PaletteStore.setActive(this@ThemeActivity, PaletteStore.OLED)
+                        }
+                        else -> {
+                            PaletteStore.setWallpaper(this@ThemeActivity, false)
+                            val first = PaletteStore.custom(this@ThemeActivity).firstOrNull()
+                            if (first != null) PaletteStore.setActive(this@ThemeActivity, first.id)
+                            else { createPreset(); selected = sources.indexOf(mode); return@tapped }
+                        }
+                    }
+                    postDelayed({ ThemeRes.recreateFaded(this@ThemeActivity) }, 260)
+                }
             }
-            val frame = FrameLayout(this).apply { clipChildren = false }
-            frame.addView(PalettePreviewView(this, detailed = false).apply {
-                palette = preset
-                if (isActive) { selTarget = frame; selRadius = 18f }
-                if (isActive) activeTile = this
-            })
-            column.addView(frame)
-            column.addView(TextView(this).apply {
-                text = preset.name
-                textSize = 13f
-                gravity = Gravity.CENTER
-                setPadding(0, dp(8f), 0, 0)
-                setTextColor(if (isActive) p.text else p.textSecondary)
-                if (isActive) typeface = ThemeRes.medium(context)
-            })
-            grid.addView(column)
-        }
-        root.addView(grid)
+        })
+        val coloured = mode != 2
+        // A text picker: the built-in presets as one segmented control, the way the Style picker is.
+        val ids = PaletteStore.builtInIds()
+        if (coloured) root.addView(SettingRowFactory.sectionLabel(this, R.string.theme_builtin))
+        if (coloured) root.addView(AncSegmentedView(this, ids.map { PaletteStore.builtIn(this, it).name }).apply {
+            selected = ids.indexOf(activeId)
+            contentDescription = getString(R.string.theme_builtin)
+            onSegmentTapped = { i ->
+                if (i != selected) {
+                    selected = i
+                    val id = ids[i]
+                    Haptics.commit(this)
+                    // A theme picked by hand ends Match system.
+                    if (PaletteStore.auto(this@ThemeActivity)) PaletteStore.setAuto(this@ThemeActivity, false)
+                    PaletteStore.setActive(this@ThemeActivity, id)
+                    postDelayed({ ThemeRes.recreateFaded(this@ThemeActivity) }, 260)
+                }
+            }
+        })
 
         // --- Match system: White in light mode, a dark built-in in dark mode ---
         val autoSwitch = SettingRowFactory.buildSwitch(this, PaletteStore.auto(this))
@@ -141,28 +154,35 @@ class ThemeActivity : Activity() {
                 ThemeRes.builtInName(this, PaletteStore.autoDark(this)))
         root.addView(SettingRowFactory.card(this).apply {
             (layoutParams as LinearLayout.LayoutParams).topMargin = dp(18f)
-            addView(autoRow)
-            // Wallpaper colours (Android 12+): the built-in presets from the system's tonal palettes.
-            if (PaletteStore.wallpaperSupported()) {
-                val wallSwitch = SettingRowFactory.buildSwitch(this@ThemeActivity, PaletteStore.wallpaper(this@ThemeActivity))
-                wallSwitch.setOnCheckedChangeListener { v, on -> PaletteStore.setWallpaper(this@ThemeActivity, on); v.postDelayed({ ThemeRes.recreateFaded(this@ThemeActivity) }, 260) }
-                val wallRow = SettingRowFactory.build(this@ThemeActivity, 0, R.string.theme_wallpaper, 0, wallSwitch) { wallSwitch.performClick() }
-                SettingRowFactory.subtitle(this@ThemeActivity, wallRow).setText(R.string.theme_wallpaper_sub)
-                SettingRowFactory.addRow(this, wallRow)
-            }
-            // Glass: the soft gradient behind the glass is optional; the window is pitch black without it.
+            if (coloured) addView(autoRow)
+            // Glass: the background behind the glass.
             if (ThemeRes.glass(this@ThemeActivity)) {
-                val gradSwitch = SettingRowFactory.buildSwitch(this@ThemeActivity, ThemeRes.glassGradient(this@ThemeActivity))
-                gradSwitch.setOnCheckedChangeListener { v, on -> ThemeRes.setGlassGradient(this@ThemeActivity, on); v.postDelayed({ ThemeRes.recreateFaded(this@ThemeActivity) }, 260) }
-                val gradRow = SettingRowFactory.build(this@ThemeActivity, 0, R.string.theme_glass_gradient, R.string.theme_glass_gradient_sub, gradSwitch) { gradSwitch.performClick() }
-                SettingRowFactory.addRow(this, gradRow)
+                val current = ThemeRes.glassBg(this@ThemeActivity)
+                val bgRow = SettingRowFactory.build(this@ThemeActivity, 0, R.string.theme_glass_gradient, 0, SettingRowFactory.buildChevron(this@ThemeActivity)) {
+                    var pick = ThemeRes.glassBg(this@ThemeActivity)
+                    val sheet = BottomSheetDialog(this@ThemeActivity)
+                    fun refresh() { sheet.items(ThemeRes.GlassBg.values().map { bg ->
+                        BottomSheetDialog.Item(getString(bg.nameRes), selected = bg == pick, onClick = { pick = bg; refresh() })
+                    }) }
+                    sheet.title(getString(R.string.theme_glass_gradient)).dismissOnSelect(false)
+                        .confirm(getString(R.string.gesture_done)) {
+                            sheet.close()
+                            if (pick != ThemeRes.glassBg(this@ThemeActivity)) { ThemeRes.setGlassBg(this@ThemeActivity, pick); ThemeRes.recreateFaded(this@ThemeActivity) }
+                        }
+                        .cancel(getString(R.string.dialog_cancel)) { sheet.close() }
+                    refresh()
+                    sheet.show()
+                }
+                SettingRowFactory.subtitle(this@ThemeActivity, bgRow).text = getString(current.nameRes)
+                if (childCount == 0) addView(bgRow) else SettingRowFactory.addRow(this, bgRow)
             }
+            if (childCount == 0) visibility = View.GONE
         })
 
         // --- Accent of the applied built-in preset ---
         val active = ThemeRes.palette(this)
         // Hidden under wallpaper colours: the wallpaper sets the accent.
-        if (active.builtIn && !PaletteStore.wallpaper(this)) {
+        if (mode == 1 && active.builtIn) {
             val accentCard = SettingRowFactory.card(this).apply {
                 (layoutParams as LinearLayout.LayoutParams).topMargin = dp(18f)
             }
@@ -221,60 +241,63 @@ class ThemeActivity : Activity() {
             root.addView(accentCard)
         }
 
-        // --- Custom · N of 3 ---
-        val custom = PaletteStore.custom(this)
-        root.addView(SettingRowFactory.sectionLabel(this, R.string.theme_custom).apply {
-            text = getString(R.string.theme_custom, custom.size, PaletteStore.MAX_CUSTOM)
-            setPadding(dp(4f), dp(18f), 0, dp(9f))
-        })
-        val card = SettingRowFactory.splitList(this)
-        // Rows that came or went while the editor was open grow in or fold away (never on the first build).
-        val before = shownCustom
-        shownCustom = custom
-        fun presetRow(preset: Palette): View {
-            val pencil = ImageView(this).apply {
-                layoutParams = LinearLayout.LayoutParams(dp(44f), dp(44f))
-                setPadding(dp(11f), dp(11f), 0, dp(11f))
-                setImageDrawable(ThemeRes.tint(this@ThemeActivity, R.drawable.ic_pencil, p.accent))
-                background = ThemeRes.ripple(this@ThemeActivity)
-                contentDescription = getString(R.string.theme_edit)
-                setOnClickListener { edit(preset.id) }
+        if (mode == 2) {
+            // --- Custom · N of 3 ---
+            val custom = PaletteStore.custom(this)
+            root.addView(SettingRowFactory.sectionLabel(this, R.string.theme_custom).apply {
+                text = getString(R.string.theme_custom, custom.size, PaletteStore.MAX_CUSTOM)
+                setPadding(dp(4f), dp(18f), 0, dp(9f))
+            })
+            val card = SettingRowFactory.splitList(this)
+            // Rows that came or went while the editor was open grow in or fold away (never on the first build).
+            val before = shownCustom
+            shownCustom = custom
+            fun presetRow(preset: Palette): View {
+                val pencil = ImageView(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(dp(44f), dp(44f))
+                    setPadding(dp(11f), dp(11f), 0, dp(11f))
+                    setImageDrawable(ThemeRes.tint(this@ThemeActivity, R.drawable.ic_pencil, p.accent))
+                    background = ThemeRes.ripple(this@ThemeActivity)
+                    contentDescription = getString(R.string.theme_edit)
+                    setOnClickListener { edit(preset.id) }
+                }
+                val row = SettingRowFactory.build(
+                    this, 0, 0, 0, pencil, leading = SwatchGrid(this, preset), minHeightDp = 62f
+                ) { apply(preset.id, card) }
+                row.findViewWithTag<TextView>(SettingRowFactory.TITLE_TAG).text = preset.name
+                return row
             }
-            val row = SettingRowFactory.build(
-                this, 0, 0, 0, pencil, leading = SwatchGrid(this, preset), minHeightDp = 62f
-            ) { apply(preset.id, card) }
-            row.findViewWithTag<TextView>(SettingRowFactory.TITLE_TAG).text = preset.name
-            return row
-        }
-        custom.forEach { preset ->
-            val row = presetRow(preset)
-            // Active: the selection border, like the built-in tiles.
-            if (preset.id == activeId) { selTarget = row; selRadius = SettingRowFactory.SPLIT_RADIUS }
-            SettingRowFactory.addSplit(card, row)
-            if (before != null && before.none { it.id == preset.id }) Motion.slide(row.parent as View, open = true)
-        }
-        before?.forEachIndexed { i, old ->
-            if (custom.none { it.id == old.id }) {
-                val ghost = presetRow(old).apply { isEnabled = false; isClickable = false }
-                SettingRowFactory.addSplit(card, ghost)
-                val gc = ghost.parent as View
-                card.removeView(gc)
-                card.addView(gc, minOf(i, card.childCount))
-                Motion.slide(gc, open = false) { card.removeView(gc) }
+            custom.forEach { preset ->
+                val row = presetRow(preset)
+                // Active: the selection border, like the built-in tiles.
+                if (preset.id == activeId) { selTarget = row; selRadius = SettingRowFactory.SPLIT_RADIUS }
+                SettingRowFactory.addSplit(card, row)
+                if (before != null && before.none { it.id == preset.id }) Motion.slide(row.parent as View, open = true)
             }
-        }
-        val left = PaletteStore.MAX_CUSTOM - custom.size
-        val newRow = SettingRowFactory.build(this, R.drawable.ic_plus, R.string.theme_new, 0, null) { createPreset() }
-        SettingRowFactory.subtitle(this, newRow).text = when (left) {
-            0 -> getString(R.string.theme_new_full)
-            1 -> getString(R.string.theme_new_sub_one)
-            else -> getString(R.string.theme_new_sub, left)
-        }
-        if (left == 0) { newRow.isEnabled = false; newRow.alpha = 0.35f }
-        SettingRowFactory.addSplit(card, newRow)
-        root.addView(card)
+            before?.forEachIndexed { i, old ->
+                if (custom.none { it.id == old.id }) {
+                    val ghost = presetRow(old).apply { isEnabled = false; isClickable = false }
+                    SettingRowFactory.addSplit(card, ghost)
+                    val gc = ghost.parent as View
+                    card.removeView(gc)
+                    card.addView(gc, minOf(i, card.childCount))
+                    Motion.slide(gc, open = false) { card.removeView(gc) }
+                }
+            }
+            val left = PaletteStore.MAX_CUSTOM - custom.size
+            val newRow = SettingRowFactory.build(this, R.drawable.ic_plus, R.string.theme_new, 0, null) { createPreset() }
+            SettingRowFactory.subtitle(this, newRow).text = when (left) {
+                0 -> getString(R.string.theme_new_full)
+                1 -> getString(R.string.theme_new_sub_one)
+                else -> getString(R.string.theme_new_sub, left)
+            }
+            if (left == 0) { newRow.isEnabled = false; newRow.alpha = 0.35f }
+            SettingRowFactory.addSplit(card, newRow)
+            root.addView(card)
 
-        root.addView(TextView(this).apply {
+        }
+
+        if (mode == 2) root.addView(TextView(this).apply {
             setText(R.string.theme_footer)
             setTextColor(p.textSecondary)
             textSize = 13f

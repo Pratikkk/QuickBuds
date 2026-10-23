@@ -41,7 +41,7 @@
     <!-- Noise control (AncSegmentedView). Segment labels must fit a quarter of the screen. -->
     <string name="anc_section">Noise control</string>
     <string name="anc_seg_off">Off</string>
-    <string name="anc_seg_anc">ANC</string>
+    <string name="anc_seg_anc">Noise cancel</string>
     <string name="anc_need_ear">Put an earbud in to change noise control</string>
     <string name="anc_seg_adapt">Adaptive</string>
     <string name="anc_seg_trans">Transparency</string>
@@ -60,6 +60,7 @@
     <string name="row_hires_sub_codec">The phone plays %1$s, not LHDC. Quality does not change</string>
     <string name="codec_dialog_title">Earbuds will reconnect</string>
     <string name="codec_dialog_accept">Accept</string>
+    <string name="codec_dialog_deny">Deny</string>
     <string name="codec_msg_reconnect">Switching audio quality disconnects the earbuds for a few seconds while they reconnect.</string>
     <string name="codec_msg_hires_drops_spatial">High-quality audio doesn\'t work with 3D audio. Turning it on turns 3D audio off, and the earbuds will disconnect for a few seconds.</string>
     <string name="codec_msg_spatial_drops_hires">3D audio doesn\'t work with high-quality audio. Turning it on switches to standard quality, and the earbuds will disconnect for a few seconds.</string>
@@ -273,10 +274,11 @@
     <string name="gesture_action_volume_up">Volume up</string>
     <string name="gesture_action_volume_down">Volume down</string>
     <string name="gesture_action_switch_device">Switch devices</string>
-    <string name="gesture_action_anc_on">ANC</string>
+    <string name="gesture_action_anc_on">Active noise reduction, last used mode</string>
+    <string name="gesture_action_anc_on_short">ANC</string>
     <string name="gesture_action_anc_adaptive">Adaptive</string>
     <string name="gesture_action_anc_transparency">Transparency</string>
-    <string name="gesture_action_anc_off">ANC off</string>
+    <string name="gesture_action_anc_off">Off</string>
 
     <!--
       SHORT forms, used ONLY by the row summary (not the dialog, which shows the
@@ -356,13 +358,23 @@
     <string name="about_license_title">License</string>
     <string name="about_license_body">QuickBuds is free software under the GNU General Public License v3.0. It builds on the open reverse-engineering work of OppoPodsManager, OppoPods and Pods-Protocol-Reverse-Engineering; the full credits are on GitHub.</string>
     <string name="about_github" translatable="false">GitHub</string>
-    <string name="theme_builtin">Built-in</string>
+    <string name="theme_builtin">Themes</string>
     <string name="theme_auto">Match system</string>
     <string name="theme_auto_sub">%1$s in light mode, %2$s in dark mode</string>
     <string name="theme_wallpaper">Wallpaper colors</string>
     <string name="theme_wallpaper_sub">Built-in themes take their colors from your wallpaper</string>
-    <string name="theme_glass_gradient">Colorful background</string>
+    <string name="theme_glass_gradient">Background</string>
+    <string name="theme_colors_title">Colors</string>
+    <string name="colors_wallpaper">Wallpaper</string>
+    <string name="colors_accent">Accent</string>
+    <string name="colors_palette">Palette</string>
     <string name="theme_glass_gradient_sub">A soft gradient behind the glass</string>
+    <string name="glass_bg_midnight">Midnight</string>
+    <string name="glass_bg_aurora">Aurora</string>
+    <string name="glass_bg_sunset">Sunset</string>
+    <string name="glass_bg_ocean">Ocean</string>
+    <string name="glass_bg_accent">Accent color</string>
+    <string name="glass_bg_none">None</string>
     <string name="theme_oled_black">OLED Black</string>
     <string name="theme_classic_dark">Classic Dark</string>
     <string name="theme_white">White</string>
@@ -566,6 +578,8 @@
     <string name="setup_allowed">Allowed</string>
     <string name="setup_next">Next</string>
     <string name="setup_back">Back</string>
+    <string name="setup_skip">Skip</string>
+    <string name="settings_setup_title">Setup guide</string>
     <string name="setup_bg_title">Stay connected</string>
     <string name="setup_bg_body">The background service keeps the widgets working and reconnects the earbuds. It sleeps while the phone is locked.</string>
     <string name="setup_look_title">Pick a look</string>

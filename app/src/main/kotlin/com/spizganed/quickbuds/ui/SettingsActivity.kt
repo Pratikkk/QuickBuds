@@ -59,6 +59,9 @@ class SettingsActivity : Activity() {
         general.add(0, link(R.drawable.ic_language, R.string.settings_language_title, R.string.settings_language_sub) {
             startActivity(Intent(this, LanguageActivity::class.java))
         })
+        general.add(link(R.drawable.ic_info, R.string.settings_setup_title, 0) {
+            startActivity(Intent(this, SetupActivity::class.java).putExtra(SetupActivity.EXTRA_AGAIN, true))
+        })
         section(R.string.settings_general, *general.toTypedArray())
 
         val version = UpdateChecker.installed(this)

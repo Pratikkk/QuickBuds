@@ -4,6 +4,7 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
@@ -35,10 +36,18 @@ class AncSegmentedView(
             val from = field
             field = v
             anim?.cancel()
+            appearAnim?.cancel()
+            if (p.glass && !nothing && width > 0) {
+                // Glass: the pill appears and leaves with a pop instead of snapping, also from and to "nothing chosen".
+                if (v < 0) { animateAppear(0f); return }
+                if (from < 0) { pos = v.toFloat(); animateAppear(1f); return }
+                appear = 1f
+            } else appear = if (v < 0) 0f else 1f
             if (width == 0 || from < 0 || v < 0) { pos = v.toFloat(); invalidate(); return }
             anim = ValueAnimator.ofFloat(pos, v.toFloat()).apply {
-                duration = 220
-                interpolator = DecelerateInterpolator()
+                duration = 380
+                // The pill overshoots its target a little and settles: quick, with a spring.
+                interpolator = android.view.animation.OvershootInterpolator(1.1f)
                 addUpdateListener { pos = it.animatedValue as Float; postInvalidateOnAnimation() }
                 start()
             }
@@ -47,11 +56,24 @@ class AncSegmentedView(
     private var pos = -1f
     private var anim: ValueAnimator? = null
 
+    /** Glass: how much of the pill shows, 0 (nothing chosen) to 1. Overshoots a little on its way in. */
+    private var appear = 0f
+    private var appearAnim: ValueAnimator? = null
+
+    private fun animateAppear(to: Float) {
+        appearAnim = ValueAnimator.ofFloat(appear, to).apply {
+            duration = if (to > 0f) 320 else 180
+            interpolator = if (to > 0f) android.view.animation.OvershootInterpolator(1.6f) else android.view.animation.DecelerateInterpolator()
+            addUpdateListener { appear = it.animatedValue as Float; postInvalidateOnAnimation() }
+            start()
+        }
+    }
+
     private fun dp(v: Float) = ThemeRes.dp(context, v).toFloat()
 
     private val p = ThemeRes.palette(context)
     private val labels = labels.toMutableList()
-    private val icons: MutableList<Drawable> = iconRes.map { context.getDrawable(it)!!.mutate() }.toMutableList()
+    private val icons: MutableList<Drawable> = iconRes.map { ThemeRes.depth(context, context.getDrawable(it)!!.mutate()) }.toMutableList()
 
     /**
      * Nothing style: the widget's dot-matrix mode icons ([QuickBudsWidget.modeIcon]), white, tinted when drawn.
@@ -66,7 +88,7 @@ class AncSegmentedView(
     fun setSegment(i: Int, label: String, iconRes: Int) {
         if (i !in labels.indices) return
         labels[i] = label
-        if (i in icons.indices) icons[i] = context.getDrawable(iconRes)!!.mutate()
+        if (i in icons.indices) icons[i] = ThemeRes.depth(context, context.getDrawable(iconRes)!!.mutate())
         if (i in dots.indices) dots[i] = QuickBudsWidget.modeIcon(WIDGET_ICON[iconRes] ?: iconRes, dotPitch)
         invalidate()
     }
@@ -86,11 +108,14 @@ class AncSegmentedView(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         // Nothing: taller, for the bigger unscaled dot icons.
-        if (material) { setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), dp(if (icons.isEmpty()) 44f else 72f).toInt()); return }
+        if (material) { setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), dp(if (icons.isEmpty()) 44f else if (iconOnly) 56f else 72f).toInt()); return }
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), dp(if (icons.isEmpty()) 48f else if (dots.isNotEmpty()) 72f else 62f).toInt())
     }
 
     private val nothing = ThemeRes.nothing(context)
+
+    /** Glass: icons only, no labels (the Left / Right buds). */
+    private val iconOnly = icons.isNotEmpty() && labels.all { it.isEmpty() }
 
     /**
      * Material style. With icons: round 52dp toggle buttons with the label under each (the noise control).
@@ -99,11 +124,70 @@ class AncSegmentedView(
      */
     private val material = ThemeRes.material(context)
 
-    private val glassDisc = ThemeRes.GlassDrawable(context, 26f)
+    private val plate = ThemeRes.GlassDrawable(context, 24f, flat = true)
     private val litPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val haloPaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
+    /**
+     * Glass: one plate with the card's corner radius. A lit glass pill glides under the selected mode (it follows [pos]);
+     * every mode is an icon and a label on the plate.
+     */
+    private fun drawGlassPlate(canvas: Canvas) {
+        val n = labels.size
+        val inset = dp(4f)
+        val segW = (width - inset * 2) / n
+        plate.setBounds(0, 0, width, height)
+        plate.draw(canvas)
+        textPaint.getTextBounds("H", 0, 1, capBounds)
+        // The pill may overshoot while it springs, but never past the plate: clamp (an overshoot below 0 hid it, a flash on Off).
+        val shown = if (appear <= 0.01f && selected < 0) -1f else pos.coerceIn(0f, (n - 1).toFloat())
+        val a = appear.coerceIn(0f, 1f)
+        if (shown >= 0f && a > 0f) {
+            val left = inset + segW * shown
+            box.set(left, inset, left + segW, height - inset)
+            val rad = if (icons.isEmpty()) height / 2f - inset else dp(20f)
+            // Flat and bright, the colour of a switch that is on: it reads as "on" like the switches below do.
+            val grow = 0.88f + 0.12f * appear
+            box.inset(box.width() * (1f - grow) / 2f, box.height() * (1f - grow) / 2f)
+            litPaint.shader = null; litPaint.style = Paint.Style.FILL
+            litPaint.color = Palette.withAlpha(p.accent, 0.95f * a)
+            canvas.drawRoundRect(box, rad, rad, litPaint)
+        }
+        if (iconOnly) {
+            // Icons only: each glyph keeps its own ratio, centred in its segment.
+            for (i in 0 until n) {
+                val on = if (shown < 0f) 0f else (1f - kotlin.math.abs(shown - i)).coerceIn(0f, 1f) * a
+                val cx = inset + segW * i + segW / 2
+                icons.getOrNull(i)?.run {
+                    setTint(Palette.blend(p.textSecondary, p.onAccent, on))
+                    val h = dp(30f)
+                    val w = if (intrinsicHeight > 0) h * intrinsicWidth / intrinsicHeight else h
+                    setBounds((cx - w / 2).toInt(), ((height - h) / 2).toInt(), (cx + w / 2).toInt(), ((height + h) / 2).toInt())
+                    draw(canvas)
+                }
+            }
+            return
+        }
+        val textOnly = icons.isEmpty()
+        val iconS = if (textOnly) 0f else dp(12f)
+        val block = if (textOnly) capBounds.height().toFloat() else iconS * 2 + dp(5f) + capBounds.height()
+        val iconTop = (height - block) / 2
+        for (i in 0 until n) {
+            val on = if (shown < 0f) 0f else (1f - kotlin.math.abs(shown - i)).coerceIn(0f, 1f) * a
+            val cx = inset + segW * i + segW / 2
+            val tint = Palette.blend(p.textSecondary, p.onAccent, on)
+            icons.getOrNull(i)?.run {
+                setTint(tint)
+                setBounds((cx - iconS).toInt(), iconTop.toInt(), (cx + iconS).toInt(), (iconTop + iconS * 2).toInt())
+                draw(canvas)
+            }
+            textPaint.color = tint
+            canvas.drawText(labels[i], cx, if (textOnly) iconTop + capBounds.height() else iconTop + iconS * 2 + dp(5f) + capBounds.height(), textPaint)
+        }
+    }
+
     private fun drawMaterial(canvas: Canvas) {
+        if (p.glass) { drawGlassPlate(canvas); return }
         val n = labels.size
         val gap = dp(4f)
         val segW = (width - gap * (n - 1)) / n
@@ -122,25 +206,9 @@ class AncSegmentedView(
                 continue
             }
             val r = dp(26f)
-            if (p.glass) {
-                // Glass: every mode is a glass disc; the selected one is lit white.
-                glassDisc.setBounds((cx - r).toInt(), 0, (cx + r).toInt(), (r * 2).toInt())
-                glassDisc.draw(canvas)
-                if (on > 0f) {
-                    // The selected disc is lit glass, not a white plate: a bright-to-cool gradient, a halo and a rim, the icon stays white.
-                    litPaint.shader = android.graphics.LinearGradient(cx - r, 0f, cx + r, r * 2,
-                        Palette.withAlpha(0xFFFFFFFF.toInt(), 0.62f * on), Palette.withAlpha(0xFFB8C6FF.toInt(), 0.30f * on), android.graphics.Shader.TileMode.CLAMP)
-                    litPaint.style = Paint.Style.FILL
-                    haloPaint.color = Palette.withAlpha(0xFFFFFFFF.toInt(), 0.14f * on)
-                    canvas.drawCircle(cx, r, r + dp(3f), haloPaint)
-                    canvas.drawCircle(cx, r, r, litPaint)
-                    litPaint.shader = null; litPaint.style = Paint.Style.STROKE; litPaint.strokeWidth = dp(1.2f)
-                    litPaint.color = Palette.withAlpha(0xFFFFFFFF.toInt(), 0.75f * on)
-                    canvas.drawCircle(cx, r, r - dp(0.6f), litPaint)
-                }
-            } else canvas.drawCircle(cx, r, r, trackPaint)
+            canvas.drawCircle(cx, r, r, trackPaint)
             icons.getOrNull(i)?.run {
-                setTint(Palette.blend(p.textSecondary, if (p.glass) 0xFFFFFFFF.toInt() else p.onAccent, on))
+                setTint(Palette.blend(p.textSecondary, p.onAccent, on))
                 val s = dp(12f).toInt()
                 setBounds((cx - s).toInt(), (r - s).toInt(), (cx + s).toInt(), (r + s).toInt())
                 draw(canvas)

@@ -64,13 +64,13 @@ class SetupActivity : Activity() {
         })
 
         back = TextView(this).apply {
-            setText(R.string.setup_back)
             textSize = 15f
             typeface = ThemeRes.medium(context)
             setTextColor(p.textSecondary)
             gravity = Gravity.CENTER
             setPadding(dp(12f), 0, dp(12f), 0)
-            setOnClickListener { show(page - 1) }
+            // The first page has no way back: the same button skips the guide.
+            setOnClickListener { if (page == 0) finishSetup() else show(page - 1) }
         }
         dots = LinearLayout(this).apply { gravity = Gravity.CENTER }
         next = TextView(this).apply {
@@ -150,7 +150,7 @@ class SetupActivity : Activity() {
             PRIVACY -> privacy()
             else -> { icon(); heading(R.string.setup_ready_title, R.string.setup_ready_body) }
         }
-        back.visibility = if (page == 0) View.INVISIBLE else View.VISIBLE
+        back.setText(if (page == 0) R.string.setup_skip else R.string.setup_back)
         next.setText(if (page == total - 1) R.string.welcome_done else R.string.setup_next)
         dots.removeAllViews()
         for (n in 0 until total) dots.addView(View(this).apply {
@@ -251,39 +251,18 @@ class SetupActivity : Activity() {
         })
 
         label(R.string.theme_builtin)
-        val activeId = PaletteStore.activeId(this)
-        body.addView(LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            PaletteStore.builtInIds().forEachIndexed { i, id ->
-                val preset = PaletteStore.builtIn(this@SetupActivity, id)
-                val on = id == activeId
-                addView(LinearLayout(this@SetupActivity).apply {
-                    orientation = LinearLayout.VERTICAL
-                    layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { if (i > 0) marginStart = dp(10f) }
-                    contentDescription = preset.name
-                    ThemeRes.sinkOnPress(this)
-                    setOnClickListener {
-                        if (id == PaletteStore.activeId(this@SetupActivity)) return@setOnClickListener
-                        Haptics.commit(it)
-                        PaletteStore.setActive(this@SetupActivity, id)
-                        ThemeRes.recreateFaded(this@SetupActivity)
-                    }
-                    addView(FrameLayout(this@SetupActivity).apply {
-                        // The picked tile gets an accent outline.
-                        if (on) foreground = GradientDrawable().apply {
-                            setColor(0); setStroke(dp(3f), p.accent); cornerRadius = dp(18f).toFloat()
-                        }
-                        addView(PalettePreviewView(this@SetupActivity, detailed = false).apply { palette = preset })
-                    })
-                    addView(TextView(this@SetupActivity).apply {
-                        text = preset.name
-                        textSize = 13f
-                        gravity = Gravity.CENTER
-                        setPadding(0, dp(8f), 0, 0)
-                        setTextColor(if (on) p.text else p.textSecondary)
-                        if (on) typeface = ThemeRes.medium(context)
-                    })
-                })
+        // The same text picker as Settings > Themes; a theme picked by hand ends Match system.
+        val ids = PaletteStore.builtInIds()
+        body.addView(AncSegmentedView(this, ids.map { PaletteStore.builtIn(this, it).name }).apply {
+            selected = ids.indexOf(PaletteStore.activeId(this@SetupActivity))
+            contentDescription = getString(R.string.theme_builtin)
+            onSegmentTapped = { i ->
+                if (i != selected) {
+                    selected = i
+                    if (PaletteStore.auto(this@SetupActivity)) PaletteStore.setAuto(this@SetupActivity, false)
+                    PaletteStore.setActive(this@SetupActivity, ids[i])
+                    postDelayed({ ThemeRes.recreateFaded(this@SetupActivity) }, 260)
+                }
             }
         })
 
@@ -462,12 +441,14 @@ class SetupActivity : Activity() {
 
     private fun finishSetup() {
         prefs.edit().putBoolean(KEY_DONE, true).apply()
-        startActivity(Intent(this, MainActivity::class.java))
+        // Opened from Settings: the screens below are still there.
+        if (!intent.getBooleanExtra(EXTRA_AGAIN, false)) startActivity(Intent(this, MainActivity::class.java))
         finish()
     }
 
     companion object {
         private const val KEY_DONE = "setupDone"
+        const val EXTRA_AGAIN = "again"
         private const val WELCOME = 0
         private const val LOOK = 1
         private const val PERMISSIONS = 2

@@ -200,7 +200,7 @@ enum class GestureAction(
     // key-function bind (`functionByte`, bind/unbind the gesture to "cycles ANC" at all) and the
     // mask ([GestureModel.holdMask], which modes it cycles through) — two separate commands on
     // purpose, so a failure in either is attributable, never merged into one "save".
-    ANC_ON(R.string.gesture_action_anc_on, functionByte = 0x08, holdModeType = 5),
+    ANC_ON(R.string.gesture_action_anc_on, R.string.gesture_action_anc_on_short, functionByte = 0x08, holdModeType = 5),
     /** `[VENDOR]` "strong" / "weak" as top-level modes of their own (Buds Z2, Enco X). */
     ANC_HIGH(R.string.widget_mode_anc_high, R.string.anc_mode_high, functionByte = 0x08, holdModeType = 4),
     ANC_LOW(R.string.widget_mode_anc_low, R.string.anc_mode_low, functionByte = 0x08, holdModeType = 3),

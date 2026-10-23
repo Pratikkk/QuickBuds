@@ -142,6 +142,8 @@ object SettingRowFactory {
         val context = row.context
         if (!ThemeRes.material(context)) return
         val dp = { v: Float -> ThemeRes.dp(context, v) }
+        // Glass: the control is its own plate; no card round it.
+        if (ThemeRes.glass(context)) { row.background = null; row.setPadding(0, 0, 0, 0); return }
         row.background = ThemeRes.card(context, ThemeRes.LIST_OUTER)
         row.setPadding(dp(4f), dp(12f), dp(4f), dp(12f))
     }
@@ -192,29 +194,43 @@ object SettingRowFactory {
                 val dp = { v: Float -> ThemeRes.dp(context, v) }
                 val checkedState = intArrayOf(android.R.attr.state_checked)
                 trackDrawable = android.graphics.drawable.StateListDrawable().apply {
+                    setEnterFadeDuration(160); setExitFadeDuration(160)
                     // Glass: a tinted track and a white thumb that keeps its size, as the system's own glass switch.
-                    addState(checkedState, ThemeRes.shape(context, if (p.glass) 0xCCECF0FF.toInt() else p.accent, null, ThemeRes.FULL).apply { setSize(dp(52f), dp(32f)) })
-                    addState(intArrayOf(), (if (p.glass) ThemeRes.shape(context, 0x4D0A0A28, p.outline, ThemeRes.FULL, 1f)
+                    addState(checkedState, ThemeRes.shape(context, p.accent, null, ThemeRes.FULL).apply { setSize(dp(52f), dp(32f)) })
+                    addState(intArrayOf(), (if (p.glass) ThemeRes.shape(context, if (p.glassLight) 0x3314152B else 0x4D0A0A28, p.outline, ThemeRes.FULL, 1f)
                         else ThemeRes.shape(context, p.container, p.textSecondary, ThemeRes.FULL, 2f)).apply { setSize(dp(52f), dp(32f)) })
                 }
                 // A plain disc with no padding: Switch shifts a thumb outward by its padding (an inset
                 // drawable's knob passed the track's end). The box is half the track wide, as Switch makes
                 // itself twice the thumb's width; the disc's centre is 16dp from the track end it sits at.
-                fun knob(color: Int, sizeDp: Float, atEnd: Boolean) = object : android.graphics.drawable.Drawable() {
-                    private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
-                    override fun draw(c: android.graphics.Canvas) = c.drawCircle(
-                        if (atEnd) bounds.right - dp(16f).toFloat() else bounds.left + dp(16f).toFloat(),
-                        bounds.exactCenterY(), dp(sizeDp) / 2f, paint)
+                // One thumb for both states, drawn from where the Switch's own animation has put its box: the disc glides
+                // from 16dp to 36dp, grows and changes colour on the way (so a toggle animates, not snaps).
+                val off = if (p.glass) android.graphics.Color.WHITE else p.textSecondary
+                val on = if (p.glass) android.graphics.Color.WHITE else p.onAccent
+                val offR = if (p.glass) 13f else 8f
+                val onR = if (p.glass) 13f else 12f
+                thumbDrawable = object : android.graphics.drawable.Drawable() {
+                    private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+                    private val shade = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+                    override fun draw(c: android.graphics.Canvas) {
+                        val pad = (callback as? View)?.paddingLeft ?: 0
+                        val t = ((bounds.left - pad) / dp(26f).toFloat()).coerceIn(0f, 1f)
+                        val cx = pad + dp(16f) + t * dp(20f)
+                        val r = dp(offR + (onR - offR) * t).toFloat()
+                        if (p.glass) {
+                            shade.shader = android.graphics.RadialGradient(cx, bounds.exactCenterY() + dp(1.5f), r + dp(5f),
+                                intArrayOf(0x4D000000, 0x4D000000, 0), floatArrayOf(0f, r / (r + dp(5f)), 1f), android.graphics.Shader.TileMode.CLAMP)
+                            c.drawCircle(cx, bounds.exactCenterY() + dp(1.5f), r + dp(5f), shade)
+                        }
+                        paint.color = androidx.core.graphics.ColorUtils.blendARGB(off, on, t)
+                        c.drawCircle(cx, bounds.exactCenterY(), r, paint)
+                    }
                     override fun getIntrinsicWidth() = dp(26f)
                     override fun getIntrinsicHeight() = dp(32f)
                     override fun setAlpha(alpha: Int) { paint.alpha = alpha }
                     override fun setColorFilter(cf: android.graphics.ColorFilter?) { paint.colorFilter = cf }
                     @Deprecated("Deprecated in Java")
                     override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
-                }
-                thumbDrawable = android.graphics.drawable.StateListDrawable().apply {
-                    addState(checkedState, knob(if (p.glass) android.graphics.Color.WHITE else p.onAccent, if (p.glass) 26f else 24f, atEnd = true))
-                    addState(intArrayOf(), knob(if (p.glass) android.graphics.Color.WHITE else p.textSecondary, if (p.glass) 26f else 16f, atEnd = false))
                 }
                 thumbTintList = null
                 trackTintList = null
@@ -258,8 +274,8 @@ object SettingRowFactory {
     /** 1dp `outline` divider between rows inside a card (Nothing: a row of dots). Not drawn after the last row. */
     fun buildDivider(context: Context): View = View(context).apply {
         if (ThemeRes.material(context)) {
-            // Material style: no line. A 2dp gap between the row tiles ([ThemeRes.Segments]).
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, ThemeRes.dp(context, 2f))
+            // Material style: no line. A 2dp gap between the row tiles ([ThemeRes.Segments]); Glass: 8dp, every row its own card.
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, ThemeRes.dp(context, if (ThemeRes.glass(context)) 8f else 2f))
             tag = GAP_TAG
             return@apply
         }

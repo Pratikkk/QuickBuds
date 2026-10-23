@@ -3,6 +3,7 @@ package com.spizganed.quickbuds.ui
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.view.MotionEvent
 import android.view.View
@@ -58,10 +59,14 @@ class LevelSliderView(
     /** Material style: the M3 slider. A 16dp track (tonal past the handle), a gap, and a 4dp bar handle that thins while dragged. */
     private val material = ThemeRes.material(context)
     private val tonal = ThemeRes.palette(context).tonal
+
+    /** Glass: Apple's slider. A thin translucent track, a white fill and a round white thumb with a soft shadow that grows while held. */
+    private val glass = ThemeRes.palette(context).glass && !nothing
+    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val bar = android.graphics.RectF()
     private val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = accent; textSize = dp(14f); textAlign = Paint.Align.CENTER
+        color = if (ThemeRes.palette(context).glass && !nothing) ThemeRes.palette(context).text else accent; textSize = dp(14f); textAlign = Paint.Align.CENTER
         if (nothing) typeface = ThemeRes.headline(context) else isFakeBoldText = true
     }
 
@@ -82,6 +87,7 @@ class LevelSliderView(
     }
 
     private fun shapes(canvas: Canvas) {
+        if (glass) { ios(canvas); return }
         if (material) { m3(canvas); return }
         canvas.drawLine(left, trackY, right, trackY, trackPaint)
         canvas.drawLine(left, trackY, x(pos), trackY, fillPaint)
@@ -89,6 +95,24 @@ class LevelSliderView(
         val r = if (dragging) dp(10f) else dp(8f)
         canvas.drawCircle(x(pos), trackY, r, dotFill)
         canvas.drawCircle(x(pos), trackY, r, dotRing)
+    }
+
+    private fun ios(canvas: Canvas) {
+        val x = x(pos)
+        val h = dp(2.5f)
+        barPaint.color = if (ThemeRes.palette(context).glassLight) 0x2614152B else 0x40FFFFFF
+        bar.set(left - h * 2, trackY - h, right + h * 2, trackY + h)
+        canvas.drawRoundRect(bar, h, h, barPaint)
+        barPaint.color = accent
+        bar.set(left - h * 2, trackY - h, x, trackY + h)
+        canvas.drawRoundRect(bar, h, h, barPaint)
+        val r = if (dragging) dp(15f) else dp(13f)
+        val cy = trackY
+        shadowPaint.shader = android.graphics.RadialGradient(x, cy + dp(2f), r + dp(7f),
+            intArrayOf(0x59000000, 0x59000000, 0), floatArrayOf(0f, r / (r + dp(7f)), 1f), android.graphics.Shader.TileMode.CLAMP)
+        canvas.drawCircle(x, cy + dp(2f), r + dp(7f), shadowPaint)
+        barPaint.color = Color.WHITE
+        canvas.drawCircle(x, cy, r, barPaint)
     }
 
     private fun m3(canvas: Canvas) {

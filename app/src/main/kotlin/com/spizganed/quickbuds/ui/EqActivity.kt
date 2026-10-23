@@ -407,8 +407,8 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = ThemeRes.sheet(context)
-            setPadding(dp(8f), dp(14f), dp(8f), dp(18f))
+            background = if (ThemeRes.glass(context) && !ThemeRes.nothing(context)) ThemeRes.floatingSheet(context) else ThemeRes.card(context, 28f, solid = true, base = ThemeRes.palette(context).background)
+            setPadding(dp(8f), dp(18f), dp(8f), dp(18f))
         }
 
         val nameView = TextView(this).apply {
@@ -472,17 +472,7 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
             })
         })
 
-        d.setContentView(root)
-        d.setCanceledOnTouchOutside(true)
-        // Same window as BottomSheetDialog, so the two sheets look like one family.
-        d.window?.let { w ->
-            w.setBackgroundDrawable(ColorDrawable(0x00000000))
-            w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-            w.setDimAmount(0.45f)
-            w.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
-            w.setGravity(Gravity.BOTTOM)
-            w.setWindowAnimations(R.style.SheetAnimation)
-        }
+        BottomSheetDialog.present(this, d, root)
         d.show()
     }
 
@@ -560,7 +550,8 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         lateinit var card: View
         private var selected = false
         private val dp = { v: Float -> ThemeRes.dp(this@EqActivity, v) }
-        private val accent = ThemeRes.color(this@EqActivity, R.attr.appColorAccent)
+        // Glass: the selected tile is lit; its label turns bright white, not the accent (low contrast on glass).
+        private val accent = if (ThemeRes.glass(this@EqActivity)) ThemeRes.palette(this@EqActivity).text else ThemeRes.color(this@EqActivity, R.attr.appColorAccent)
         private val primary = ThemeRes.color(this@EqActivity, R.attr.appColorTextPrimary)
         private val label = TextView(this@EqActivity).apply {
             text = name

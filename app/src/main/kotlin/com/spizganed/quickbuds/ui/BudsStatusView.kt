@@ -3,6 +3,7 @@ package com.spizganed.quickbuds.ui
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
@@ -35,6 +36,10 @@ class BudsStatusView(context: Context) : View(context) {
         var anim: ValueAnimator? = null
         var dots: android.graphics.Bitmap? = null   // Nothing: the dot-matrix ring, redrawn when [dotsKey] changes
         var dotsKey = ""
+        var mask: android.graphics.Bitmap? = null   // Glass: the glyph's alpha mask and its blurred shadow
+        var shadow: android.graphics.Bitmap? = null
+        var shadowOff = IntArray(2)
+        var maskKey = ""
     }
 
     private fun dp(v: Float) = ThemeRes.dp(context, v).toFloat()
@@ -81,10 +86,10 @@ class BudsStatusView(context: Context) : View(context) {
 
     private val trackPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         // Material: the M3 progress track (secondary container).
-        style = Paint.Style.STROKE; strokeWidth = dp(6f); color = if (ThemeRes.material(context)) p.tonal else p.outline
+        style = Paint.Style.STROKE; strokeWidth = dp(if (p.glass && !nothing) 4f else 6f); color = if (ThemeRes.material(context)) p.tonal else p.outline
     }
     private val arcPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE; strokeWidth = dp(6f); strokeCap = Paint.Cap.ROUND; color = p.accent
+        style = Paint.Style.STROKE; strokeWidth = dp(if (p.glass && !nothing) 4f else 6f); strokeCap = Paint.Cap.ROUND; color = p.accent
     }
     private val pctPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textSize = dp(21f); textAlign = Paint.Align.CENTER
@@ -148,11 +153,11 @@ class BudsStatusView(context: Context) : View(context) {
     private fun withA(color: Int, a: Float) = (color and 0x00FFFFFF) or ((((color ushr 24) and 0xFF) * (0.35f + 0.65f * a)).toInt() shl 24)
 
     /** Glass glyphs are white: bright in the ear and for the case, softer out of the ear, softest in the case. */
-    private fun glassTint(isCase: Boolean, status: Int): Int = when {
-        isCase || status == 3 || status == 7 -> 0xF2FFFFFF.toInt()
-        status == 4 || status == 0 -> 0x73FFFFFF
-        else -> 0xB3FFFFFF.toInt()
-    }
+    private fun glassTint(isCase: Boolean, status: Int): Int = Palette.withAlpha(p.ink, when {
+        isCase || status == 3 || status == 7 -> 0.95f
+        status == 4 || status == 0 -> 0.45f
+        else -> 0.7f
+    })
 
     /** Before the model's first "in ear" the "in ear" shown may be a stand-in: no label. */
     private var noWearLabel = false
@@ -162,6 +167,38 @@ class BudsStatusView(context: Context) : View(context) {
         4, 0 -> context.getString(R.string.status_in_case)
         -1 -> null
         else -> context.getString(R.string.status_out)
+    }
+
+    private val glyphPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val blurPaint = Paint().apply { maskFilter = android.graphics.BlurMaskFilter(dp(3f), android.graphics.BlurMaskFilter.Blur.NORMAL) }
+
+    /**
+     * Glass: the glyph has depth. A soft shadow below, then the body as a vertical gradient (lit top, dimmer bottom).
+     * The glyph's alpha mask is cached per size.
+     */
+    private fun drawGlassGlyph(canvas: Canvas, s: Slot, x: Float, y: Float, w: Float, h: Float, tint: Int) {
+        val iw = w.toInt().coerceAtLeast(1); val ih = h.toInt().coerceAtLeast(1)
+        val key = "$iw/$ih"
+        if (s.maskKey != key) {
+            val bmp = android.graphics.Bitmap.createBitmap(iw, ih, android.graphics.Bitmap.Config.ARGB_8888)
+            s.icon.setTint(Color.WHITE)
+            s.icon.setBounds(0, 0, iw, ih)
+            s.icon.draw(Canvas(bmp))
+            val off = IntArray(2)
+            s.mask = bmp.extractAlpha()
+            s.shadow = bmp.extractAlpha(blurPaint, off)
+            s.shadowOff = off
+            s.maskKey = key
+            bmp.recycle()
+        }
+        val a = (tint ushr 24) / 255f
+        shadowPaint.color = Color.argb((90 * a).toInt(), 0, 0, 0)
+        canvas.drawBitmap(s.shadow!!, x + s.shadowOff[0], y + s.shadowOff[1] + dp(2.5f), shadowPaint)
+        val top = tint
+        val bottom = Palette.withAlpha(tint, 0.62f)
+        glyphPaint.shader = android.graphics.LinearGradient(0f, y, 0f, y + h, top, bottom, android.graphics.Shader.TileMode.CLAMP)
+        canvas.drawBitmap(s.mask!!, x, y, glyphPaint)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -195,13 +232,13 @@ class BudsStatusView(context: Context) : View(context) {
                     // Flat like the rest of the screen: a faint disc, a thin track and a white arc, no light effects.
                     val inner = r - trackPaint.strokeWidth / 2 - dp(1f)
                     discPaint.shader = null
-                    discPaint.color = withA(0x14FFFFFF, a)
+                    discPaint.color = withA(if (p.glassLight) 0x1A14152B else 0x14FFFFFF, a)
                     canvas.drawCircle(cx, cy, inner, discPaint)
-                    trackPaint.color = 0x2EFFFFFF
+                    trackPaint.color = if (p.glassLight) 0x2614152B else 0x2EFFFFFF
                     canvas.drawOval(arcBox, trackPaint)
                     if (s.shown > 0f) {
                         arcPaint.shader = null
-                        arcPaint.color = withA(0xFFFFFFFF.toInt(), a)
+                        arcPaint.color = withA(p.accent, a)
                         arcPaint.alpha = (255 * (0.35f + 0.65f * a)).toInt()
                         if (s.shown >= 0.995f) canvas.drawOval(arcBox, arcPaint) else canvas.drawArc(arcBox, -90f, 360f * s.shown, false, arcPaint)
                     }
@@ -215,9 +252,14 @@ class BudsStatusView(context: Context) : View(context) {
                 val bw = dp(if (glass) s.glassW else s.boxW) * gscale
                 val bh = dp(if (glass) s.glassH else s.boxH) * gscale
                 val (iw, ih) = if (s.iconRatio < bw / bh) bh * s.iconRatio to bh else bw to bw / s.iconRatio
-                s.icon.setTint(androidx.core.graphics.ColorUtils.blendARGB(p.disabled, if (glass) glassTint(isCase, s.status) else wearTint(p, isCase, s.status, ThemeRes.material(context)), conn))
-                s.icon.setBounds((cx - iw / 2).toInt(), (cy - ih / 2).toInt(), (cx + iw / 2).toInt(), (cy + ih / 2).toInt())
-                s.icon.draw(canvas)
+                val tint = androidx.core.graphics.ColorUtils.blendARGB(p.disabled, if (glass) glassTint(isCase, s.status) else wearTint(p, isCase, s.status, ThemeRes.material(context)), conn)
+                if (glass) {
+                    drawGlassGlyph(canvas, s, cx - iw / 2, cy - ih / 2, iw, ih, tint)
+                } else {
+                    s.icon.setTint(tint)
+                    s.icon.setBounds((cx - iw / 2).toInt(), (cy - ih / 2).toInt(), (cx + iw / 2).toInt(), (cy + ih / 2).toInt())
+                    s.icon.draw(canvas)
+                }
             }
 
             pctPaint.color = p.text
