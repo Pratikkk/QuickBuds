@@ -10,6 +10,7 @@ Android · Windows · Linux
 [![Platform](https://img.shields.io/badge/Platform-Android%208%2B%20%7C%20Windows%20%7C%20Linux-3DDC84.svg)](#install)
 [![Release](https://img.shields.io/badge/Release-latest-blue.svg)](https://github.com/spizganed/QuickBuds/releases/latest)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/spizganed)
+[![Discord](https://img.shields.io/badge/Discord-Chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/pvsnEf9TrZ)
 
 <img src="docs/images/phone.png" width="230" alt="QuickBuds on a phone"> &nbsp; <img src="docs/images/desktop.png" width="560" alt="QuickBuds on a PC">
 
@@ -139,6 +140,7 @@ offers this test once, after the first connect to a model that is not confirmed.
 problem sends a description and the log, without a GitHub account. Or open an
 [issue](https://github.com/spizganed/QuickBuds/issues); [CONTRIBUTING.md](./docs/CONTRIBUTING.md#reporting-a-model)
 says what to include. Each report lets the next release fix that model.
+To talk to the developer and other owners, join the [Discord server](https://discord.gg/pvsnEf9TrZ).
 
 ## For developers
 
