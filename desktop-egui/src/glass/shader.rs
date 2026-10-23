@@ -56,7 +56,13 @@ void main() {
   float r = min(u_radius, min(hs.x, hs.y));
   vec2 q = p - ctr;
   float s = sd(q, hs, r);
-  float aa = 1.0 - smoothstep(-0.5, 0.5, s);
+  // coverage from four taps around the pixel, so a corner is smooth on any GPU
+  float aa = 0.0;
+  for (int i = 0; i < 4; i++) {
+    vec2 o4 = vec2(float(i & 1) - 0.5, float(i >> 1) - 0.5) * 0.5;
+    aa += 1.0 - smoothstep(-0.75, 0.75, sd(q + o4, hs, r));
+  }
+  aa *= 0.25;
   if (aa <= 0.0) discard;
   float d = -s;
   if (u_kind == 0) {

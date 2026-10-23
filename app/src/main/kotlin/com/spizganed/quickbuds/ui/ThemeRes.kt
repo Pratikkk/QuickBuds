@@ -373,7 +373,7 @@ object ThemeRes {
         else shape(context, fill, null, if (material(context)) FULL else radiusDp)
 
     /** The design's glass surface: a diagonal white gradient, a light rim and a bright line along the top edge. */
-    class GlassDrawable(context: Context, private val radiusDp: Float, private val selected: Boolean = false) : Drawable() {
+    class GlassDrawable(context: Context, private val radiusDp: Float, private val selected: Boolean = false, private val topOnly: Boolean = false, private val base: Int = 0) : Drawable() {
         private val d = context.resources.displayMetrics.density
         private val fill = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
         private val rim = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
@@ -381,6 +381,8 @@ object ThemeRes {
         }
         private val lit = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { style = android.graphics.Paint.Style.STROKE; strokeWidth = d }
         private val box = android.graphics.RectF()
+        private val basePaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = base }
+        private val path = android.graphics.Path()
 
         override fun onBoundsChange(b: android.graphics.Rect) {
             fill.shader = android.graphics.LinearGradient(b.left.toFloat(), b.top.toFloat(), b.right.toFloat(), b.bottom.toFloat(),
@@ -391,6 +393,18 @@ object ThemeRes {
         override fun draw(canvas: android.graphics.Canvas) {
             val r = minOf(radiusDp * d, bounds.width() / 2f, bounds.height() / 2f)
             box.set(bounds); box.inset(d / 2, d / 2)
+            if (topOnly) {
+                // A sheet: rounded on top only, over a dark base so the content behind does not show through.
+                box.bottom += r
+                canvas.save(); canvas.clipRect(bounds)
+                path.reset(); path.addRoundRect(box, floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f), android.graphics.Path.Direction.CW)
+                canvas.drawPath(path, basePaint); canvas.drawPath(path, fill); canvas.drawPath(path, rim)
+                box.inset(d, d)
+                path.reset(); path.addRoundRect(box, floatArrayOf(r - d, r - d, r - d, r - d, 0f, 0f, 0f, 0f), android.graphics.Path.Direction.CW)
+                canvas.drawPath(path, lit)
+                canvas.restore()
+                return
+            }
             canvas.drawRoundRect(box, r, r, fill)
             canvas.drawRoundRect(box, r, r, rim)
             box.inset(d, d)
@@ -526,9 +540,7 @@ object ThemeRes {
         if (p.glass) {
             if (!topOnly) return GlassDrawable(context, radiusDp)
             val sheetRgb = if (glassGradient(context)) 0x0F0F22 else 0x181818
-            return shape(context, sheetRgb or (if (windowBlur(context)) 0xA8000000.toInt() else 0xF2000000.toInt()), p.outline, radiusDp).apply {
-                val r = dp(context, radiusDp).toFloat(); cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f)
-            }
+            return GlassDrawable(context, radiusDp, topOnly = true, base = sheetRgb or (if (windowBlur(context)) 0x90000000.toInt() else 0xF2000000.toInt()))
         }
         // Material: a tonal surface, no outline.
         if (material(context)) return shape(context, if (fill == null || fill == p.card) p.container else fill, null, radiusDp).apply {
