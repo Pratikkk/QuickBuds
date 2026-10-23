@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS reports (
   crash INTEGER NOT NULL,    -- 1: sent from the crash dialog
   log TEXT,                  -- null when the person turned the log off
   status TEXT NOT NULL DEFAULT 'new',  -- new, working, done, unsupported, no_log, no_description, needs_btsnoop
-  note TEXT                  -- the developer's one-line reason for the status
+  note TEXT,                 -- the developer's one-line reason for the status
+  reply TEXT,                -- the developer's answer to the person; shown once in the app
+  reply_seen INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS reports_sender_at ON reports (sender, at);
 
@@ -37,3 +39,7 @@ CREATE TABLE IF NOT EXISTS activity (
 );
 -- Run once on a database made before the install IDs (it fails when the column exists, which is fine):
 -- ALTER TABLE reports ADD COLUMN app_id TEXT;
+-- Replies (the /ping answer carries one unread reply per install). Run once on a database made before replies:
+-- ALTER TABLE reports ADD COLUMN reply TEXT;
+-- ALTER TABLE reports ADD COLUMN reply_seen INTEGER NOT NULL DEFAULT 0;
+-- Write a reply: UPDATE reports SET reply = 'text' WHERE id = 42;

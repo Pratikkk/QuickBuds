@@ -129,7 +129,25 @@ async function ping(req, env) {
     );
   }
   await env.DB.batch(batch);
-  return answer(200, "ok");
+  const reply = APP_ID.test(id) ? await takeReply(env, id) : null;
+  return Response.json({ ok: true, message: "ok", ...(reply && { reply }) });
+}
+
+/**
+ * The developer's answer to a report of this install, once: the oldest unread one. The app shows it in a sheet.
+ * A failed read never fails the ping. The text is the `reply` column of the report (set with SQL, see the README).
+ */
+async function takeReply(env, id) {
+  try {
+    const row = await env.DB.prepare(
+      "SELECT id, reply FROM reports WHERE app_id = ? AND reply IS NOT NULL AND reply_seen = 0 ORDER BY id LIMIT 1",
+    ).bind(id).first();
+    if (!row) return null;
+    await env.DB.prepare("UPDATE reports SET reply_seen = 1 WHERE id = ?").bind(row.id).run();
+    return { id: row.id, text: String(row.reply).slice(0, 600) };
+  } catch {
+    return null;
+  }
 }
 
 /**

@@ -49,3 +49,14 @@ npx wrangler d1 execute quickbuds-reports --remote --command "UPDATE reports SET
 ```bash
 npx wrangler d1 execute quickbuds-reports --remote --command "DELETE FROM reports WHERE at < '2026-01-01'"
 ```
+
+## Reply to a report
+
+A report that carries an install ID can get one answer. Write it with SQL, 600 characters at most, plain text:
+
+```bash
+npx wrangler d1 execute quickbuds-reports --remote --command "UPDATE reports SET reply = 'Text' WHERE id = 42"
+```
+
+The next daily ping of that install returns the reply once. The app shows it in a sheet and the Worker marks it as seen.
+A database made before replies needs the two `ALTER TABLE` lines in `schema.sql` first.

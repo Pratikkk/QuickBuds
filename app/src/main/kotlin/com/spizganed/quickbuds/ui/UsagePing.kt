@@ -28,6 +28,13 @@ object UsagePing {
 
     private const val URL_PING = "https://quickbuds-report.spizganed.workers.dev/ping"
     private const val KEY_DAY = "usagePingDay"
+    private const val KEY_REPLY = "pendingReply"
+
+    /** The developer's reply that the last ping brought, taken once; null when there is none. */
+    fun takeReply(c: Context): String? {
+        val prefs = c.getSharedPreferences(ThemeRes.PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString(KEY_REPLY, null)?.also { prefs.edit().remove(KEY_REPLY).apply() }
+    }
 
     /** Settings and the setup guide: the daily count is on unless the user turns it off. */
     const val KEY_ENABLED = "usagePingEnabled"
@@ -48,7 +55,14 @@ object UsagePing {
                     conn.readTimeout = 10_000
                     conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
                     conn.outputStream.use { it.write(body.toByteArray()) }
-                    if (conn.responseCode == 200) prefs.edit().putLong(KEY_DAY, today).apply()
+                    if (conn.responseCode == 200) {
+                        prefs.edit().putLong(KEY_DAY, today).apply()
+                        // The answer can carry the developer's reply to a report of this install, once.
+                        val reply = runCatching {
+                            JSONObject(conn.inputStream.bufferedReader().readText()).optJSONObject("reply")?.optString("text")
+                        }.getOrNull()
+                        if (!reply.isNullOrBlank()) prefs.edit().putString(KEY_REPLY, reply).apply()
+                    }
                 } finally { conn.disconnect() }
             } catch (_: Exception) { }
         }.start()
