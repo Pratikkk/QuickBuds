@@ -41,7 +41,7 @@ import com.spizganed.quickbuds.widget.BatteryWidgetProvider
  */
 class SetupActivity : Activity() {
 
-    private val total = 9
+    private val total = 10
     private var page = 0
     private lateinit var body: LinearLayout
     private lateinit var back: TextView
@@ -147,6 +147,7 @@ class SetupActivity : Activity() {
             BACKGROUND -> background()
             WIDGETS -> widgets()
             FEEDBACK -> feedback()
+            ISSUES -> issues()
             PRIVACY -> privacy()
             else -> { icon(); heading(R.string.setup_ready_title, R.string.setup_ready_body) }
         }
@@ -432,6 +433,14 @@ class SetupActivity : Activity() {
         })
     }
 
+    /** What Settings › Known issues holds. Nothing is sent from here. */
+    private fun issues() {
+        heading(R.string.settings_issues_title, R.string.setup_issues_body)
+        body.addView(SettingRowFactory.card(this).apply {
+            addView(SettingRowFactory.build(this@SetupActivity, R.drawable.ic_info, R.string.settings_issues_title, R.string.settings_issues_sub, null))
+        })
+    }
+
     private fun privacy() {
         heading(R.string.about_privacy_title, R.string.about_privacy_body)
         body.addView(SettingRowFactory.card(this).apply {
@@ -456,7 +465,8 @@ class SetupActivity : Activity() {
         private const val BACKGROUND = 4
         private const val WIDGETS = 5
         private const val FEEDBACK = 6
-        private const val PRIVACY = 7
+        private const val ISSUES = 7
+        private const val PRIVACY = 8
         fun done(a: Activity) = a.getSharedPreferences(ThemeRes.PREFS_NAME, MODE_PRIVATE).getBoolean(KEY_DONE, false)
     }
 }

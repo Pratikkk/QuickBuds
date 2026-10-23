@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">Tidak bersambung</string>
     <string name="setup_ready_title">Anda sudah sedia</string>
     <string name="setup_ready_body">Sambungkan earbud dan buka QuickBuds. Setiap pilihan kekal dalam Tetapan.</string>
+    <string name="settings_issues_title">Isu diketahui</string>
+    <string name="settings_issues_sub">Had earbud dan telefon anda</string>
+    <string name="issues_none">Tiada isu diketahui untuk earbud dan telefon anda.</string>
+    <string name="issues_dialog_body">Earbud atau telefon anda mempunyai had yang diketahui. Anda boleh membacanya dalam Tetapan.</string>
+    <string name="issues_dialog_action">Tunjuk</string>
+    <string name="issue_spatial_silent_title">Audio 3D mungkin kedengaran sama</string>
+    <string name="issue_spatial_silent_body">Sesetengah pemilik tidak mendengar kesan ruang pada model ini. Kami belum tahu sama ada earbud atau aplikasi puncanya.</string>
+    <string name="issue_samsung_codec_title">Tiada pilihan kodek pada telefon Samsung</string>
+    <string name="issue_samsung_codec_body">Telefon Samsung tidak menunjukkan pilihan kodek dalam tetapan Bluetooth. Audio berkualiti tinggi mungkin tidak berfungsi.</string>
+    <string name="issue_hires_spatial_title">Audio berkualiti tinggi dan audio 3D</string>
+    <string name="issue_hires_spatial_body">Earbud hanya menjalankan satu daripadanya. Menghidupkan satu akan mematikan yang lain.</string>
+    <string name="setup_issues_body">Tetapan menyenaraikan had earbud dan telefon anda. QuickBuds juga memberitahu sekali jika model anda mempunyainya.</string>
+    <string name="reply_title">Balasan daripada pembangun</string>
+    <string name="about_discord_desc">Sembang dengan pembangun di Discord</string>
 </resources>

@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">Niet verbonden</string>
     <string name="setup_ready_title">Klaar</string>
     <string name="setup_ready_body">Verbind je oortjes en open QuickBuds. Elke keuze blijft in Instellingen.</string>
+    <string name="settings_issues_title">Bekende problemen</string>
+    <string name="settings_issues_sub">Beperkingen van je oordopjes en telefoon</string>
+    <string name="issues_none">Geen bekende problemen voor je oordopjes en telefoon.</string>
+    <string name="issues_dialog_body">Je oordopjes of telefoon hebben bekende beperkingen. Je leest ze in Instellingen.</string>
+    <string name="issues_dialog_action">Tonen</string>
+    <string name="issue_spatial_silent_title">3D-audio kan hetzelfde klinken</string>
+    <string name="issue_spatial_silent_body">Sommige gebruikers horen geen ruimtelijk effect bij dit model. We weten nog niet of de oordopjes of de app de oorzaak zijn.</string>
+    <string name="issue_samsung_codec_title">Geen codec-keuze op Samsung-telefoons</string>
+    <string name="issue_samsung_codec_body">Samsung-telefoons tonen de codec-keuze niet in de Bluetooth-instellingen. Audio van hoge kwaliteit doet mogelijk niets.</string>
+    <string name="issue_hires_spatial_title">Audio van hoge kwaliteit en 3D-audio</string>
+    <string name="issue_hires_spatial_body">De oordopjes gebruiken maar één van beide. Als je er één aanzet, gaat de ander uit.</string>
+    <string name="setup_issues_body">Instellingen toont de beperkingen van je oordopjes en telefoon. QuickBuds meldt het ook één keer als je model ze heeft.</string>
+    <string name="reply_title">Antwoord van de ontwikkelaar</string>
+    <string name="about_discord_desc">Chat met de ontwikkelaar op Discord</string>
 </resources>

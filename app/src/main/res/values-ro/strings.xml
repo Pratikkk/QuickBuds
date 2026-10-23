@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">Neconectat</string>
     <string name="setup_ready_title">Totul e gata</string>
     <string name="setup_ready_body">Conectează căștile și deschide QuickBuds. Fiecare alegere rămâne în Setări.</string>
+    <string name="settings_issues_title">Probleme cunoscute</string>
+    <string name="settings_issues_sub">Limitele căștilor și ale telefonului tău</string>
+    <string name="issues_none">Nu există probleme cunoscute pentru căștile și telefonul tău.</string>
+    <string name="issues_dialog_body">Căștile sau telefonul tău au limite cunoscute. Le poți citi în Setări.</string>
+    <string name="issues_dialog_action">Afișează</string>
+    <string name="issue_spatial_silent_title">Sunetul 3D poate suna la fel</string>
+    <string name="issue_spatial_silent_body">Unii utilizatori nu aud efect spațial la acest model. Nu știm încă dacă cauza sunt căștile sau aplicația.</string>
+    <string name="issue_samsung_codec_title">Fără alegerea codecului pe telefoanele Samsung</string>
+    <string name="issue_samsung_codec_body">Telefoanele Samsung nu arată alegerea codecului în setările Bluetooth. Sunetul de înaltă calitate poate să nu facă nimic.</string>
+    <string name="issue_hires_spatial_title">Sunet de înaltă calitate și sunet 3D</string>
+    <string name="issue_hires_spatial_body">Căștile folosesc doar unul dintre ele. Pornirea unuia îl oprește pe celălalt.</string>
+    <string name="setup_issues_body">Setările enumeră limitele căștilor și ale telefonului tău. QuickBuds te anunță și o dată dacă modelul tău are vreuna.</string>
+    <string name="reply_title">Răspunsul dezvoltatorului</string>
+    <string name="about_discord_desc">Discută cu dezvoltatorul pe Discord</string>
 </resources>

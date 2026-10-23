@@ -517,4 +517,18 @@
     <string name="setup_earbuds_disconnected">ไม่ได้เชื่อมต่อ</string>
     <string name="setup_ready_title">พร้อมแล้ว</string>
     <string name="setup_ready_body">เชื่อมต่อหูฟังแล้วเปิด QuickBuds ทุกตัวเลือกอยู่ในการตั้งค่า</string>
+    <string name="settings_issues_title">ปัญหาที่ทราบ</string>
+    <string name="settings_issues_sub">ข้อจำกัดของหูฟังและโทรศัพท์ของคุณ</string>
+    <string name="issues_none">ไม่มีปัญหาที่ทราบสำหรับหูฟังและโทรศัพท์ของคุณ</string>
+    <string name="issues_dialog_body">หูฟังหรือโทรศัพท์ของคุณมีข้อจำกัดที่ทราบอยู่ อ่านได้ในการตั้งค่า</string>
+    <string name="issues_dialog_action">แสดง</string>
+    <string name="issue_spatial_silent_title">เสียง 3D อาจฟังดูเหมือนเดิม</string>
+    <string name="issue_spatial_silent_body">ผู้ใช้บางคนไม่ได้ยินเอฟเฟกต์เสียงรอบทิศทางในรุ่นนี้ เรายังไม่ทราบว่าสาเหตุมาจากหูฟังหรือแอป</string>
+    <string name="issue_samsung_codec_title">โทรศัพท์ Samsung ไม่มีตัวเลือกโคเดก</string>
+    <string name="issue_samsung_codec_body">โทรศัพท์ Samsung ไม่แสดงตัวเลือกโคเดกในการตั้งค่าบลูทูธ เสียงคุณภาพสูงอาจไม่ทำงาน</string>
+    <string name="issue_hires_spatial_title">เสียงคุณภาพสูงและเสียง 3D</string>
+    <string name="issue_hires_spatial_body">หูฟังใช้ได้เพียงอย่างเดียว การเปิดอย่างหนึ่งจะปิดอีกอย่าง</string>
+    <string name="setup_issues_body">การตั้งค่าแสดงข้อจำกัดของหูฟังและโทรศัพท์ของคุณ QuickBuds จะแจ้งหนึ่งครั้งหากรุ่นของคุณมี</string>
+    <string name="reply_title">คำตอบจากนักพัฒนา</string>
+    <string name="about_discord_desc">แชตกับนักพัฒนาบน Discord</string>
 </resources>

@@ -517,4 +517,18 @@
     <string name="setup_earbuds_disconnected">Tidak terhubung</string>
     <string name="setup_ready_title">Siap</string>
     <string name="setup_ready_body">Sambungkan earbud dan buka QuickBuds. Setiap pilihan tetap ada di Pengaturan.</string>
+    <string name="settings_issues_title">Masalah yang diketahui</string>
+    <string name="settings_issues_sub">Batasan earbud dan ponsel Anda</string>
+    <string name="issues_none">Tidak ada masalah yang diketahui untuk earbud dan ponsel Anda.</string>
+    <string name="issues_dialog_body">Earbud atau ponsel Anda punya batasan yang diketahui. Anda dapat membacanya di Pengaturan.</string>
+    <string name="issues_dialog_action">Tampilkan</string>
+    <string name="issue_spatial_silent_title">Audio 3D mungkin terdengar sama</string>
+    <string name="issue_spatial_silent_body">Beberapa pemilik tidak mendengar efek spasial pada model ini. Kami belum tahu apakah penyebabnya earbud atau aplikasi.</string>
+    <string name="issue_samsung_codec_title">Tidak ada pilihan codec di ponsel Samsung</string>
+    <string name="issue_samsung_codec_body">Ponsel Samsung tidak menampilkan pilihan codec di pengaturan Bluetooth. Audio berkualitas tinggi mungkin tidak berfungsi.</string>
+    <string name="issue_hires_spatial_title">Audio berkualitas tinggi dan audio 3D</string>
+    <string name="issue_hires_spatial_body">Earbud hanya menjalankan salah satunya. Menyalakan satu mematikan yang lain.</string>
+    <string name="setup_issues_body">Pengaturan mencantumkan batasan earbud dan ponsel Anda. QuickBuds juga memberi tahu sekali jika model Anda memilikinya.</string>
+    <string name="reply_title">Balasan dari pengembang</string>
+    <string name="about_discord_desc">Mengobrol dengan pengembang di Discord</string>
 </resources>

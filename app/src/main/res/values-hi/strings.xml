@@ -517,4 +517,18 @@
     <string name="setup_earbuds_disconnected">जुड़ा नहीं</string>
     <string name="setup_ready_title">आप तैयार हैं</string>
     <string name="setup_ready_body">अपने ईयरबड जोड़ें और QuickBuds खोलें। यहाँ के सभी विकल्प सेटिंग में रहते हैं।</string>
+    <string name="settings_issues_title">ज्ञात समस्याएँ</string>
+    <string name="settings_issues_sub">आपके इयरबड और फ़ोन की सीमाएँ</string>
+    <string name="issues_none">आपके इयरबड और फ़ोन के लिए कोई ज्ञात समस्या नहीं है।</string>
+    <string name="issues_dialog_body">आपके इयरबड या फ़ोन की कुछ ज्ञात सीमाएँ हैं। आप उन्हें सेटिंग में पढ़ सकते हैं।</string>
+    <string name="issues_dialog_action">दिखाएँ</string>
+    <string name="issue_spatial_silent_title">3D ऑडियो एक जैसा सुनाई दे सकता है</string>
+    <string name="issue_spatial_silent_body">कुछ उपयोगकर्ताओं को इस मॉडल में स्पेशियल प्रभाव सुनाई नहीं देता। हम अभी नहीं जानते कि कारण इयरबड हैं या ऐप।</string>
+    <string name="issue_samsung_codec_title">Samsung फ़ोन में कोडेक चुनने का विकल्प नहीं</string>
+    <string name="issue_samsung_codec_body">Samsung फ़ोन ब्लूटूथ सेटिंग में कोडेक का विकल्प नहीं दिखाते। हाई-क्वालिटी ऑडियो शायद कुछ न करे।</string>
+    <string name="issue_hires_spatial_title">हाई-क्वालिटी ऑडियो और 3D ऑडियो</string>
+    <string name="issue_hires_spatial_body">इयरबड इनमें से एक ही चलाते हैं। एक चालू करने पर दूसरा बंद हो जाता है।</string>
+    <string name="setup_issues_body">सेटिंग में आपके इयरबड और फ़ोन की सीमाएँ दी गई हैं। आपके मॉडल में कोई हो तो QuickBuds एक बार बताएगा।</string>
+    <string name="reply_title">डेवलपर का उत्तर</string>
+    <string name="about_discord_desc">Discord पर डेवलपर से चैट करें</string>
 </resources>

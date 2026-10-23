@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">No conectado</string>
     <string name="setup_ready_title">Todo listo</string>
     <string name="setup_ready_body">Conecta tus auriculares y abre QuickBuds. Cada elección sigue en Ajustes.</string>
+    <string name="settings_issues_title">Problemas conocidos</string>
+    <string name="settings_issues_sub">Límites de tus auriculares y de tu teléfono</string>
+    <string name="issues_none">No hay problemas conocidos para tus auriculares y tu teléfono.</string>
+    <string name="issues_dialog_body">Tus auriculares o tu teléfono tienen límites conocidos. Puedes leerlos en Ajustes.</string>
+    <string name="issues_dialog_action">Mostrar</string>
+    <string name="issue_spatial_silent_title">El audio 3D puede sonar igual</string>
+    <string name="issue_spatial_silent_body">Algunos usuarios no oyen efecto espacial en este modelo. Aún no sabemos si la causa son los auriculares o la app.</string>
+    <string name="issue_samsung_codec_title">Sin elección de códec en teléfonos Samsung</string>
+    <string name="issue_samsung_codec_body">Los teléfonos Samsung no muestran la elección de códec en los ajustes de Bluetooth. El audio de alta calidad puede no hacer nada.</string>
+    <string name="issue_hires_spatial_title">Audio de alta calidad y audio 3D</string>
+    <string name="issue_hires_spatial_body">Los auriculares usan solo uno de los dos. Al activar uno, se desactiva el otro.</string>
+    <string name="setup_issues_body">Los ajustes muestran los límites de tus auriculares y de tu teléfono. QuickBuds también te avisa una vez si tu modelo tiene alguno.</string>
+    <string name="reply_title">Respuesta del desarrollador</string>
+    <string name="about_discord_desc">Chatea con el desarrollador en Discord</string>
 </resources>

@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">Hindi nakakonekta</string>
     <string name="setup_ready_title">Handa ka na</string>
     <string name="setup_ready_body">Ikonekta ang earbuds at buksan ang QuickBuds. Nasa Settings ang bawat pagpili.</string>
+    <string name="settings_issues_title">Mga kilalang isyu</string>
+    <string name="settings_issues_sub">Mga limitasyon ng iyong earbuds at telepono</string>
+    <string name="issues_none">Walang kilalang isyu para sa iyong earbuds at telepono.</string>
+    <string name="issues_dialog_body">May mga kilalang limitasyon ang iyong earbuds o telepono. Mababasa mo ang mga ito sa Mga Setting.</string>
+    <string name="issues_dialog_action">Ipakita</string>
+    <string name="issue_spatial_silent_title">Maaaring pareho ang tunog ng 3D audio</string>
+    <string name="issue_spatial_silent_body">May mga may-ari na walang naririnig na spatial effect sa modelong ito. Hindi pa namin alam kung ang earbuds o ang app ang sanhi.</string>
+    <string name="issue_samsung_codec_title">Walang pagpili ng codec sa mga teleponong Samsung</string>
+    <string name="issue_samsung_codec_body">Hindi ipinapakita ng mga teleponong Samsung ang pagpili ng codec sa mga setting ng Bluetooth. Maaaring walang gawin ang high-quality audio.</string>
+    <string name="issue_hires_spatial_title">High-quality audio at 3D audio</string>
+    <string name="issue_hires_spatial_body">Isa lang sa dalawa ang pinapatakbo ng earbuds. Kapag binuksan ang isa, mapapatay ang isa pa.</string>
+    <string name="setup_issues_body">Nakalista sa Mga Setting ang mga limitasyon ng iyong earbuds at telepono. Magsasabi rin ang QuickBuds nang isang beses kung mayroon ang iyong modelo.</string>
+    <string name="reply_title">Sagot ng developer</string>
+    <string name="about_discord_desc">Makipag-chat sa developer sa Discord</string>
 </resources>

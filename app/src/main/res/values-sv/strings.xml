@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">Inte ansluten</string>
     <string name="setup_ready_title">Klart</string>
     <string name="setup_ready_body">Anslut hörlurarna och öppna QuickBuds. Varje val finns kvar i Inställningar.</string>
+    <string name="settings_issues_title">Kända problem</string>
+    <string name="settings_issues_sub">Begränsningar för dina hörlurar och din telefon</string>
+    <string name="issues_none">Inga kända problem för dina hörlurar och din telefon.</string>
+    <string name="issues_dialog_body">Dina hörlurar eller din telefon har kända begränsningar. Du kan läsa dem i Inställningar.</string>
+    <string name="issues_dialog_action">Visa</string>
+    <string name="issue_spatial_silent_title">3D-ljud kan låta likadant</string>
+    <string name="issue_spatial_silent_body">Vissa användare hör ingen rumseffekt på den här modellen. Vi vet ännu inte om hörlurarna eller appen är orsaken.</string>
+    <string name="issue_samsung_codec_title">Inget kodekval på Samsung-telefoner</string>
+    <string name="issue_samsung_codec_body">Samsung-telefoner visar inte kodekvalet i Bluetooth-inställningarna. Högkvalitativt ljud kanske inte gör något.</string>
+    <string name="issue_hires_spatial_title">Högkvalitativt ljud och 3D-ljud</string>
+    <string name="issue_hires_spatial_body">Hörlurarna kör bara ett av dem. Slår du på det ena stängs det andra av.</string>
+    <string name="setup_issues_body">Inställningar listar begränsningarna för dina hörlurar och din telefon. QuickBuds säger också till en gång om din modell har några.</string>
+    <string name="reply_title">Svar från utvecklaren</string>
+    <string name="about_discord_desc">Chatta med utvecklaren på Discord</string>
 </resources>

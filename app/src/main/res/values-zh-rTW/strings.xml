@@ -517,4 +517,18 @@
     <string name="setup_earbuds_disconnected">未連線</string>
     <string name="setup_ready_title">一切就緒</string>
     <string name="setup_ready_body">連接耳機並開啟 QuickBuds。這裡的所有選擇都保留在設定中。</string>
+    <string name="settings_issues_title">已知問題</string>
+    <string name="settings_issues_sub">耳機和手機的限制</string>
+    <string name="issues_none">你的耳機和手機沒有已知問題。</string>
+    <string name="issues_dialog_body">你的耳機或手機有已知限制。可在設定中查看。</string>
+    <string name="issues_dialog_action">查看</string>
+    <string name="issue_spatial_silent_title">3D 音訊聽起來可能沒有變化</string>
+    <string name="issue_spatial_silent_body">部分使用者在這款型號上聽不到空間效果。我們還不知道原因在耳機還是應用程式。</string>
+    <string name="issue_samsung_codec_title">三星手機沒有編碼器選項</string>
+    <string name="issue_samsung_codec_body">三星手機在藍牙設定中不顯示編碼器選項。高音質音訊可能不起作用。</string>
+    <string name="issue_hires_spatial_title">高音質音訊和 3D 音訊</string>
+    <string name="issue_hires_spatial_body">耳機一次只執行其中一個。開啟一個會關閉另一個。</string>
+    <string name="setup_issues_body">設定中列出了耳機和手機的限制。如果你的型號有，QuickBuds 也會提醒一次。</string>
+    <string name="reply_title">開發者的回覆</string>
+    <string name="about_discord_desc">在 Discord 上與開發者聊天</string>
 </resources>

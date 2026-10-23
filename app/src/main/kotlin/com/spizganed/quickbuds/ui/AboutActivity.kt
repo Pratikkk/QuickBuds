@@ -84,6 +84,12 @@ class AboutActivity : Activity() {
             }
         })
 
+        root.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, dp(10f), 0, 0)
+            addView(linkButton(R.drawable.ic_chat, R.string.about_discord, R.string.about_discord_desc, DISCORD_URL))
+        })
+
         root.addView(SettingRowFactory.sectionLabel(this, R.string.about_license_title))
         root.addView(SettingRowFactory.card(this).apply {
             setPadding(dp(16f), dp(14f), dp(16f), dp(14f))
@@ -131,6 +137,7 @@ class AboutActivity : Activity() {
 
     companion object {
         const val GITHUB_URL = "https://github.com/spizganed/QuickBuds"
+        const val DISCORD_URL = "https://discord.gg/pvsnEf9TrZ"
         /** Null hides the button (it was hidden until the page existed). */
         val KOFI_URL: String? = "https://ko-fi.com/spizganed"
     }

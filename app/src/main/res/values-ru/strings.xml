@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">Не подключено</string>
     <string name="setup_ready_title">Всё готово</string>
     <string name="setup_ready_body">Подключите наушники и откройте QuickBuds. Все выборы остаются в настройках.</string>
+    <string name="settings_issues_title">Известные проблемы</string>
+    <string name="settings_issues_sub">Ограничения ваших наушников и телефона</string>
+    <string name="issues_none">Для ваших наушников и телефона нет известных проблем.</string>
+    <string name="issues_dialog_body">У ваших наушников или телефона есть известные ограничения. Их можно прочитать в Настройках.</string>
+    <string name="issues_dialog_action">Показать</string>
+    <string name="issue_spatial_silent_title">3D-звук может звучать так же</string>
+    <string name="issue_spatial_silent_body">Некоторые владельцы не слышат пространственного эффекта в этой модели. Мы пока не знаем, виноваты наушники или приложение.</string>
+    <string name="issue_samsung_codec_title">На телефонах Samsung нет выбора кодека</string>
+    <string name="issue_samsung_codec_body">Телефоны Samsung не показывают выбор кодека в настройках Bluetooth. Звук высокого качества может ничего не менять.</string>
+    <string name="issue_hires_spatial_title">Звук высокого качества и 3D-звук</string>
+    <string name="issue_hires_spatial_body">Наушники используют только один из них. Включение одного выключает другой.</string>
+    <string name="setup_issues_body">В Настройках перечислены ограничения ваших наушников и телефона. QuickBuds также один раз сообщит, если они есть у вашей модели.</string>
+    <string name="reply_title">Ответ разработчика</string>
+    <string name="about_discord_desc">Чат с разработчиком в Discord</string>
 </resources>

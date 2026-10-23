@@ -604,4 +604,19 @@
     <string name="setup_earbuds_disconnected">Not connected</string>
     <string name="setup_ready_title">You are ready</string>
     <string name="setup_ready_body">Connect your earbuds and open QuickBuds. Every choice here stays in Settings.</string>
+    <string name="settings_issues_title">Known issues</string>
+    <string name="settings_issues_sub">Limits of your earbuds and phone</string>
+    <string name="issues_none">No known issues for your earbuds and phone.</string>
+    <string name="issues_dialog_body">Your earbuds or your phone have known limits. You can read them in Settings.</string>
+    <string name="issues_dialog_action">Show</string>
+    <string name="issue_spatial_silent_title">3D audio may sound the same</string>
+    <string name="issue_spatial_silent_body">Some owners hear no spatial effect on this model. We do not know yet if the earbuds or the app cause it.</string>
+    <string name="issue_samsung_codec_title">No codec choice on Samsung phones</string>
+    <string name="issue_samsung_codec_body">Samsung phones do not show the codec choice in Bluetooth settings. High-quality audio may do nothing.</string>
+    <string name="issue_hires_spatial_title">High-quality audio and 3D audio</string>
+    <string name="issue_hires_spatial_body">The earbuds run only one of them. Turning one on turns the other off.</string>
+    <string name="setup_issues_body">Settings lists the limits of your earbuds and phone. QuickBuds also tells you once when your model has any.</string>
+    <string name="reply_title">Reply from the developer</string>
+    <string name="about_discord" translatable="false">Discord</string>
+    <string name="about_discord_desc">Chat with the developer on Discord</string>
 </resources>

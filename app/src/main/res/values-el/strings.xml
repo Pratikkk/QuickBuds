@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">Μη συνδεδεμένο</string>
     <string name="setup_ready_title">Είστε έτοιμοι</string>
     <string name="setup_ready_body">Συνδέστε τα ακουστικά και ανοίξτε το QuickBuds. Κάθε επιλογή μένει στις Ρυθμίσεις.</string>
+    <string name="settings_issues_title">Γνωστά προβλήματα</string>
+    <string name="settings_issues_sub">Περιορισμοί των ακουστικών και του τηλεφώνου σας</string>
+    <string name="issues_none">Δεν υπάρχουν γνωστά προβλήματα για τα ακουστικά και το τηλέφωνό σας.</string>
+    <string name="issues_dialog_body">Τα ακουστικά ή το τηλέφωνό σας έχουν γνωστούς περιορισμούς. Μπορείτε να τους δείτε στις Ρυθμίσεις.</string>
+    <string name="issues_dialog_action">Εμφάνιση</string>
+    <string name="issue_spatial_silent_title">Ο ήχος 3D μπορεί να ακούγεται ίδιος</string>
+    <string name="issue_spatial_silent_body">Ορισμένοι χρήστες δεν ακούν χωρικό εφέ σε αυτό το μοντέλο. Δεν γνωρίζουμε ακόμη αν φταίνε τα ακουστικά ή η εφαρμογή.</string>
+    <string name="issue_samsung_codec_title">Δεν υπάρχει επιλογή κωδικοποιητή σε τηλέφωνα Samsung</string>
+    <string name="issue_samsung_codec_body">Τα τηλέφωνα Samsung δεν δείχνουν την επιλογή κωδικοποιητή στις ρυθμίσεις Bluetooth. Ο ήχος υψηλής ποιότητας μπορεί να μην κάνει τίποτα.</string>
+    <string name="issue_hires_spatial_title">Ήχος υψηλής ποιότητας και ήχος 3D</string>
+    <string name="issue_hires_spatial_body">Τα ακουστικά χρησιμοποιούν μόνο το ένα. Όταν ενεργοποιείτε το ένα, απενεργοποιείται το άλλο.</string>
+    <string name="setup_issues_body">Οι Ρυθμίσεις απαριθμούν τους περιορισμούς των ακουστικών και του τηλεφώνου σας. Το QuickBuds σας ειδοποιεί μία φορά αν το μοντέλο σας έχει.</string>
+    <string name="reply_title">Απάντηση του προγραμματιστή</string>
+    <string name="about_discord_desc">Συνομιλήστε με τον προγραμματιστή στο Discord</string>
 </resources>

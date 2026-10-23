@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">Não conectado</string>
     <string name="setup_ready_title">Tudo pronto</string>
     <string name="setup_ready_body">Conecte seus fones e abra o QuickBuds. Cada escolha continua nas Configurações.</string>
+    <string name="settings_issues_title">Problemas conhecidos</string>
+    <string name="settings_issues_sub">Limites dos seus fones e do seu telefone</string>
+    <string name="issues_none">Nenhum problema conhecido para os seus fones e o seu telefone.</string>
+    <string name="issues_dialog_body">Os seus fones ou o seu telefone têm limites conhecidos. Você pode lê-los em Configurações.</string>
+    <string name="issues_dialog_action">Mostrar</string>
+    <string name="issue_spatial_silent_title">O áudio 3D pode soar igual</string>
+    <string name="issue_spatial_silent_body">Alguns usuários não ouvem efeito espacial neste modelo. Ainda não sabemos se a causa são os fones ou o app.</string>
+    <string name="issue_samsung_codec_title">Sem escolha de codec em telefones Samsung</string>
+    <string name="issue_samsung_codec_body">Telefones Samsung não mostram a escolha de codec nas configurações de Bluetooth. O áudio de alta qualidade pode não fazer nada.</string>
+    <string name="issue_hires_spatial_title">Áudio de alta qualidade e áudio 3D</string>
+    <string name="issue_hires_spatial_body">Os fones usam apenas um dos dois. Ligar um desliga o outro.</string>
+    <string name="setup_issues_body">As Configurações listam os limites dos seus fones e do seu telefone. O QuickBuds também avisa uma vez se o seu modelo tiver algum.</string>
+    <string name="reply_title">Resposta do desenvolvedor</string>
+    <string name="about_discord_desc">Converse com o desenvolvedor no Discord</string>
 </resources>

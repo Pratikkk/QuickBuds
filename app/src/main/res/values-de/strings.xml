@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">Nicht verbunden</string>
     <string name="setup_ready_title">Alles bereit</string>
     <string name="setup_ready_body">Verbinde deine Ohrhörer und öffne QuickBuds. Jede Wahl bleibt in den Einstellungen.</string>
+    <string name="settings_issues_title">Bekannte Probleme</string>
+    <string name="settings_issues_sub">Grenzen Ihrer Ohrhörer und Ihres Telefons</string>
+    <string name="issues_none">Keine bekannten Probleme für Ihre Ohrhörer und Ihr Telefon.</string>
+    <string name="issues_dialog_body">Ihre Ohrhörer oder Ihr Telefon haben bekannte Grenzen. Sie können sie in den Einstellungen lesen.</string>
+    <string name="issues_dialog_action">Anzeigen</string>
+    <string name="issue_spatial_silent_title">3D-Audio klingt eventuell gleich</string>
+    <string name="issue_spatial_silent_body">Manche Nutzer hören bei diesem Modell keinen Raumklang. Wir wissen noch nicht, ob die Ohrhörer oder die App die Ursache sind.</string>
+    <string name="issue_samsung_codec_title">Keine Codec-Auswahl bei Samsung-Telefonen</string>
+    <string name="issue_samsung_codec_body">Samsung-Telefone zeigen die Codec-Auswahl nicht in den Bluetooth-Einstellungen. Hochwertiges Audio bewirkt eventuell nichts.</string>
+    <string name="issue_hires_spatial_title">Hochwertiges Audio und 3D-Audio</string>
+    <string name="issue_hires_spatial_body">Die Ohrhörer nutzen nur eines von beiden. Wenn Sie eines einschalten, geht das andere aus.</string>
+    <string name="setup_issues_body">Die Einstellungen listen die Grenzen Ihrer Ohrhörer und Ihres Telefons. QuickBuds meldet sie auch einmal, wenn Ihr Modell welche hat.</string>
+    <string name="reply_title">Antwort des Entwicklers</string>
+    <string name="about_discord_desc">Auf Discord mit dem Entwickler chatten</string>
 </resources>

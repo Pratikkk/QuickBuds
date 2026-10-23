@@ -80,6 +80,9 @@ class SettingsActivity : Activity() {
             },
             link(R.drawable.ic_info, R.string.settings_about_title, R.string.settings_about_sub) {
                 startActivity(Intent(this, AboutActivity::class.java))
+            },
+            link(R.drawable.ic_info, R.string.settings_issues_title, R.string.settings_issues_sub) {
+                startActivity(Intent(this, KnownIssuesActivity::class.java))
             }
         )
 

@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">Nepřipojeno</string>
     <string name="setup_ready_title">Hotovo</string>
     <string name="setup_ready_body">Připojte sluchátka a otevřete QuickBuds. Každá volba zůstává v Nastavení.</string>
+    <string name="settings_issues_title">Známé problémy</string>
+    <string name="settings_issues_sub">Omezení vašich sluchátek a telefonu</string>
+    <string name="issues_none">Pro vaše sluchátka a telefon nejsou známé žádné problémy.</string>
+    <string name="issues_dialog_body">Vaše sluchátka nebo telefon mají známá omezení. Přečtete si je v Nastavení.</string>
+    <string name="issues_dialog_action">Zobrazit</string>
+    <string name="issue_spatial_silent_title">3D zvuk může znít stejně</string>
+    <string name="issue_spatial_silent_body">Někteří majitelé u tohoto modelu neslyší prostorový efekt. Zatím nevíme, zda je příčinou sluchátko, nebo aplikace.</string>
+    <string name="issue_samsung_codec_title">Telefony Samsung nenabízejí výběr kodeku</string>
+    <string name="issue_samsung_codec_body">Telefony Samsung nezobrazují výběr kodeku v nastavení Bluetooth. Vysoce kvalitní zvuk nemusí fungovat.</string>
+    <string name="issue_hires_spatial_title">Vysoce kvalitní zvuk a 3D zvuk</string>
+    <string name="issue_hires_spatial_body">Sluchátka používají jen jedno z nich. Zapnutím jednoho se druhé vypne.</string>
+    <string name="setup_issues_body">Nastavení uvádí omezení vašich sluchátek a telefonu. QuickBuds vás také jednou upozorní, když je váš model má.</string>
+    <string name="reply_title">Odpověď vývojáře</string>
+    <string name="about_discord_desc">Chat s vývojářem na Discordu</string>
 </resources>

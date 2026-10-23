@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">Non connecté</string>
     <string name="setup_ready_title">Tout est prêt</string>
     <string name="setup_ready_body">Connectez vos écouteurs et ouvrez QuickBuds. Chaque choix reste dans les Réglages.</string>
+    <string name="settings_issues_title">Problèmes connus</string>
+    <string name="settings_issues_sub">Limites de vos écouteurs et de votre téléphone</string>
+    <string name="issues_none">Aucun problème connu pour vos écouteurs et votre téléphone.</string>
+    <string name="issues_dialog_body">Vos écouteurs ou votre téléphone ont des limites connues. Vous pouvez les lire dans les Réglages.</string>
+    <string name="issues_dialog_action">Afficher</string>
+    <string name="issue_spatial_silent_title">L’audio 3D peut sonner pareil</string>
+    <string name="issue_spatial_silent_body">Certains utilisateurs n’entendent aucun effet spatial sur ce modèle. Nous ne savons pas encore si la cause vient des écouteurs ou de l’appli.</string>
+    <string name="issue_samsung_codec_title">Pas de choix de codec sur les téléphones Samsung</string>
+    <string name="issue_samsung_codec_body">Les téléphones Samsung n’affichent pas le choix du codec dans les réglages Bluetooth. L’audio haute qualité peut ne rien faire.</string>
+    <string name="issue_hires_spatial_title">Audio haute qualité et audio 3D</string>
+    <string name="issue_hires_spatial_body">Les écouteurs n’utilisent qu’un des deux. Activer l’un désactive l’autre.</string>
+    <string name="setup_issues_body">Les Réglages listent les limites de vos écouteurs et de votre téléphone. QuickBuds vous prévient aussi une fois si votre modèle en a.</string>
+    <string name="reply_title">Réponse du développeur</string>
+    <string name="about_discord_desc">Discuter avec le développeur sur Discord</string>
 </resources>

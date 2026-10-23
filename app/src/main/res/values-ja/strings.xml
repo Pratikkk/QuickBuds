@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">未接続</string>
     <string name="setup_ready_title">準備完了</string>
     <string name="setup_ready_body">イヤホンを接続して QuickBuds を開いてください。ここでの選択はすべて設定に残ります。</string>
+    <string name="settings_issues_title">既知の問題</string>
+    <string name="settings_issues_sub">イヤホンとスマートフォンの制限</string>
+    <string name="issues_none">お使いのイヤホンとスマートフォンに既知の問題はありません。</string>
+    <string name="issues_dialog_body">お使いのイヤホンまたはスマートフォンには既知の制限があります。設定で確認できます。</string>
+    <string name="issues_dialog_action">表示</string>
+    <string name="issue_spatial_silent_title">3Dオーディオが同じように聞こえる場合があります</string>
+    <string name="issue_spatial_silent_body">このモデルで空間効果が聞こえないという声があります。原因がイヤホンかアプリかは、まだ分かっていません。</string>
+    <string name="issue_samsung_codec_title">Samsung のスマートフォンではコーデックを選べません</string>
+    <string name="issue_samsung_codec_body">Samsung のスマートフォンは Bluetooth 設定にコーデックの選択を表示しません。高音質オーディオが働かないことがあります。</string>
+    <string name="issue_hires_spatial_title">高音質オーディオと3Dオーディオ</string>
+    <string name="issue_hires_spatial_body">イヤホンはどちらか一方だけを使います。一方をオンにすると、もう一方はオフになります。</string>
+    <string name="setup_issues_body">設定にイヤホンとスマートフォンの制限を一覧で表示します。お使いのモデルに該当がある場合、QuickBuds は一度だけ知らせます。</string>
+    <string name="reply_title">開発者からの返信</string>
+    <string name="about_discord_desc">Discordで開発者とチャット</string>
 </resources>

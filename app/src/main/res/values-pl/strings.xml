@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">Niepołączone</string>
     <string name="setup_ready_title">Wszystko gotowe</string>
     <string name="setup_ready_body">Połącz słuchawki i otwórz QuickBuds. Każdy wybór zostaje w Ustawieniach.</string>
+    <string name="settings_issues_title">Znane problemy</string>
+    <string name="settings_issues_sub">Ograniczenia słuchawek i telefonu</string>
+    <string name="issues_none">Brak znanych problemów dla Twoich słuchawek i telefonu.</string>
+    <string name="issues_dialog_body">Twoje słuchawki lub telefon mają znane ograniczenia. Możesz je przeczytać w Ustawieniach.</string>
+    <string name="issues_dialog_action">Pokaż</string>
+    <string name="issue_spatial_silent_title">Dźwięk 3D może brzmieć tak samo</string>
+    <string name="issue_spatial_silent_body">Niektórzy użytkownicy nie słyszą efektu przestrzennego w tym modelu. Nie wiemy jeszcze, czy winne są słuchawki, czy aplikacja.</string>
+    <string name="issue_samsung_codec_title">Brak wyboru kodeka w telefonach Samsung</string>
+    <string name="issue_samsung_codec_body">Telefony Samsung nie pokazują wyboru kodeka w ustawieniach Bluetooth. Dźwięk wysokiej jakości może nic nie zmienić.</string>
+    <string name="issue_hires_spatial_title">Dźwięk wysokiej jakości i dźwięk 3D</string>
+    <string name="issue_hires_spatial_body">Słuchawki używają tylko jednego z nich. Włączenie jednego wyłącza drugi.</string>
+    <string name="setup_issues_body">Ustawienia zawierają listę ograniczeń słuchawek i telefonu. QuickBuds raz o nich powiadomi, jeśli Twój model je ma.</string>
+    <string name="reply_title">Odpowiedź dewelopera</string>
+    <string name="about_discord_desc">Czat z deweloperem na Discordzie</string>
 </resources>

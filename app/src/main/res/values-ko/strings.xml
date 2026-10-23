@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">연결 안 됨</string>
     <string name="setup_ready_title">준비 완료</string>
     <string name="setup_ready_body">이어버드를 연결하고 QuickBuds를 여세요. 여기의 모든 선택은 설정에 남습니다.</string>
+    <string name="settings_issues_title">알려진 문제</string>
+    <string name="settings_issues_sub">이어버드와 휴대폰의 제한</string>
+    <string name="issues_none">이어버드와 휴대폰에 알려진 문제가 없습니다.</string>
+    <string name="issues_dialog_body">이어버드 또는 휴대폰에 알려진 제한이 있습니다. 설정에서 읽을 수 있습니다.</string>
+    <string name="issues_dialog_action">보기</string>
+    <string name="issue_spatial_silent_title">3D 오디오가 같게 들릴 수 있습니다</string>
+    <string name="issue_spatial_silent_body">일부 사용자는 이 모델에서 공간 효과를 듣지 못합니다. 원인이 이어버드인지 앱인지 아직 모릅니다.</string>
+    <string name="issue_samsung_codec_title">Samsung 휴대폰에는 코덱 선택이 없습니다</string>
+    <string name="issue_samsung_codec_body">Samsung 휴대폰은 Bluetooth 설정에 코덱 선택을 표시하지 않습니다. 고음질 오디오가 작동하지 않을 수 있습니다.</string>
+    <string name="issue_hires_spatial_title">고음질 오디오와 3D 오디오</string>
+    <string name="issue_hires_spatial_body">이어버드는 둘 중 하나만 사용합니다. 하나를 켜면 다른 하나가 꺼집니다.</string>
+    <string name="setup_issues_body">설정에 이어버드와 휴대폰의 제한이 나옵니다. 모델에 해당하는 것이 있으면 QuickBuds가 한 번 알려 줍니다.</string>
+    <string name="reply_title">개발자의 답변</string>
+    <string name="about_discord_desc">Discord에서 개발자와 채팅</string>
 </resources>

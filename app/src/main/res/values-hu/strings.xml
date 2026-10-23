@@ -515,4 +515,18 @@
     <string name="setup_earbuds_disconnected">Nincs csatlakoztatva</string>
     <string name="setup_ready_title">Minden kész</string>
     <string name="setup_ready_body">Csatlakoztasd a fülhallgatót, és nyisd meg a QuickBudsot. Minden választás a Beállításokban marad.</string>
+    <string name="settings_issues_title">Ismert problémák</string>
+    <string name="settings_issues_sub">A fülhallgató és a telefon korlátai</string>
+    <string name="issues_none">Nincs ismert probléma a fülhallgatóval és a telefonnal.</string>
+    <string name="issues_dialog_body">A fülhallgatónak vagy a telefonnak ismert korlátai vannak. Elolvashatod őket a Beállításokban.</string>
+    <string name="issues_dialog_action">Megjelenítés</string>
+    <string name="issue_spatial_silent_title">A 3D hang lehet, hogy ugyanúgy szól</string>
+    <string name="issue_spatial_silent_body">Egyes tulajdonosok nem hallanak térhatást ennél a modellnél. Még nem tudjuk, hogy a fülhallgató vagy az alkalmazás az oka.</string>
+    <string name="issue_samsung_codec_title">Samsung telefonon nincs kodekválasztás</string>
+    <string name="issue_samsung_codec_body">A Samsung telefonok nem mutatják a kodekválasztást a Bluetooth-beállításokban. A kiváló minőségű hang lehet, hogy nem csinál semmit.</string>
+    <string name="issue_hires_spatial_title">Kiváló minőségű hang és 3D hang</string>
+    <string name="issue_hires_spatial_body">A fülhallgató csak az egyiket használja. Az egyik bekapcsolása kikapcsolja a másikat.</string>
+    <string name="setup_issues_body">A Beállítások felsorolják a fülhallgató és a telefon korlátait. A QuickBuds egyszer szól is, ha a modelledben van ilyen.</string>
+    <string name="reply_title">A fejlesztő válasza</string>
+    <string name="about_discord_desc">Csevegj a fejlesztővel a Discordon</string>
 </resources>

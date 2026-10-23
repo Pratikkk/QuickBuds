@@ -517,4 +517,18 @@
     <string name="setup_earbuds_disconnected">Chưa kết nối</string>
     <string name="setup_ready_title">Sẵn sàng</string>
     <string name="setup_ready_body">Kết nối tai nghe và mở QuickBuds. Mọi lựa chọn vẫn nằm trong Cài đặt.</string>
+    <string name="settings_issues_title">Sự cố đã biết</string>
+    <string name="settings_issues_sub">Giới hạn của tai nghe và điện thoại của bạn</string>
+    <string name="issues_none">Không có sự cố đã biết với tai nghe và điện thoại của bạn.</string>
+    <string name="issues_dialog_body">Tai nghe hoặc điện thoại của bạn có giới hạn đã biết. Bạn có thể đọc trong Cài đặt.</string>
+    <string name="issues_dialog_action">Xem</string>
+    <string name="issue_spatial_silent_title">Âm thanh 3D có thể nghe như cũ</string>
+    <string name="issue_spatial_silent_body">Một số người dùng không nghe thấy hiệu ứng không gian ở mẫu này. Chúng tôi chưa biết nguyên nhân là tai nghe hay ứng dụng.</string>
+    <string name="issue_samsung_codec_title">Điện thoại Samsung không có lựa chọn codec</string>
+    <string name="issue_samsung_codec_body">Điện thoại Samsung không hiển thị lựa chọn codec trong cài đặt Bluetooth. Âm thanh chất lượng cao có thể không làm gì.</string>
+    <string name="issue_hires_spatial_title">Âm thanh chất lượng cao và âm thanh 3D</string>
+    <string name="issue_hires_spatial_body">Tai nghe chỉ chạy một trong hai. Bật cái này sẽ tắt cái kia.</string>
+    <string name="setup_issues_body">Cài đặt liệt kê các giới hạn của tai nghe và điện thoại của bạn. QuickBuds cũng báo một lần nếu mẫu của bạn có.</string>
+    <string name="reply_title">Phản hồi từ nhà phát triển</string>
+    <string name="about_discord_desc">Trò chuyện với nhà phát triển trên Discord</string>
 </resources>

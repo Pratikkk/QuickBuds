@@ -433,7 +433,24 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         featureList.postDelayed(askTest, 3000)
     }
 
-    private val askTest = Runnable { askTestPending = false; maybeAskTest() }
+    private val askTest = Runnable { askTestPending = false; maybeShowReply(); maybeAskTest(); maybeAnnounceIssues() }
+
+    /** The developer's reply to a report of this install ([UsagePing.takeReply]); shown once, before the other prompts. */
+    private fun maybeShowReply() {
+        if (!claimPrompt()) return
+        val text = UsagePing.takeReply(this) ?: run { promptShown = false; return }
+        ConfirmDialog.show(this, getString(R.string.reply_title), text, getString(R.string.welcome_done), cancelRes = null)
+    }
+
+    /** Once per model: connected buds whose model has known issues ([KnownIssues]). */
+    private fun maybeAnnounceIssues() {
+        if (!WidgetStateStore.read(this).connected || !KnownIssues.shouldAnnounce(this) || !claimPrompt()) return
+        KnownIssues.markAnnounced(this)
+        ConfirmDialog.show(
+            this, getString(R.string.settings_issues_title), getString(R.string.issues_dialog_body),
+            getString(R.string.issues_dialog_action), R.string.test_ask_later
+        ) { startActivity(Intent(this, KnownIssuesActivity::class.java)) }
+    }
 
     /** Once per model: connected buds with a feature shown that no owner confirmed ([ModelTest]). */
     private fun maybeAskTest() {
