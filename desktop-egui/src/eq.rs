@@ -11,6 +11,7 @@ use std::time::{Duration, Instant};
 /// How long a create or delete shows before the buds' re-read confirms it.
 const HOLD: Duration = Duration::from_secs(4);
 const ROW: f32 = 56.0;
+const GAP: f32 = 10.0;
 const MAX_W: f32 = 760.0;
 
 #[derive(Default)]
@@ -71,11 +72,10 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     if !builtins.is_empty() {
         label(ui, x0, y, t(&tr, "eq_recommended"));
         y += 34.0;
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * builtins.len() as f32));
-        glass::flat_at(ui, card, 28.0, 1.0);
+        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, (ROW + GAP) * builtins.len() as f32 - GAP));
         for (i, (id, key)) in builtins.iter().enumerate() {
-            let r = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
-            if i > 0 { glass::divider_at(ui, x0, x0 + w, r.top()); }
+            let r = Rect::from_min_size(Pos2::new(x0, y + (ROW + GAP) * i as f32), Vec2::new(w, ROW));
+            glass::flat_at(ui, r, 28.0, 1.0);
             if glass::list_item_at(ui, ("builtin", *id), r, t(&tr, key), current == Some(*id), false).clicked() {
                 sends.push(Cmd::EqBuiltIn(*id));
                 st.picked = Some((*id, Instant::now()));
@@ -112,11 +112,10 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         let customs: Vec<&Preset> = s.eq_custom.iter().filter(|p| !gone(st, p.id)).collect();
         let n = customs.len() + st.added.len();
         if n > 0 {
-            let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * n as f32));
-            glass::flat_at(ui, card, 28.0, 1.0);
+            let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, (ROW + GAP) * n as f32 - GAP));
             for (i, p) in customs.iter().enumerate() {
-                let r = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
-                if i > 0 { glass::divider_at(ui, x0, x0 + w, r.top()); }
+                let r = Rect::from_min_size(Pos2::new(x0, y + (ROW + GAP) * i as f32), Vec2::new(w, ROW));
+                glass::flat_at(ui, r, 28.0, 1.0);
                 if glass::list_item_at(ui, ("custom", p.id), r, &p.name, current == Some(p.id), false).clicked() {
                     sends.push(Cmd::EqSave((*p).clone()));
                     st.picked = Some((p.id, Instant::now()));
@@ -124,8 +123,8 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
                 glass::icon_at(ui, icons::PENCIL, Rect::from_center_size(Pos2::new(r.right() - 32.0, r.center().y), Vec2::splat(20.0)), white(0.7));
             }
             for (j, (name, _)) in st.added.iter().enumerate() {
-                let r = Rect::from_min_size(Pos2::new(x0, y + ROW * (customs.len() + j) as f32), Vec2::new(w, ROW));
-                glass::divider_at(ui, x0, x0 + w, r.top());
+                let r = Rect::from_min_size(Pos2::new(x0, y + (ROW + GAP) * (customs.len() + j) as f32), Vec2::new(w, ROW));
+                glass::flat_at(ui, r, 28.0, 1.0);
                 glass::list_item_at(ui, ("pending", j), r, name, false, true);
             }
             y += card.height() + 12.0;
@@ -151,7 +150,9 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     // The editor of the selected custom preset
     if let Some(p) = editing(&s).filter(|p| Some(p.id) == current) {
         let (ex, ey, ew) = if two { (x0 + w + 14.0, body.top(), body.width() - w - 14.0) } else { (x0, y, w) };
-        let h = 64.0 + 230.0 + 70.0;
+        let h = if two { (body.bottom() - body.top()).max(364.0) } else { 64.0 + 230.0 + 70.0 };
+        // The bands fill the card between the name field and the Delete button.
+        let ch = (h - 76.0 - 80.0 - 56.0).clamp(170.0, 340.0);
         let card = Rect::from_min_size(Pos2::new(ex, ey), Vec2::new(ew, h));
         glass::flat_at(ui, card, 28.0, 1.0);
         // The name field is refilled only when the preset or its saved name changes, not while typing.
@@ -175,14 +176,14 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         let mut pts: Vec<Pos2> = vec![];
         let mut release = false;
         for i in 0..n {
-            let cx = ex + ew * (i as f32 + 0.5) / n as f32;
-            let col = Rect::from_center_size(Pos2::new(cx, band_top + 85.0), Vec2::new(50.0, 170.0));
+            let cx = ex + 20.0 + (ew - 40.0) * (i as f32 + 0.5) / n as f32;
+            let col = Rect::from_center_size(Pos2::new(cx, band_top + ch / 2.0), Vec2::new(50.0, ch));
             let sl = glass::vslider_at(ui, ("band", i), col, &mut gains[i], -(EQ_GAIN as f32), EQ_GAIN as f32, true);
             if sl.changed { st.drag = Some(gains.clone()); }
             if sl.released { release = true; }
             let t01 = (gains[i] + EQ_GAIN as f32) / (2 * EQ_GAIN) as f32;
             pts.push(Pos2::new(cx, col.bottom() - 12.0 - (col.height() - 24.0) * t01));
-            glass::text(ui, Pos2::new(cx, band_top + 188.0), Align2::CENTER_CENTER, &freq_label(p.freqs[i]), 12.5, 0.72);
+            glass::text(ui, Pos2::new(cx, band_top + ch + 18.0), Align2::CENTER_CENTER, &freq_label(p.freqs[i]), 12.5, 0.72);
             glass::text(ui, Pos2::new(cx, band_top - 8.0), Align2::CENTER_CENTER, &format!("{:+}", gains[i] as i32), 12.5, 0.9);
         }
         smooth_line(ui, &pts);

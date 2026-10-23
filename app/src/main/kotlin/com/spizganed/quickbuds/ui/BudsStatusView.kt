@@ -192,24 +192,17 @@ class BudsStatusView(context: Context) : View(context) {
                 arcBox.set(cx - r, cy - r, cx + r, cy + r)
                 if (glass) {
                     val a = conn
-                    // The glass disc inside the ring: lit from the top.
+                    // Flat like the rest of the screen: a faint disc, a thin track and a white arc, no light effects.
                     val inner = r - trackPaint.strokeWidth / 2 - dp(1f)
-                    discPaint.shader = android.graphics.LinearGradient(0f, cy - inner, 0f, cy + inner, intArrayOf(withA(0x2EFFFFFF, a), withA(0x0AFFFFFF, a)), null, android.graphics.Shader.TileMode.CLAMP)
+                    discPaint.shader = null
+                    discPaint.color = withA(0x14FFFFFF, a)
                     canvas.drawCircle(cx, cy, inner, discPaint)
-                    rimPaint.shader = android.graphics.LinearGradient(0f, cy - inner, 0f, cy + inner, intArrayOf(withA(0x8CFFFFFF.toInt(), a), withA(0x14FFFFFF, a)), null, android.graphics.Shader.TileMode.CLAMP)
-                    canvas.drawCircle(cx, cy, inner, rimPaint)
-                    trackPaint.color = 0x38FFFFFF
+                    trackPaint.color = 0x2EFFFFFF
                     canvas.drawOval(arcBox, trackPaint)
                     if (s.shown > 0f) {
-                        // A faint halo just wider than the arc.
-                        glowPaint.strokeWidth = dp(10f); glowPaint.color = withA(0x16FFFFFF, a)
-                        // A full ring is an oval: round caps overlapping at the top would draw a bright spot.
-                        if (s.shown >= 0.995f) canvas.drawOval(arcBox, glowPaint) else canvas.drawArc(arcBox, -90f, 360f * s.shown, false, glowPaint)
-                        sweepMatrix.setRotate(-90f, cx, cy)
-                        val sweep = android.graphics.SweepGradient(cx, cy, intArrayOf(0xFFF0F3FF.toInt(), 0xFFFFFFFF.toInt(), 0xFFF0F3FF.toInt()), floatArrayOf(0f, 0.5f, 1f))
-                        sweep.setLocalMatrix(sweepMatrix)
-                        arcPaint.shader = sweep
-                        arcPaint.alpha = (240 * (0.35f + 0.65f * a)).toInt()
+                        arcPaint.shader = null
+                        arcPaint.color = withA(0xFFFFFFFF.toInt(), a)
+                        arcPaint.alpha = (255 * (0.35f + 0.65f * a)).toInt()
                         if (s.shown >= 0.995f) canvas.drawOval(arcBox, arcPaint) else canvas.drawArc(arcBox, -90f, 360f * s.shown, false, arcPaint)
                     }
                 } else {

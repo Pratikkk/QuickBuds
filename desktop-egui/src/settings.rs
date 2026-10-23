@@ -40,15 +40,15 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let is_glass = app.style == Style::Glass;
     // Rows: the style first; the theme and accent for the styles that use the palette; the glow for Glass.
     let rows = 3 + if is_glass { 1 } else { 2 };
-    let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * rows as f32));
-    glass::flat_at(ui, card, 28.0, 1.0);
-    let r = |i: usize| Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
+    let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, (ROW + 10.0) * rows as f32 - 10.0));
+    let r = |i: usize| Rect::from_min_size(Pos2::new(x0, y + (ROW + 10.0) * i as f32), Vec2::new(w, ROW));
     let mut i = 0;
+    glass::flat_at(ui, r(0), 28.0, 1.0);
     let (clicked, _) = glass::row_at(ui, "style", r(i), icons::PALETTE, t(&tr, "widget_style_title"), "", Trailing::Value(t(&tr, app.style.name_key()).into()), true);
     if clicked { app.settings.style_dlg = true; }
     i += 1;
     if is_glass {
-        glass::divider_at(ui, x0, x0 + w, r(i).top());
+        glass::flat_at(ui, r(i), 28.0, 1.0);
         let (_, toggled) = glass::row_at(ui, "glow", r(i), icons::PALETTE, t(&tr, "theme_glass_gradient"), t(&tr, "theme_glass_gradient_sub"), Trailing::Switch(app.glow), true);
         if toggled { app.glow = !app.glow; save_setting("glass_gradient", app.glow.into()); }
         i += 1;
@@ -56,20 +56,20 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         let light = palette::is_light_system(ui.ctx());
         let id = palette::active_id(light);
         let name = if palette::auto() { t(&tr, "theme_auto").to_string() } else { theme_name(&tr, &id) };
-        glass::divider_at(ui, x0, x0 + w, r(i).top());
+        glass::flat_at(ui, r(i), 28.0, 1.0);
         let (clicked, _) = glass::row_at(ui, "theme", r(i), icons::PALETTE, t(&tr, "theme_title"), "", Trailing::Value(name), true);
         if clicked { app.settings.theme_dlg = true; }
         i += 1;
-        glass::divider_at(ui, x0, x0 + w, r(i).top());
+        glass::flat_at(ui, r(i), 28.0, 1.0);
         let (clicked, _) = glass::row_at(ui, "accent", r(i), icons::PALETTE, t(&tr, "theme_accent"), "", Trailing::Value(palette::hex(crate::glass::style::pal().accent)), true);
         if clicked { app.settings.accent_dlg = true; }
         i += 1;
     }
-    glass::divider_at(ui, x0, x0 + w, r(i).top());
+    glass::flat_at(ui, r(i), 28.0, 1.0);
     let (clicked, _) = glass::row_at(ui, "lang", r(i), icons::LANGUAGE, t(&tr, "settings_language_title"), t(&tr, "settings_language_sub"), glass::Trailing::Value(name(current)), true);
     if clicked { app.settings.choosing = true; }
     i += 1;
-    glass::divider_at(ui, x0, x0 + w, r(i).top());
+    glass::flat_at(ui, r(i), 28.0, 1.0);
     let (_, toggled) = glass::row_at(ui, "clearbat", r(i), icons::BATTERY, t(&tr, "settings_clear_battery_title"), t(&tr, "settings_clear_battery_sub"), Trailing::Switch(clear), true);
     if toggled { save_setting("clear_battery", (!clear).into()); }
     y += card.height() + 24.0;

@@ -8,6 +8,7 @@ use crate::{load_settings, save_setting, t, App, Page};
 use eframe::egui::{Align2, Pos2, Rect, Ui, Vec2};
 
 const ROW: f32 = 56.0;
+const GAP: f32 = 10.0;
 const MAX_W: f32 = 760.0;
 
 /// What the Earbud settings row says: the pick, or Automatic with what was detected.
@@ -60,11 +61,10 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         list.sort_by_key(|m| name(m).to_lowercase());
         glass::text(ui, Pos2::new(x0 + 6.0, y + 14.0), Align2::LEFT_CENTER, brand, 14.0, 0.72);
         y += 34.0;
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * list.len() as f32));
-        glass::flat_at(ui, card, 28.0, 1.0);
+        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, (ROW + GAP) * list.len() as f32 - GAP));
         for (i, m) in list.iter().enumerate() {
-            let r = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
-            if i > 0 { glass::divider_at(ui, x0, x0 + w, r.top()); }
+            let r = Rect::from_min_size(Pos2::new(x0, y + (ROW + GAP) * i as f32), Vec2::new(w, ROW));
+            glass::flat_at(ui, r, 28.0, 1.0);
             let n = name(m);
             let id = m["id"].as_str().unwrap_or("");
             // Two ids share a name (colour ranges, regional variants): those rows show their id.

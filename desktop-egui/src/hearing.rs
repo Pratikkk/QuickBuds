@@ -294,14 +294,14 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let has_test = s.caps.supports(CMD_GOLDEN_DETECT);
 
     let n = 1 + has_test as usize;
-    let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 72.0 * n as f32));
-    glass::flat_at(ui, card, 28.0, 1.0);
+    let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 82.0 * n as f32 - 10.0));
     let r0 = Rect::from_min_size(card.min, Vec2::new(w, 72.0));
+    glass::flat_at(ui, r0, 28.0, 1.0);
     let (_, toggled) = glass::row_at(ui, "hearing", r0, icons::HEARING, t(&tr, "row_golden_title"), t(&tr, "row_golden_sub"), Trailing::Switch(sw), on);
     if toggled { app.send(Cmd::Features(vec![(FEATURE_HEARING, !sw)])); }
     if has_test {
-        let r1 = Rect::from_min_size(Pos2::new(x0, y + 72.0), Vec2::new(w, 72.0));
-        glass::divider_at(ui, x0, x0 + w, r1.top());
+        let r1 = Rect::from_min_size(Pos2::new(x0, y + 82.0), Vec2::new(w, 72.0));
+        glass::flat_at(ui, r1, 28.0, 1.0);
         let (clicked, _) = glass::row_at(ui, "htest", r1, icons::EARBUD, t(&tr, "golden_test_row"), t(&tr, "golden_test_sub"), Trailing::Chevron, on);
         if clicked {
             app.hearing.open = true;
@@ -321,12 +321,11 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         glass::text(ui, r.center(), Align2::CENTER_CENTER, t(&tr, "golden_none"), 14.0, 0.6);
         y += 64.0;
     } else {
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * list.len() as f32));
-        glass::flat_at(ui, card, 28.0, 1.0);
+        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, (ROW + 10.0) * list.len() as f32 - 10.0));
         let active = app.hearing.active;
         for (i, r) in list.iter().enumerate() {
-            let row = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
-            if i > 0 { glass::divider_at(ui, x0, x0 + w, row.top()); }
+            let row = Rect::from_min_size(Pos2::new(x0, y + (ROW + 10.0) * i as f32), Vec2::new(w, ROW));
+            glass::flat_at(ui, row, 28.0, 1.0);
             if glass::list_item_at(ui, ("rec", r.uid), row, &r.name, r.uid == active, !on).clicked() && on { apply_record(app, r.clone()); }
             let del = Rect::from_center_size(Pos2::new(row.right() - 28.0, row.center().y), Vec2::splat(36.0));
             let resp = ui.interact(del, ui.scope_id().with(("recdel", r.uid)), egui::Sense::click());

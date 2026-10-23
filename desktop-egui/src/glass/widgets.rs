@@ -360,28 +360,14 @@ pub fn ring_at(ui: &Ui, id: impl std::hash::Hash + std::fmt::Debug, center: Pos2
         }
         return;
     }
+    // Flat like the rest of the screen: a faint disc, a thin track and a white arc, no light effects.
     let inner = radius - width / 2.0 - 1.0;
-    // The disc, lit from the top, with a rim light on its upper edge.
-    ui.painter().circle_filled(center, inner, white(0.07 * a));
-    let rim: Vec<Pos2> = (0..=24).map(|i| {
-        let ang = (-150.0 + 120.0 * i as f32 / 24.0).to_radians();
-        center + Vec2::angled(ang) * inner
-    }).collect();
-    ui.painter().add(Shape::line(rim, Stroke::new(1.2, white(0.45 * a))));
-    ui.painter().circle_stroke(center, radius, Stroke::new(width, white(0.22 * a)));
+    ui.painter().circle_filled(center, inner, white(0.08 * a));
+    ui.painter().circle_stroke(center, radius, Stroke::new(width, white(0.18 * a)));
     if v > 0.004 {
         let f = v.min(1.0);
-        let halo = |al: f32| Color32::from_white_alpha((al * 255.0 * a) as u8);
-        if f >= 0.995 {
-            // A full ring is a circle: round caps overlapping at the top would draw a bright spot.
-            ui.painter().circle_stroke(center, radius, Stroke::new(width + 9.0, halo(0.05)));
-            ui.painter().circle_stroke(center, radius, Stroke::new(width + 4.0, halo(0.08)));
-            ui.painter().circle_stroke(center, radius, Stroke::new(width, Color32::from_rgba_unmultiplied(248, 250, 255, (240.0 * a) as u8)));
-        } else {
-            arc(ui, center, radius, width + 9.0, f, halo(0.05), halo(0.05));
-            arc(ui, center, radius, width + 4.0, f, halo(0.08), halo(0.08));
-            arc(ui, center, radius, width, f, Color32::from_rgba_unmultiplied(244, 247, 255, (240.0 * a) as u8), Color32::from_rgba_unmultiplied(255, 255, 255, (240.0 * a) as u8));
-        }
+        let col = Color32::from_rgba_unmultiplied(255, 255, 255, (245.0 * a) as u8);
+        if f >= 0.995 { ui.painter().circle_stroke(center, radius, Stroke::new(width, col)); } else { arc(ui, center, radius, width, f, col, col); }
     }
     if let Some(g) = glyph {
         let h = radius * 1.05;

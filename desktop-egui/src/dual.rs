@@ -8,6 +8,7 @@ use crate::{t, App};
 use eframe::egui::{self, Align2, Pos2, Rect, Ui, Vec2};
 
 const ROW: f32 = 72.0;
+const GAP: f32 = 10.0;
 const MAX_W: f32 = 760.0;
 
 #[derive(Default)]
@@ -54,11 +55,10 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     if !rows.is_empty() {
         glass::text(ui, Pos2::new(x0 + 6.0, y + 14.0), Align2::LEFT_CENTER, t(&tr, if manages { "dual_section_all" } else { "dual_section_devices" }), 14.0, 0.72);
         y += 34.0;
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * rows.len() as f32));
-        glass::flat_at(ui, card, 28.0, 1.0);
+        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, (ROW + GAP) * rows.len() as f32 - GAP));
         for (i, d) in rows.iter().enumerate() {
-            let r = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
-            if i > 0 { glass::divider_at(ui, x0, x0 + w, r.top()); }
+            let r = Rect::from_min_size(Pos2::new(x0, y + (ROW + GAP) * i as f32), Vec2::new(w, ROW));
+            glass::flat_at(ui, r, 28.0, 1.0);
             let state = t(&tr, if d.this_device { "dual_connected_this" } else if d.connected { "dual_connected" } else { "dual_not_connected" });
             let can = manages && !d.this_device;
             let trailing = if can { Trailing::Value(t(&tr, if d.connected { "conn_action_disconnect" } else { "conn_action_connect" }).into()) } else { Trailing::None };

@@ -69,10 +69,10 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     if has_alert || has_tap {
         if !two { label(ui, x0, y, t(&tr, "earbuds_section_sounds")); y += 34.0; }
         let n = has_alert as usize + has_tap as usize;
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 96.0 * n as f32));
-        glass::flat_at(ui, card, 28.0, 1.0);
+        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 106.0 * n as f32 - 10.0));
         let mut cy = y;
         if has_alert {
+            glass::flat_at(ui, Rect::from_min_size(Pos2::new(x0, cy), Vec2::new(w, 96.0)), 28.0, 1.0);
             let mut v = app.earbuds.alert.unwrap_or(s.alert_volume.unwrap_or(5) as f32);
             glass::text(ui, Pos2::new(x0 + 24.0, cy + 26.0), Align2::LEFT_CENTER, t(&tr, "row_alert_title"), 15.0, 1.0);
             glass::icon_at(ui, if v <= 1.0 { icons::VOLUME_OFF } else { icons::VOLUME }, Rect::from_center_size(Pos2::new(x0 + 36.0, cy + 66.0), Vec2::splat(22.0)), glass::white(1.0));
@@ -80,9 +80,10 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
             let sl = glass::slider_at(ui, "alert", sr, &mut v, 1.0, 10.0, true);
             if sl.changed { app.earbuds.alert = Some(v); }
             if sl.released { app.send(Cmd::AlertVolume(v as u8)); app.earbuds.alert = None; }
-            cy += 96.0;
+            cy += 106.0;
         }
         if has_tap {
+            glass::flat_at(ui, Rect::from_min_size(Pos2::new(x0, cy), Vec2::new(w, 96.0)), 28.0, 1.0);
             let mut v = app.earbuds.tap.unwrap_or(s.tap_level.map_or(3, |t| t.0) as f32);
             glass::text(ui, Pos2::new(x0 + 24.0, cy + 26.0), Align2::LEFT_CENTER, t(&tr, "tap_level_title"), 15.0, 1.0);
             let sr = Rect::from_min_size(Pos2::new(x0 + 24.0, cy + 46.0), Vec2::new(w - 90.0, 40.0));
@@ -114,23 +115,22 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         && (s.caps.supports(CMD_PERSONAL_NOISE) || s.manual);
     if pnc || !items.is_empty() {
         if !two { label(ui, x0, y, t(&tr, "earbuds_section_features")); y += 34.0; }
-        let pnc_h = if pnc { ROW } else { 0.0 };
-        let rows_h: f32 = pnc_h + items.iter().map(|i| ROW + if i.kind > 0 && i.on { 56.0 } else { 0.0 }).sum::<f32>();
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, rows_h));
-        glass::flat_at(ui, card, 28.0, 1.0);
+        let g = 10.0;
+        let rows_h: f32 = (if pnc { ROW + g } else { 0.0 }) + items.iter().map(|i| ROW + g + if i.kind > 0 && i.on { 56.0 + g } else { 0.0 }).sum::<f32>() - g;
         let mut cy = y;
         if pnc {
             let r = Rect::from_min_size(Pos2::new(x0, cy), Vec2::new(w, ROW));
+            glass::flat_at(ui, r, 28.0, 1.0);
             let pon = pnc_listed == Some(1);
             let (_, toggled) = glass::row_at(ui, "pnc", r, icons::MODE_ANC_MEDIUM, t(&tr, "pnc_title"), t(&tr, "pnc_sub"), Trailing::Switch(pon), on);
             if toggled {
                 if pon { app.send(Cmd::Features(vec![(FEATURE_PERSONAL_NOISE, false)])); } else { pnc_start(app); }
             }
-            cy += ROW;
+            cy += ROW + g;
         }
-        for (n, i) in items.iter().enumerate() {
+        for i in items.iter() {
             let r = Rect::from_min_size(Pos2::new(x0, cy), Vec2::new(w, ROW));
-            if n > 0 || pnc { glass::divider_at(ui, x0, x0 + w, r.top()); }
+            glass::flat_at(ui, r, 28.0, 1.0);
             let (_, toggled) = glass::row_at(ui, ("feat", i.id), r, i.icon, t(&tr, i.title), t(&tr, i.sub), Trailing::Switch(i.on), on);
             if toggled {
                 let cmds = home_logic::feature_cmds(&s, i.id, !i.on);
@@ -140,13 +140,14 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
                     None => for c in cmds { app.send(c); },
                 }
             }
-            cy += ROW;
+            cy += ROW + g;
             if i.kind > 0 && i.on {
                 let pr = Rect::from_min_size(Pos2::new(x0, cy), Vec2::new(w, 56.0));
+                glass::flat_at(ui, pr, 28.0, 1.0);
                 let title = t(&tr, if i.kind == 1 { "game_sound_type_title" } else { "head_motion_type_title" });
                 let (clicked, _) = glass::row_at(ui, ("pick", i.id), pr, icons::CHEVRON_DOWN, title, "", Trailing::Value(i.choice.clone().unwrap_or("—".into())), on);
                 if clicked { app.earbuds.picking = Some(i.kind); }
-                cy += 56.0;
+                cy += 56.0 + g;
             }
         }
         y += rows_h + 18.0;

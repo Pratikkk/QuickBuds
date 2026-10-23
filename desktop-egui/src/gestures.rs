@@ -71,7 +71,9 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         y += 56.0 + 18.0;
     }
 
-    // The gesture rows
+    // The gesture rows, under their label
+    glass::text(ui, Pos2::new(x0 + 6.0, y + 14.0), Align2::LEFT_CENTER, t(&tr, "gesture_section_not_in_call"), 14.0, 0.72);
+    y += 34.0;
     let y_top = y;
     let mut n_rows = m.rows.len();
     if m.both_hold { n_rows += 1; }
@@ -102,11 +104,9 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     // On call
     if !m.on_call.is_empty() {
         // Wide: the label sits beside the Left / Right buttons, so both cards start on one line.
-        let aligned = two && !m.one_button;
-        let (cx, mut cy) = if two { (x0 + w + 14.0, y_top) } else { (x0, y) };
-        let label_y = if aligned { y_top - 18.0 - 28.0 } else { cy };
-        glass::text(ui, Pos2::new(cx + 6.0, label_y + if aligned { 0.0 } else { 14.0 }), Align2::LEFT_CENTER, t(&tr, "gesture_section_on_call"), 14.0, 0.72);
-        if !aligned { cy += 34.0; }
+        let (cx, mut cy) = if two { (x0 + w + 14.0, y_top - 34.0) } else { (x0, y) };
+        glass::text(ui, Pos2::new(cx + 6.0, cy + 14.0), Align2::LEFT_CENTER, t(&tr, "gesture_section_on_call"), 14.0, 0.72);
+        cy += 34.0;
         let card = Rect::from_min_size(Pos2::new(cx, cy), Vec2::new(w, (ROW + GAP) * m.on_call.len() as f32 - GAP));
         for (i, k) in m.on_call.iter().enumerate() {
             let r = Rect::from_min_size(Pos2::new(cx, cy + (ROW + GAP) * i as f32), Vec2::new(w, ROW));
