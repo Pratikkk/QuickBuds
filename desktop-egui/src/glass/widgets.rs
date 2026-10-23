@@ -263,7 +263,8 @@ pub fn tile_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug + Copy, r
 pub fn row_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug + Copy, rect: Rect, svg: &'static str, title: &str, sub: &str, trailing: Trailing, enabled: bool) -> (bool, bool) {
     let r = ui.interact(rect, wid(ui, id), Sense::click());
     let (h, _) = feel(ui, &r);
-    if h > 0.0 && enabled { ui.painter().rect_filled(rect, 0.0, white(0.06 * h)); }
+    // The hover plate sits inside the card with round ends, so it never pokes out of a rounded corner.
+    if h > 0.0 && enabled { ui.painter().rect_filled(rect.shrink2(Vec2::new(8.0, 5.0)), 18.0, white(0.07 * h)); }
     let a = if enabled { 1.0 } else { 0.5 };
     icon_at(ui, svg, square(rect.left_center() + Vec2::new(34.0, 0.0), 24.0), white(0.88 * a));
     let dy = if sub.is_empty() { 0.0 } else { 11.0 };
