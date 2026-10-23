@@ -3,7 +3,7 @@
 
 use crate::types::*;
 use crate::session::{Line, LOG};
-use crate::{with_app, App, MainWindow, Report, Tr};
+use crate::{with_app, App, Community, MainWindow, Report, Tr};
 use slint::{ComponentHandle, Model, VecModel};
 use std::io::Write;
 use std::process::Stdio;
@@ -244,7 +244,7 @@ pub(crate) fn app_id() -> String {
 }
 
 /// Counts this install once a day: platform, version and the install ID (README, Privacy). Network thread only.
-pub(crate) fn ping() {
+pub(crate) fn ping(weak: slint::Weak<MainWindow>) {
     let today = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs() / 86_400).unwrap_or(0);
     if crate::load_settings()["usage_ping_day"].as_u64() == Some(today) { return; }
     let body = serde_json::json!({
@@ -252,8 +252,25 @@ pub(crate) fn ping() {
         "version": env!("CARGO_PKG_VERSION"),
         "id": app_id(),
     });
-    let (code, _) = post(&WORKER.replace("/report", "/ping"), &body.to_string());
-    if code == 200 { crate::save_setting("usage_ping_day", today.into()); }
+    let (code, text) = post(&WORKER.replace("/report", "/ping"), &body.to_string());
+    if code != 200 { return; }
+    crate::save_setting("usage_ping_day", today.into());
+    // The answer can carry the developer's reply to a report of this install, once.
+    let reply = serde_json::from_str::<serde_json::Value>(&text).ok().and_then(|v| v["reply"]["text"].as_str().map(String::from));
+    if let Some(reply) = reply.filter(|r| !r.trim().is_empty()) {
+        let _ = weak.upgrade_in_event_loop(move |m| m.global::<Community>().set_reply(reply.into()));
+    }
+}
+
+const DISCORD: &str = "https://discord.gg/pvsnEf9TrZ";
+
+/// The issues of the current earbuds ([known issues](crate) as on the phone): the model's `knownIssues`, and Hi-Res with 3D audio
+/// when both are offered and are not one switch each.
+fn known_issues(a: &App) -> (bool, bool) {
+    let silent = a.snap.model.is_some_and(|m| m["knownIssues"].as_array().is_some_and(|k| k.iter().any(|x| x.as_str() == Some("spatial_silent"))));
+    let offered = |id: u8| a.snap.features.iter().any(|f| f.0 == id);
+    let both = offered(FEATURE_HIRES) && offered(FEATURE_SPATIAL) && a.snap.model.map_or(true, |m| m["spatialToggle"] != 1);
+    (silent, both)
 }
 
 /// Posts [d] to the Worker.
@@ -311,6 +328,14 @@ pub fn setup(main: &MainWindow) {
     let r = main.global::<Report>();
     r.set_picked(VecModel::from_slice(&[false; 6]));
     r.on_open(|| with_app(open));
+    let c = main.global::<Community>();
+    c.on_refresh(|| with_app(|a| {
+        let (silent, both) = known_issues(a);
+        let c = a.main.global::<Community>();
+        c.set_spatial_silent(silent);
+        c.set_hires_spatial(both);
+    }));
+    c.on_open_discord(|| crate::update::open_url(DISCORD));
     r.on_toggle(|i| with_app(|a| {
         let p = a.main.global::<Report>().get_picked();
         let i = i as usize;

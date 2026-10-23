@@ -130,8 +130,11 @@ pub fn install(r: &Release) -> Result<(), String> {
 }
 
 /// Opens the release page in the browser.
-pub fn open_page() {
-    let _ = if cfg!(windows) { quiet("explorer").arg(PAGE).spawn() } else { host("xdg-open").arg(PAGE).spawn() };
+pub fn open_page() { open_url(PAGE); }
+
+/// Opens [url] in the browser.
+pub fn open_url(url: &str) {
+    let _ = if cfg!(windows) { quiet("explorer").arg(url).spawn() } else { host("xdg-open").arg(url).spawn() };
 }
 
 /// A command for a program outside the AppImage: without the GTK paths its AppRun sets for the bundled GTK

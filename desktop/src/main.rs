@@ -471,6 +471,15 @@ fn set_texts(tr: &Tr, s: &[String]) {
     tr.set_problem_log_empty(t(s, "problem_log_empty").into());
     tr.set_section_features(t(s, "earbuds_section_features").into());
     tr.set_section_about(t(s, "earbuds_section_about").into());
+    tr.set_issues_title(t(s, "settings_issues_title").into());
+    tr.set_issues_sub(t(s, "settings_issues_sub").into());
+    tr.set_issues_none(t(s, "issues_none").into());
+    tr.set_issue_spatial_silent_title(t(s, "issue_spatial_silent_title").into());
+    tr.set_issue_spatial_silent_body(t(s, "issue_spatial_silent_body").into());
+    tr.set_issue_hires_spatial_title(t(s, "issue_hires_spatial_title").into());
+    tr.set_issue_hires_spatial_body(t(s, "issue_hires_spatial_body").into());
+    tr.set_discord_desc(t(s, "about_discord_desc").into());
+    tr.set_reply_title(t(s, "reply_title").into());
     tr.set_firmware_title(t(s, "row_firmware_title").into());
     tr.set_firmware_dialog_title(t(s, "firmware_dialog_title").into());
     tr.set_firmware_dialog_body(t(s, "firmware_dialog_body").into());
@@ -894,7 +903,8 @@ fn main() {
     MATERIAL.set(style == "material");
     with_app(|a| { theme::apply(a); a.set_style(style == "pixel", scale); });
     update::setup(&main);
-    std::thread::spawn(report::ping);
+    let weak = main.as_weak();
+    std::thread::spawn(move || report::ping(weak));
     with_app(report::show_crash);
     // Closing the window hides it; the app lives in the tray until Quit.
     slint::run_event_loop_until_quit().expect("event loop");

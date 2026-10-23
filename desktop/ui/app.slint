@@ -232,6 +232,15 @@ export global Tr {
     in property <string> problem-log-empty;
     in property <string> section-features;
     in property <string> section-about;
+    in property <string> issues-title;
+    in property <string> issues-sub;
+    in property <string> issues-none;
+    in property <string> issue-spatial-silent-title;
+    in property <string> issue-spatial-silent-body;
+    in property <string> issue-hires-spatial-title;
+    in property <string> issue-hires-spatial-body;
+    in property <string> discord-desc;
+    in property <string> reply-title;
     in property <string> firmware-title;
     in property <string> firmware-dialog-title;
     in property <string> firmware-dialog-body;
@@ -2368,6 +2377,15 @@ component DualPage inherits Rectangle {
 
 // App settings (the phone's Settings and Theme screens): for now the style.
 // App settings › Feedback (`report.rs`).
+// Known issues of the current earbuds and the developer's reply to a report (`report.rs`).
+export global Community {
+    in property <bool> spatial-silent;
+    in property <bool> hires-spatial;
+    in-out property <string> reply;
+    callback refresh();
+    callback open-discord();
+}
+
 export global Report {
     in-out property <string> model;
     in-out property <string> description;
@@ -3319,7 +3337,25 @@ component SettingsPage inherits Rectangle {
                     NavRow { icon: Buds.icon-info; title: Tr.problem-title; subtitle: Tr.problem-sub; clicked => { root.open-report(); } }
                 }
             }
+            Card {
+                live: true;
+                border-radius: 24px;
+                VerticalLayout {
+                    padding-left: 20px;
+                    padding-right: 20px;
+                    NavRow { icon: Buds.icon-info; title: Tr.issues-title; subtitle: Tr.issues-sub; clicked => { Community.refresh(); issues.show(); } }
+                    Divider {}
+                    NavRow { icon: Buds.icon-info; title: "Discord"; subtitle: Tr.discord-desc; clicked => { Community.open-discord(); } }
+                }
+            }
         }
+    }
+    issues := Dialog {
+        x: (root.width - self.width) / 2; y: 60px;
+        title: Tr.issues-title; ok: Tr.close; cancel: "";
+        body: (Community.spatial-silent ? Tr.issue-spatial-silent-title + "\n" + Tr.issue-spatial-silent-body + "\n\n" : "")
+            + (Community.hires-spatial ? Tr.issue-hires-spatial-title + "\n" + Tr.issue-hires-spatial-body + "\n\n" : "")
+            + (!Community.spatial-silent && !Community.hires-spatial ? Tr.issues-none : "");
     }
     lang := ChoiceDialog {
         x: (root.width - self.width) / 2; y: 60px;
@@ -3597,6 +3633,14 @@ export component MainWindow inherits Window {
     // The launch prompt (`modeltest.rs`): once per unconfirmed model, on Overview.
     property <int> test-ask: ModelTest.ask;
     changed test-ask => { test-prompt.show(); }
+    // The developer's reply to a report of this install, once (`report::ping`).
+    property <string> reply: Community.reply;
+    changed reply => { if self.reply != "" { reply-dialog.show(); } }
+    reply-dialog := Dialog {
+        x: (root.width - self.width) / 2; y: (root.height - 200px) / 2;
+        title: Tr.reply-title; body: Community.reply; ok: Tr.close; cancel: "";
+        accepted => { Community.reply = ""; }
+    }
     test-prompt := Dialog {
         x: (root.width - self.width) / 2; y: (root.height - 200px) / 2;
         title: Tr.report-title; body: Tr.test-ask-body; ok: Tr.test-title; cancel: Tr.test-ask-later;

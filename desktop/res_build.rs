@@ -27,6 +27,8 @@ const STRINGS: &[&str] = &[
     "desktop_nav_overview", "desktop_nav_app_settings", "action_dev_tools", "settings_language_title", "settings_language_sub", "language_system",
     "row_hires_title", "row_hires_sub", "row_hires_sub_off", "row_spatial_title", "row_spatial_sub", "spatial_fixed", "spatial_head_tracking", "codec_dialog_title", "codec_dialog_accept",
     "codec_msg_reconnect", "codec_msg_hires_drops_spatial", "codec_msg_spatial_drops_hires",
+    "settings_issues_title", "settings_issues_sub", "issues_none", "issue_spatial_silent_title", "issue_spatial_silent_body",
+    "issue_hires_spatial_title", "issue_hires_spatial_body", "about_discord_desc", "reply_title",
     "problem_title", "problem_sub", "problem_intro", "problem_model", "problem_category", "problem_description", "problem_description_hint", "problem_log_title", "problem_preview", "problem_send", "problem_sending", "problem_unsupported", "problem_supported_list", "problem_log_empty", "problem_cat_ui", "problem_cat_lag", "problem_cat_connection", "problem_cat_feature", "problem_cat_battery", "problem_cat_other", "crash_title",
     "report_title", "test_title", "test_sub", "test_ask_body", "test_ask_later", "test_intro", "test_start", "test_restart",
     "test_reconnecting", "test_failed", "test_section_check", "test_check_battery", "test_check_features", "test_check_states",
