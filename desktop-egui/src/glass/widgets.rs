@@ -158,8 +158,16 @@ pub fn disc_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, center: 
     // The lit disc fades in and out as the selection moves.
     let t = ui.ctx().animate_bool_with_time(r.id.with("sel"), selected, 0.2);
     glass_at(ui, rect, diameter / 2.0, 1.0 + 0.5 * h + 0.5 * p);
-    if t > 0.0 { ui.painter().circle_filled(center, diameter / 2.0 - 0.5, lit(t)); }
-    let (from, to) = (white(1.0), on_accent());
+    if t > 0.0 {
+        if style::glass() {
+            // Lit glass, not a white plate: a halo, a bright body, a rim; the icon stays white.
+            ui.painter().circle_filled(center, diameter / 2.0 + 3.0, white(0.10 * t));
+            ui.painter().circle_filled(center, diameter / 2.0 - 0.5, white(0.36 * t));
+            ui.painter().circle_filled(center + Vec2::new(0.0, diameter * 0.18), diameter / 2.0 * 0.6, Color32::from_rgba_unmultiplied(184, 198, 255, (46.0 * t) as u8));
+            ui.painter().circle_stroke(center, diameter / 2.0 - 0.6, Stroke::new(1.2, white(0.75 * t)));
+        } else { ui.painter().circle_filled(center, diameter / 2.0 - 0.5, lit(t)); }
+    }
+    let (from, to) = (white(1.0), if style::glass() { white(1.0) } else { on_accent() });
     let mix = |a: u8, b: u8| (a as f32 + (b as f32 - a as f32) * t) as u8;
     icon_at(ui, svg, square(center, 24.0), Color32::from_rgb(mix(from.r(), to.r()), mix(from.g(), to.g()), mix(from.b(), to.b())));
     text(ui, center + Vec2::new(0.0, diameter / 2.0 + 14.0), Align2::CENTER_CENTER, label, 11.5, 0.8 + 0.2 * t);
@@ -223,6 +231,33 @@ pub fn nav_item_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, rect
 
 /// What a list row shows on its right.
 pub enum Trailing { None, Chevron, Switch(bool), Value(String) }
+
+/// A home tile: icon top left, a switch or chevron top right, the title and a line under it at the bottom.
+/// Returns (tile clicked, switch toggled).
+pub fn tile_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug + Copy, rect: Rect, svg: &'static str, title: &str, sub: &str, trailing: Trailing, enabled: bool) -> (bool, bool) {
+    let r = ui.interact(rect, wid(ui, id), Sense::click());
+    let (h, p) = feel(ui, &r);
+    flat_at(ui, rect, 28.0, 1.0 + 0.5 * h * if enabled { 1.0 } else { 0.0 } + 0.3 * p);
+    let a = if enabled { 1.0 } else { 0.5 };
+    icon_at(ui, svg, square(rect.left_top() + Vec2::new(36.0, 36.0), 26.0), white(0.9 * a));
+    let mut toggled = false;
+    match &trailing {
+        Trailing::Switch(on) => { toggled = switch_at(ui, (id, "sw"), Pos2::new(rect.right() - 22.0 - 52.0, rect.top() + 20.0), *on, enabled); }
+        Trailing::Chevron => icon_at(ui, crate::icons::CHEVRON_RIGHT, square(rect.right_top() + Vec2::new(-30.0, 34.0), 18.0), white(0.7 * a)),
+        _ => {}
+    }
+    // The lines are cut with an ellipsis when the tile is narrow.
+    let fit = |s: &str, size: f32| -> String {
+        let max = ((rect.width() - 40.0) / (size * 0.52)) as usize;
+        if s.chars().count() <= max { s.to_string() } else { format!("{}…", s.chars().take(max.saturating_sub(1)).collect::<String>().trim_end()) }
+    };
+    let dy = if sub.is_empty() { 0.0 } else { 12.0 };
+    text(ui, Pos2::new(rect.left() + 22.0, rect.bottom() - 28.0 - dy), Align2::LEFT_CENTER, &fit(title, 16.5), 16.5, a);
+    if !sub.is_empty() { text(ui, Pos2::new(rect.left() + 22.0, rect.bottom() - 24.0), Align2::LEFT_CENTER, &fit(sub, 12.5), 12.5, 0.74 * a); }
+    if enabled && r.hovered() { ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand); }
+    // The switch takes its own clicks; a click anywhere else on a switch tile toggles it too.
+    if matches!(trailing, Trailing::Switch(_)) { (false, toggled || (r.clicked() && enabled)) } else { (r.clicked(), false) }
+}
 
 /// A list row inside a card: icon, title, subtitle, trailing control. 72 points tall. Returns (row clicked, switch toggled).
 pub fn row_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug + Copy, rect: Rect, svg: &'static str, title: &str, sub: &str, trailing: Trailing, enabled: bool) -> (bool, bool) {
@@ -331,9 +366,10 @@ pub fn ring_at(ui: &Ui, id: impl std::hash::Hash + std::fmt::Debug, center: Pos2
     ui.painter().circle_stroke(center, radius, Stroke::new(width, white(0.22 * a)));
     if v > 0.004 {
         let f = v.min(1.0);
-        let glow = Color32::from_white_alpha((0.10 * 255.0 * a) as u8);
-        arc(ui, center, radius, width + 7.0, f, glow, glow);
-        arc(ui, center, radius, width, f, Color32::from_rgba_unmultiplied(216, 224, 255, (255.0 * a) as u8), Color32::from_rgba_unmultiplied(255, 255, 255, (255.0 * a) as u8));
+        let halo = |al: f32| Color32::from_white_alpha((al * 255.0 * a) as u8);
+        arc(ui, center, radius, width + 11.0, f, halo(0.05), halo(0.05));
+        arc(ui, center, radius, width + 6.0, f, halo(0.09), halo(0.09));
+        arc(ui, center, radius, width, f, Color32::from_rgba_unmultiplied(240, 243, 255, (255.0 * a) as u8), Color32::from_rgba_unmultiplied(255, 255, 255, (255.0 * a) as u8));
     }
     if let Some(g) = glyph {
         let h = radius * 1.05;

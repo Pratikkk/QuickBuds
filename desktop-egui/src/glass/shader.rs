@@ -77,12 +77,14 @@ void main() {
     o = vec4(c * aa, aa);
     return;
   }
-  vec2 n = normalize(vec2(
+  vec2 g = vec2(
     sd(q + vec2(1., 0.), hs, r) - sd(q - vec2(1., 0.), hs, r),
-    sd(q + vec2(0., 1.), hs, r) - sd(q - vec2(0., 1.), hs, r)) + 1e-5);
+    sd(q + vec2(0., 1.), hs, r) - sd(q - vec2(0., 1.), hs, r));
+  vec2 n = dot(g, g) > 1e-6 ? normalize(g) : vec2(0.0);
   // lens: what is behind bends near the edge
   float edge = 22.0 * u_dpi;
-  float f = pow(clamp(1.0 - d / edge, 0.0, 1.0), 2.0);
+  float f0 = clamp(1.0 - d / edge, 0.0, 1.0);
+  float f = f0 * f0;
   vec2 sp = p + n * f * edge * 0.9;
   // blur: 48 taps on a golden-angle spiral, a gaussian weight, the spiral turned per pixel so no pattern shows
   float rad = 16.0 * u_dpi;

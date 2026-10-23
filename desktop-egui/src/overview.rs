@@ -173,14 +173,9 @@ fn sidebar(app: &mut App, ui: &mut Ui, sb: Rect) {
         (Page::Dual, icons::DEVICES, "dual_title", h.dual),
         (Page::Earbuds, icons::EARBUD, "earbuds_title", true),
     ];
-    let bottom = [(Page::Settings, icons::SETTINGS_COG, "desktop_nav_app_settings", true), (Page::Dev, icons::DEV_TOOLS, "action_dev_tools", true)];
-    let bottom_y = sb.bottom() - 12.0 - 44.0 * bottom.len() as f32 - 2.0;
     let mut items: Vec<(Page, &'static str, &'static str, bool, Rect)> = vec![];
     for (i, (page, icon, key, ready)) in top.into_iter().enumerate() {
         items.push((page, icon, key, ready, Rect::from_min_size(Pos2::new(sb.left() + 12.0, sb.top() + 76.0 + 46.0 * i as f32), Vec2::new(sb.width() - 24.0, 44.0))));
-    }
-    for (i, (page, icon, key, ready)) in bottom.into_iter().enumerate() {
-        items.push((page, icon, key, ready, Rect::from_min_size(Pos2::new(sb.left() + 12.0, bottom_y + 46.0 * i as f32), Vec2::new(sb.width() - 24.0, 44.0))));
     }
     let on_page = |p: Page| p == app.page || (p == Page::Earbuds && app.page == Page::Models);
     // The lit pill slides to the selected entry.
@@ -275,45 +270,40 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     }
     let mut left: Vec<HomeRow> = vec![];
     let nav = |id, icon, key: &str, sub: &str, page| HomeRow { id, icon, title: t(tr, key).into(), sub: sub.into(), trailing: Trailing::Chevron, enabled: true, page: Some(page), confirm: None };
-    if app.has.eq { left.push(nav("eq", icons::EQUALIZER, "eq_title", "", Page::Eq)); }
-    if app.has.dual { left.push(nav("dual", icons::DEVICES, "dual_title", "", Page::Dual)); }
-    left.push(nav("earbuds", icons::EARBUD, "earbuds_title", "", Page::Earbuds));
+    if app.has.eq { left.push(nav("eq", icons::EQUALIZER, "eq_title", t(tr, "row_eq_sub"), Page::Eq)); }
+    if app.has.hearing { left.push(nav("hearing", icons::HEARING, "row_golden_title", t(tr, "row_golden_sub"), Page::Hearing)); }
+    if app.has.dual { left.push(nav("dual", icons::DEVICES, "dual_title", t(tr, "row_dual_sub"), Page::Dual)); }
+    left.push(nav("earbuds", icons::EARBUD, "earbuds_title", t(tr, "row_earbuds_sub"), Page::Earbuds));
 
-    // Layout: two columns when wide, one when narrow.
-    let wide = body.width() >= 820.0;
-    let (c1, c2) = if wide {
-        let w1 = ((body.width() - GAP) * 0.535).floor();
-        (Rect::from_min_size(body.min, Vec2::new(w1, body.height())), Rect::from_min_max(Pos2::new(body.left() + w1 + GAP, body.top()), body.max))
-    } else {
-        (body, body)
-    };
-    let h_batt = 224.0;
-    let h_anc = 114.0;
-    let h_right = ROW * right.len() as f32;
-    let h_left = ROW * left.len() as f32;
-    let batt = Rect::from_min_size(c1.min, Vec2::new(c1.width(), h_batt));
-    let (anc, rows_r, nav_r);
-    if wide {
-        anc = Rect::from_min_size(c2.min, Vec2::new(c2.width(), h_anc));
-        rows_r = Rect::from_min_size(Pos2::new(c2.left(), anc.bottom() + GAP), Vec2::new(c2.width(), h_right));
-        nav_r = Rect::from_min_size(Pos2::new(c1.left(), batt.bottom() + GAP), Vec2::new(c1.width(), h_left));
-    } else {
-        anc = Rect::from_min_size(Pos2::new(c1.left(), batt.bottom() + GAP), Vec2::new(c1.width(), h_anc));
-        rows_r = Rect::from_min_size(Pos2::new(c1.left(), anc.bottom() + GAP), Vec2::new(c1.width(), h_right));
-        nav_r = Rect::from_min_size(Pos2::new(c1.left(), rows_r.bottom() + GAP), Vec2::new(c1.width(), h_left));
-    }
-
-    let bottom = [batt.bottom(), anc.bottom(), rows_r.bottom(), nav_r.bottom()].into_iter().fold(f32::MIN, f32::max);
+    // Layout: a grid that fills the window. Row 1: battery and noise control. Row 2: the switch tiles. Row 3: the page tiles.
+    let h_min = [236.0, 138.0, 104.0];
+    let rows = if right.is_empty() { 2 } else { 3 };
+    let min_total: f32 = if right.is_empty() { h_min[0] + h_min[2] } else { h_min.iter().sum() } + GAP * (rows as f32 - 1.0);
+    let extra = (body.height() - min_total).max(0.0);
+    let h1 = h_min[0] + extra * 0.42;
+    let h2 = h_min[1] + extra * 0.30;
+    let h3 = h_min[2] + extra * if right.is_empty() { 0.58 } else { 0.28 };
+    let wide = body.width() >= 700.0;
+    let w1 = if wide { ((body.width() - GAP) * 0.56).floor() } else { body.width() };
+    let batt = Rect::from_min_size(body.min, Vec2::new(w1, h1));
+    let anc = if wide { Rect::from_min_max(Pos2::new(batt.right() + GAP, body.top()), Pos2::new(body.right(), batt.bottom())) }
+        else { Rect::from_min_size(Pos2::new(body.left(), batt.bottom() + GAP), Vec2::new(body.width(), 150.0)) };
+    let mut y = if wide { batt.bottom() } else { anc.bottom() } + GAP;
+    let mut bottom = y - GAP;
     battery(app, ui, batt);
     noise(app, ui, anc);
-    for (rect, list, id) in [(rows_r, right, "right"), (nav_r, left, "left")] {
-        if list.is_empty() { continue; }
-        glass::flat_at(ui, rect, 32.0, 1.0);
+    let grid = |app: &mut App, ui: &mut Ui, list: Vec<HomeRow>, y: f32, h: f32, id: &'static str| -> f32 {
+        let n = list.len();
+        if n == 0 { return y; }
+        let cols = if body.width() >= 560.0 { n } else { n.min(2) };
+        let rows_n = (n + cols - 1) / cols;
+        let th = if cols == n { h } else { ((h - GAP * (rows_n as f32 - 1.0)) / rows_n as f32).max(104.0) };
+        let w = ((body.width() - GAP * (cols as f32 - 1.0)) / cols as f32).floor();
         for (i, r) in list.iter().enumerate() {
-            let rr = Rect::from_min_size(Pos2::new(rect.left(), rect.top() + ROW * i as f32), Vec2::new(rect.width(), ROW));
-            if i > 0 { glass::divider_at(ui, rect.left(), rect.right(), rr.top()); }
+            let (cx, cy) = ((i % cols) as f32, (i / cols) as f32);
+            let rect = Rect::from_min_size(Pos2::new(body.left() + cx * (w + GAP), y + cy * (th + GAP)), Vec2::new(w, th));
             let tr = match &r.trailing { Trailing::Switch(v) => Trailing::Switch(*v), Trailing::Chevron => Trailing::Chevron, Trailing::Value(v) => Trailing::Value(v.clone()), Trailing::None => Trailing::None };
-            let (clicked, toggled) = glass::row_at(ui, (id, r.id), rr, r.icon, &r.title, &r.sub, tr, r.enabled);
+            let (clicked, toggled) = glass::tile_at(ui, (id, r.id), rect, r.icon, &r.title, &r.sub, tr, r.enabled);
             if clicked { if let Some(p) = r.page { app.page = p; } }
             if toggled {
                 let on_now = matches!(r.trailing, Trailing::Switch(true));
@@ -331,8 +321,13 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
                 }
             }
         }
-    }
-    bottom
+        y + rows_n as f32 * th + GAP * (rows_n as f32 - 1.0)
+    };
+    let end = grid(app, ui, right, y, h2, "right");
+    if end > y { bottom = end; y = end + GAP; }
+    let end = grid(app, ui, left, y, h3, "left");
+    if end > y { bottom = end; }
+    bottom.max(batt.bottom()).max(anc.bottom())
 }
 
 fn battery(app: &mut App, ui: &mut Ui, rect: Rect) {
@@ -345,6 +340,9 @@ fn battery(app: &mut App, ui: &mut Ui, rect: Rect) {
     let wear = |i: usize| match s.wear[i] { 3 | 7 => t(tr, "status_in_ear"), 4 => t(tr, "status_in_case"), 1 | 5 => if blind { t(tr, "status_in_ear") } else { t(tr, "status_out") }, _ => "" };
     // Left, case, right.
     let cols = [(0usize, icons::BUD_LEFT), (2, icons::CASE), (1, icons::BUD_RIGHT)];
+    // The content block is 224 points tall; it sits in the middle of the card.
+    let oy = ((rect.height() - 224.0) / 2.0).max(0.0);
+    let rect = Rect::from_min_max(rect.min + Vec2::new(0.0, oy), rect.max);
     for (n, (i, glyph)) in cols.into_iter().enumerate() {
         let cx = rect.left() + rect.width() * (1.0 / 6.0 + n as f32 / 3.0);
         let b = s.battery[i];
@@ -367,14 +365,18 @@ fn noise(app: &mut App, ui: &mut Ui, rect: Rect) {
     let is_level = types::LEVELS.contains(&anc.as_str());
     let modes = app.modes.clone();
     let levels = modes.levels();
-    let cy = rect.top() + 46.0;
+    // Up to four modes: one row for two, a 2x2 grid for three or four.
+    let place = |i: usize, n: usize| -> Pos2 {
+        if n <= 2 { return Pos2::new(rect.left() + rect.width() * (i as f32 + 0.5) / n.max(1) as f32, rect.center().y - 10.0); }
+        let (c, r) = ((i % 2) as f32, (i / 2) as f32);
+        Pos2::new(rect.left() + rect.width() * (0.25 + 0.5 * c), rect.top() + rect.height() * (0.29 + 0.43 * r))
+    };
 
     if app.levels_open && on {
         let n = levels.len().max(1);
         for (i, id) in levels.iter().enumerate() {
             let (icon, li) = level_info(id);
-            let cx = rect.left() + rect.width() * (i as f32 + 0.5) / n as f32;
-            let r = glass::disc_at(ui, ("level", i), Pos2::new(cx, cy), 54.0, icon, t(&app.tr, LEVEL_NAMES[li]), anc == *id);
+            let r = glass::disc_at(ui, ("level", i), place(i, n), 54.0, icon, t(&app.tr, LEVEL_NAMES[li]), anc == *id);
             if r.clicked() {
                 app.send(Cmd::Anc(if anc == *id { types::OFF.into() } else { id.to_string() }));
                 app.levels_open = false;
@@ -398,9 +400,8 @@ fn noise(app: &mut App, ui: &mut Ui, rect: Rect) {
     if modes.supports(types::TRANSPARENCY) { items.push((types::TRANSPARENCY.into(), icons::MODE_TRANSPARENCY, t(&app.tr, "anc_seg_trans").into())); }
     let n = items.len().max(1);
     for (i, (id, icon, label)) in items.iter().enumerate() {
-        let cx = rect.left() + rect.width() * (i as f32 + 0.5) / n as f32;
         let selected = if id == "ANC" { is_level } else { anc == *id };
-        let r = glass::disc_at(ui, ("mode", i), Pos2::new(cx, cy), 54.0, icon, label, selected && on);
+        let r = glass::disc_at(ui, ("mode", i), place(i, n), 54.0, icon, label, selected && on);
         if r.clicked() && on {
             if id == "ANC" {
                 if levels.len() > 1 { app.levels_open = true; }

@@ -100,6 +100,8 @@ class AncSegmentedView(
     private val material = ThemeRes.material(context)
 
     private val glassDisc = ThemeRes.GlassDrawable(context, 26f)
+    private val litPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val haloPaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     private fun drawMaterial(canvas: Canvas) {
         val n = labels.size
@@ -124,10 +126,21 @@ class AncSegmentedView(
                 // Glass: every mode is a glass disc; the selected one is lit white.
                 glassDisc.setBounds((cx - r).toInt(), 0, (cx + r).toInt(), (r * 2).toInt())
                 glassDisc.draw(canvas)
-                if (on > 0f) { trackPaint.color = Palette.withAlpha(0xFFFFFFFF.toInt(), 0.85f * on); canvas.drawCircle(cx, r, r, trackPaint) }
+                if (on > 0f) {
+                    // The selected disc is lit glass, not a white plate: a bright-to-cool gradient, a halo and a rim, the icon stays white.
+                    litPaint.shader = android.graphics.LinearGradient(cx - r, 0f, cx + r, r * 2,
+                        Palette.withAlpha(0xFFFFFFFF.toInt(), 0.62f * on), Palette.withAlpha(0xFFB8C6FF.toInt(), 0.30f * on), android.graphics.Shader.TileMode.CLAMP)
+                    litPaint.style = Paint.Style.FILL
+                    haloPaint.color = Palette.withAlpha(0xFFFFFFFF.toInt(), 0.14f * on)
+                    canvas.drawCircle(cx, r, r + dp(3f), haloPaint)
+                    canvas.drawCircle(cx, r, r, litPaint)
+                    litPaint.shader = null; litPaint.style = Paint.Style.STROKE; litPaint.strokeWidth = dp(1.2f)
+                    litPaint.color = Palette.withAlpha(0xFFFFFFFF.toInt(), 0.75f * on)
+                    canvas.drawCircle(cx, r, r - dp(0.6f), litPaint)
+                }
             } else canvas.drawCircle(cx, r, r, trackPaint)
             icons.getOrNull(i)?.run {
-                setTint(Palette.blend(p.textSecondary, p.onAccent, on))
+                setTint(Palette.blend(p.textSecondary, if (p.glass) 0xFFFFFFFF.toInt() else p.onAccent, on))
                 val s = dp(12f).toInt()
                 setBounds((cx - s).toInt(), (r - s).toInt(), (cx + s).toInt(), (r + s).toInt())
                 draw(canvas)
