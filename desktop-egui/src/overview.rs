@@ -317,7 +317,7 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
 }
 
 fn battery(app: &mut App, ui: &mut Ui, rect: Rect) {
-    glass::flat_at(ui, rect, 32.0, 1.0);
+    glass::flat_at(ui, rect, 28.0, 1.0);
     let s = &app.snap;
     let on = s.status == Status::On;
     let blind = !wear_sensor_seen(s, app.demo);
@@ -344,8 +344,8 @@ fn battery(app: &mut App, ui: &mut Ui, rect: Rect) {
 }
 
 fn noise(app: &mut App, ui: &mut Ui, rect: Rect) {
-    // One glass capsule; a lit pill glides to the chosen mode.
-    glass::glass_at(ui, rect, 32.0, 1.0);
+    // A flat plate like the tiles; only the lit pill is glass, and it glides to the chosen mode.
+    glass::flat_at(ui, rect, 28.0, 1.0);
     let on = app.snap.status == Status::On;
     let anc = app.snap.anc.clone().unwrap_or_default();
     let is_level = types::LEVELS.contains(&anc.as_str());
@@ -383,7 +383,7 @@ fn noise(app: &mut App, ui: &mut Ui, rect: Rect) {
     let vis = ui.ctx().animate_bool_with_time(egui::Id::NULL.with("anc-pill-v"), sel.is_some(), 0.18);
     if vis > 0.0 {
         let r = Rect::from_min_size(Pos2::new(x, inner.top()), Vec2::new(seg_w, inner.height()));
-        let rad = 26.0;
+        let rad = 21.0;
         ui.painter().rect_filled(r.expand(3.0), rad + 3.0, white(0.10 * vis));
         ui.painter().rect_filled(r, rad, white(0.36 * vis));
         ui.painter().rect_stroke(r, rad, egui::Stroke::new(1.2, white(0.75 * vis)), egui::StrokeKind::Inside);
@@ -392,7 +392,7 @@ fn noise(app: &mut App, ui: &mut Ui, rect: Rect) {
     for (i, (id, icon, label, selected)) in items.iter().enumerate() {
         let seg = Rect::from_min_size(Pos2::new(inner.left() + seg_w * i as f32, inner.top()), Vec2::new(seg_w, inner.height()));
         let r = ui.interact(seg, egui::Id::NULL.with(("anc-seg", i)), egui::Sense::click());
-        if r.hovered() && on && !(*selected) { ui.painter().rect_filled(seg.shrink(2.0), 24.0, white(0.07)); }
+        if r.hovered() && on && !(*selected) { ui.painter().rect_filled(seg.shrink(2.0), 19.0, white(0.07)); }
         let a = if !on { 0.5 } else if *selected { 1.0 } else { 0.82 };
         glass::icon_at(ui, icon, Rect::from_center_size(seg.center() - Vec2::new(0.0, 12.0), Vec2::splat(26.0)), white(a));
         glass::text(ui, seg.center() + Vec2::new(0.0, 22.0), Align2::CENTER_CENTER, label, 12.5, if *selected && on { 1.0 } else { 0.8 * a });
