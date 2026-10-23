@@ -70,7 +70,7 @@ class SetupActivity : Activity() {
             gravity = Gravity.CENTER
             setPadding(dp(12f), 0, dp(12f), 0)
             // The first page has no way back: the same button skips the guide.
-            setOnClickListener { if (page == 0) finishSetup() else show(page - 1) }
+            setOnClickListener { if (page == 0) finishSetup() else show(page - 1, animate = true) }
         }
         dots = LinearLayout(this).apply { gravity = Gravity.CENTER }
         next = TextView(this).apply {
@@ -80,7 +80,7 @@ class SetupActivity : Activity() {
             setTextColor(ThemeRes.onFill(this@SetupActivity))
             background = ThemeRes.ripple(this@SetupActivity, ThemeRes.pill(this@SetupActivity, p.accent, 22f))
             setPadding(dp(24f), 0, dp(24f), 0)
-            setOnClickListener { if (page == total - 1) finishSetup() else show(page + 1) }
+            setOnClickListener { if (page == total - 1) finishSetup() else show(page + 1, animate = true) }
         }
         root.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -126,17 +126,32 @@ class SetupActivity : Activity() {
     /** A permission dialog, the Bluetooth settings or the battery dialog may have changed what a page shows. */
     override fun onResume() {
         super.onResume()
-        if (::body.isInitialized && page in listOf(PERMISSIONS, EARBUDS, BACKGROUND)) show(page)
+        if (::body.isInitialized && page in listOf(PERMISSIONS, EARBUDS, BACKGROUND)) refresh()
     }
 
     /** Back goes to the previous page, then leaves the app from the first one. */
-    private fun goBack() { if (page > 0) show(page - 1) else finish() }
+    private fun goBack() { if (page > 0) show(page - 1, animate = true) else finish() }
 
     @Suppress("DEPRECATION", "GestureBackNavigation") // Android 12 and older call this; 13 and newer use the callback in onCreate.
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() = goBack()
 
-    private fun show(i: Int) {
+    /** What the page on screen shows, so a return to the screen repaints only when something changed (no flash of the buttons). */
+    private var shownSig = ""
+
+    private fun signature(): String = when (page) {
+        PERMISSIONS -> "${granted(bluetoothPermissions())}${granted(notificationPermissions())}"
+        EARBUDS -> "${granted(bluetoothPermissions())}|$connected|${BudsDevice.savedAddress(this)}|" +
+            BudsDevice.candidates(this).joinToString { it.address }
+        BACKGROUND -> "${batteryExempt()}"
+        else -> ""
+    }
+
+    /** Repaints the page on screen only when what it shows changed; no transition. */
+    private fun refresh() { if (signature() != shownSig) show(page) }
+
+    private fun show(i: Int, animate: Boolean = false) {
+        val forward = i >= page
         page = i.coerceIn(0, total - 1)
         body.removeAllViews()
         when (page) {
@@ -151,6 +166,8 @@ class SetupActivity : Activity() {
             PRIVACY -> privacy()
             else -> { icon(); heading(R.string.setup_ready_title, R.string.setup_ready_body) }
         }
+        shownSig = signature()
+        if (animate) Motion.page(body, forward)
         back.setText(if (page == 0) R.string.setup_skip else R.string.setup_back)
         next.setText(if (page == total - 1) R.string.welcome_done else R.string.setup_next)
         dots.removeAllViews()
@@ -316,7 +333,7 @@ class SetupActivity : Activity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (page == PERMISSIONS) show(PERMISSIONS)
+        if (page == PERMISSIONS) refresh()
     }
 
     /** The paired earbuds the app can control: pick one, or pair them in Android first. Connecting happens when the guide ends. */
@@ -355,7 +372,7 @@ class SetupActivity : Activity() {
                 }
                 val row = SettingRowFactory.build(this, R.drawable.ic_earbud, 0, 0, mark) {
                     BudsDevice.remember(this, d)
-                    show(EARBUDS)
+                    refresh()
                 }
                 row.findViewWithTag<TextView>(SettingRowFactory.TITLE_TAG).text = d.name
                 val state = connected?.let { getString(if (d.address in it) R.string.setup_earbuds_connected else R.string.setup_earbuds_disconnected) }
@@ -383,7 +400,7 @@ class SetupActivity : Activity() {
             override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
                 val now = proxy.connectedDevices.map { it.address }.toSet()
                 adapter.closeProfileProxy(profile, proxy)
-                runOnUiThread { if (now != connected) { connected = now; if (page == EARBUDS) show(EARBUDS) } }
+                runOnUiThread { if (now != connected) { connected = now; if (page == EARBUDS) refresh() } }
             }
             override fun onServiceDisconnected(profile: Int) {}
         }, BluetoothProfile.A2DP)
