@@ -20,7 +20,12 @@ object LogDecoder {
         0x811F to "Hearing profile", 0x8123 to "Codec list", 0x8124 to "Bass level", 0x812A to "Spatial type",
         0x812B to "Game sound", 0x812F to "Batch reply (answers follow as RX[batch])", 0x8132 to "Preferred device",
         0x8133 to "Tap sensitivity", 0x8134 to "Head gestures", 0x8200 to "Offered events", 0x8205 to "Notifications registered",
-        0x8427 to "Alert volume ack"
+        0x8427 to "Alert volume ack",
+        // Named by what the vendor app calls them (2026-10-23); the payload is not decoded, so the hex follows.
+        0x8101 to "Protocol version", 0x8102 to "Vendor ID", 0x8107 to "Frame budget", 0x810B to "Earbuds colour ID",
+        0x8117 to "Earphone identity", 0x8118 to "Ear restore data", 0x8119 to "Zen mode file info", 0x811C to "Status 0x011C",
+        0x811D to "Wear status", 0x8121 to "Ear tone data", 0x8125 to "Account key", 0x8127 to "Screen-off broadcast delay",
+        0x8129 to "Calibrated state", 0x8135 to "GMN config", 0x8136 to "LE/BR switch state"
     )
 
     /** `0x0204` subTypes decoded in the connection manager (its own log line follows), named the same way. */

@@ -753,8 +753,9 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         @Volatile private var sweepPartial = false
         private var sweepRun: Runnable? = null
         private val sweepHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        private const val SWEEP_STEPS = 18
-        private const val SWEEP_STEP_MS = 16L
+        /** The home rings' own timing (BudsStatusView): a fill takes 350 ms, an emptying 500 ms, with a decelerate curve. */
+        private const val SWEEP_FILL_MS = 350L
+        private const val SWEEP_EMPTY_MS = 500L
 
         /**
          * Connect: the rings fill from 0 to their level and the glyphs take their colour. Disconnect: the reverse, from
@@ -788,17 +789,22 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 return refreshAll(app)
             }
             sweepState = last
-            var step = 0
+            // Time-based, like the app's animator: a slow frame is skipped, never stretched, so the sweep ends when the app's would.
+            val total = if (connecting) SWEEP_FILL_MS else SWEEP_EMPTY_MS
+            val start = android.os.SystemClock.uptimeMillis()
+            var first = true
             val r = object : Runnable {
                 override fun run() {
-                    step++
-                    val t = step / SWEEP_STEPS.toFloat()
+                    val t = ((android.os.SystemClock.uptimeMillis() - start) / total.toFloat()).coerceIn(0f, 1f)
                     val eased = 1f - (1f - t) * (1f - t)
-                    sweepPartial = step in 2 until SWEEP_STEPS
-                    if (step >= SWEEP_STEPS) { sweepK = -1f; sweepState = null }
+                    val done = t >= 1f
+                    // The first and the last frame are full updates; the ones between are partial.
+                    sweepPartial = !first && !done
+                    first = false
+                    if (done) { sweepK = -1f; sweepState = null }
                     else sweepK = if (connecting) eased else 1f - eased
                     refreshAll(app)
-                    if (step < SWEEP_STEPS) sweepHandler.postDelayed(this, SWEEP_STEP_MS)
+                    if (!done) sweepHandler.postDelayed(this, 4)
                 }
             }
             sweepRun = r
