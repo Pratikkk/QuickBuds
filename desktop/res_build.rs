@@ -8,7 +8,7 @@ use std::{env, fmt::Write, fs, path::Path};
 const RES: &str = "../app/src/main/res";
 
 const ICONS: &[&str] = &[
-    "ic_bud_left", "ic_bud_right", "ic_case", "ic_earbud", "ic_earbud_settings", "ic_low_latency",
+    "ic_bud_left", "ic_bud_right", "ic_case", "ic_earbud", "ic_low_latency",
     "ic_mode_off", "ic_mode_anc_medium", "ic_mode_adaptive", "ic_mode_transparency",
     "ic_mode_anc_low", "ic_mode_anc_high", "ic_mode_anc_smart",
     "ic_layout", "ic_equalizer", "ic_gesture", "ic_hearing", "ic_devices", "ic_settings_cog", "ic_dev_tools",

@@ -171,7 +171,7 @@ class HomeLayoutActivity : Activity() {
             "golden" to Triple(R.drawable.ic_hearing, R.string.row_golden_title, R.string.row_golden_sub),
             "eq" to Triple(R.drawable.ic_equalizer, R.string.row_eq_title, R.string.row_eq_sub),
             "dual" to Triple(R.drawable.ic_devices, R.string.row_dual_title, R.string.row_dual_sub),
-            "earbuds" to Triple(R.drawable.ic_earbud_settings, R.string.row_earbuds_title, R.string.row_earbuds_sub)
+            "earbuds" to Triple(R.drawable.ic_settings_cog, R.string.row_earbuds_title, R.string.row_earbuds_sub)
         )
     }
 }
