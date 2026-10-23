@@ -66,6 +66,20 @@ class PalettePreviewView(context: Context, private val detailed: Boolean) : View
         }
         val h = if (strokeColor != null) strokeW / 2 else 0f
         box.set(l + h, t + h, r - h, b - h)
+        if (palette.glass) {
+            // Glass: the window is a midnight glow and every surface a lit, translucent plate with a bright rim.
+            val bg = color == palette.background
+            fill.shader = android.graphics.LinearGradient(l, t, r, b,
+                if (bg) 0xFF20204A.toInt() else 0x3CFFFFFF, if (bg) 0xFF0A0A16.toInt() else 0x10FFFFFF, android.graphics.Shader.TileMode.CLAMP)
+            c.drawRoundRect(box, radius, radius, fill)
+            fill.shader = null
+            if (strokeColor != null) {
+                stroke.color = if (bg && !active) 0x40FFFFFF else if (bg) strokeColor else 0x70FFFFFF
+                stroke.strokeWidth = strokeW
+                c.drawRoundRect(box, radius, radius, stroke)
+            }
+            return
+        }
         fill.color = color
         c.drawRoundRect(box, radius, radius, fill)
         if (strokeColor != null) {

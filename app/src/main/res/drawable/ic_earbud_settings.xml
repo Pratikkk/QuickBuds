@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Earbud settings: an earbud outline with a small cog at its lower right.
+  24dp viewport, one white stroke colour, tinted per theme in code (ThemeRes.tint).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <!-- Earbud: round head, short stem -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M3.6 9.2 A5 5.4 0 0 1 13.6 9.2 C13.6 11.9 12.2 13.3 11.2 14.5 L10.8 20 A1.6 1.6 0 0 1 7.6 20 L7.4 14.4 C5.2 13.3 3.6 11.9 3.6 9.2 Z" />
+    <!-- Cog: a ring with four teeth -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:pathData="M18 14.6 A2.4 2.4 0 1 1 17.99 14.6 M18 11.3 V12 M18 24 V23.6 M14.7 17 H15.4 M20.6 17 H21.3" />
+</vector>

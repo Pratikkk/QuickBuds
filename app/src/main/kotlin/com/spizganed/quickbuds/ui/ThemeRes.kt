@@ -373,11 +373,11 @@ object ThemeRes {
         else shape(context, fill, null, if (material(context)) FULL else radiusDp)
 
     /** The design's glass surface: a diagonal white gradient, a light rim and a bright line along the top edge. */
-    class GlassDrawable(context: Context, private val radiusDp: Float, private val selected: Boolean = false, private val topOnly: Boolean = false, private val base: Int = 0) : Drawable() {
+    class GlassDrawable(context: Context, private val radiusDp: Float, private val selected: Boolean = false, private val topOnly: Boolean = false, private val base: Int = 0, private val strong: Boolean = false) : Drawable() {
         private val d = context.resources.displayMetrics.density
         private val fill = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
         private val rim = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            style = android.graphics.Paint.Style.STROKE; strokeWidth = d; color = 0x4DFFFFFF
+            style = android.graphics.Paint.Style.STROKE; strokeWidth = d; color = if (strong) 0x80FFFFFF.toInt() else 0x4DFFFFFF
         }
         private val lit = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { style = android.graphics.Paint.Style.STROKE; strokeWidth = d }
         private val box = android.graphics.RectF()
@@ -386,7 +386,7 @@ object ThemeRes {
 
         override fun onBoundsChange(b: android.graphics.Rect) {
             fill.shader = android.graphics.LinearGradient(b.left.toFloat(), b.top.toFloat(), b.right.toFloat(), b.bottom.toFloat(),
-                if (selected) 0x40FFFFFF else 0x26FFFFFF, if (selected) 0x22FFFFFF else 0x0AFFFFFF, android.graphics.Shader.TileMode.CLAMP)
+                if (selected) 0x40FFFFFF else if (strong) 0x4AFFFFFF else 0x26FFFFFF, if (selected) 0x22FFFFFF else if (strong) 0x16FFFFFF else 0x0AFFFFFF, android.graphics.Shader.TileMode.CLAMP)
             lit.shader = android.graphics.LinearGradient(0f, b.top.toFloat(), 0f, b.top + 20 * d, 0x8CFFFFFF.toInt(), 0, android.graphics.Shader.TileMode.CLAMP)
         }
 
@@ -552,7 +552,7 @@ object ThemeRes {
     }
 
     /** Icon button / framed control: `card` fill, `outline` stroke, 14dp radius (SPEC section 2). */
-    fun iconButton(context: Context, radiusDp: Float = 14f): Drawable = card(context, if (material(context)) FULL else radiusDp)
+    fun iconButton(context: Context, radiusDp: Float = 14f): Drawable = if (palette(context).glass && !nothing(context)) GlassDrawable(context, radiusDp, strong = true) else card(context, if (material(context)) FULL else radiusDp)
 
     /** Material style: a list's outer and inner corners, and a selected list item's corners (M3 expressive list). */
     const val LIST_OUTER = 16f

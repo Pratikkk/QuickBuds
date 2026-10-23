@@ -255,7 +255,7 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     if app.has.eq { left.push(nav("eq", icons::EQUALIZER, "eq_title", t(tr, "row_eq_sub"), Page::Eq)); }
     if app.has.hearing { left.push(nav("hearing", icons::HEARING, "row_golden_title", t(tr, "row_golden_sub"), Page::Hearing)); }
     if app.has.dual { left.push(nav("dual", icons::DEVICES, "dual_title", t(tr, "row_dual_sub"), Page::Dual)); }
-    left.push(nav("earbuds", icons::EARBUD, "earbuds_title", t(tr, "row_earbuds_sub"), Page::Earbuds));
+    left.push(nav("earbuds", icons::EARBUD_SETTINGS, "earbuds_title", t(tr, "row_earbuds_sub"), Page::Earbuds));
 
     // Layout A: on the left the battery, the noise control and the Equalizer; on the right the switch and page tiles.
     let mut tiles: Vec<HomeRow> = right;
@@ -264,8 +264,8 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     tiles.extend(left);
     let wide = body.width() >= 900.0;
     let lw = if wide { 520.0_f32.min(body.width() * 0.45).floor() } else { body.width() };
-    let h_batt = 300.0_f32.min(body.height() * 0.42);
-    let h_anc = 160.0;
+    let h_anc = 112.0;
+    let h_batt = ((body.height() - h_anc - GAP * 2.0 - 120.0) * 0.8).clamp(250.0, 330.0);
     let batt = Rect::from_min_size(body.min, Vec2::new(lw, h_batt));
     let anc = Rect::from_min_size(Pos2::new(body.left(), batt.bottom() + GAP), Vec2::new(lw, h_anc));
     battery(app, ui, batt);
@@ -344,56 +344,70 @@ fn battery(app: &mut App, ui: &mut Ui, rect: Rect) {
 }
 
 fn noise(app: &mut App, ui: &mut Ui, rect: Rect) {
-    glass::glass_at(ui, rect, 32.0, 1.0);
+    // One glass capsule; a lit pill glides to the chosen mode.
+    glass::glass_at(ui, rect, rect.height() / 2.0, 1.0);
     let on = app.snap.status == Status::On;
     let anc = app.snap.anc.clone().unwrap_or_default();
     let is_level = types::LEVELS.contains(&anc.as_str());
     let modes = app.modes.clone();
     let levels = modes.levels();
-    // Up to four modes: one row for two, a 2x2 grid for three or four.
-    let place = |i: usize, n: usize| -> Pos2 {
-        if n <= 2 || rect.height() < 200.0 { return Pos2::new(rect.left() + rect.width() * (i as f32 + 0.5) / n.max(1) as f32, rect.center().y - 10.0); }
-        let (c, r) = ((i % 2) as f32, (i / 2) as f32);
-        Pos2::new(rect.left() + rect.width() * (0.25 + 0.5 * c), rect.top() + rect.height() * (0.29 + 0.43 * r))
-    };
 
+    // (id, icon, label, selected)
+    let mut items: Vec<(String, &'static str, String, bool)> = vec![];
     if app.levels_open && on {
-        let n = levels.len().max(1);
-        for (i, id) in levels.iter().enumerate() {
+        for id in levels.iter() {
             let (icon, li) = level_info(id);
-            let r = glass::disc_at(ui, ("level", i), place(i, n), 54.0, icon, t(&app.tr, LEVEL_NAMES[li]), anc == *id);
-            if r.clicked() {
-                app.send(Cmd::Anc(if anc == *id { types::OFF.into() } else { id.to_string() }));
-                app.levels_open = false;
+            items.push((id.to_string(), icon, t(&app.tr, LEVEL_NAMES[li]).into(), anc == *id));
+        }
+    } else {
+        if modes.supports(types::OFF) { items.push((types::OFF.into(), icons::MODE_OFF, t(&app.tr, "anc_seg_off").into(), anc == types::OFF)); }
+        if !levels.is_empty() {
+            let (icon, li) = level_info(if is_level { &anc } else { "" });
+            let mut label = t(&app.tr, "anc_seg_anc").to_string();
+            if is_level {
+                if let Some(c) = t(&app.tr, LEVEL_NAMES[li]).chars().next() { label = format!("{label} {}", c.to_uppercase()); }
             }
+            items.push(("ANC".into(), icon, label, is_level));
         }
-        return;
+        if modes.supports(types::ADAPTIVE) { items.push((types::ADAPTIVE.into(), icons::MODE_ADAPTIVE, t(&app.tr, "anc_seg_adapt").into(), anc == types::ADAPTIVE)); }
+        if modes.supports(types::TRANSPARENCY) { items.push((types::TRANSPARENCY.into(), icons::MODE_TRANSPARENCY, t(&app.tr, "anc_seg_trans").into(), anc == types::TRANSPARENCY)); }
     }
-
-    // (mode id, icon, label)
-    let mut items: Vec<(String, &'static str, String)> = vec![];
-    if modes.supports(types::OFF) { items.push((types::OFF.into(), icons::MODE_OFF, t(&app.tr, "anc_seg_off").into())); }
-    if !levels.is_empty() {
-        let (icon, li) = level_info(if is_level { &anc } else { "" });
-        let mut label = t(&app.tr, "anc_seg_anc").to_string();
-        if is_level {
-            if let Some(c) = t(&app.tr, LEVEL_NAMES[li]).chars().next() { label = format!("{label} {}", c.to_uppercase()); }
-        }
-        items.push(("ANC".into(), icon, label));
-    }
-    if modes.supports(types::ADAPTIVE) { items.push((types::ADAPTIVE.into(), icons::MODE_ADAPTIVE, t(&app.tr, "anc_seg_adapt").into())); }
-    if modes.supports(types::TRANSPARENCY) { items.push((types::TRANSPARENCY.into(), icons::MODE_TRANSPARENCY, t(&app.tr, "anc_seg_trans").into())); }
     let n = items.len().max(1);
-    for (i, (id, icon, label)) in items.iter().enumerate() {
-        let selected = if id == "ANC" { is_level } else { anc == *id };
-        let r = glass::disc_at(ui, ("mode", i), place(i, n), 54.0, icon, label, selected && on);
-        if r.clicked() && on {
-            if id == "ANC" {
-                if levels.len() > 1 { app.levels_open = true; }
-                else if let Some(l) = levels.first() { app.send(Cmd::Anc(l.to_string())); }
-            } else {
-                app.send(Cmd::Anc(id.clone()));
-            }
+    let pad = 8.0;
+    let inner = Rect::from_min_max(rect.min + Vec2::splat(pad), rect.max - Vec2::splat(pad));
+    let seg_w = inner.width() / n as f32;
+    let sel = if on { items.iter().position(|i| i.3) } else { None };
+    // The lit pill, sliding to the selection and fading in and out.
+    let target = sel.map_or(0.0, |i| inner.left() + seg_w * i as f32);
+    let x = ui.ctx().animate_value_with_time(egui::Id::NULL.with("anc-pill-x"), target, 0.24);
+    let vis = ui.ctx().animate_bool_with_time(egui::Id::NULL.with("anc-pill-v"), sel.is_some(), 0.18);
+    if vis > 0.0 {
+        let r = Rect::from_min_size(Pos2::new(x, inner.top()), Vec2::new(seg_w, inner.height()));
+        let rad = inner.height() / 2.0;
+        ui.painter().rect_filled(r.expand(3.0), rad + 3.0, white(0.10 * vis));
+        ui.painter().rect_filled(r, rad, white(0.36 * vis));
+        ui.painter().rect_stroke(r, rad, egui::Stroke::new(1.2, white(0.75 * vis)), egui::StrokeKind::Inside);
+    }
+    let mut clicked_id = None;
+    for (i, (id, icon, label, selected)) in items.iter().enumerate() {
+        let seg = Rect::from_min_size(Pos2::new(inner.left() + seg_w * i as f32, inner.top()), Vec2::new(seg_w, inner.height()));
+        let r = ui.interact(seg, egui::Id::NULL.with(("anc-seg", i)), egui::Sense::click());
+        if r.hovered() && on && !(*selected) { ui.painter().rect_filled(seg.shrink(2.0), inner.height() / 2.0, white(0.07)); }
+        let a = if !on { 0.5 } else if *selected { 1.0 } else { 0.82 };
+        glass::icon_at(ui, icon, Rect::from_center_size(seg.center() - Vec2::new(0.0, 12.0), Vec2::splat(26.0)), white(a));
+        glass::text(ui, seg.center() + Vec2::new(0.0, 22.0), Align2::CENTER_CENTER, label, 12.5, if *selected && on { 1.0 } else { 0.8 * a });
+        if on && r.hovered() { ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand); }
+        if r.clicked() && on { clicked_id = Some((i, id.clone(), *selected)); }
+    }
+    if let Some((_, id, selected)) = clicked_id {
+        if app.levels_open {
+            app.send(Cmd::Anc(if selected { types::OFF.into() } else { id }));
+            app.levels_open = false;
+        } else if id == "ANC" {
+            if levels.len() > 1 { app.levels_open = true; }
+            else if let Some(l) = levels.first() { app.send(Cmd::Anc(l.to_string())); }
+        } else {
+            app.send(Cmd::Anc(id));
         }
     }
 }
