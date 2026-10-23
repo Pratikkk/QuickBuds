@@ -224,7 +224,7 @@ pub fn row_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug + Copy, re
     icon_at(ui, svg, square(rect.left_center() + Vec2::new(34.0, 0.0), 24.0), white(0.88 * a));
     let dy = if sub.is_empty() { 0.0 } else { 11.0 };
     text(ui, rect.left_center() + Vec2::new(58.0, -dy), Align2::LEFT_CENTER, title, 16.0, a);
-    if !sub.is_empty() { text(ui, rect.left_center() + Vec2::new(58.0, 10.0), Align2::LEFT_CENTER, sub, 12.5, 0.66 * a); }
+    if !sub.is_empty() { text(ui, rect.left_center() + Vec2::new(58.0, 10.0), Align2::LEFT_CENTER, sub, 12.5, 0.74 * a); }
     let mut toggled = false;
     match trailing {
         Trailing::None => {}

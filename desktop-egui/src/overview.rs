@@ -147,7 +147,13 @@ pub fn show(app: &mut App, ui: &mut Ui) {
             Page::Settings => crate::settings::show(app, &mut page, shifted),
             _ => overview(app, &mut page, shifted),
         };
-        app.scroll = app.scroll.min((bottom + app.scroll - body.bottom() + 12.0).max(0.0));
+        // A page that shrinks (the EQ editor closes) eases the scroll back instead of snapping.
+        let max = (bottom + app.scroll - body.bottom() + 12.0).max(0.0);
+        if app.scroll > max {
+            let dt = ui.input(|i| i.stable_dt).min(0.05);
+            app.scroll += (max - app.scroll) * (1.0 - (-14.0 * dt).exp());
+            if app.scroll - max < 0.5 { app.scroll = max; } else { ui.ctx().request_repaint(); }
+        }
     } else {
         placeholder(ui, body);
     }

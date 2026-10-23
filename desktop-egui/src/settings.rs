@@ -73,7 +73,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let (_, toggled) = glass::row_at(ui, "clearbat", r(i), icons::BATTERY, t(&tr, "settings_clear_battery_title"), t(&tr, "settings_clear_battery_sub"), Trailing::Switch(clear), true);
     if toggled { save_setting("clear_battery", (!clear).into()); }
     y += card.height() + 24.0;
-    glass::text(ui, Pos2::new(x0 + 6.0, y + 8.0), Align2::LEFT_CENTER, &format!("QuickBuds {}", env!("CARGO_PKG_VERSION")), 13.0, 0.6);
+    glass::text(ui, Pos2::new(x0 + 6.0, y + 8.0), Align2::LEFT_CENTER, &format!("QuickBuds {}", env!("CARGO_PKG_VERSION")), 13.0, 0.74);
     y += 24.0;
 
     // Style
