@@ -276,20 +276,21 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     left.push(nav("earbuds", icons::EARBUD, "earbuds_title", t(tr, "row_earbuds_sub"), Page::Earbuds));
 
     // Layout: a grid that fills the window. Row 1: battery and noise control. Row 2: the switch tiles. Row 3: the page tiles.
-    let h_min = [236.0, 138.0, 104.0];
-    let rows = if right.is_empty() { 2 } else { 3 };
-    let min_total: f32 = if right.is_empty() { h_min[0] + h_min[2] } else { h_min.iter().sum() } + GAP * (rows as f32 - 1.0);
+    // Row 1: battery. Row 2: noise control, under it. Row 3: the switch tiles. Row 4: the page tiles.
+    let h_min = [176.0, 136.0, 138.0, 104.0];
+    let n_rows = if right.is_empty() { 3 } else { 4 };
+    let min_total: f32 = if right.is_empty() { h_min[0] + h_min[1] + h_min[3] } else { h_min.iter().sum() } + GAP * (n_rows as f32 - 1.0);
     let extra = (body.height() - min_total).max(0.0);
-    let h1 = h_min[0] + extra * 0.42;
-    let h2 = h_min[1] + extra * 0.30;
-    let h3 = h_min[2] + extra * if right.is_empty() { 0.58 } else { 0.28 };
-    let wide = body.width() >= 700.0;
-    let w1 = if wide { ((body.width() - GAP) * 0.56).floor() } else { body.width() };
-    let batt = Rect::from_min_size(body.min, Vec2::new(w1, h1));
-    let anc = if wide { Rect::from_min_max(Pos2::new(batt.right() + GAP, body.top()), Pos2::new(body.right(), batt.bottom())) }
-        else { Rect::from_min_size(Pos2::new(body.left(), batt.bottom() + GAP), Vec2::new(body.width(), 150.0)) };
-    let mut y = if wide { batt.bottom() } else { anc.bottom() } + GAP;
-    let mut bottom = y - GAP;
+    let h1 = h_min[0] + extra * 0.28;
+    let h_anc = h_min[1] + extra * 0.22;
+    let h2 = h_min[2] + extra * 0.26;
+    let h3 = h_min[3] + extra * if right.is_empty() { 0.50 } else { 0.24 };
+    let wide = true;
+    let batt = Rect::from_min_size(body.min, Vec2::new(body.width(), h1));
+    let anc = Rect::from_min_size(Pos2::new(body.left(), batt.bottom() + GAP), Vec2::new(body.width(), h_anc));
+    let _ = wide;
+    let mut y = anc.bottom() + GAP;
+    let mut bottom = anc.bottom();
     battery(app, ui, batt);
     noise(app, ui, anc);
     let grid = |app: &mut App, ui: &mut Ui, list: Vec<HomeRow>, y: f32, h: f32, id: &'static str| -> f32 {
@@ -341,20 +342,17 @@ fn battery(app: &mut App, ui: &mut Ui, rect: Rect) {
     // Left, case, right.
     let cols = [(0usize, icons::BUD_LEFT), (2, icons::CASE), (1, icons::BUD_RIGHT)];
     // The content block is 224 points tall; it sits in the middle of the card.
-    let oy = ((rect.height() - 224.0) / 2.0).max(0.0);
+    let oy = ((rect.height() - 160.0) / 2.0).max(0.0);
     let rect = Rect::from_min_max(rect.min + Vec2::new(0.0, oy), rect.max);
     for (n, (i, glyph)) in cols.into_iter().enumerate() {
         let cx = rect.left() + rect.width() * (1.0 / 6.0 + n as f32 / 3.0);
         let b = s.battery[i];
         let frac = b.map(|x| x.0 as f32 / 100.0);
-        glass::ring_at(ui, ("ring", n), Pos2::new(cx, rect.top() + 66.0), 40.0, if on { frac } else { None }, Some(glyph), !on);
+        glass::ring_at(ui, ("ring", n), Pos2::new(cx, rect.top() + 46.0), 40.0, if on { frac } else { None }, Some(glyph), !on);
         let pct = match (b, on) { (Some(x), true) => format!("{}%", x.0), _ => "—".into() };
-        glass::text(ui, Pos2::new(cx, rect.top() + 134.0), Align2::CENTER_CENTER, &pct, 21.0, if on { 1.0 } else { 0.5 });
+        glass::text(ui, Pos2::new(cx, rect.top() + 112.0), Align2::CENTER_CENTER, &pct, 21.0, if on { 1.0 } else { 0.5 });
         let sub = if i == 2 { t(tr, "status_case") } else { wear(i) };
-        glass::text(ui, Pos2::new(cx, rect.top() + 160.0), Align2::CENTER_CENTER, sub, 13.0, 0.72);
-    }
-    if !s.name.is_empty() {
-        glass::text(ui, Pos2::new(rect.center().x, rect.top() + 196.0), Align2::CENTER_CENTER, &s.name, 14.0, 0.72);
+        glass::text(ui, Pos2::new(cx, rect.top() + 138.0), Align2::CENTER_CENTER, sub, 13.0, 0.72);
     }
 }
 
@@ -367,7 +365,7 @@ fn noise(app: &mut App, ui: &mut Ui, rect: Rect) {
     let levels = modes.levels();
     // Up to four modes: one row for two, a 2x2 grid for three or four.
     let place = |i: usize, n: usize| -> Pos2 {
-        if n <= 2 { return Pos2::new(rect.left() + rect.width() * (i as f32 + 0.5) / n.max(1) as f32, rect.center().y - 10.0); }
+        if n <= 2 || rect.width() > 560.0 { return Pos2::new(rect.left() + rect.width() * (i as f32 + 0.5) / n.max(1) as f32, rect.center().y - 10.0); }
         let (c, r) = ((i % 2) as f32, (i / 2) as f32);
         Pos2::new(rect.left() + rect.width() * (0.25 + 0.5 * c), rect.top() + rect.height() * (0.29 + 0.43 * r))
     };
