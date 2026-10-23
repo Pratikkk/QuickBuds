@@ -48,6 +48,15 @@ pub fn backdrop(ui: &Ui) {
     ui.painter().add(shader::window(ctx, ui.max_rect(), w));
 }
 
+/// A content surface. Liquid Glass keeps glass for the functional layer (sidebar, buttons, controls, dialogs), so in Glass
+/// content is a flat, faintly lit plate with a hairline edge; the other styles draw the same card as `glass_at`.
+pub fn flat_at(ui: &Ui, rect: Rect, radius: f32, k: f32) {
+    if style::style() != Style::Glass { return glass_at(ui, rect, radius, k); }
+    let r = radius.min(rect.height() / 2.0);
+    ui.painter().rect_filled(rect, r, white(0.07 + 0.03 * (k - 1.0).clamp(0.0, 1.0)));
+    ui.painter().rect_stroke(rect, r, Stroke::new(1.0, white(0.11)), StrokeKind::Inside);
+}
+
 /// A surface (fill strength `k`, above 1 on hover): real glass in Glass; a tonal card in Material; a card with an outline in
 /// QuickBuds; a card with a dotted outline in Pixel art.
 pub fn glass_at(ui: &Ui, rect: Rect, radius: f32, k: f32) {
@@ -74,7 +83,7 @@ pub fn glass_at(ui: &Ui, rect: Rect, radius: f32, k: f32) {
 
 /// A glass card at `rect` with content laid out inside it (top-left, `pad` points in).
 pub fn card_at<R>(ui: &mut Ui, rect: Rect, radius: f32, pad: f32, add: impl FnOnce(&mut Ui) -> R) -> R {
-    glass_at(ui, rect, radius, 1.0);
+    flat_at(ui, rect, radius, 1.0);
     ui.scope_builder(egui::UiBuilder::new().max_rect(rect.shrink(pad)), add).inner
 }
 

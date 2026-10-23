@@ -62,7 +62,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     // The model row: Automatic with what was detected, or the pick.
     {
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW));
-        glass::glass_at(ui, card, 28.0, 1.0);
+        glass::flat_at(ui, card, 28.0, 1.0);
         let (clicked, _) = glass::row_at(ui, "model", card, icons::EARBUD, t(&tr, "model_title"), &crate::models::summary(app), Trailing::Chevron, true);
         if clicked { app.page = crate::Page::Models; }
         y += ROW + 18.0;
@@ -92,7 +92,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         let pnc_h = if pnc { ROW } else { 0.0 };
         let rows_h: f32 = pnc_h + items.iter().map(|i| ROW + if i.kind > 0 && i.on { 56.0 } else { 0.0 }).sum::<f32>();
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, rows_h));
-        glass::glass_at(ui, card, 28.0, 1.0);
+        glass::flat_at(ui, card, 28.0, 1.0);
         let mut cy = y;
         if pnc {
             let r = Rect::from_min_size(Pos2::new(x0, cy), Vec2::new(w, ROW));
@@ -135,7 +135,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         y += 34.0;
         let n = has_alert as usize + has_tap as usize;
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 96.0 * n as f32));
-        glass::glass_at(ui, card, 28.0, 1.0);
+        glass::flat_at(ui, card, 28.0, 1.0);
         let mut cy = y;
         if has_alert {
             let mut v = app.earbuds.alert.unwrap_or(s.alert_volume.unwrap_or(5) as f32);
@@ -165,7 +165,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     if s.caps.supports(CMD_FIND_BUDS) { has_rows.push(1); }
     if !has_rows.is_empty() {
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * has_rows.len() as f32));
-        glass::glass_at(ui, card, 28.0, 1.0);
+        glass::flat_at(ui, card, 28.0, 1.0);
         for (n, kind) in has_rows.iter().enumerate() {
             let r = Rect::from_min_size(Pos2::new(x0, y + ROW * n as f32), Vec2::new(w, ROW));
             if n > 0 { glass::divider_at(ui, x0, x0 + w, r.top()); }
@@ -184,7 +184,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         label(ui, x0, y, t(&tr, "earbuds_section_about"));
         y += 34.0;
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW));
-        glass::glass_at(ui, card, 28.0, 1.0);
+        glass::flat_at(ui, card, 28.0, 1.0);
         glass::row_at(ui, "fw", card, icons::INFO, t(&tr, "row_firmware_title"), s.firmware.as_deref().unwrap_or("—"), Trailing::None, true);
         y += ROW + 18.0;
     }

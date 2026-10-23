@@ -51,7 +51,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let mut y = body.top();
     if s.status != Status::On {
         let r = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 96.0));
-        glass::glass_at(ui, r, 32.0, 1.0);
+        glass::flat_at(ui, r, 32.0, 1.0);
         glass::text(ui, r.center(), Align2::CENTER_CENTER, t(&tr, "eq_not_connected"), 15.0, 0.8);
         return r.bottom();
     }
@@ -70,7 +70,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         label(ui, x0, y, t(&tr, "eq_recommended"));
         y += 34.0;
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * builtins.len() as f32));
-        glass::glass_at(ui, card, 28.0, 1.0);
+        glass::flat_at(ui, card, 28.0, 1.0);
         for (i, (id, key)) in builtins.iter().enumerate() {
             let r = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
             if i > 0 { glass::divider_at(ui, x0, x0 + w, r.top()); }
@@ -87,7 +87,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         let on = s.bass_on.unwrap_or(false);
         let h = ROW + 16.0 + if on { 60.0 } else { 0.0 };
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, h));
-        glass::glass_at(ui, card, 28.0, 1.0);
+        glass::flat_at(ui, card, 28.0, 1.0);
         let row = Rect::from_min_size(card.min, Vec2::new(w, ROW + 16.0));
         let (_, toggled) = glass::row_at(ui, "bass", row, icons::EQUALIZER, t(&tr, "eq_basswave"), t(&tr, "eq_basswave_sub"), glass::Trailing::Switch(on), true);
         if toggled { sends.push(Cmd::BassWave(!on)); }
@@ -111,7 +111,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         let n = customs.len() + st.added.len();
         if n > 0 {
             let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * n as f32));
-            glass::glass_at(ui, card, 28.0, 1.0);
+            glass::flat_at(ui, card, 28.0, 1.0);
             for (i, p) in customs.iter().enumerate() {
                 let r = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
                 if i > 0 { glass::divider_at(ui, x0, x0 + w, r.top()); }
@@ -150,7 +150,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     if let Some(p) = editing(&s).filter(|p| Some(p.id) == current) {
         let h = 64.0 + 230.0 + 70.0;
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, h));
-        glass::glass_at(ui, card, 28.0, 1.0);
+        glass::flat_at(ui, card, 28.0, 1.0);
         // The name field is refilled only when the preset or its saved name changes, not while typing.
         let key = (p.id, p.name.clone());
         if st.name_key.as_ref() != Some(&key) { st.name = p.name.clone(); st.name_key = Some(key); }

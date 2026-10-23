@@ -41,7 +41,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     // Rows: the style first; the theme and accent for the styles that use the palette; the glow for Glass.
     let rows = 3 + if is_glass { 1 } else { 2 };
     let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * rows as f32));
-    glass::glass_at(ui, card, 28.0, 1.0);
+    glass::flat_at(ui, card, 28.0, 1.0);
     let r = |i: usize| Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
     let mut i = 0;
     let (clicked, _) = glass::row_at(ui, "style", r(i), icons::PALETTE, t(&tr, "widget_style_title"), "", Trailing::Value(t(&tr, app.style.name_key()).into()), true);

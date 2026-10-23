@@ -66,7 +66,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let heights: Vec<f32> = rows.iter().map(|(t, _)| line_h * t.lines().count().max(1) as f32).collect();
     let total: f32 = heights.iter().sum::<f32>() + 28.0;
     let card = Rect::from_min_size(Pos2::new(x0, top), Vec2::new(w, total.max(80.0)));
-    glass::glass_at(ui, card, 28.0, 1.0);
+    glass::flat_at(ui, card, 28.0, 1.0);
     let mut cy = top + 14.0;
     for ((text, kind), h) in rows.iter().zip(&heights) {
         // Rows far outside the window are not drawn.

@@ -60,7 +60,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     if m.both_hold { n_rows += 1; }
     if n_rows > 0 {
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * n_rows as f32));
-        glass::glass_at(ui, card, 28.0, 1.0);
+        glass::flat_at(ui, card, 28.0, 1.0);
         for (i, (g, _)) in m.rows.iter().enumerate() {
             let r = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
             if i > 0 { glass::divider_at(ui, x0, x0 + w, r.top()); }
@@ -88,7 +88,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         glass::text(ui, Pos2::new(x0 + 6.0, y + 14.0), Align2::LEFT_CENTER, t(&tr, "gesture_section_on_call"), 14.0, 0.72);
         y += 34.0;
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * m.on_call.len() as f32));
-        glass::glass_at(ui, card, 28.0, 1.0);
+        glass::flat_at(ui, card, 28.0, 1.0);
         for (i, k) in m.on_call.iter().enumerate() {
             let r = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
             if i > 0 { glass::divider_at(ui, x0, x0 + w, r.top()); }
@@ -100,7 +100,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     }
     if n_rows == 0 && m.on_call.is_empty() {
         let r = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 96.0));
-        glass::glass_at(ui, r, 28.0, 1.0);
+        glass::flat_at(ui, r, 28.0, 1.0);
         glass::text(ui, r.center(), Align2::CENTER_CENTER, t(&tr, "eq_not_connected"), 15.0, 0.8);
         y += 96.0;
     }

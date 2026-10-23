@@ -239,7 +239,7 @@ fn header(app: &mut App, ui: &mut Ui, c: Rect) {
 
 fn placeholder(ui: &mut Ui, body: Rect) {
     let r = Rect::from_min_size(body.min, Vec2::new(body.width(), 120.0));
-    glass::glass_at(ui, r, 32.0, 1.0);
+    glass::flat_at(ui, r, 32.0, 1.0);
     glass::text(ui, r.center(), Align2::CENTER_CENTER, "This page is not ported to egui yet.", 16.0, 0.8);
 }
 
@@ -308,7 +308,7 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     noise(app, ui, anc);
     for (rect, list, id) in [(rows_r, right, "right"), (nav_r, left, "left")] {
         if list.is_empty() { continue; }
-        glass::glass_at(ui, rect, 32.0, 1.0);
+        glass::flat_at(ui, rect, 32.0, 1.0);
         for (i, r) in list.iter().enumerate() {
             let rr = Rect::from_min_size(Pos2::new(rect.left(), rect.top() + ROW * i as f32), Vec2::new(rect.width(), ROW));
             if i > 0 { glass::divider_at(ui, rect.left(), rect.right(), rr.top()); }
@@ -336,7 +336,7 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
 }
 
 fn battery(app: &mut App, ui: &mut Ui, rect: Rect) {
-    glass::glass_at(ui, rect, 32.0, 1.0);
+    glass::flat_at(ui, rect, 32.0, 1.0);
     let s = &app.snap;
     let on = s.status == Status::On;
     let blind = !wear_sensor_seen(s, app.demo);

@@ -295,7 +295,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
 
     let n = 1 + has_test as usize;
     let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 72.0 * n as f32));
-    glass::glass_at(ui, card, 28.0, 1.0);
+    glass::flat_at(ui, card, 28.0, 1.0);
     let r0 = Rect::from_min_size(card.min, Vec2::new(w, 72.0));
     let (_, toggled) = glass::row_at(ui, "hearing", r0, icons::HEARING, t(&tr, "row_golden_title"), t(&tr, "row_golden_sub"), Trailing::Switch(sw), on);
     if toggled { app.send(Cmd::Features(vec![(FEATURE_HEARING, !sw)])); }
@@ -317,12 +317,12 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     y += 34.0;
     if list.is_empty() {
         let r = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 64.0));
-        glass::glass_at(ui, r, 28.0, 1.0);
+        glass::flat_at(ui, r, 28.0, 1.0);
         glass::text(ui, r.center(), Align2::CENTER_CENTER, t(&tr, "golden_none"), 14.0, 0.6);
         y += 64.0;
     } else {
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * list.len() as f32));
-        glass::glass_at(ui, card, 28.0, 1.0);
+        glass::flat_at(ui, card, 28.0, 1.0);
         let active = app.hearing.active;
         for (i, r) in list.iter().enumerate() {
             let row = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
@@ -348,7 +348,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         }
         y += 44.0 + 12.0;
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 380.0));
-        glass::glass_at(ui, card, 28.0, 1.0);
+        glass::flat_at(ui, card, 28.0, 1.0);
         radar(ui, card, Some(both[app.hearing.ear.min(1)]));
         y += card.height() + 12.0;
     }

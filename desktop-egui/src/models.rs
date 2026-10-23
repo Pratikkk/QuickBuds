@@ -45,7 +45,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let name = |m: &serde_json::Value| m["name"].as_str().unwrap_or("").to_string();
 
     let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW));
-    glass::glass_at(ui, card, 28.0, 1.0);
+    glass::flat_at(ui, card, 28.0, 1.0);
     let detected = s.detected.and_then(|m| m["name"].as_str());
     let auto_sub = match detected {
         Some(n) => t(&tr, "model_detected").replace("%1$s", n),
@@ -61,7 +61,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         glass::text(ui, Pos2::new(x0 + 6.0, y + 14.0), Align2::LEFT_CENTER, brand, 14.0, 0.72);
         y += 34.0;
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * list.len() as f32));
-        glass::glass_at(ui, card, 28.0, 1.0);
+        glass::flat_at(ui, card, 28.0, 1.0);
         for (i, m) in list.iter().enumerate() {
             let r = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
             if i > 0 { glass::divider_at(ui, x0, x0 + w, r.top()); }
