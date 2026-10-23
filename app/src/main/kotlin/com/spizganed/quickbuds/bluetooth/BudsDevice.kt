@@ -9,7 +9,7 @@ import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.ui.ThemeRes
 
 /**
- * Which paired device is "the buds": the address saved last (the buds
+ * Which paired device is "the buds": the paired device named like the model picked by hand, else the address saved last (the buds
  * whose audio connected most recently, see [KeepAliveReceiver]), else the first bonded device that
  * offers one of the OPPO SPP UUIDs or carries a model name from `models.json`.
  */
@@ -35,6 +35,9 @@ object BudsDevice {
             context.getSystemService(BluetoothManager::class.java)?.adapter?.bondedDevices
         }.getOrNull().orEmpty()
         val saved = prefs(context).getString(KEY_ADDRESS, null)
+        // A model picked by hand names the buds the person means, whichever buds connected for audio last.
+        val picked = ModelCatalog.manual(context)?.let { id -> ModelCatalog.all(context).firstOrNull { it.id == id }?.name }
+        picked?.let { name -> bonded.firstOrNull { it.name == name } }?.let { return it.also { d -> remember(context, d) } }
         return bonded.firstOrNull { it.address == saved }
             ?: bonded.firstOrNull { isBuds(context, it) }?.also { remember(context, it) }
     }
