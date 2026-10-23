@@ -269,7 +269,12 @@ pub fn row_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug + Copy, re
     icon_at(ui, svg, square(rect.left_center() + Vec2::new(34.0, 0.0), 24.0), white(0.88 * a));
     let dy = if sub.is_empty() { 0.0 } else { 11.0 };
     text(ui, rect.left_center() + Vec2::new(58.0, -dy), Align2::LEFT_CENTER, title, 16.0, a);
-    if !sub.is_empty() { text(ui, rect.left_center() + Vec2::new(58.0, 10.0), Align2::LEFT_CENTER, sub, 12.5, 0.74 * a); }
+    if !sub.is_empty() {
+        // Cut with an ellipsis before the trailing control.
+        let max = ((rect.width() - 58.0 - 84.0) / 6.4) as usize;
+        let shown = if sub.chars().count() <= max { sub.to_string() } else { format!("{}…", sub.chars().take(max.saturating_sub(1)).collect::<String>().trim_end()) };
+        text(ui, rect.left_center() + Vec2::new(58.0, 10.0), Align2::LEFT_CENTER, &shown, 12.5, 0.74 * a);
+    }
     let mut toggled = false;
     match trailing {
         Trailing::None => {}
@@ -358,7 +363,6 @@ pub fn ring_at(ui: &Ui, id: impl std::hash::Hash + std::fmt::Debug, center: Pos2
     let inner = radius - width / 2.0 - 1.0;
     // The disc, lit from the top, with a rim light on its upper edge.
     ui.painter().circle_filled(center, inner, white(0.07 * a));
-    ui.painter().circle_filled(center - Vec2::new(0.0, inner * 0.35), inner * 0.7, white(0.04 * a));
     let rim: Vec<Pos2> = (0..=24).map(|i| {
         let ang = (-150.0 + 120.0 * i as f32 / 24.0).to_radians();
         center + Vec2::angled(ang) * inner
@@ -368,9 +372,16 @@ pub fn ring_at(ui: &Ui, id: impl std::hash::Hash + std::fmt::Debug, center: Pos2
     if v > 0.004 {
         let f = v.min(1.0);
         let halo = |al: f32| Color32::from_white_alpha((al * 255.0 * a) as u8);
-        arc(ui, center, radius, width + 11.0, f, halo(0.05), halo(0.05));
-        arc(ui, center, radius, width + 6.0, f, halo(0.09), halo(0.09));
-        arc(ui, center, radius, width, f, Color32::from_rgba_unmultiplied(240, 243, 255, (255.0 * a) as u8), Color32::from_rgba_unmultiplied(255, 255, 255, (255.0 * a) as u8));
+        if f >= 0.995 {
+            // A full ring is a circle: round caps overlapping at the top would draw a bright spot.
+            ui.painter().circle_stroke(center, radius, Stroke::new(width + 9.0, halo(0.05)));
+            ui.painter().circle_stroke(center, radius, Stroke::new(width + 4.0, halo(0.08)));
+            ui.painter().circle_stroke(center, radius, Stroke::new(width, Color32::from_rgba_unmultiplied(248, 250, 255, (240.0 * a) as u8)));
+        } else {
+            arc(ui, center, radius, width + 9.0, f, halo(0.05), halo(0.05));
+            arc(ui, center, radius, width + 4.0, f, halo(0.08), halo(0.08));
+            arc(ui, center, radius, width, f, Color32::from_rgba_unmultiplied(244, 247, 255, (240.0 * a) as u8), Color32::from_rgba_unmultiplied(255, 255, 255, (240.0 * a) as u8));
+        }
     }
     if let Some(g) = glyph {
         let h = radius * 1.05;

@@ -203,13 +203,14 @@ class BudsStatusView(context: Context) : View(context) {
                     if (s.shown > 0f) {
                         // A faint halo just wider than the arc.
                         glowPaint.strokeWidth = dp(10f); glowPaint.color = withA(0x16FFFFFF, a)
-                        canvas.drawArc(arcBox, -90f, 360f * s.shown, false, glowPaint)
+                        // A full ring is an oval: round caps overlapping at the top would draw a bright spot.
+                        if (s.shown >= 0.995f) canvas.drawOval(arcBox, glowPaint) else canvas.drawArc(arcBox, -90f, 360f * s.shown, false, glowPaint)
                         sweepMatrix.setRotate(-90f, cx, cy)
                         val sweep = android.graphics.SweepGradient(cx, cy, intArrayOf(0xFFF0F3FF.toInt(), 0xFFFFFFFF.toInt(), 0xFFF0F3FF.toInt()), floatArrayOf(0f, 0.5f, 1f))
                         sweep.setLocalMatrix(sweepMatrix)
                         arcPaint.shader = sweep
-                        arcPaint.alpha = (255 * (0.35f + 0.65f * a)).toInt()
-                        canvas.drawArc(arcBox, -90f, 360f * s.shown, false, arcPaint)
+                        arcPaint.alpha = (240 * (0.35f + 0.65f * a)).toInt()
+                        if (s.shown >= 0.995f) canvas.drawOval(arcBox, arcPaint) else canvas.drawArc(arcBox, -90f, 360f * s.shown, false, arcPaint)
                     }
                 } else {
                     canvas.drawOval(arcBox, trackPaint)

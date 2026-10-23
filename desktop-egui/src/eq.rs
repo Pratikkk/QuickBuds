@@ -46,7 +46,9 @@ fn label(ui: &Ui, x: f32, y: f32, s: &str) {
 pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let s = app.snap.clone();
     let tr = app.tr.clone();
-    let w = body.width().min(MAX_W);
+    // Wide window: the presets on the left, the band editor on the right.
+    let two = body.width() >= 900.0;
+    let w = if two { ((body.width() - 14.0) / 2.0).floor() } else { body.width().min(MAX_W) };
     let x0 = body.left();
     let mut y = body.top();
     if s.status != Status::On {
@@ -148,13 +150,14 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
 
     // The editor of the selected custom preset
     if let Some(p) = editing(&s).filter(|p| Some(p.id) == current) {
+        let (ex, ey, ew) = if two { (x0 + w + 14.0, body.top(), body.width() - w - 14.0) } else { (x0, y, w) };
         let h = 64.0 + 230.0 + 70.0;
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, h));
+        let card = Rect::from_min_size(Pos2::new(ex, ey), Vec2::new(ew, h));
         glass::flat_at(ui, card, 28.0, 1.0);
         // The name field is refilled only when the preset or its saved name changes, not while typing.
         let key = (p.id, p.name.clone());
         if st.name_key.as_ref() != Some(&key) { st.name = p.name.clone(); st.name_key = Some(key); }
-        let nf = Rect::from_min_size(Pos2::new(x0 + 20.0, y + 16.0), Vec2::new(w - 40.0, 44.0));
+        let nf = Rect::from_min_size(Pos2::new(ex + 20.0, ey + 16.0), Vec2::new(ew - 40.0, 44.0));
         let resp = glass::text_field_at(ui, nf, &mut st.name, 20);
         if resp.lost_focus() {
             let name = st.name.trim().to_string();
@@ -168,11 +171,11 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         let n = p.gains.len().max(1);
         let shown: Vec<f32> = match &st.drag { Some(d) if d.len() == p.gains.len() => d.clone(), _ => p.gains.iter().map(|g| *g as f32).collect() };
         let mut gains = shown.clone();
-        let band_top = y + 76.0;
+        let band_top = ey + 76.0;
         let mut pts: Vec<Pos2> = vec![];
         let mut release = false;
         for i in 0..n {
-            let cx = x0 + w * (i as f32 + 0.5) / n as f32;
+            let cx = ex + ew * (i as f32 + 0.5) / n as f32;
             let col = Rect::from_center_size(Pos2::new(cx, band_top + 85.0), Vec2::new(50.0, 170.0));
             let sl = glass::vslider_at(ui, ("band", i), col, &mut gains[i], -(EQ_GAIN as f32), EQ_GAIN as f32, true);
             if sl.changed { st.drag = Some(gains.clone()); }
@@ -192,11 +195,11 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         // The buds echo the gains: the finger's copy is not needed any more.
         if let Some(d) = &st.drag { if !release && d.iter().zip(&p.gains).all(|(a, b)| *a as i8 == *b) { st.drag = None; } }
         // Delete
-        let del = Rect::from_min_size(Pos2::new(x0 + 20.0, card.bottom() - 62.0), Vec2::new(140.0, 46.0));
+        let del = Rect::from_min_size(Pos2::new(ex + 20.0, card.bottom() - 62.0), Vec2::new(140.0, 46.0));
         if glass::button_at(ui, "delete", del, 23.0, false).clicked() { st.confirm_delete = true; }
         glass::icon_at(ui, icons::DELETE, Rect::from_center_size(Pos2::new(del.left() + 28.0, del.center().y), Vec2::splat(20.0)), white(1.0));
         glass::text(ui, Pos2::new(del.left() + 48.0, del.center().y), Align2::LEFT_CENTER, t(&tr, "eq_delete"), 15.0, 1.0);
-        y += h + 18.0;
+        if !two { y += h + 18.0; }
 
         if st.confirm_delete {
             let msg = t(&tr, "eq_delete_confirm").replace("%1$s", &p.name);
@@ -222,7 +225,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     }
 
     for c in sends { app.send(c); }
-    y
+    if two { y.max(body.top() + 364.0) } else { y }
 }
 
 /// A smooth line through the band points (Catmull-Rom, sampled).

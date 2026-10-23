@@ -53,9 +53,13 @@ fn label(ui: &Ui, x: f32, y: f32, s: &str) {
 pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let s = app.snap.clone();
     let tr = app.tr.clone();
-    let w = body.width().min(MAX_W);
+    // Wide window: the model, the switches and the firmware on the left; sounds, fit test and find on the right.
+    let two = body.width() >= 900.0;
+    let w = if two { ((body.width() - 14.0) / 2.0).floor() } else { body.width().min(MAX_W) };
     let x0 = body.left();
+    let xr = if two { x0 + w + 14.0 } else { x0 };
     let mut y = body.top();
+    let mut yr = body.top();
     let on = s.status == Status::On;
     let flagged = |flag: Option<&str>| s.manual && flag.is_some_and(|f| s.model.is_some_and(|m| m[f] == 1));
 
@@ -127,6 +131,9 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         y += rows_h + 18.0;
     }
 
+    {
+    let x0 = xr;
+    if two { std::mem::swap(&mut y, &mut yr); }
     // Sounds: the alert volume, the tap sensitivity.
     let has_alert = s.caps.supports(CMD_SET_ALERT_VOLUME) && s.alert_volume.is_some();
     let has_tap = s.model.is_some_and(|m| m["tapLevel"] == 1) && (s.manual || s.caps.supports(CMD_SET_TAP_LEVEL) && s.tap_level.is_some());
@@ -179,6 +186,9 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         y += card.height() + 18.0;
     }
 
+    if two { std::mem::swap(&mut y, &mut yr); }
+    }
+
     // About: the firmware. No updates here: a failed flash can brick the buds, so it points to HeyMelody.
     if s.caps.supports(CMD_QUERY_FIRMWARE) {
         label(ui, x0, y, t(&tr, "earbuds_section_about"));
@@ -213,7 +223,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         }
     }
     dialogs(app, ui);
-    y
+    y.max(yr)
 }
 
 /// (left, right) in an ear. Without an "in ear" seen, "out" may only mean the model has no sensor: counted as in.

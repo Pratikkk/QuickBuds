@@ -37,7 +37,9 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let s = app.snap.clone();
     let tr = app.tr.clone();
     let m = Model::of(&s);
-    let w = body.width().min(MAX_W);
+    // Wide window: the tap rows on the left, the on-call rows on the right.
+    let two = body.width() >= 900.0;
+    let w = if two { ((body.width() - 14.0) / 2.0).floor() } else { body.width().min(MAX_W) };
     let x0 = body.left();
     let mut y = body.top();
     let on = s.status == Status::On;
@@ -47,7 +49,8 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     // Left / Right
     if !m.one_button {
         for (i, label) in ["status_left", "status_right"].iter().enumerate() {
-            let r = Rect::from_min_size(Pos2::new(x0 + i as f32 * (w / 2.0 + 4.0), y), Vec2::new(w / 2.0 - 4.0, 46.0));
+            let sw = if two { w } else { w };
+            let r = Rect::from_min_size(Pos2::new(x0 + i as f32 * (sw / 2.0 + 4.0), y), Vec2::new(sw / 2.0 - 4.0, 46.0));
             let lit = side == i as u8 + 1;
             if glass::button_at(ui, ("side", i), r, 23.0, lit).clicked() { app.gestures.side = i as u8 + 1; }
             ui.painter().text(r.center(), Align2::CENTER_CENTER, t(&tr, label), egui::FontId::proportional(15.0), if lit { glass::on_accent() } else { glass::white(1.0) });
@@ -56,6 +59,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     }
 
     // The gesture rows
+    let y_top = y;
     let mut n_rows = m.rows.len();
     if m.both_hold { n_rows += 1; }
     if n_rows > 0 {
@@ -85,18 +89,19 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
 
     // On call
     if !m.on_call.is_empty() {
-        glass::text(ui, Pos2::new(x0 + 6.0, y + 14.0), Align2::LEFT_CENTER, t(&tr, "gesture_section_on_call"), 14.0, 0.72);
-        y += 34.0;
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW * m.on_call.len() as f32));
+        let (cx, mut cy) = if two { (x0 + w + 14.0, y_top) } else { (x0, y) };
+        glass::text(ui, Pos2::new(cx + 6.0, cy + 14.0), Align2::LEFT_CENTER, t(&tr, "gesture_section_on_call"), 14.0, 0.72);
+        cy += 34.0;
+        let card = Rect::from_min_size(Pos2::new(cx, cy), Vec2::new(w, ROW * m.on_call.len() as f32));
         glass::flat_at(ui, card, 28.0, 1.0);
         for (i, k) in m.on_call.iter().enumerate() {
-            let r = Rect::from_min_size(Pos2::new(x0, y + ROW * i as f32), Vec2::new(w, ROW));
-            if i > 0 { glass::divider_at(ui, x0, x0 + w, r.top()); }
+            let r = Rect::from_min_size(Pos2::new(cx, cy + ROW * i as f32), Vec2::new(w, ROW));
+            if i > 0 { glass::divider_at(ui, cx, cx + w, r.top()); }
             let v = call_on(&s, *k).map_or("—", |on| t(&tr, if on { ON_CALL[*k].1 } else { "gesture_action_none" }));
             let (clicked, _) = glass::row_at(ui, ("call", i), r, ON_CALL[*k].5, t(&tr, ON_CALL[*k].0), "", Trailing::Value(v.into()), on);
             if clicked { app.gestures.target = Some(Target::Call(*k)); }
         }
-        y += card.height() + 18.0;
+        if two { y = y.max(cy + card.height() + 18.0); } else { y += card.height() + 18.0; }
     }
     if n_rows == 0 && m.on_call.is_empty() {
         let r = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 96.0));
