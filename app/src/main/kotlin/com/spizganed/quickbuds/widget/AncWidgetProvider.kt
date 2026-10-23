@@ -320,7 +320,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
 
         /**
          * Glass: the widget's plate at its real size (so the corners stay round), about 0.7 of the screen's pixels to keep the
-         * RemoteViews bitmap small: a see-through base, the app's background colours as soft blobs (tinted by the accent for the Accent
+         * RemoteViews bitmap small: a nearly opaque base (a widget has no backdrop blur, so a see-through plate would show the wallpaper sharp), the app's background colours as soft blobs (tinted by the accent for the Accent
          * background), a diagonal sheen and a hairline rim. A launcher gives no blur behind a widget, so the wallpaper shows through.
          */
         private fun glassPlate(c: Context, p: Palette, id: Int): Bitmap {
@@ -337,7 +337,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             cv.save(); cv.clipPath(clip)
             val light = p.glassLight
             val oled = p.id == com.spizganed.quickbuds.ui.PaletteStore.OLED
-            val base = if (light) 0xDCF7F8FF.toInt() else if (oled) 0xB8000004.toInt() else 0xB82A2D3B.toInt()
+            val base = if (light) 0xF4F7F8FF.toInt() else if (oled) 0xF2060609.toInt() else 0xF22A2D3B.toInt()
             cv.drawColor(base)
             val bg = ThemeRes.glassBg(c)
             val blobs = bg.blobs ?: if (bg == ThemeRes.GlassBg.ACCENT) intArrayOf(p.accent, Palette.blend(p.accent, 0xFF4A6DFF.toInt(), 0.5f), Palette.blend(p.accent, 0xFFFF9D6B.toInt(), 0.5f), Palette.blend(p.accent, Color.WHITE, 0.35f)) else null
