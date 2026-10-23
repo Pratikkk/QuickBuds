@@ -301,7 +301,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             if (!WidgetSettings.background(c, id)) return v.setImageViewResource(R.id.w_bg, android.R.color.transparent)
             if (p.glass) {
                 // Glass: a translucent plate with a rim, drawn as it is (no tint).
-                v.setImageViewResource(R.id.w_bg, if (p.glassLight) R.drawable.widget_bg_glass_l else R.drawable.widget_bg_glass)
+                v.setImageViewResource(R.id.w_bg, if (p.glassLight) R.drawable.widget_bg_glass_l else if (p.id == com.spizganed.quickbuds.ui.PaletteStore.DARK) R.drawable.widget_bg_glass_d else R.drawable.widget_bg_glass)
                 return v.setInt(R.id.w_bg, "setColorFilter", 0)
             }
             v.setImageViewResource(R.id.w_bg, bgRes(c))
@@ -383,8 +383,20 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         private fun content(context: Context, v: RemoteViews, b: Btn, p: Palette, selected: Boolean, icon: Int, text: CharSequence?, iconDp: Float, pitch: Float = DOT_DP) {
             val fg = if (!selected) p.textSecondary else if (WidgetSettings.nothingStyle(context)) p.accent
                 else if (p.glass) p.onAccent else if (WidgetSettings.materialStyle(context)) p.text else p.onAccent
-            icon(context, v, b.icon, icon, iconDp, pitch)
-            v.setInt(b.icon, "setColorFilter", fg)
+            if (p.glass) {
+                // Glass: the icon with depth, as in the app (a bitmap; no colour filter).
+                val h = ThemeRes.dp(context, iconDp).coerceAtLeast(1)
+                val d = context.getDrawable(icon)!!.mutate()
+                val w = if (d.intrinsicHeight > 0) Math.round(h * d.intrinsicWidth.toFloat() / d.intrinsicHeight).coerceAtLeast(1) else h
+                val pad = Math.round(h * 0.2f)
+                val bmp = Bitmap.createBitmap(w + 2 * pad, h + 2 * pad, Bitmap.Config.ARGB_8888)
+                GlassArt.Glyph(d).draw(Canvas(bmp), bmp.width / 2f, bmp.height / 2f - 1f, w.toFloat(), h.toFloat(), fg, h / 30f, p.glassLight)
+                v.setImageViewBitmap(b.icon, bmp)
+                v.setInt(b.icon, "setColorFilter", 0)
+            } else {
+                icon(context, v, b.icon, icon, iconDp, pitch)
+                v.setInt(b.icon, "setColorFilter", fg)
+            }
             if (text == null) v.setViewVisibility(b.label, View.GONE)
             else {
                 v.setViewVisibility(b.label, View.VISIBLE)

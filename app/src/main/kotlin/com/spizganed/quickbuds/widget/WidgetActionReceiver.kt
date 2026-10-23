@@ -68,6 +68,10 @@ class WidgetActionReceiver : BroadcastReceiver() {
                     "adapt" -> { state.ancMode = "Adaptive";     shortAction = "ANC_CYCLE" }
                 }
                 sendAncMode = state.ancMode
+                // After a strength pick the widget goes back to its first screen, in every style.
+                if (target in setOf("low", "med", "high", "smart") && widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                    WidgetSettings.setPage(context, widgetId, null)
+                }
             }
             WidgetActions.ACTION_GAME_TOGGLE -> {
                 state.gameMode = !state.gameMode
