@@ -50,7 +50,7 @@ object ModelCatalog {
         val byId = { m: Model -> id != null && m.id.equals(id, ignoreCase = true) }
         val byName = { m: Model -> name != null && m.name == name }
         return models.firstOrNull { byName(it) && byId(it) } ?: models.firstOrNull(byName) ?: models.firstOrNull(byId)
-            ?: models.firstOrNull { name != null && squash(it.name) == squash(name) }
+            ?: models.filter { name != null && squash(it.name) == squash(name) }.singleOrNull()
     }
 
     /** A name without case, spaces and punctuation, so "OnePlus Buds3" and "oneplus buds 3" compare equal. Last resort only. */

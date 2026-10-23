@@ -70,7 +70,7 @@
     -->
     <application
         android:name=".QuickBudsApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
@@ -281,16 +281,10 @@
             </intent-filter>
         </activity>
 
+        <!-- Not exported: only the widgets send to it, with explicit intents. -->
         <receiver
             android:name=".widget.WidgetActionReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.spizganed.quickbuds.widget.ANC_CYCLE" />
-                <action android:name="com.spizganed.quickbuds.widget.TRANS" />
-                <action android:name="com.spizganed.quickbuds.widget.OFF" />
-                <action android:name="com.spizganed.quickbuds.widget.GAME_TOGGLE" />
-            </intent-filter>
-        </receiver>
+            android:exported="false" />
 
     </application>
 

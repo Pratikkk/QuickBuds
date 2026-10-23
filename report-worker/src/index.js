@@ -16,7 +16,7 @@ export default {
     const url = new URL(req.url);
     if (req.method === "POST" && url.pathname === "/report") return report(req, env);
     if (req.method === "POST" && url.pathname === "/ping") return ping(req, env);
-    if (req.method === "GET" && url.pathname === "/") return list(url, env);
+    if (req.method === "GET" && url.pathname === "/") return list(req, url, env);
     return new Response("Not found", { status: 404 });
   },
 };
@@ -61,8 +61,10 @@ async function report(req, env) {
  * The developer's page: the newest reports first, as plain text, or as JSON with format=json.
  * Only "new" and "working" reports show. after=<id> shows only newer reports; limit=<n> (default 20, at most 100).
  */
-async function list(url, env) {
-  if (!env.READ_KEY || url.searchParams.get("key") !== env.READ_KEY) return new Response("Not found", { status: 404 });
+async function list(req, url, env) {
+  // The key comes in the Authorization header (Bearer) or, for a browser, in the URL. The header keeps it out of logs.
+  const given = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ?? url.searchParams.get("key");
+  if (!env.READ_KEY || given !== env.READ_KEY) return new Response("Not found", { status: 404 });
   if (url.searchParams.has("stats")) return stats(url, env);
   const after = Number(url.searchParams.get("after") ?? 0) || 0;
   const limit = Math.min(Number(url.searchParams.get("limit") ?? 20) || 20, 100);
