@@ -529,4 +529,5 @@
     <string name="setup_issues_body">Instellingen toont de beperkingen van je oordopjes en telefoon. QuickBuds meldt het ook één keer als je model ze heeft.</string>
     <string name="reply_title">Antwoord van de ontwikkelaar</string>
     <string name="about_discord_desc">Chat met de ontwikkelaar op Discord</string>
+    <string name="about_privacy_reply">Met de ID kan de ontwikkelaar ook antwoorden op een rapport dat je stuurde. Het antwoord komt met de dagelijkse telling.</string>
 </resources>

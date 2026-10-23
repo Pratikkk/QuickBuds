@@ -529,4 +529,5 @@
     <string name="setup_issues_body">A Beállítások felsorolják a fülhallgató és a telefon korlátait. A QuickBuds egyszer szól is, ha a modelledben van ilyen.</string>
     <string name="reply_title">A fejlesztő válasza</string>
     <string name="about_discord_desc">Csevegj a fejlesztővel a Discordon</string>
+    <string name="about_privacy_reply">Az azonosító lehetővé teszi, hogy a fejlesztő válaszoljon az elküldött jelentésedre. A válasz a napi számlálással érkezik.</string>
 </resources>

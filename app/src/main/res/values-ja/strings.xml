@@ -529,4 +529,5 @@
     <string name="setup_issues_body">設定にイヤホンとスマートフォンの制限を一覧で表示します。お使いのモデルに該当がある場合、QuickBuds は一度だけ知らせます。</string>
     <string name="reply_title">開発者からの返信</string>
     <string name="about_discord_desc">Discordで開発者とチャット</string>
+    <string name="about_privacy_reply">このIDにより、開発者は送信されたレポートに返信できます。返信は1日1回の集計と一緒に届きます。</string>
 </resources>

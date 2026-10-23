@@ -529,4 +529,5 @@
     <string name="setup_issues_body">Die Einstellungen listen die Grenzen Ihrer Ohrhörer und Ihres Telefons. QuickBuds meldet sie auch einmal, wenn Ihr Modell welche hat.</string>
     <string name="reply_title">Antwort des Entwicklers</string>
     <string name="about_discord_desc">Auf Discord mit dem Entwickler chatten</string>
+    <string name="about_privacy_reply">Mit der ID kann der Entwickler auch auf einen gesendeten Bericht antworten. Die Antwort kommt mit der täglichen Zählung.</string>
 </resources>

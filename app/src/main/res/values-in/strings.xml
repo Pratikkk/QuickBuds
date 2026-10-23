@@ -531,4 +531,5 @@
     <string name="setup_issues_body">Pengaturan mencantumkan batasan earbud dan ponsel Anda. QuickBuds juga memberi tahu sekali jika model Anda memilikinya.</string>
     <string name="reply_title">Balasan dari pengembang</string>
     <string name="about_discord_desc">Mengobrol dengan pengembang di Discord</string>
+    <string name="about_privacy_reply">ID ini juga memungkinkan pengembang membalas laporan yang Anda kirim. Balasan datang bersama penghitungan harian.</string>
 </resources>

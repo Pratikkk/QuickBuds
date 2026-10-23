@@ -529,4 +529,5 @@
     <string name="setup_issues_body">설정에 이어버드와 휴대폰의 제한이 나옵니다. 모델에 해당하는 것이 있으면 QuickBuds가 한 번 알려 줍니다.</string>
     <string name="reply_title">개발자의 답변</string>
     <string name="about_discord_desc">Discord에서 개발자와 채팅</string>
+    <string name="about_privacy_reply">이 ID로 개발자가 보낸 신고에 답할 수도 있습니다. 답변은 하루 한 번의 집계와 함께 옵니다.</string>
 </resources>

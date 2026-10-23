@@ -529,4 +529,5 @@
     <string name="setup_issues_body">Ustawienia zawierają listę ograniczeń słuchawek i telefonu. QuickBuds raz o nich powiadomi, jeśli Twój model je ma.</string>
     <string name="reply_title">Odpowiedź dewelopera</string>
     <string name="about_discord_desc">Czat z deweloperem na Discordzie</string>
+    <string name="about_privacy_reply">Identyfikator pozwala też deweloperowi odpowiedzieć na wysłane zgłoszenie. Odpowiedź przychodzi z dziennym zliczeniem.</string>
 </resources>

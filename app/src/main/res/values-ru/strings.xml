@@ -529,4 +529,5 @@
     <string name="setup_issues_body">В Настройках перечислены ограничения ваших наушников и телефона. QuickBuds также один раз сообщит, если они есть у вашей модели.</string>
     <string name="reply_title">Ответ разработчика</string>
     <string name="about_discord_desc">Чат с разработчиком в Discord</string>
+    <string name="about_privacy_reply">ID также позволяет разработчику ответить на отправленный вами отчёт. Ответ приходит вместе с ежедневным подсчётом.</string>
 </resources>

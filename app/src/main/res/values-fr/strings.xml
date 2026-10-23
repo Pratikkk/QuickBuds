@@ -529,4 +529,5 @@
     <string name="setup_issues_body">Les Réglages listent les limites de vos écouteurs et de votre téléphone. QuickBuds vous prévient aussi une fois si votre modèle en a.</string>
     <string name="reply_title">Réponse du développeur</string>
     <string name="about_discord_desc">Discuter avec le développeur sur Discord</string>
+    <string name="about_privacy_reply">L’ID permet aussi au développeur de répondre à un rapport que vous avez envoyé. La réponse arrive avec le comptage quotidien.</string>
 </resources>

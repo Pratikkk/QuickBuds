@@ -529,4 +529,5 @@
     <string name="setup_issues_body">Le Impostazioni elencano i limiti dei tuoi auricolari e del tuo telefono. QuickBuds ti avvisa anche una volta se il tuo modello ne ha.</string>
     <string name="reply_title">Risposta dello sviluppatore</string>
     <string name="about_discord_desc">Chatta con lo sviluppatore su Discord</string>
+    <string name="about_privacy_reply">L’ID permette anche allo sviluppatore di rispondere a una segnalazione inviata. La risposta arriva con il conteggio giornaliero.</string>
 </resources>

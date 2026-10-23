@@ -529,4 +529,5 @@
     <string name="setup_issues_body">Setările enumeră limitele căștilor și ale telefonului tău. QuickBuds te anunță și o dată dacă modelul tău are vreuna.</string>
     <string name="reply_title">Răspunsul dezvoltatorului</string>
     <string name="about_discord_desc">Discută cu dezvoltatorul pe Discord</string>
+    <string name="about_privacy_reply">ID-ul permite dezvoltatorului să răspundă și la un raport trimis de tine. Răspunsul vine odată cu numărătoarea zilnică.</string>
 </resources>

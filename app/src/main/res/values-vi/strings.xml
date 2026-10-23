@@ -531,4 +531,5 @@
     <string name="setup_issues_body">Cài đặt liệt kê các giới hạn của tai nghe và điện thoại của bạn. QuickBuds cũng báo một lần nếu mẫu của bạn có.</string>
     <string name="reply_title">Phản hồi từ nhà phát triển</string>
     <string name="about_discord_desc">Trò chuyện với nhà phát triển trên Discord</string>
+    <string name="about_privacy_reply">ID cũng cho phép nhà phát triển trả lời báo cáo bạn đã gửi. Câu trả lời đến cùng lượt đếm hằng ngày.</string>
 </resources>

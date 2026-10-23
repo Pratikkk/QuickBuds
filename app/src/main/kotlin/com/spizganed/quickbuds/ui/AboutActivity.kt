@@ -105,7 +105,7 @@ class AboutActivity : Activity() {
         root.addView(SettingRowFactory.card(this).apply {
             setPadding(dp(16f), dp(14f), dp(16f), dp(14f))
             addView(TextView(this@AboutActivity).apply {
-                setText(R.string.about_privacy_body)
+                text = getString(R.string.about_privacy_body) + " " + getString(R.string.about_privacy_reply)
                 textSize = 14f
                 setTextColor(p.textSecondary)
                 setLineSpacing(0f, 1.15f)

@@ -443,6 +443,12 @@ class SetupActivity : Activity() {
 
     private fun privacy() {
         heading(R.string.about_privacy_title, R.string.about_privacy_body)
+        body.addView(TextView(this).apply {
+            setText(R.string.about_privacy_reply)
+            textSize = 14f
+            setTextColor(p.textSecondary)
+            setPadding(dp(4f), 0, dp(4f), dp(12f))
+        })
         body.addView(SettingRowFactory.card(this).apply {
             addView(switchRow(R.drawable.ic_info, R.string.settings_ping_title, R.string.settings_ping_sub, UsagePing.KEY_ENABLED, true))
         })

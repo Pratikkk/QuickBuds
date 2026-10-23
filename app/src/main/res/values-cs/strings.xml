@@ -529,4 +529,5 @@
     <string name="setup_issues_body">Nastavení uvádí omezení vašich sluchátek a telefonu. QuickBuds vás také jednou upozorní, když je váš model má.</string>
     <string name="reply_title">Odpověď vývojáře</string>
     <string name="about_discord_desc">Chat s vývojářem na Discordu</string>
+    <string name="about_privacy_reply">ID také umožní vývojáři odpovědět na vaše hlášení. Odpověď přijde s denním započtením.</string>
 </resources>

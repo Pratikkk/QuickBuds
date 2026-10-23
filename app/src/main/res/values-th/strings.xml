@@ -531,4 +531,5 @@
     <string name="setup_issues_body">การตั้งค่าแสดงข้อจำกัดของหูฟังและโทรศัพท์ของคุณ QuickBuds จะแจ้งหนึ่งครั้งหากรุ่นของคุณมี</string>
     <string name="reply_title">คำตอบจากนักพัฒนา</string>
     <string name="about_discord_desc">แชตกับนักพัฒนาบน Discord</string>
+    <string name="about_privacy_reply">รหัสนี้ยังช่วยให้นักพัฒนาตอบรายงานที่คุณส่งได้ คำตอบจะมาพร้อมการนับรายวัน</string>
 </resources>

@@ -529,4 +529,5 @@
     <string name="setup_issues_body">সেটিংসে আপনার ইয়ারবাড ও ফোনের সীমাবদ্ধতা লেখা আছে। আপনার মডেলে সমস্যা থাকলে QuickBuds একবার জানাবে।</string>
     <string name="reply_title">ডেভেলপারের উত্তর</string>
     <string name="about_discord_desc">Discord-এ ডেভেলপারের সাথে চ্যাট করুন</string>
+    <string name="about_privacy_reply">আইডি ডেভেলপারকে আপনার পাঠানো রিপোর্টের উত্তর দিতেও সাহায্য করে। উত্তর দৈনিক গণনার সাথে আসে।</string>
 </resources>

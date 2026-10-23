@@ -529,4 +529,5 @@
     <string name="setup_issues_body">As Configurações listam os limites dos seus fones e do seu telefone. O QuickBuds também avisa uma vez se o seu modelo tiver algum.</string>
     <string name="reply_title">Resposta do desenvolvedor</string>
     <string name="about_discord_desc">Converse com o desenvolvedor no Discord</string>
+    <string name="about_privacy_reply">O ID também permite que o desenvolvedor responda a um relatório que você enviou. A resposta chega com a contagem diária.</string>
 </resources>

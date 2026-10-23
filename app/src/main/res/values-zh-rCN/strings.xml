@@ -531,4 +531,5 @@
     <string name="setup_issues_body">设置中列出了耳机和手机的限制。如果你的型号有，QuickBuds 也会提醒一次。</string>
     <string name="reply_title">开发者的回复</string>
     <string name="about_discord_desc">在 Discord 上与开发者聊天</string>
+    <string name="about_privacy_reply">该 ID 还能让开发者回复你发送的报告。回复随每日计数一起送达。</string>
 </resources>

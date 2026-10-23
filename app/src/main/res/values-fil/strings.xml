@@ -529,4 +529,5 @@
     <string name="setup_issues_body">Nakalista sa Mga Setting ang mga limitasyon ng iyong earbuds at telepono. Magsasabi rin ang QuickBuds nang isang beses kung mayroon ang iyong modelo.</string>
     <string name="reply_title">Sagot ng developer</string>
     <string name="about_discord_desc">Makipag-chat sa developer sa Discord</string>
+    <string name="about_privacy_reply">Pinapayagan din ng ID ang developer na sumagot sa ulat na ipinadala mo. Dumarating ang sagot kasama ng pang-araw-araw na bilang.</string>
 </resources>

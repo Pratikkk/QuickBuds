@@ -531,4 +531,5 @@
     <string name="setup_issues_body">सेटिंग में आपके इयरबड और फ़ोन की सीमाएँ दी गई हैं। आपके मॉडल में कोई हो तो QuickBuds एक बार बताएगा।</string>
     <string name="reply_title">डेवलपर का उत्तर</string>
     <string name="about_discord_desc">Discord पर डेवलपर से चैट करें</string>
+    <string name="about_privacy_reply">आईडी से डेवलपर आपकी भेजी रिपोर्ट का उत्तर भी दे सकता है। उत्तर दैनिक गिनती के साथ आता है।</string>
 </resources>

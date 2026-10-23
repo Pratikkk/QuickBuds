@@ -529,4 +529,5 @@
     <string name="setup_issues_body">Tetapan menyenaraikan had earbud dan telefon anda. QuickBuds juga memberitahu sekali jika model anda mempunyainya.</string>
     <string name="reply_title">Balasan daripada pembangun</string>
     <string name="about_discord_desc">Sembang dengan pembangun di Discord</string>
+    <string name="about_privacy_reply">ID ini juga membolehkan pembangun membalas laporan yang anda hantar. Balasan datang bersama pengiraan harian.</string>
 </resources>
