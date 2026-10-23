@@ -1,5 +1,5 @@
 # Checks the locales, runs the Android unit tests and lint, builds the release APK and AAB, runs the core and desktop
-# tests and builds the desktop archives (scripts/desktop-dist.sh). Runs on every push to main and rework/rewrite, on pull
+# tests and builds the desktop archives (scripts/desktop-dist.sh). Runs on every push to main and desktop-rework-ui, on pull
 # requests, and by hand (`gh workflow run Build`, for a test APK made from the phone). On the PC,
 # scripts/release-build.sh does the same, much faster (docs/CONTRIBUTING.md). The APK is signed
 # when the repository has the RELEASE_KEYSTORE_B64 and RELEASE_KEY_PROPERTIES secrets, so it installs over the
@@ -8,7 +8,7 @@ name: Build
 
 on:
   push:
-    branches: [main, rework/rewrite]
+    branches: [main, desktop-rework-ui]
   pull_request:
   workflow_dispatch:
     inputs:
