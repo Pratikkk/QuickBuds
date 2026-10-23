@@ -91,8 +91,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         && (pnc_listed.is_some() || flagged(Some("personalAnc")))
         && (s.caps.supports(CMD_PERSONAL_NOISE) || s.manual);
     if pnc || !items.is_empty() {
-        label(ui, x0, y, t(&tr, "earbuds_section_features"));
-        y += 34.0;
+        if !two { label(ui, x0, y, t(&tr, "earbuds_section_features")); y += 34.0; }
         let pnc_h = if pnc { ROW } else { 0.0 };
         let rows_h: f32 = pnc_h + items.iter().map(|i| ROW + if i.kind > 0 && i.on { 56.0 } else { 0.0 }).sum::<f32>();
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, rows_h));
@@ -138,8 +137,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let has_alert = s.caps.supports(CMD_SET_ALERT_VOLUME) && s.alert_volume.is_some();
     let has_tap = s.model.is_some_and(|m| m["tapLevel"] == 1) && (s.manual || s.caps.supports(CMD_SET_TAP_LEVEL) && s.tap_level.is_some());
     if has_alert || has_tap {
-        label(ui, x0, y, t(&tr, "earbuds_section_sounds"));
-        y += 34.0;
+        if !two { label(ui, x0, y, t(&tr, "earbuds_section_sounds")); y += 34.0; }
         let n = has_alert as usize + has_tap as usize;
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 96.0 * n as f32));
         glass::flat_at(ui, card, 28.0, 1.0);
@@ -191,8 +189,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
 
     // About: the firmware. No updates here: a failed flash can brick the buds, so it points to HeyMelody.
     if s.caps.supports(CMD_QUERY_FIRMWARE) {
-        label(ui, x0, y, t(&tr, "earbuds_section_about"));
-        y += 34.0;
+        if !two { label(ui, x0, y, t(&tr, "earbuds_section_about")); y += 34.0; }
         let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW));
         glass::flat_at(ui, card, 28.0, 1.0);
         glass::row_at(ui, "fw", card, icons::INFO, t(&tr, "row_firmware_title"), s.firmware.as_deref().unwrap_or("—"), Trailing::None, true);

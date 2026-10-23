@@ -89,9 +89,12 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
 
     // On call
     if !m.on_call.is_empty() {
+        // Wide: the label sits beside the Left / Right buttons, so both cards start on one line.
+        let aligned = two && !m.one_button;
         let (cx, mut cy) = if two { (x0 + w + 14.0, y_top) } else { (x0, y) };
-        glass::text(ui, Pos2::new(cx + 6.0, cy + 14.0), Align2::LEFT_CENTER, t(&tr, "gesture_section_on_call"), 14.0, 0.72);
-        cy += 34.0;
+        let label_y = if aligned { y_top - 18.0 - 46.0 / 2.0 } else { cy };
+        glass::text(ui, Pos2::new(cx + 6.0, label_y + if aligned { 0.0 } else { 14.0 }), Align2::LEFT_CENTER, t(&tr, "gesture_section_on_call"), 14.0, 0.72);
+        if !aligned { cy += 34.0; }
         let card = Rect::from_min_size(Pos2::new(cx, cy), Vec2::new(w, ROW * m.on_call.len() as f32));
         glass::flat_at(ui, card, 28.0, 1.0);
         for (i, k) in m.on_call.iter().enumerate() {
