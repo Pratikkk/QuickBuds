@@ -1785,7 +1785,7 @@ class BudsConnectionManager(private val context: Context) {
                 // Also a push report for the engine: it confirms a game-mode operation.
                 val gameId = Capabilities.gameModeId(context)
                 syncHandler.post {
-                    execute(sync.report(mapOf(gameId to (if (on) 1 else 0)), null, SystemClock.elapsedRealtime()))
+                    execute(sync.report(mapOf(gameId to (if (on) 1 else 0)), null, SystemClock.elapsedRealtime(), push = true))
                 }
             }
             return

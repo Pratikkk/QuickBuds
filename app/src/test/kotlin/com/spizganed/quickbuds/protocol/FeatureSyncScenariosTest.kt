@@ -29,7 +29,7 @@ class FeatureSyncScenariosTest {
             val actual = when (e.getString("ev")) {
                 "tap" -> sync.tap(op(e), now)
                 "ack" -> sync.ack(e.getInt("seq"), e.getInt("status"), now)
-                "report" -> sync.report(intMap(e.getJSONObject("values")), if (e.isNull("seq")) null else e.getInt("seq"), now)
+                "report" -> sync.report(intMap(e.getJSONObject("values")), if (e.isNull("seq")) null else e.getInt("seq"), now, e.optBoolean("push", false))
                 "tick" -> sync.tick(now)
                 "disconnect" -> sync.disconnect(now)
                 "reconnect" -> sync.reconnect(now)

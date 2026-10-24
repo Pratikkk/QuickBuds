@@ -98,7 +98,8 @@ class FeatureSync {
         return out
     }
 
-    fun report(values: Map<Int, Int>, seq: Int?, now: Long): List<Out> {
+    /** [push]: the buds sent it on their own (an event). A read reply that is not ours is NOT a push: it only updates values. */
+    fun report(values: Map<Int, Int>, seq: Int?, now: Long, push: Boolean = false): List<Out> {
         val out = mutableListOf<Out>()
         for ((id, value) in values.toSortedMap()) {
             if (this.values[id] != value) {
@@ -110,7 +111,7 @@ class FeatureSync {
         val a = active ?: return out
         val confirms = when (a.phase) {
             Phase.REPLY -> seq != null && seq == a.readSeq
-            Phase.PUSH -> seq == null && a.op.key in values
+            Phase.PUSH -> push && a.op.key in values
             Phase.RESTART -> a.reconnected
             Phase.ACK -> false
         }
