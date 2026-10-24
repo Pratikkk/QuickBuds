@@ -23,6 +23,8 @@ class AncModes private constructor(
 ) {
     fun supports(mode: String) = mode in set
     fun bit(mode: String): Int? = set[mode]
+    /** App mode name -> SET bit, as the product-id reply names them. Empty when the model has no table. */
+    fun slots(): Map<String, Int> = set
     /** The ANC levels these buds have, low to high. */
     val levels: List<String> = LEVELS.filter { it in set }
     val isEmpty get() = set.isEmpty()

@@ -32,7 +32,7 @@ import com.spizganed.quickbuds.bluetooth.PacketLogger
 import com.spizganed.quickbuds.protocol.AncModes
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.Capabilities
-import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.RowRules
 import com.spizganed.quickbuds.protocol.Feature
 import com.spizganed.quickbuds.protocol.FeatureSync
 import com.spizganed.quickbuds.widget.AncWidgetProvider
@@ -1257,12 +1257,12 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
 
     /** Relays the rows only when what the buds support changed, not on every status poll. */
     private fun relayoutIfSupportChanged() {
-        val sig = featureRows.keys.filter { rowSupported(it) }.joinToString() +
-            Capabilities.supports(this, OpoProtocol.CMD_SET_ANC) + AncModes.of(this)
+        val rows = rowsOf(this)
+        val sig = rows.joinToString()
         if (sig == supportSignature) return
         supportSignature = sig
         if (AncModes.of(this) !== ancModes) { buildAnc(); renderAnc(activeAncMode) }
-        layoutFeatureRows()
+        layoutFeatureRows(rows)
     }
 
     /** The sound-settings rows by key, in build (default) order; laid out by [layoutFeatureRows]. */
@@ -1277,18 +1277,17 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
      * ([KEY_ROW_ORDER] / [KEY_ROW_HIDDEN]); unknown or new keys fall back to build order.
      * The tile disappears when every row is hidden.
      */
-    private fun layoutFeatureRows() {
+    private fun layoutFeatureRows(rows: Set<String> = rowsOf(this)) {
         val prefs = getSharedPreferences(ThemeRes.PREFS_NAME, MODE_PRIVATE)
         val hidden = prefs.getStringSet(KEY_ROW_HIDDEN, emptySet()).orEmpty()
         featureList.removeAllViews()
         for (key in rowOrder(prefs, featureRows.keys.toList())) {
             val row = featureRows[key] ?: continue
             (row.parent as? android.view.ViewGroup)?.removeView(row)
-            if (key !in hidden && rowSupported(key)) SettingRowFactory.addRow(featureList, row)
+            if (key !in hidden && key in rows) SettingRowFactory.addRow(featureList, row)
         }
         featureList.visibility = if (featureList.childCount == 0) View.GONE else View.VISIBLE
-        ancRow.visibility = if (Capabilities.supports(this, OpoProtocol.CMD_SET_ANC) && !AncModes.of(this).isEmpty)
-            View.VISIBLE else View.GONE
+        ancRow.visibility = if (RowRules.ANC in rows) View.VISIBLE else View.GONE
         setEnabledDeep(featureList, connectedUi != false)
     }
 
@@ -1443,28 +1442,29 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         const val KEY_ROW_HIDDEN = "homeRowHidden"
 
         /**
-         * Whether the connected buds have a row's feature at all (see [Capabilities]): a `0x0403`
+         * Whether the connected buds have a row's feature at all ([RowRules]): a `0x0403`
          * switch must be in their `0x810D` reply, a command in their `0x8100` bitmap. Nothing read
-         * yet = shown. Earbud settings gates its own rows. [ModelTest] lists the same rows.
+         * yet = no conditional row. Earbud settings gates its own rows. [ModelTest] lists the same rows.
          */
-        fun rowSupported(c: Context, key: String): Boolean = when (key) {
-            "wind" -> Capabilities.offered(c, Feature.WIND_NOISE, "windMode")
-            "game" -> Capabilities.hasFeature(c, Capabilities.gameModeId(c))
-            "hires" -> Capabilities.hasFeature(c, Feature.HIRES_CODEC) || codecPicker(c)
-            "spatial" -> Capabilities.hasFeature(c, Feature.SPATIAL_SOUND) || spatialByType(c)
-            "golden" -> Capabilities.hasFeature(c, Feature.GOLDEN_SOUND)
-            "eq" -> EqActivity.hasEq(c)
-            "dual" -> Capabilities.hasFeature(c, Feature.DUAL_DEVICE)
-            else -> true
-        }
+        fun rowSupported(c: Context, key: String): Boolean = key in rowsOf(c)
+
+        /**
+         * The rows the buds' own answers support ([RowRules]). Nothing read yet = only the
+         * unconditional rows; the last saved reply shows its rows until the fresh one arrives.
+         */
+        fun rowsOf(c: Context): Set<String> = RowRules.rows(
+            ModelCatalog.current(c)?.json,
+            Capabilities.reply(c),
+            Capabilities.commands(c),
+            AncModes.of(c).slots().takeIf { it.isNotEmpty() }
+        )
 
         /**
          * Spatial audio as HeyMelody picks it (PROTOCOL-LEGACY.md §9): buds whose bitmap has `0x012A` (or a
-         * hand-picked model with head tracking) take a type through `0x0422`, the rest feature `0x1B`.
+         * model with head tracking) take a type through `0x0422`, the rest feature `0x1B`.
          */
-        fun spatialByType(c: Context) = !spatialSwitchOnly(c) &&
-            (Capabilities.supports(c, OpoProtocol.CMD_QUERY_SPATIAL_TYPE) ||
-                (ModelCatalog.manual(c) != null && spatialHeadTracking(c)))
+        fun spatialByType(c: Context) =
+            RowRules.spatialByType(ModelCatalog.current(c)?.json, Capabilities.commands(c))
 
         /**
          * Our own key `spatialToggle` (realme Link data, PROTOCOL-LEGACY.md §9): spatial is feature `1B` alone and
@@ -1472,16 +1472,16 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
          */
         fun spatialSwitchOnly(c: Context) = ModelCatalog.current(c)?.json?.optInt("spatialToggle") == 1
 
-        /** The model's `spatialModes` has `2`: Off / Fixed / Head tracking instead of a plain switch. */
+        /** `spatialModes` holds `2`: Off / Fixed / Head tracking instead of a plain switch. */
         fun spatialHeadTracking(c: Context) =
-            ModelCatalog.current(c)?.json?.optJSONArray("spatialModes")?.toString()?.contains('2') == true
+            RowRules.spatialHeadTracking(ModelCatalog.current(c)?.json)
 
         /**
          * `[VENDOR]` HeyMelody's "High-quality audio" screen on `hiRes` models (PROTOCOL-LEGACY.md §9): the row
          * picks the codec, and the switch (Hi-Res) is live only with LDAC or LHDC V5, as there.
          */
-        fun codecPicker(c: Context) = ModelCatalog.current(c)?.json?.optInt("hiRes") == 1 &&
-            Capabilities.supports(c, OpoProtocol.CMD_QUERY_CODEC_LIST)
+        fun codecPicker(c: Context) =
+            RowRules.codecPicker(ModelCatalog.current(c)?.json, Capabilities.commands(c))
 
         /** Saved row order, completed with any key it does not name, in [defaults] order. */
         fun rowOrder(prefs: android.content.SharedPreferences, defaults: List<String>): List<String> {

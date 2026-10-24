@@ -28,6 +28,7 @@ import com.spizganed.quickbuds.protocol.FeatureSync
 import com.spizganed.quickbuds.protocol.FeatureSyncConfig
 import com.spizganed.quickbuds.protocol.GoldenSound
 import com.spizganed.quickbuds.protocol.OppoPacketFramer
+import com.spizganed.quickbuds.protocol.RowRules
 import com.spizganed.quickbuds.protocol.UserInteractionParser
 import com.spizganed.quickbuds.protocol.WearingStatusParser
 import com.spizganed.quickbuds.ui.GestureConfigStore
@@ -700,14 +701,18 @@ class BudsConnectionManager(private val context: Context) {
 
     /**
      * The Bluetooth name HeyMelody matches the model list by ([ModelCatalog]). Other buds than last
-     * time: the old product id and manual pick go, so neither names the new buds until `0x8103`.
+     * time: the old product id, manual pick, bitmap and feature reply go, so neither names the new
+     * buds until `0x8103`, and no saved row of the old buds shows on the new ones ([RowRules]).
      */
     private fun rememberDeviceName(device: BluetoothDevice) {
         val name = runCatching { device.name }.getOrNull() ?: return
         val prefs = featurePrefs()
         if (prefs.getString(ModelCatalog.KEY_DEVICE_NAME, null) == name) return
         prefs.edit().putString(ModelCatalog.KEY_DEVICE_NAME, name)
-            .remove(Capabilities.KEY_PRODUCT_ID).remove(ModelCatalog.KEY_MANUAL).apply()
+            .remove(Capabilities.KEY_PRODUCT_ID).remove(ModelCatalog.KEY_MANUAL)
+            .remove(Capabilities.KEY_COMMANDS).remove(Capabilities.KEY_FEATURES).apply()
+        // The in-memory copy is the saved reply of the old buds: drop it too, until the first fresh reply.
+        featureStates = emptyMap()
     }
 
     private fun featurePrefs() = context.getSharedPreferences(ThemeRes.PREFS_NAME, Context.MODE_PRIVATE)
@@ -1042,9 +1047,14 @@ class BudsConnectionManager(private val context: Context) {
         handler.post { listeners.forEach { it.onCapabilities() } }
     }
 
-    /** `0x010D` for the model in use (PROTOCOL-LEGACY.md §9): its own id list, wind noise only where the model has the flag. */
+    /**
+     * `0x010D` for the model in use (PROTOCOL-LEGACY.md §9): its own id list plus the ids a model
+     * flag names and both game-mode ids ([RowRules.askQuery]). A model without a list uses the
+     * default list, which already holds those ids except wind noise.
+     */
     private fun statusQuery(seq: Int = 0x00) = ModelCatalog.current(context)?.json.let {
-        OpoProtocol.queryStatus(it?.optString("statusQuery")?.ifEmpty { null }, it?.optInt("windMode") == 1, seq)
+        val query = RowRules.askQuery(it, Capabilities.commands(context))
+        OpoProtocol.queryStatus(query, query == null && RowRules.asksWind(it), seq)
     }
 
     /** Timestamp of the last ANC command we flushed; see noteUnattributed(). */

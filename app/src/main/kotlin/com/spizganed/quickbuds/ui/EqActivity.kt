@@ -30,6 +30,7 @@ import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.RowRules
 import com.spizganed.quickbuds.protocol.Feature
 import com.spizganed.quickbuds.protocol.FeatureSync
 import org.json.JSONArray
@@ -60,10 +61,12 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         fun hasBassWave(context: Context) =
             flag(context, "bassEngine") && Capabilities.supports(context, OpoProtocol.CMD_SET_BASSWAVE_LEVEL)
 
-        /** `[VENDOR]` HeyMelody's EQ row: built-in presets (`equalizer` 1-4) or custom presets. */
-        fun hasEq(context: Context) = hasCustom(context) ||
-            ((ModelCatalog.current(context)?.json?.optInt("eqKind") ?: 1) in 1..4 &&
-                Capabilities.supports(context, OpoProtocol.CMD_SET_EQ))
+        /** `[VENDOR]` HeyMelody's EQ row: the model has EQ data and the buds accept its command ([RowRules]). */
+        fun hasEq(context: Context) = RowRules.EQ in RowRules.rows(
+            ModelCatalog.current(context)?.json,
+            Capabilities.reply(context),
+            Capabilities.commands(context)
+        )
 
         /** `[VENDOR]` `customEqMax`, else HeyMelody's default of 3. */
         fun maxCustom(context: Context) =

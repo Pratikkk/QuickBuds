@@ -12,8 +12,8 @@ import com.spizganed.quickbuds.ui.ThemeRes
  *  - the `0x810D` status reply lists only the `0x0403` feature switches the firmware has, so a
  *    feature id missing from it is a switch these buds do not have.
  *
- * Both are persisted, so a screen can ask before the service binds. Nothing read yet means
- * everything is allowed: the behaviour before detection existed, and what a Buds 4 gets anyway.
+ * Both are persisted, so a screen can ask before the service binds. A row needs the buds' answer:
+ * nothing read yet shows no conditional row ([RowRules]).
  */
 object Capabilities {
 
@@ -78,26 +78,35 @@ object Capabilities {
         return saved.split(',').any { it.toIntOrNull() == cmd }
     }
 
-    /** The game mode switch: `0x28` on buds with game sound types, else `0x06`. */
-    fun gameModeId(context: Context) = if (supports(context, OpoProtocol.CMD_GAME_SOUND))
-        Feature.GAME_MODE_MAIN else Feature.GAME_MODE
-
-    fun hasFeature(context: Context, id: Int): Boolean {
-        val saved = prefs(context).getString(KEY_FEATURES, null).orEmpty()
-        if (saved.isEmpty()) return true
-        return saved.split(',').any { it.substringBefore('=').toIntOrNull() == id }
+    /** The saved `0x8100` commands, or null when the bitmap is not read yet. */
+    fun commands(context: Context): Set<Int>? {
+        val saved = prefs(context).getString(KEY_COMMANDS, null) ?: return null
+        return saved.split(',').mapNotNull { it.toIntOrNull() }.toSet()
     }
+
+    /** The saved `0x810D` reply, or null when no reply is saved yet. */
+    fun reply(context: Context): Map<Int, Int>? {
+        val saved = prefs(context).getString(KEY_FEATURES, null).orEmpty()
+        if (saved.isEmpty()) return null
+        return saved.split(',').mapNotNull { e ->
+            val k = e.substringBefore('=').toIntOrNull()
+            val v = e.substringAfter('=', "").toIntOrNull()
+            if (k != null && v != null) k to v else null
+        }.toMap()
+    }
+
+    /** The game mode switch: `0x28` on buds with game sound types, else `0x06`. */
+    fun gameModeId(context: Context) = RowRules.gameModeId(commands(context))
+
+    /** The buds listed [id] in their last `0x810D` reply. Nothing read yet means no. */
+    fun hasFeature(context: Context, id: Int): Boolean = reply(context)?.containsKey(id) == true
 
     /**
-     * The buds listed [id] in their last `0x810D` reply, or the model picked by hand has [flag] in
-     * HeyMelody's list (`assets/models.json`). Unlike [hasFeature], nothing read means no: these rows
-     * are new, and a Buds 4 has none of them.
+     * The buds listed [id] in their last `0x810D` reply. [flag] only decides WHAT TO ASK
+     * ([RowRules.askQuery]); it never shows a row on its own.
      */
-    fun offered(context: Context, id: Int, flag: String?): Boolean {
-        val saved = prefs(context).getString(KEY_FEATURES, null).orEmpty()
-        if (saved.split(',').any { it.substringBefore('=').toIntOrNull() == id }) return true
-        return flag != null && ModelCatalog.manual(context) != null && ModelCatalog.current(context)?.json?.optInt(flag) == 1
-    }
+    @Suppress("UNUSED_PARAMETER")
+    fun offered(context: Context, id: Int, flag: String?): Boolean = reply(context)?.containsKey(id) == true
 
     fun save(context: Context, commands: Set<Int>) {
         prefs(context).edit().putString(KEY_COMMANDS, commands.sorted().joinToString(",")).apply()
