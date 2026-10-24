@@ -178,6 +178,12 @@ class BudsConnectionManager(private val context: Context) {
     /** The only timer of the feature sync: asks the engine to give up on a silent buds. */
     private val tickRunnable = Runnable { execute(sync.tick(SystemClock.elapsedRealtime())) }
 
+    /**
+     * False until the first status reply of a connection primes the engine with the buds' raw values.
+     * Without it that first reply emits `Changed` for every id and rewrites the old-path switches.
+     */
+    @Volatile private var syncPrimed = false
+
     private var bluetoothSocket: BluetoothSocket? = null
     private var connectedThread: ConnectedThread? = null
     private var isReady = false
@@ -303,6 +309,7 @@ class BudsConnectionManager(private val context: Context) {
                 caseClosing = false
                 if (audioAfterRestart) { audioAfterRestart = false; setPhoneAudio(device, on = true) }
                 handler.post { listeners.forEach { it.onConnected(true) } }
+                syncPrimed = false
                 syncHandler.post { execute(sync.reconnect(SystemClock.elapsedRealtime())) }
                 log("Ready for commands. Running init sequence...")
                 runInitSequence()
@@ -416,6 +423,7 @@ class BudsConnectionManager(private val context: Context) {
         bluetoothSocket = null
         bridge?.dropClient()
         handler.post { listeners.forEach { it.onConnected(false) } }
+        syncPrimed = false
         syncHandler.post { execute(sync.disconnect(SystemClock.elapsedRealtime())) }
         log("Disconnected")
     }
@@ -771,8 +779,10 @@ class BudsConnectionManager(private val context: Context) {
         return when (kind) {
             FeatureSync.ToastKind.REFUSED_MISSING -> context.getString(R.string.feature_refused_missing, name)
             FeatureSync.ToastKind.REFUSED_NOW ->
-                // Hi-Res refused now: the phone plays no LDAC or LHDC (reports #33 #42 #44).
-                codec?.takeIf { key == Feature.HIRES_CODEC }?.let { context.getString(R.string.hires_needs_codec, codecName(it)) }
+                // Hi-Res refused now: the phone plays no LDAC or LHDC (reports #33 #42 #44). When it
+                // already plays one of them the codec hint is wrong, so the generic text is used.
+                codec?.takeIf { key == Feature.HIRES_CODEC && it != 3 && it != 7 && it != 8 }
+                    ?.let { context.getString(R.string.hires_needs_codec, codecName(it)) }
                     ?: context.getString(R.string.feature_refused_now, name)
             FeatureSync.ToastKind.NOT_CHANGED -> context.getString(R.string.feature_not_changed, name)
             FeatureSync.ToastKind.NO_ANSWER -> context.getString(R.string.feature_no_answer, name)
@@ -1591,7 +1601,12 @@ class BudsConnectionManager(private val context: Context) {
             }
             // A reply to our own read carries the engine's number back to it (null for any other read).
             val engineSeq = wireToEngine.remove(seq)
-            syncHandler.post { execute(sync.report(raw, engineSeq, SystemClock.elapsedRealtime())) }
+            syncHandler.post {
+                // The first reply of a connection primes the engine silently: a report with equal
+                // values emits nothing, so the old-path switches keep their own paint.
+                if (!syncPrimed) { sync.init(raw); syncPrimed = true }
+                execute(sync.report(raw, engineSeq, SystemClock.elapsedRealtime()))
+            }
             return
         }
 

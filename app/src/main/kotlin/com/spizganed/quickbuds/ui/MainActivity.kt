@@ -905,6 +905,60 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     }
 
     /**
+     * A tap on the Hi-Res switch asks for [wantOn]; the switch itself does not move, the buds' own
+     * report moves it. Every dialog, the codec guard and the codec refresh are as before.
+     */
+    private fun requestHires(wantOn: Boolean) {
+        val hires = hiresSwitch ?: return
+        if (codecPicker()) {
+            val codec = manager.codec ?: return
+            confirmReconnect(R.string.codec_msg_reconnect) {
+                setSwitchQuiet(hires, wantOn)
+                manager.setCodec(codec, wantOn)
+            }
+            return
+        }
+        val apply = fun() {
+            // Buds that offer a codec list refuse this switch unless the phone plays LDAC or LHDC (status 2, reports #33 #42 #44).
+            val played = manager.codec
+            if (wantOn && manager.codecs.isNotEmpty() && played != null && played != 3 && played != 7 && played != 8) {
+                Toast.makeText(this, getString(R.string.hires_needs_codec, codecName(played)), Toast.LENGTH_LONG).show()
+                return
+            }
+            val dropSpatial = wantOn && spatialOn() && !spatialSwitchOnly()
+            confirmReconnect(
+                if (dropSpatial) R.string.codec_msg_hires_drops_spatial else R.string.codec_msg_reconnect
+            ) {
+                if (dropSpatial && spatialByType()) {
+                    manager.setSpatialType(0)
+                    paintSpatial()
+                    hires.postDelayed({
+                        manager.requestSetting(
+                            Feature.HIRES_CODEC,
+                            listOf(Feature.HIRES_CODEC to 1),
+                            FeatureSync.Confirm.READ,
+                            restarts = true
+                        )
+                    }, 300)
+                } else {
+                    manager.requestSetting(
+                        Feature.HIRES_CODEC,
+                        if (dropSpatial) listOf(Feature.SPATIAL_SOUND to 0, Feature.HIRES_CODEC to 1)
+                        else listOf(Feature.HIRES_CODEC to (if (wantOn) 1 else 0)),
+                        FeatureSync.Confirm.READ,
+                        restarts = true
+                    )
+                }
+            }
+        }
+        // The phone can switch codec after the connect: read it again before the guard looks at it.
+        if (wantOn && manager.codecs.isNotEmpty()) {
+            manager.refreshCodec()
+            hires.postDelayed(apply, 400)
+        } else apply()
+    }
+
+    /**
      * Pushes our optimistic state into the store and REPAINTS THE WIDGET.
      *
      * The refreshAll() call is the whole reason this method exists. Writing the
@@ -963,13 +1017,9 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         // --- 1. Game mode / low latency ---
         val game = SettingRowFactory.buildSwitch(this, gameModeOn)
         gameSwitch = game
-        game.setOnCheckedChangeListener { _, isChecked ->
-            // setOnCheckedChangeListener fires when we programmatically set
-            // isChecked too, which would echo a bud-side gesture back as a
-            // command. The store listener guards against that by only writing
-            // when the value actually differs.
-            if (syncingFeatures) return@setOnCheckedChangeListener
-            if (isChecked != gameModeOn) toggleGameMode(isChecked)
+        // A tap asks for the opposite value; the switch moves only when the buds report one.
+        (game as RequestSwitch).onRequest = { wantOn ->
+            if (wantOn != gameModeOn) toggleGameMode(wantOn)
         }
         addRow("game", 
             SettingRowFactory.build(
@@ -985,55 +1035,8 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         // The switches show the BUDS' state: onFeatureStates() repaints them from 0x810D.
         val hires = SettingRowFactory.buildSwitch(this, false)
         hiresSwitch = hires
-        hires.setOnCheckedChangeListener { _, isChecked ->
-            if (syncingFeatures) return@setOnCheckedChangeListener
-            setSwitchQuiet(hires, !isChecked)
-            if (codecPicker()) {
-                val codec = manager.codec ?: return@setOnCheckedChangeListener
-                return@setOnCheckedChangeListener confirmReconnect(R.string.codec_msg_reconnect) {
-                    setSwitchQuiet(hires, isChecked)
-                    manager.setCodec(codec, isChecked)
-                }
-            }
-            val apply = fun() {
-                // Buds that offer a codec list refuse this switch unless the phone plays LDAC or LHDC (status 2, reports #33 #42 #44).
-                val played = manager.codec
-                if (isChecked && manager.codecs.isNotEmpty() && played != null && played != 3 && played != 7 && played != 8) {
-                    Toast.makeText(this, getString(R.string.hires_needs_codec, codecName(played)), Toast.LENGTH_LONG).show()
-                    return
-                }
-                val dropSpatial = isChecked && spatialOn() && !spatialSwitchOnly()
-                confirmReconnect(
-                    if (dropSpatial) R.string.codec_msg_hires_drops_spatial else R.string.codec_msg_reconnect
-                ) {
-                    if (dropSpatial && spatialByType()) {
-                        manager.setSpatialType(0)
-                        paintSpatial()
-                        hires.postDelayed({
-                            manager.requestSetting(
-                                Feature.HIRES_CODEC,
-                                listOf(Feature.HIRES_CODEC to 1),
-                                FeatureSync.Confirm.READ,
-                                restarts = true
-                            )
-                        }, 300)
-                    } else {
-                        manager.requestSetting(
-                            Feature.HIRES_CODEC,
-                            if (dropSpatial) listOf(Feature.SPATIAL_SOUND to 0, Feature.HIRES_CODEC to 1)
-                            else listOf(Feature.HIRES_CODEC to (if (isChecked) 1 else 0)),
-                            FeatureSync.Confirm.READ,
-                            restarts = true
-                        )
-                    }
-                }
-            }
-            // The phone can switch codec after the connect: read it again before the guard looks at it.
-            if (isChecked && manager.codecs.isNotEmpty()) {
-                manager.refreshCodec()
-                hires.postDelayed(apply, 400)
-            } else apply()
-        }
+        // A tap asks for the opposite value; the switch moves only when the buds report one.
+        (hires as RequestSwitch).onRequest = { wantOn -> requestHires(wantOn) }
         val hiresRow = SettingRowFactory.build(
             this, R.drawable.ic_hires, R.string.row_hires_title, R.string.row_hires_sub_off, hires
         ) { if (codecPicker()) codecSheet() else hires.performClick() }
@@ -1240,8 +1243,6 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
             return
         }
         sub?.setText(R.string.row_game_sub)
-        // The switch stayed where the tap left it: put back the buds' state from the store.
-        gameSwitch?.let { setSwitchFromBuds(it, gameModeOn) }
         gameSwitch?.isEnabled = connectedUi != false
     }
 
