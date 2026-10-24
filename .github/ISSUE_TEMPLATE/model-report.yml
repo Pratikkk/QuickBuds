@@ -1,17 +1,17 @@
 name: Model report
-description: How QuickBuds works with your OnePlus, OPPO or realme earbuds.
+description: How QuickBuds works with your OnePlus, OPPO, realme or DIZO earbuds.
 labels: [model report]
 body:
   - type: markdown
     attributes:
       value: >-
-        QuickBuds supports OnePlus, OPPO and realme earbuds only. Other brands use a different
+        QuickBuds supports OnePlus, OPPO, realme and DIZO earbuds only. Other brands use a different
         protocol, and QuickBuds cannot connect to them.
   - type: dropdown
     id: brand
     attributes:
       label: Brand
-      options: [OnePlus, OPPO, realme]
+      options: [OnePlus, OPPO, realme, DIZO]
     validations:
       required: true
   - type: input

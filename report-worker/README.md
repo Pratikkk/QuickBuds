@@ -25,6 +25,8 @@ npx wrangler deploy
 - In a browser: `https://quickbuds-report.<subdomain>.workers.dev/?key=<READ_KEY>`
 - For a script: add `&format=json`, and send the key as `Authorization: Bearer <READ_KEY>` instead of in the URL.
 - Only newer reports: `&after=<id>`. More reports: `&limit=100`.
+- The apps send a daily count to `/ping`.
+- Counts: add `&stats=1`, and `&days=<n>`.
 
 The key is the only access control. Keep the link private.
 

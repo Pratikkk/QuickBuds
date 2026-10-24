@@ -703,7 +703,7 @@ the active record; the phone keeps the list. A record: 4-byte id (big-endian, ch
 - **Radar graph:** per ear, sum the hearing and ear-scan biquads in dB (`20 log10 |B/A|`, 44100 Hz
   default), read at 80, 10000, 4800, 2400, 1200, 250 Hz (80 at the top, clockwise). Radius =
   `max(2, -|dB| × 10 / scale + 10)`, scales 7.5, 15, 15, 12.5, 12.5, 7.5; 10 = no change.
-- Ear scan only where `models.json` has `"earScan":1`.
+- Ear scan only where `models.json` has `"hearingScan":1`.
 - The OPPO Enco Air5 Pro refuses an ear-scan start (`0x040D 04 01 <id>`) with status `01` on Windows
   (6 times, report #44). The cause is unknown; the wear state is a guess `[CAPTURE]`.
 
@@ -727,7 +727,7 @@ the active record; the phone keeps the list. A record: 4-byte id (big-endian, ch
 - **realme models** `[VENDOR]` (realme Link, issue #8): 3D sound is feature `1B` alone and Hi-Res `18`
   alone, whatever the bitmap says; realme Link never writes one with the other (on some models it only
   warns). The Air7 Pro lists `0x012A` / `0x0422` but leaves `0x012A` unanswered. Our own key
-  `"spatialSwitch":1` (realme models with 3D sound). Wired; works on the Air7 Pro (its owner, issue #9),
+  `"spatialToggle":1` (realme models with 3D sound). Wired; works on the Air7 Pro (its owner, issue #9),
   unverified on the others.
 - **3D audio source `0x041E`** `[VENDOR]` (bitmap bit 43, with `0xEF03`): `00` the buds render 3D audio,
   `01` the phone does. HeyMelody sends only `01`, when the phone's own spatializer takes over. realme
@@ -782,9 +782,9 @@ push 0x0504 <id>                     EQ changed
   falls back to `00`). **Ids are renumbered after create / delete: always re-read `0x0122`.**
 - **Built-ins differ per model** `[VENDOR]`: `eqPresets` lists `{mode, slot}`;
   `slot` is the `0x0406` id. Buds 4: 0 Balanced, 1 Clear Vocals, 2 Bass; Nord Buds 2r: 0, 1
-  Bold, 2. Types 1-4 are named differently where `equalizer` is `2` (or Enco R / Air2). 40 of 137
+  Bold, 2. Types 1-4 are named differently where `equalizer` is `2` (or Enco R / Air2). 41 of 143
   models have none.
-- **realme** `[VENDOR]` realme Link: 27 realme models have four built-ins, not in HeyMelody's list.
+- **realme** `[VENDOR]` realme Link: 28 realme models have four built-ins, not in HeyMelody's list.
   `0x0406` ids: 0 Pure Raw, 1 Deep Bass, 2 Pure Voice, 3 Pure Bass. `models.json` gives them our own
   types 101-104 (Pure Raw, Deep Bass, Pure Voice, Pure Bass), `equalizer` 1. T110 and T01 have three
   other presets with unknown ids: no EQ until a capture. Firmware-gated: use `eqPresetsCompat`, else `eqPresetsByFirmware`, else

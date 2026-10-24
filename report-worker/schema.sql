@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS reports (
   description TEXT NOT NULL,
   crash INTEGER NOT NULL,    -- 1: sent from the crash dialog
   log TEXT,                  -- null when the person turned the log off
+  app_id TEXT,               -- the app's own install ID (UUID); null when the app sends none
   status TEXT NOT NULL DEFAULT 'new',  -- new, working, done, unsupported, no_log, no_description, needs_btsnoop
   note TEXT,                 -- the developer's one-line reason for the status
   reply TEXT,                -- the developer's answer to the person; shown once in the app

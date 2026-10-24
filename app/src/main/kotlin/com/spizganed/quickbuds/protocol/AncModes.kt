@@ -7,7 +7,7 @@ import org.json.JSONArray
 /**
  * The noise-control modes one model has and the `0x0404` bit of each (PROTOCOL-LEGACY.md §5).
  *
- * `[VENDOR]` HeyMelody's per-model list, `noiseReductionMode` in `assets/models.json`: a tree of
+ * `[VENDOR]` HeyMelody's per-model list, `ancModes` in `assets/models.json`: a tree of
  * `{modeType, protocolIndex, childrenMode}`. A SET sends a mode's own `protocolIndex` as a bit;
  * a report's bit is looked up in the same tree,
  * parents first, then children. That is why Off is SET as bit 0 but reported as bit 3

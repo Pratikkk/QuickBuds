@@ -95,7 +95,7 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
 
     /**
      * The model's built-in presets as (`0x0406` id, name), in HeyMelody's order. `[VENDOR]` its per-model
-     * `equalizerMode` (`assets/models.json`): each `modeType` names a preset and its `protocolIndex` is
+     * `eqPresets` (`assets/models.json`): each `modeType` names a preset and its `protocolIndex` is
      * the id, so the same id is a different preset on another model (Nord Buds 2R: 1 = Bold). Names
      * are `DisplayContentUtils.d()`. Nothing detected yet = Buds 4; a model without the list gets none.
      */

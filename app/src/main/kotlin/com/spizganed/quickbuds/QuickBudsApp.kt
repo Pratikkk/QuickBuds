@@ -140,7 +140,7 @@ class QuickBudsApp : Application() {
             appendLine("device : $device")
             appendLine("thread : ${thread.name}")
             appendLine("version: ${installVersion(context)}")
-            // Diagnostic recorded by ThemeRes.apply: names the first app frame seen
+            // Diagnostic recorded by ThemeRes.select: names the first app frame seen
             // when the resource access that blocks applyOverrideConfiguration was
             // set up. Absent when nothing in the app appears in that path.
             runCatching {

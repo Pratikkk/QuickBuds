@@ -3,12 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.spizganed.quickbuds">
 
-    <uses-feature android:name="android.software.companion_device_setup" android:required="true" />
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
 
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
@@ -40,10 +38,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!--
-      ONLY for the crash reporter's API<=28 fallback path, where there is no
-      MediaStore.Downloads to write through. On API 29+ this declaration is
-      ignored and MediaStore is used instead, so no runtime prompt is ever shown
-      on a modern device. Do not raise maxSdkVersion.
+      For two API<=28 paths: the crash log in Download/QuickBuds and the Dev
+      Tools log export. On API 29+ both write through MediaStore, so no runtime
+      prompt is ever shown on a modern device. Do not raise maxSdkVersion.
     -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -64,7 +61,7 @@
       matter how early in onCreate it was called (the trace pointed at
       ContextThemeWrapper.applyOverrideConfiguration).
 
-      The per-activity theme is set by ThemeRes.apply() before super.onCreate
+      The per-activity theme is set by ThemeRes.select() before super.onCreate
       instead, which runs before this attribute would ever have been read. If a
       theme is added back here, the app crashes on launch again.
     -->

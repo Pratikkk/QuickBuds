@@ -3,7 +3,7 @@
   Paths exposed by the app-update FileProvider.
 
   Only the cache directory is exposed, and only for this one flow: the downloaded
-  APK is written to cacheDir (see UpdateActivity.APK_NAME) and handed to the
+  APK is written to cacheDir (see UpdateActivity.download, `quickbuds-update.apk`) and handed to the
   package installer as a content:// URI. Nothing else in the app's storage is
   reachable through this provider.
 
