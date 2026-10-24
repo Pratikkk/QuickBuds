@@ -9,7 +9,7 @@ import java.util.Locale
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * Packet logging foundation (roadmap item #1).
+ * Packet logging foundation.
  *
  * Every TX frame, RX frame and status line in BudsConnectionManager flows
  * through its private log(), which now also calls PacketLogger.log().
@@ -19,11 +19,11 @@ import java.util.concurrent.CopyOnWriteArrayList
  *         logcat | grep QuickBuds-Packets
  *   - Appends to packets.log in app-specific external storage, so the log
  *     survives app restarts and can be opened in a hex editor / text viewer.
- *   - In-memory ring buffer (getLines()) so the Dev Tools screen (#7) can
+ *   - In-memory ring buffer (getLines()) so the Dev Tools screen can
  *     display live log content without file I/O on the UI thread.
  *
  * Toggle ENABLED to false for release builds. Will later be exposed as the
- * dev-mode switch (roadmap item #7).
+ * dev-mode switch.
  */
 object PacketLogger {
 

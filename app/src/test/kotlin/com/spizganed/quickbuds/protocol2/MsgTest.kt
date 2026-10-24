@@ -22,7 +22,7 @@ class MsgTest {
             b(0, 0xFF, 0x77, 0x5A, 0xEA, 0x67, 0x0E, 0x20, 0x07), b(0, 0x9B, 0x2C, 0x50, 0x80),
         )
         for (bit in 0 until 72) maps += ByteArray(11).also { it[1 + bit / 8] = (1 shl (bit % 8)).toByte() }
-        // The shipping table lacks the commands added for bits 35, 64, 67 and 68.
+        // The shipping table holds the commands for bits 35, 64, 67 and 68.
         val added = setOf(0x0419, 0x0136, 0x0433, 0x0432, 0x0135, 0x0435, 0x0117)
         for (map in maps) {
             val new = Bitmap.parse(map)!!

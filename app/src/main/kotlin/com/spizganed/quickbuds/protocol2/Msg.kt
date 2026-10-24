@@ -110,7 +110,7 @@ class Bitmap private constructor(private val cmds: Set<Int>?) {
 
 /** A decoded message from the buds. */
 sealed class Msg {
-    // Replies (section 4)
+    // Replies (section 6)
     data class BitmapReply(val bitmap: Bitmap) : Msg()
     /** 24-bit product id, as the buds send it. */
     data class ProductId(val id: Int) : Msg()

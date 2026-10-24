@@ -37,8 +37,8 @@ object SimpleLog {
             msg == "Disconnected" -> link("Disconnected")
             msg.startsWith("Connection lost") -> link("Connection lost")
             msg == "Case closed" -> link("Case closed, the buds disconnected")
-            msg.startsWith("Reconnect after loss") -> Regex("(\\d+)/5").find(msg)?.let { link("Reconnecting, try ${it.groupValues[1]} of 5") }
-                ?: problem("Stopped reconnecting after 5 tries")
+            msg.startsWith("Reconnect after loss") -> Regex("(\\d+)/8").find(msg)?.let { link("Reconnecting, try ${it.groupValues[1]} of 8") }
+                ?: problem("Stopped reconnecting after 8 tries")
             msg.startsWith("Auto-retry") -> link("Could not connect, trying again")
             msg.startsWith("Giving up") || msg.startsWith("All connection methods failed") -> problem("Could not connect to the buds")
             msg.startsWith("Bridge on") -> link("Bridge on")
@@ -55,7 +55,7 @@ object SimpleLog {
             msg.startsWith("BTN EVT:") -> got(gesture(after))
             msg.startsWith("FIT:") -> got(fit(msg))
             msg.startsWith("KEYFN:") -> got("Gestures read")
-            msg.startsWith("KEYFN DIFF:") && "NO CHANGE" !in msg -> got("Gestures differ from the first reading")
+            msg.startsWith("KEYFN DIFF:") && "NO CHANGE" !in msg -> got("Gestures differ from the last reading")
             msg.startsWith("EQ: current=") -> got("Equalizer read")
             msg.startsWith("CODEC:") -> got("Audio codec read")
             msg.startsWith("PERSONAL ANC result") -> got("Personalised noise cancelling test finished")

@@ -19,8 +19,8 @@ package com.spizganed.quickbuds.protocol
  *
  * READ docs/PROTOCOL-LEGACY.md BEFORE EDITING THIS FILE. It documents the frame layout,
  * every known command, the ANC set-vs-notify trap, and the assumptions that were
- * already proven wrong once. Its [OSS] tags and the README's Credits record which
- * source each area came from; tag a new constant there when you add it here.
+ * already proven wrong once. Its evidence tags record the source of each area; tag a new
+ * constant there when you add it here.
  *
  * Do not copy code from those projects without checking their licenses first.
  */
@@ -121,7 +121,7 @@ object OpoProtocol {
     /** Who renders 3D audio: `0x041E 00` the buds, `01` the phone. realme Link sends `00` on connect. `[VENDOR]` (PROTOCOL-LEGACY.md §9). */
     const val CMD_SPATIAL_SOURCE = 0x041E
     /**
-     * Codec picker on `highAudio` models (PROTOCOL-LEGACY.md §9), `[VENDOR]`, unverified on buds: read the
+     * Codec picker on `hiRes` models (PROTOCOL-LEGACY.md §9), `[VENDOR]`, unverified on buds: read the
      * current codec with `0x0114` -> `00 <codec>`, the offered ones with `0x0123` -> `00 <u16 LE mask>`
      * (bit k = codec k + 1), write `0x041A <codec> <hiRes> 00`. The buds restart after the write.
      */
@@ -146,7 +146,7 @@ object OpoProtocol {
 
     private var seqCounter = 0x01
 
-    /** 0xC0..0xDF belongs to the feature-sync engine (see local/FEATURE-SYNC.md): skip it. */
+    /** 0xC0..0xDF belongs to the feature-sync engine (see docs/FEATURE-SYNC.md): skip it. */
     @Synchronized
     private fun nextSeq(): Int {
         val seq = seqCounter
@@ -404,7 +404,7 @@ object OpoProtocol {
      *     02 04   "                              (…the source lists all three)
      *     04 01   getIntelligentNoiseReductionMode
      *
-     * WHY THIS EXISTS: the hold's ANC cycle is the one thing this app cannot yet configure.
+     * WHY THIS EXISTS: the hold's ANC cycle has its own write (setHoldAncModes).
      * Its key-function byte (`0x08`) only *reports* that the hold cycles ANC — measured on
      * the device, clearing that byte did not stop the cycle, and which modes it stepped
      * through was decided entirely on the vendor side. The mode list lives HERE instead, and
@@ -463,14 +463,13 @@ object OpoProtocol {
      * ([KeyFunctionParser.DEVICE_TYPE_BOTH]), which the buds fan out to both sides: the
      * following `0x8108` read-back always showed the SAME `fn` on `dev=0x01` AND `dev=0x02`,
      * never `dev=0x04` itself. See [KeyFunctionParser.BUTTON_ON_CALL] for the full capture and
-     * what is still `[INFERRED]` (which act is which UI row).
+     * the confirmed act-to-row mapping.
      */
     /**
      * `act 0x02`, toggled `[CAPTURE]` between `fn 0x00` and `fn 0x1D` while he switched
      * HeyMelody's on-call **double tap** row between None and Answer/end call, twice. The
-     * bytes are exactly what shipped from the vendor app; only the ENGLISH LABEL ("double
-     * tap") is `[INFERRED]` from the order he described the two rows in, not read off the
-     * wire — see [KeyFunctionParser.BUTTON_ON_CALL].
+     * bytes are exactly what shipped from the vendor app; the ENGLISH LABEL ("double tap")
+     * is `[TESTED]` on a real call — see [KeyFunctionParser.BUTTON_ON_CALL].
      *
      * Named (not inlined) so [com.spizganed.quickbuds.ui.OnCallConfigStore] can reverse-map a
      * device reading back to a row without duplicating these numbers.
@@ -481,8 +480,8 @@ object OpoProtocol {
     /**
      * `act 0x06`, toggled `[CAPTURE]` between `fn 0x00` and `fn 0x1C` while he switched
      * HeyMelody's on-call **long hold** row between None and Decline call, twice. Same
-     * caveat as the double-tap pair above: the bytes are measured, the "long hold" label is
-     * `[INFERRED]`.
+     * evidence as the double-tap pair above: the bytes are measured, and the "long hold"
+     * label is `[TESTED]` on a real call.
      */
     const val ON_CALL_ACT_LONG_HOLD = 0x06
     const val ON_CALL_FN_DECLINE = 0x1C
@@ -554,10 +553,8 @@ object OpoProtocol {
      * getKeyFunction (0x0108) — read the CURRENT gesture bindings.
      *
      * READ-ONLY, and deliberately so: it reports what the buds are already doing,
-     * so it cannot change state or break a binding. The 0x8108 reply is the cheapest
-     * shot at learning the `function` enum, which is the one thing blocking gesture
-     * configuration in our app (PROTOCOL-LEGACY.md §6). It may also hand us the enum straight
-     * from the device, which would remove the need for a HeyMelody capture.
+     * so it cannot change state or break a binding. The 0x8108 reply carries the function
+     * enum; PROTOCOL-LEGACY.md §6 lists the measured values.
      *
      * Payload is a bare query (no payload), matching the other 0x01xx reads. The buds
      * DO answer it: the reply is `<status> <count> <4-byte entries>...` and its layout
@@ -607,7 +604,7 @@ object OpoProtocol {
 
     /**
      * [statusQuery]: the model's `statusQuery` (hex ids, HeyMelody's per-model list, PROTOCOL-LEGACY.md §9); a model
-     * without one gets the full list below. [windNoise]: the model's `windNoise` flag adds [Feature.WIND_NOISE].
+     * without one gets the full list below. [windNoise]: the model's `windMode` flag adds [Feature.WIND_NOISE].
      */
     fun queryStatus(statusQuery: String? = null, windNoise: Boolean = false, seq: Int = 0x00): ByteArray {
         val ids = (statusQuery?.split(' ')?.map { it.toInt(16).toByte() }?.toByteArray() ?: byteArrayOf(
@@ -983,7 +980,7 @@ object EqCodec {
 
     /** The tag every captured preset carries; used for a new preset, which has none of its own yet. */
     val DEFAULT_TAG = byteArrayOf(GAIN_MIN.toByte(), GAIN_MAX.toByte())
-    /** HeyMelody's bands where the model list gives none (`customEqFrequency`: 10 bands on 8 models). */
+    /** HeyMelody's bands where the model list gives none (`customEqBands`: 10 bands on 10 models). */
     val DEFAULT_FREQS = listOf(62, 250, 1000, 4000, 8000, 16000)
 
     fun newPreset(name: String, freqs: List<Int>) = Preset(0, name, freqs, List(freqs.size) { 0 }, false, DEFAULT_TAG)
@@ -1012,7 +1009,7 @@ object EqCodec {
 /**
  * Parser for the 0x0204 subType 0x05 "game mode changed" active report.
  *
- * Frame shape (7-byte payload after the 8-byte header):
+ * Frame shape (2-byte payload after the 9-byte header):
  *
  *     AA 09 00 00 04 02 FF 02 00 05 01
  *     |  |  |  |  |  |  |  |  |  |  +-- payload[1] = state (0x01 ON, 0x00 OFF)
@@ -1100,15 +1097,13 @@ object GameModeParser {
  * The `function` VALUES were unknown for a long time and are now MEASURED — see
  * `GestureAction.functionByte` and PROTOCOL-LEGACY.md §6. Do not re-derive them.
  *
- * WHAT IS STILL UNKNOWN, AND MUST NOT BE NAMED:
- *   - the `buttonAction` NUMBERS: they are NOT the `0x0204` subType `0xF1` action
- *     numbers. `F1` reports single tap as `0x00` and long press as `0x04`; this
- *     reply binds `0x01` as well as `0x04`. Plausible that 1..6 = single, double,
- *     triple, long press, slide up, slide down, but that is `[GUESS]`.
+ * THE `buttonAction` NUMBERS ARE MEASURED, not guessed: 1 single, 2 double, 3 triple,
+ * 4 hold, 5 slide, 6 long hold (PROTOCOL-LEGACY.md §6). They are NOT the `0x0204`
+ * subType `0xF1` action numbers: `F1` reports single tap as `0x00` and long press as
+ * `0x04`, and this reply binds `0x01` as well as `0x04`.
  *
- * So the `buttonAction` field is still printed as a NUMBER ONLY. A dropdown built on
- * a guessed enum looks finished while sending the wrong thing, and guessing ANC bits
- * already cost this project a regression (PROTOCOL-LEGACY.md §5).
+ * The field is still printed as a NUMBER ONLY, so the line needs no name table.
+ * Guessing ANC bits already cost this project a regression (PROTOCOL-LEGACY.md §5).
  *
  * Because the layout is exactly the thing that was once wrong here, the log line
  * still ends with `RAW=[...]`, so a capture stays readable by eye even if a future
@@ -1144,20 +1139,16 @@ object KeyFunctionParser {
      * call`, one combined option) and **long hold** (`None` / `Decline call`). Measured from
      * the capture:
      *
-     *     act 0x02  fn 0x00 <-> 0x1D   (toggled twice — believed double tap, see caveat below)
-     *     act 0x06  fn 0x00 <-> 0x1C   (toggled twice — believed long hold, see caveat below)
+     *     act 0x02  fn 0x00 <-> 0x1D   (toggled twice — double tap)
+     *     act 0x06  fn 0x00 <-> 0x1C   (toggled twice — long hold)
      *
      * `act 0x03` is untouched in every capture — a third slot this group has but HeyMelody's
      * UI never exercised, so its meaning is still unknown.
      *
-     * **THE BYTES ARE MEASURED; THE ENGLISH LABELS ARE `[INFERRED]`.** Unlike the primary
-     * group's `function` enum (§6, pinned down independently via a live `F1` frame per
-     * value), on-call has no such second signal — nothing raises an `F1` frame while on a
-     * call in any capture taken so far. The act-to-row mapping above rests on the order he
-     * described the two rows in, not on anything read off the wire. Writing these bytes back
-     * is still safe (they are HeyMelody's own, byte-for-byte), but if the wrong UI switch
-     * turns out to trigger the wrong result on a real call, swap the two `act` values first —
-     * that is the only place the guess could be wrong, not the bytes themselves.
+     * **THE BYTES ARE MEASURED; THE ENGLISH LABELS ARE `[TESTED]`.** The two rows are
+     * double tap (`None` / `Answer + end call`) and long hold (`None` / `Decline call`),
+     * confirmed on a real call (PROTOCOL-LEGACY.md §6). Writing these bytes back is safe:
+     * they are HeyMelody's own, byte-for-byte.
      *
      * `act 0x02` and `act 0x03` also exist in `btn 0x01` (the primary group) with UNRELATED
      * meanings (primary double tap / triple tap). A write that matched on (side, action)
@@ -1317,9 +1308,10 @@ object KeyFunctionParser {
      * slot does appear and disappear as a binding is cleared.
      *
      * NO CHANGE is stated explicitly rather than returning an empty string, because it
-     * is a REAL RESULT here: rebinding the HOLD cannot move `fn` at all (the vendor app
-     * offers the hold only the ANC cycle), so "nothing moved" is the expected outcome
-     * of that particular experiment and must not be readable as a failure to run.
+     * is a REAL RESULT here: rebinding the ANC-cycle HOLD cannot move `fn` at all (the
+     * ANC-cycle hold is offered only the ANC modes, so that hold cannot be bound to voice
+     * assistant), so "nothing moved" is the expected outcome of that particular experiment
+     * and must not be readable as a failure to run.
      */
     fun diff(previous: String, current: String): String {
         val before = parseSignature(previous)
@@ -1381,11 +1373,10 @@ object KeyFunctionParser {
  * Frame shape (captured on Buds 4, 5 samples across several sessions):
  *
  *     AA 0D 00 00 04 02 FF 06 00 F1 01 01 XX YY 02
- *     |  |  |  |  |  |  |  |  |  |  |  |  |  |  +-- ? (constant 0x02 so far)
- *     |  |  |  |  |  |  |  |  |  |  |  |  +--+----- options int16 (see below)
- *     |  |  |  |  |  |  |  |  |  |  |  +---------- payload[4] = context/field
- *     |  |  |  |  |  |  |  |  |  |  +------------- payload[3] = button id
- *     |  |  |  |  |  |  |  |  |  +---------------- payload[2] = action
+ *     |  |  |  |  |  |  |  |  |  |  |  |  |  |  +-- payload[5] = context/field
+ *     |  |  |  |  |  |  |  |  |  |  |  |  +--+----- payload[4] = function
+ *     |  |  |  |  |  |  |  |  |  |  |  +---------- payload[3] = action
+ *     |  |  |  |  |  |  |  |  |  |  +------------- payload[2] = button id
  *     |  |  |  |  |  |  |  |  +------------------- payload[1] = side (0x01 L, 0x02 R)
  *     |  |  |  |  |  |  |  +---------------------- payload[0] = subType 0xF1
  *     |  |  |  |  |  |  +------------------------- 0x06  (payload length)
@@ -1407,7 +1398,7 @@ object KeyFunctionParser {
  *     byte3 = the bound FUNCTION, as the buds report it — matching the 0x8108 reply's
  *                         `function` byte. See the correspondence below.
  *     byte4 = context
- *     then  = int16 options, little endian
+ *     then  = int16 options from payload[6], little endian
  *
  * THE OLD CLAIM HERE WAS WRONG — do not restore it. This comment used to say "ANC
  * changes made on the BUDS raise no 0x0204 subtype event — verified three times".
@@ -1423,12 +1414,12 @@ object KeyFunctionParser {
  * THE CONCLUSION THAT USED TO SIT HERE WAS TOO STRONG, and it is kept only so it is not
  * restored. It read "byte3 is identical for every gesture of the same action+side,
  * therefore it cannot say what the gesture did", with two long presses — one cycling ANC,
- * one firing voice assistant — offered as the proof. That example cannot exist: the hold
- * is offered only the ANC modes, so a hold cannot be bound to voice assistant, and a
- * binding is one function per (device, button, action) anyway. The observation never
- * supported the conclusion.
+ * one firing voice assistant — offered as the proof. That example cannot exist: the
+ * ANC-cycle hold is offered only the ANC modes, so that hold cannot be bound to voice
+ * assistant, and a binding is one function per (device, button, action) anyway. The
+ * observation never supported the conclusion.
  *
- * BYTE2 AND BYTE3 ARE THE KEY-FUNCTION MAPPING. PROTOCOL-LEGACY.md §6.1 asked whether byte3
+ * BYTE2 AND BYTE3 ARE THE KEY-FUNCTION MAPPING. PROTOCOL-LEGACY.md §6 asked whether byte3
  * carries the bound function. It does — and byte2 carries the key-function *action*
  * number, so the F1 frame is the key-function entry for the gesture that fired:
  *
@@ -1440,7 +1431,7 @@ object KeyFunctionParser {
  *
  * Four independent slots, four DIFFERENT function values, all matching — that is not a
  * coincidence, and byte2 == the key-function `act` in every one of them. The F1 numbering
- * is therefore NOT the key-function numbering (as §6.1 already warned); byte2 here is
+ * is therefore NOT the key-function numbering (as §6 already warned); byte2 here is
  * already a key-function `act`, not an F1 action id.
  *
  * AN EARLIER REVISION OF THIS COMMENT CLAIMED THE OPPOSITE, using this frame as its
@@ -1455,15 +1446,9 @@ object KeyFunctionParser {
  * It is very likely a different event (a touch/tap report rather than a binding firing),
  * which also means the [OSS] reading of 0x00 as "single tap" is suspect.
  *
- * STILL UNEXPLAINED, and the reason this is not written as settled:
- *   - slides. byte2 0x07 / 0x08 give byte3 0x05 / 0x06, while the slide slot's fn is
- *     0x0A. Possibly "switch track" (0x0A) is a COMPOSITE that the firmware reports
- *     per-direction as prev (0x05) and next (0x06) — coherent, but unproven.
- *   - whether byte2 is ever an F1 action number, or always a key-function `act`.
- *
- * So: this frame MAY carry the function, and the evidence for that is now strong rather
- * than absent. It is still not a control signal — nothing may switch on byte3 until the
- * two outliers above are explained.
+ * The frame carries the function: byte2 is the key-function act and byte3 its fn.
+ * A slide reports 0B/0C or 05/06, so byte3 is the effective function, not the slot's own
+ * `fn`. The frame is diagnostic only; do not use it as a control signal.
  */
 object UserInteractionParser {
 

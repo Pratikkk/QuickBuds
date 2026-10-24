@@ -7,7 +7,7 @@ object Feature {
     const val AUTO_PLAY_PAUSE = 0x04
     const val DUAL_DEVICE = 0x11
     const val SPATIAL_SOUND = 0x1B
-    /** Hi-Res (LHDC) codec. Switching it makes the buds drop and reconnect. `[CAPTURE]` 2026-09-23. */
+    /** Hi-Res (high-quality audio) switch. Switching it makes the buds drop and reconnect. `[CAPTURE]` 2026-09-23. */
     const val HIRES_CODEC = 0x18
     /** BassWave on/off. Level is its own command, the BassWave level command. `[CAPTURE]` 2026-09-23. */
     const val BASSWAVE = 0x1D
@@ -21,7 +21,7 @@ object Feature {
     const val GAME_SOUND = 0x27
     /** Plain on/off switches from HeyMelody, `[VENDOR]`, unverified on buds (PROTOCOL-LEGACY.md §9). */
     const val VOCAL_ENHANCE = 0x09
-    /** realme Link's wind noise switch; asked only for models with the `windNoise` flag. */
+    /** realme Link's wind noise switch; asked only for models with the `windMode` flag. */
     const val WIND_NOISE = 0x1A
     const val POWER_SAVING = 0x17
     const val SMART_VOLUME = 0x1C

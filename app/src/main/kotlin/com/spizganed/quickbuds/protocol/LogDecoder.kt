@@ -84,7 +84,7 @@ object LogDecoder {
             }
         } else if (msg.startsWith("RX")) {
             direction = Direction.RX
-            // Format: "RX: AA 08 ..." or "RX[cmd=0x8106]: AA 08 ..."
+            // Format: "RX: AA 08 ..." or "RX[batch]: AA 08 ..."
             val bracketStart = msg.indexOf('[')
             if (bracketStart >= 0) {
                 val bracketEnd = msg.indexOf(']')
@@ -270,9 +270,9 @@ object LogDecoder {
                 // not the bit a SET sends. The bit is printed; the manager's "ANC QUERY:" line names
                 // it with the model's table (AncModes).
                 //
-                // The caveat, stated so the line is not over-trusted: for the SWITCH-LIST
-                // query (`02 01`) the reply's shape is unknown, so the name is only meaningful
-                // for the current-mode query. The hex is the part that is always true.
+                // The caveat, stated so the line is not over-trusted: the switch-list query
+                // (`02 01`) answers `02 <kind> <mask LE>` (PROTOCOL-LEGACY.md §5), a mask and
+                // not a mode, so the name is only meaningful for the current-mode query.
                 val hex = OpoProtocol.bytesToHex(payload)
                 "ANC query response (0x810C): ${AncEventParser.describe(payload)} [$hex]"
             }

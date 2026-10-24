@@ -489,7 +489,7 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         const val EXTRA_HOLD_MASK = "hold_mask"
         const val EXTRA_HOLD_TYPE = "hold_type"
 
-        /** On-call gestures (`btn 0x06`). See BudsConnectionManager.sendOnCall*(). */
+        /** On-call gestures (`btn 0x06`). See BudsConnectionManager.sendOnCall(). */
         const val ACTION_SET_ON_CALL = "com.spizganed.quickbuds.SET_ON_CALL"
         const val ACTION_FIND_BUDS = "com.spizganed.quickbuds.FIND_BUDS"
         /** The model list changed the model ([BudsConnectionManager.modelPicked]). */

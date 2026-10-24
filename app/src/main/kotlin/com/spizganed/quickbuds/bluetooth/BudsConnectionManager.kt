@@ -170,7 +170,7 @@ class BudsConnectionManager(private val context: Context) {
 
     private val handler = Handler(Looper.getMainLooper())
 
-    // --- Feature sync (local/FEATURE-SYNC.md): one engine, one thread ---
+    // --- Feature sync (docs/FEATURE-SYNC.md): one engine, one thread ---
     /** Every engine call and every output it produces runs on this thread. */
     private val syncThread = HandlerThread("feature-sync").apply { start() }
     private val syncHandler = Handler(syncThread.looper)
@@ -423,9 +423,9 @@ class BudsConnectionManager(private val context: Context) {
     /**
      * A link we did not close ourselves dropped — typically the buds restarting after a codec
      * change, which drops us 2-3 times in a row while they settle. Nothing else
-     * would reconnect: KeepAliveReceiver only fires on ACL_CONNECTED, and the buds can drop just
-     * our RFCOMM channel while the Bluetooth link itself stays up. Growing delays give them time
-     * to settle; a connection that lived 30 s starts the count over.
+     * would reconnect: KeepAliveReceiver connects when an audio profile reports connected; the
+     * buds can drop just our RFCOMM channel while the Bluetooth link stays up. Growing delays
+     * give them time to settle; a connection that lived 30 s starts the count over.
      */
     private fun reconnectAfterLoss() {
         val device = lastDevice ?: return
@@ -501,12 +501,6 @@ class BudsConnectionManager(private val context: Context) {
         }.start()
     }
 
-    /** `0x28` on buds with game sound, `0x06` elsewhere, both ways (`[VENDOR]`, PROTOCOL-LEGACY.md §9). */
-
-    /**
-     * Dual connection, in HeyMelody's exact order (`[CAPTURE]` 2026-09-25): `0x0403 11 xx`, a status
-     * re-read, then `0x0413 08 00 xx`. The buds answer with a `0x0204` subType `06` device list.
-     */
     private val pending = java.util.concurrent.ConcurrentHashMap<Int, Pair<Int, Long>>()
 
     /** The feature id of each `0x0403` write by sequence byte, so a refusal in the log names its switch. */
@@ -522,6 +516,10 @@ class BudsConnectionManager(private val context: Context) {
         return out
     }
 
+    /**
+     * Dual connection, in HeyMelody's exact order (`[CAPTURE]` 2026-09-25): `0x0403 11 xx`, a status
+     * re-read, then `0x0413 08 00 xx`. The buds answer with a `0x0204` subType `06` device list.
+     */
     fun setDualDevice(on: Boolean) {
         Thread {
             try {
@@ -739,7 +737,7 @@ class BudsConnectionManager(private val context: Context) {
 
     /**
      * One user action on a setting. The engine sends the writes in order and waits for the confirmation
-     * kind given; [key] is the control that shows "applying". See local/FEATURE-SYNC.md.
+     * kind given; [key] is the control that shows "applying". See docs/FEATURE-SYNC.md.
      */
     fun requestSetting(key: Int, writes: List<Pair<Int, Int>>, confirm: FeatureSync.Confirm, restarts: Boolean = false) {
         if (key !in FeatureSyncConfig.ENABLED) {
@@ -905,7 +903,7 @@ class BudsConnectionManager(private val context: Context) {
     fun setHeadMotionType(type: Int) = writeThenRead(OpoProtocol.setHeadMotionType(type),"Head motion type $type",
         OpoProtocol.queryHeadMotionType(), "query head motion type") { headMotionType = type }
 
-    /** Codec picker (`highAudio` models): the current codec and the offered ones, from `0x8114` / `0x8123`. */
+    /** Codec picker (`hiRes` models): the current codec and the offered ones, from `0x8114` / `0x8123`. */
     @Volatile var codec: Int? = null
         private set
     @Volatile var codecs: List<Int> = emptyList()
@@ -1055,9 +1053,9 @@ class BudsConnectionManager(private val context: Context) {
     /**
      * Marks that an ANC frame is now on the wire.
      *
-     * Called from sendRawBlocking() right after the write succeeds, so the ONLY
-     * requirement is that ANC goes through sendRaw() — which every ANC path does
-     * (service, widget, tile, app all end up in BudsConnectionManager.sendAnc*).
+     * Called from sendRawBlocking() after the write call returns, also when the write failed.
+     * So the ONLY requirement is that ANC goes through sendRaw() — which every ANC path does
+     * (service, widget, app all end up in BudsConnectionManager.sendAnc*).
      * If an ANC command is ever written directly to ConnectedThread, this must be
      * called alongside it or the attribution probe silently stops working.
      */
@@ -1071,8 +1069,8 @@ class BudsConnectionManager(private val context: Context) {
      * the level the app just set is the best available hint. It never overrides a
      * value we can name outright — see AncModes.modeForRaw().
      *
-     * Deliberately a plain field rather than a WidgetStateStore read: the manager
-     * has no Context, and the store is owned by the service.
+     * Deliberately a plain field rather than a WidgetStateStore read: the store is owned by
+     * the service.
      */
     private var lastAncLevelSent: String? = null
 
@@ -1587,7 +1585,7 @@ class BudsConnectionManager(private val context: Context) {
         if (cmd == OpoProtocol.CMD_SET_ANC or 0x8000 && payload.isNotEmpty() && payload[0].toInt() != 0) {
             log("ANC write refused (status ${payload[0].toInt() and 0xFF}), re-reading")
             sendRaw(OpoProtocol.queryAncMode(), "query anc")
-            // From the app, the widget or the tile alike: say why the mode did not change.
+            // From the app or the widget alike: say why the mode did not change.
             if (payload[0].toInt() == 0x0E) handler.post {
                 Toast.makeText(context, R.string.anc_need_ear, Toast.LENGTH_SHORT).show()
             }
