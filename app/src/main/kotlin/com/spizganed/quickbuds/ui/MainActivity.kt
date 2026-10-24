@@ -242,8 +242,8 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         // Neutral switches while disconnected, set quietly so no listener sends a write.
         // The buds' real state is repainted on connect.
         syncingFeatures = true
-        gameSwitch?.setFromBuds(connected && gameModeOn)
-        if (!connected) { hiresSwitch?.setFromBuds(false); spatialSwitch?.setFromBuds(false); goldenSwitch?.setFromBuds(false); windSwitch?.setFromBuds(false) }
+        if (connected) gameSwitch?.setFromBuds(gameModeOn) else gameSwitch?.snapFromBuds(false)
+        if (!connected) { hiresSwitch?.snapFromBuds(false); spatialSwitch?.snapFromBuds(false); goldenSwitch?.snapFromBuds(false); windSwitch?.snapFromBuds(false) }
         syncingFeatures = false
         if (connected && ::manager.isInitialized) onFeatureStates(manager.featureStates)
         renderAnc(activeAncMode)
@@ -1104,13 +1104,15 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
 
     private fun setSwitchQuiet(s: Switch, on: Boolean) {
         syncingFeatures = true
-        s.setFromBuds(on)
+        s.isChecked = on
         syncingFeatures = false
     }
 
-    /** A repaint with an equal value does nothing, so nothing animates. */
+    /** A state from the earbuds: the first paint snaps, a later real change slides, an equal value does nothing. */
     private fun setSwitchFromBuds(s: Switch, on: Boolean) {
-        if (s.isChecked != on) setSwitchQuiet(s, on)
+        syncingFeatures = true
+        s.setFromBuds(on)
+        syncingFeatures = false
     }
 
     private fun featureOn(id: Int) = manager.featureStates[id] == 1

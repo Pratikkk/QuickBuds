@@ -2,4 +2,5 @@
 <resources>
     <!-- Marks a view that [Entrance] gave the press feel. -->
     <item name="glass_feel" type="id" />
+    <item name="switch_painted" type="id" />
 </resources>
