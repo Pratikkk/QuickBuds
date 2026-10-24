@@ -10,15 +10,15 @@ Two ways, from easy to thorough:
 | **1. The app's own log** | Only the app | Everything QuickBuds sends and receives |
 | **2. Bluetooth HCI snoop log** | Developer options, adb, Wireshark / tshark | Everything on the Bluetooth link, **HeyMelody's traffic included** |
 
-Start with 1. Use 2 when the question is "what does HeyMelody send for this setting", or when a frame
-never shows up in the app's log.
+Start with 1. Use 2 to learn what HeyMelody sends for a setting. Use it also when a frame
+never shows in the app's log.
 
 ## 1. The app's own log
 
 1. Open QuickBuds and connect. Wait a few seconds for the connect burst to finish.
 2. Dev tools › **Clear**, so the export holds one clean session.
-3. Do each action (a setting in the app, or a gesture on the buds) and **wait at least 3 seconds**
-   before the next one. Write down what you did and the time.
+3. Do each action: a setting in the app, or a gesture on the buds. **Wait at least 3 seconds**
+   before the next action. Write down what you did and the time.
 4. Repeat the round once, so a one-off frame gets a chance to show again.
 5. Dev tools › **Export**. The file lands in `Download/QuickBuds/`.
 
@@ -47,8 +47,8 @@ adb logcat -d -s QuickBuds-Packets:D   # instant, but other apps can rotate it o
 | `KEYFN DIFF:` | What changed in the gesture table between two reads. |
 | `FEATURE REFUSED:` | The buds refused a switch write. Status 1: the buds lack the switch. Status 2: they have it and will not take it now, for example high-quality audio without an LDAC or LHDC link. The line shows the setting key, the reason and the codec. An old-path line also shows the status and the offered codecs. |
 
-**No log line does not mean no frame.** Was: a filter hid the ANC push, and "ANC raises no event"
-was believed for weeks. When the app's log is silent, check the HCI log.
+**A silent log does not prove that no frame exists.** Was: a filter hid the ANC push, and the team believed
+"ANC raises no event" for weeks. Is: check the HCI log when the app's log is silent.
 
 ## 2. Bluetooth HCI snoop log
 
@@ -98,9 +98,9 @@ tshark -r btsnoop_hci.log -Y "btrfcomm && data.data[0] == aa" \
 - `hci_h4.direction`: `0x00` = sent by the phone, `0x01` = sent by the buds.
 - Do not filter on `btrfcomm.channel`: it changes per connection.
 - For full detail use `-T json`, but not together with `-c N` (returns nothing on some builds).
-- Wireshark opens the same file; filter `btrfcomm` and look for payloads starting `aa`.
+- Wireshark opens the same file. Filter `btrfcomm` and look for payloads starting `aa`.
 
-**If the filter returns nothing:** the log began after the RFCOMM link came up, so tshark never saw
+**If the filter returns nothing:** the log started after the RFCOMM link came up. Then tshark never saw
 which L2CAP channels carry RFCOMM. List the channels, skip the audio stream (by far the biggest), and
 decode the rest by hand, one per direction:
 
@@ -109,15 +109,15 @@ tshark -r btsnoop_hci.log -Y btl2cap -T fields -e btl2cap.cid | sort | uniq -c
 tshark -r btsnoop_hci.log -d btl2cap.cid==0x3040,btrfcomm -d btl2cap.cid==0x0071,btrfcomm -Y btrfcomm ...
 ```
 
-A length above 127 uses two length bytes (LEB128, PROTOCOL.md §2) and can be split over several
-RFCOMM frames: join them per direction before cutting at `AA`. Other RFCOMM channels carry HFP's AT
-commands; ignore those.
+Frames over 127 bytes have a two-byte length (LEB128, PROTOCOL.md §2). They can arrive in several
+RFCOMM frames. Join them per direction before you cut at `AA`. Other RFCOMM channels carry HFP's AT
+commands. Ignore those.
 
 tshark on the phone (Termux): `pkg install x11-repo && pkg install wireshark-qt`.
 
 ### What to send
 
-The tshark output (or the lines for your actions), plus your notes: which setting, old and new value,
+Send the tshark output, or the lines for your actions. Add your notes: the setting, the old and new value,
 and the time. That is enough to add a command to PROTOCOL.md.
 
 ## Still open, and capturable

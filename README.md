@@ -17,12 +17,12 @@ Android · Windows · Linux
 </div>
 
 QuickBuds is an open-source alternative to HeyMelody and realme Link. It talks to your earbuds over
-Bluetooth and shows the controls that your model has: on the phone with real home screen widgets, and on
-the PC with a tray icon. It is a hobby project; you can support it on [Ko-fi](https://ko-fi.com/spizganed).
+Bluetooth. It shows the controls that your model has. The phone has real home screen widgets. The PC has a
+tray icon. It is a hobby project. You can support it on [Ko-fi](https://ko-fi.com/spizganed).
 
 ## Install
 
-The current release is 5.1.0. Pair your earbuds in the system's Bluetooth settings first. QuickBuds connects to paired earbuds; it does not pair them.
+The current release is 5.1.0. Pair your earbuds in the system's Bluetooth settings first. QuickBuds connects to paired earbuds. It does not pair them.
 
 | Platform | How |
 | --- | --- |
@@ -40,8 +40,8 @@ The app updates itself. To remove it, run the same script with `uninstall`:
 If you prefer, download `QuickBuds-linux-x64.AppImage` or the tarball `QuickBuds<version>-linux-x64.tar.gz` from the release. The tarball needs BlueZ, GTK 3 and libayatana-appindicator.
 
 > **Got the APK somewhere else?** The only official downloads are the GitHub releases. A copy from
-> another site is genuine only if it is signed with this certificate (SHA-256), which
-> `apksigner verify --print-certs <apk>` shows:
+> another site is genuine only if it carries the signature of this certificate (SHA-256). Run
+> `apksigner verify --print-certs <apk>` to see the signature:
 > `9ae0ea888079cbd86af5a24391cd351af4a81fc04ebe9bd8429074c736249f61`
 
 ## What it does
@@ -50,15 +50,15 @@ If you prefer, download `QuickBuds-linux-x64.AppImage` or the tarball `QuickBuds
 | --- | --- |
 | **Battery and wear** | Each bud and the case, live. |
 | **Noise control** | Off, Noise cancelling (Low, Medium, High, Smart), Adaptive, Transparency. |
-| **Sound** | Equalizer with presets, custom curves and bass boost. High-quality audio, 3D audio, low latency mode. High-quality audio needs an LHDC or LDAC link on models that offer a codec list. The phone's Bluetooth settings choose the codec. The switch changes the bitrate and the sampling rate. |
+| **Sound** | Equalizer with presets, custom curves and bass boost. High-quality audio, 3D audio, low latency mode. High-quality audio needs an LHDC or LDAC link on models that offer a codec list. The phone's Bluetooth settings choose the codec. The High-quality audio switch changes the bitrate and the sampling rate. |
 | **Hearing** | A hearing test that tunes the sound to your ears, and a fit test of the ear-tip seal. |
 | **Controls** | Gestures per bud, wear detection, dual connection, find my earbuds, prompt volume, tap sensitivity, firmware version. |
-| **Per model** | QuickBuds reads the model and shows only what that model supports. Settings, Known issues lists the limits of your model and phone, and the app tells you once when your model has some. A switch on the feature-sync engine moves only when the earbuds confirm it. Noise control moves at the tap. A failed change shows a toast with the reason. |
+| **Per model** | QuickBuds reads the model and shows only what that model supports. Settings › Known issues lists the limits of your model and phone, and the app tells you once when your model has some. A switch on the feature-sync engine moves only when the earbuds confirm it. Noise control moves at the tap. A failed change shows a toast with the reason. |
 | **Android** | Home screen widgets from 2×2 up: the battery first, then the noise control and switches after a double tap. A ten-page setup guide. A game equalizer that follows the game in the foreground (needs Usage access). |
 | **PC** | A tray icon with quick controls (Windows) or a battery menu (Linux). |
-| **Looks** | Material, QuickBuds, Pixel art and Glass styles. OLED Black, Classic Dark and White themes, wallpaper colours, your own accent and palettes. Glass has six backgrounds. The phone and its widgets have all four styles; the PC app has the first three. |
-| **Feedback** | Settings, Feedback sends a description, a model test or a crash report with the log, without a GitHub account. The developer can answer a report, and the answer shows once in the app. |
-| **Languages and updates** | 27 languages, switchable in the app. Updates from GitHub releases; the PC app updates itself. |
+| **Looks** | Material, QuickBuds, Pixel art and Glass styles. OLED Black, Classic Dark and White themes, wallpaper colours, your own accent and palettes. Glass has six backgrounds. The phone and its widgets have all four styles. The PC app has the first three. |
+| **Feedback** | Settings › Feedback sends a description, a model test or a crash report with the log, without a GitHub account. The developer can answer a report, and the answer shows once in the app. |
+| **Languages and updates** | 27 languages, switchable in the app. Updates come from GitHub releases. The PC app updates itself. |
 
 <div align="center">
 
@@ -71,14 +71,14 @@ If you prefer, download `QuickBuds-linux-x64.AppImage` or the tarball `QuickBuds
 ## Supported earbuds
 
 QuickBuds works on **any Android 8+ phone** (Samsung, Google Pixel, Xiaomi, Nothing, Motorola, OnePlus…),
-not only on OnePlus / OPPO phones. It knows every earbud in HeyMelody's and realme Link's lists, 140 in
-all, and shows only the features each one has. Each model also lists its known issues in Settings.
+not only on OnePlus / OPPO phones. It knows every model in HeyMelody's and realme Link's lists, 140 in
+all. It shows only the features each model has. Each model also lists its known issues in Settings.
 
 <details><summary><b>Confirmed</b> (6 models)</summary>
 
 <details><summary><b>OnePlus</b> (2)</summary>
 
-- **OnePlus Buds 4**: fully working. Every feature is tested on a Nothing Phone (3a), Android 16, and on Windows and Linux.
+- **OnePlus Buds 4**: fully working. The owner tested every feature on a Nothing Phone (3a) with Android 16, and on Windows and Linux.
 - **OnePlus Bullets Wireless Z3**: confirmed by its owner on Android: battery, 3D audio, equalizer.
 
 </details>
@@ -101,7 +101,7 @@ all, and shows only the features each one has. Each model also lists its known i
 
 <details><summary><b>Not confirmed yet</b> (134 models)</summary>
 
-Detected, with features built from HeyMelody's and realme Link's data. Some may not work.
+The app detects these models. Their features come from HeyMelody's and realme Link's data. Some may not work.
 
 <details><summary><b>OnePlus</b> (30 models)</summary>
 
@@ -129,13 +129,15 @@ DIZO Wireless, DIZO GoPods D, DIZO GoPods.
 
 </details>
 
-**Own other buds? Please tell us what works.** In the app, Settings › Test my earbuds (desktop: App
-settings) reconnects the buds, lets you mark each feature, and sends the result with the log. The app
-offers this test once, after the first connect to a model that is not confirmed. Settings › Feedback
+**Own other buds? Please tell us what works.** In the app, Settings › Test my earbuds reconnects the buds.
+It lets you mark each feature and sends the result with the log. The desktop uses App settings.
+
+The app offers this test once, after the first connect to a model that is not confirmed. Settings › Feedback
 sends a description and the log, without a GitHub account. Or open an
-[issue](https://github.com/spizganed/QuickBuds/issues); [CONTRIBUTING.md](./docs/CONTRIBUTING.md#reporting-a-model)
+[issue](https://github.com/spizganed/QuickBuds/issues). [CONTRIBUTING.md](./docs/CONTRIBUTING.md#reporting-a-model)
 says what to include. Each report lets the next release fix that model.
-The developer can answer a report: the answer shows once in the app, on the next daily count (see Privacy).
+
+The developer can answer a report. The answer shows once in the app, on the next daily count (see Privacy).
 To talk to the developer and other owners, join the [Discord server](https://discord.gg/pvsnEf9TrZ).
 
 ## For developers
@@ -156,7 +158,7 @@ The first hints about the earbud protocol came from
 [OppoPodsManager](https://github.com/Zhaoyi-ya/OppoPodsManager),
 [Pods-Protocol-Reverse-Engineering](https://github.com/Star-ZER0/Pods-Protocol-Reverse-Engineering) and
 [OppoPods](https://github.com/Leaf-lsgtky/OppoPods). Today every fact in [PROTOCOL.md](./docs/PROTOCOL.md) rests on a
-capture from real hardware, on a test on a device, or on the HeyMelody and realme Link apps (studied for interoperability).
+capture, a device test, or the vendor apps. The project studied the vendor apps for interoperability only.
 
 Built with [Slint](https://slint.dev) (GPLv3) and [tray-icon](https://github.com/tauri-apps/tray-icon) on the PC.
 Fonts: [Doto](https://github.com/oliverlalan/Doto) and [Google Sans Flex](https://github.com/googlefonts/googlesans-flex),
@@ -164,20 +166,21 @@ both SIL Open Font License 1.1, licenses bundled in `app/src/main/assets/`.
 
 ## Privacy
 
-Once a day QuickBuds sends its platform, its version number (for example "Android 5.0.0") and a random install ID to a Cloudflare Worker.
-The Worker counts active installs with it. The ID ties to no device, account or address, and the app sends no earbud data.
-The ID also lets the developer answer a report you sent: the answer comes back with the daily count. A problem report carries the same ID and is sent only when you send it. On Android, Settings > Count my install turns the daily count off
-(then no reply can reach you), and About > Privacy > Reset install ID forgets the ID. On the PC, delete the `app_id` key in `settings.json`.
+Once a day, QuickBuds sends its platform, its version and a random install ID to a Cloudflare Worker.
+The Worker counts active installs with it. The ID ties to no device, account or address. The app sends no earbud data.
+
+The ID also lets the developer answer a report you sent. The answer comes back with the daily count. A problem report carries the same ID and is sent only when you send it. On Android, Settings › Count my install turns the daily count off
+(then no reply can reach you). About › Privacy › Reset install ID forgets the ID. On the PC, delete the `app_id` key in `settings.json`.
 The Worker code is in [report-worker/](./report-worker).
 
 ## License
 
 Copyright (C) 2026 spizganed
 
-QuickBuds is free software under the GNU General Public License v3.0 or later, distributed without
-any warranty; see [LICENSE](./LICENSE).
+QuickBuds is free software under the GNU General Public License v3.0 or later. It has no
+warranty. See [LICENSE](./LICENSE).
 
-QuickBuds is an independent project, not affiliated with, endorsed by or sponsored by OnePlus, OPPO,
-realme, HeyTap or any of their affiliates. OnePlus, OPPO, realme, HeyMelody and the earbud model names
-are trademarks of their respective owners and are used here only to say which devices the app works
-with. The protocol was studied only to make these earbuds work with this app.
+QuickBuds is an independent project. It is not affiliated with OnePlus, OPPO, realme, HeyTap or their
+affiliates. Those companies do not endorse or sponsor it. OnePlus, OPPO, realme, HeyMelody and the earbud
+model names are trademarks of their owners. This text uses them only to say which devices the app works
+with. The project studied the protocol only to make these earbuds work with this app.

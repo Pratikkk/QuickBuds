@@ -1,8 +1,8 @@
 # Report Worker
 
-The problem report's backend: a Cloudflare Worker on the free plan, with a D1 database. The apps post
-each report to `/report`. The Worker stores only reports with a known model, a description and, when a log is on,
-frames from the buds. A model test ("Test" category) always has the log. A crash report skips these checks. One sender can post 5 reports an hour.
+This is the backend of the problem report. It is a Cloudflare Worker on the free plan. It uses a D1 database. The apps post
+each report to `/report`. The Worker stores only reports with a known model, a description and, when the report has a log,
+frames from the buds. A model test ("Test" category) always has the log. A crash report skips the model check and the description check. One sender can post 5 reports an hour.
 
 ## Deploy (once)
 

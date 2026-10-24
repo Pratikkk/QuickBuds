@@ -2,15 +2,20 @@
 
 Matches QuickBuds 5.1.0 (version code 39).
 
-The wire format of the OPPO / OnePlus / realme earbud RFCOMM link, as the owned protocol layer implements it
-(`core/` in Rust, `protocol2/` in Kotlin). The shipping layer is the legacy one, described in
+This is the wire format of the OPPO / OnePlus / realme earbud RFCOMM link. The owned protocol layer
+implements it: `core/` in Rust and `protocol2/` in Kotlin. The shipping layer is the legacy one, described in
 [PROTOCOL-LEGACY.md](./PROTOCOL-LEGACY.md). It carries many fixes. Verified facts from this file move into it.
 This layer replaces it only when it does everything HeyMelody and realme Link do, on every model.
 Each fact comes from a capture, from our own buds, or from the vendor apps' behaviour (studied for
-interoperability only). The code is written from this file, not from the vendor apps.
+interoperability only). This file is the source of the code, not the vendor apps.
 
-**Evidence tags:** `[VENDOR]` the vendor app's behaviour · `[CAPTURE]` seen in a capture on our own buds ·
-`[TESTED]` checked by hand on our own buds · `[GUESS]` unverified. Never promote a claim without evidence.
+**Evidence tags:**
+- `[VENDOR]`: the vendor app's behaviour.
+- `[CAPTURE]`: seen in a capture on our own buds.
+- `[TESTED]`: checked by hand on our own buds.
+- `[GUESS]`: unverified.
+
+Never promote a claim without evidence.
 
 **Status:** complete for every feature the apps build. The code is `core/src/{wire,msg,cmd}.rs` and the `protocol2` package.
 
@@ -18,7 +23,7 @@ interoperability only). The code is written from this file, not from the vendor 
 
 ## 1. Transport
 
-Classic Bluetooth RFCOMM (SPP). One long-lived socket; the buds push events at any time.
+Classic Bluetooth RFCOMM (SPP). One long-lived socket. The buds push events at any time.
 
 | UUID | Use |
 |---|---|
@@ -48,11 +53,11 @@ AA  <Len>  <Slice> 00  [<Fsn>]  <Message or slice of it>
 - No checksum.
 - The receiver reads a byte stream, not reads. It skips bytes up to `AA`, reads `Len`, and waits for `Len` more
   bytes. A `Len` below 2 or above 4096 drops the `AA` and searches on. (The vendor app splits on read boundaries
-  instead; both give the same messages for well-formed input.)
+  instead. Both give the same messages for well-formed input.)
 - The receiver joins slices in order and parses the message when `Slice` is `03`. A declared `PayLen` larger
   than the bytes present cuts the payload to the bytes present `[VENDOR]`.
 - The sender splits a message when it exceeds the frame budget. The budget is 660 bytes by default. The reply
-  to `0x0107` (`00 <u16 LE>`) can lower it `[VENDOR]`. Some bulk transfers use a larger budget; QuickBuds sends none.
+  to `0x0107` (`00 <u16 LE>`) can lower it `[VENDOR]`. Some bulk transfers use a larger budget. QuickBuds sends none.
 - One write at a time. Wait for the write to finish (5 s limit) and pause a model-specific interval between slices.
 
 ### Seq and replies
@@ -68,12 +73,12 @@ The sender picks `Seq`. The reply repeats it `[CAPTURE]`. QuickBuds uses these r
 | `F2` | The wearing query `0x0109` |
 | `FF` | A push from the buds |
 
-- A status read with a non-zero seq is echoed: the reply `0x810D` carries the same seq `[TESTED 2026-10-24]`.
+- The buds echo a status read with a non-zero seq: the reply `0x810D` carries the same seq `[TESTED 2026-10-24]`.
 - Reply command = request command with bit 15 set (`0x0106` → `0x8106`) `[CAPTURE]`. A write reply carries a
   status byte, `00` = accepted. Accepted does not mean applied: read the state back.
-- A refused `0x0403` write carries a non-zero status: `01` the buds lack the id, `02` or any other value
-  they refuse it now (section 11). A `0x0404` write with no bud in an ear is refused with `0E`.
-- A reply is matched on `(Seq, Cmd & 0x7FFF)` `[VENDOR]`.
+- A refused `0x0403` write carries a non-zero status. `01` means the buds lack the id. `02` or any other value
+  means they refuse it now (section 11). The buds refuse a `0x0404` write with `0E` when no bud is in an ear.
+- The app matches a reply on `(Seq, Cmd & 0x7FFF)` `[VENDOR]`.
 
 ## 3. Command classes
 
@@ -89,7 +94,7 @@ The sender picks `Seq`. The reply repeats it `[CAPTURE]`. QuickBuds uses these r
 ## 4. Command bitmap
 
 The reply to `0x0100` is `00` and then bytes read least significant bit first. Bit n, when set, enables the commands
-in the table. A command with no bit is refused by the vendor app and never sent. Always enabled: `0x0100`-`0x0104`,
+in the table. The vendor app refuses a command with no bit and never sends it. Always enabled: `0x0100`-`0x0104`,
 `0x0106`, `0x010B`, `0x010D`, `0x0F00`, `0x0F03`, `0x0F04`. The table has 69 bits; bits past the buds' bitmap length
 are off `[VENDOR]`. Buds 4 `[CAPTURE]`: `00 FF 77 5A EA 67 0E 20 07`.
 
@@ -168,7 +173,7 @@ are off `[VENDOR]`. Buds 4 `[CAPTURE]`: `00 FF 77 5A EA 67 0E 20 07`.
 ## 5. Pushes — `0x0204`
 
 `payload[0]` is the event code. `Seq` is `FF`. "After the code" below means the bytes that follow `payload[0]`.
-A known code with too few bytes is malformed and dropped. An unknown code is kept as raw bytes.
+The app drops a known code with too few bytes. It keeps an unknown code as raw bytes.
 
 | Code | Event | Layout after the code |
 |---|---|---|
@@ -195,8 +200,8 @@ A known code with too few bytes is malformed and dropped. An unknown code is kep
 | `F8` | LE / BR link switch state | `<bits>`: bit 0 state, bit 1 owner, bit 2 reset flag `[VENDOR]` |
 | `F9` | AI translation audio focus | `<v>`; online feature, not built |
 
-Codes `07` and `0C` have no handler; `09` goes to a separate parser for a list of records (not read, unused). `F3` is
-offered by the buds and ignored `[VENDOR]`.
+Codes `07` and `0C` have no handler. Code `09` goes to a separate parser for a list of records. The app
+does not read it and does not use it. `F3` is offered by the buds and ignored `[VENDOR]`.
 
 Registration: `0x0200` reads which codes the buds offer (`00 <count> <codes>`). `0x0205 <count> <codes...>`
 subscribes. Buds without `0x0205` in the bitmap take `0x0201 <code>` once per code `[VENDOR]`.
@@ -215,13 +220,13 @@ Init sequence `[CAPTURE]` (Buds 4, both apps): wait 300 ms, then one message eve
 reads (section 7 when the bitmap has bit 56, else one by one)
 ```
 
-With bit 56, the reads go out in one `0x012F` frame. The read order is: `0x010D`, `0x010C 01 01`, `0x010C 04 01`
-on Smart models, `0x0130`, `0x0106`, `0x0109`, `0x0108`, the hold-cycle reads, `0x0105`, `0x012A`, `0x0123`,
-`0x0114`, `0x012B`, `0x0134`. A model with `spatialToggle` gets `0x041E 00` after the reads.
+With bit 56, the reads go out in one `0x012F` frame. The read order starts with `0x010D`, `0x010C 01 01` and
+`0x010C 04 01` on Smart models. Then `0x0130`, `0x0106`, `0x0109`, `0x0108` and the hold-cycle reads. Then
+`0x0105`, `0x012A`, `0x0123`, `0x0114`, `0x012B` and `0x0134`. A model with `spatialToggle` gets `0x041E 00` after the reads.
 
-Nothing is polled after that. Battery, wearing, ANC and game mode arrive as pushes `[TESTED]`.
+The app does not poll after that. Battery, wearing, ANC and game mode arrive as pushes `[TESTED]`.
 
-- **Bitmap** `0x8100` (section 4). Every command the app sends is checked against it. A command with no bit is not sent.
+- **Bitmap** `0x8100` (section 4). The app checks every command against the bitmap. It does not send a command with no bit.
 - **Product id** `0x8103`: `00 <id, 3 bytes LE>`. Buds 4: `00 14 54 06` is `065414` `[CAPTURE]`. Four colour ranges
   fold into one id before the model lookup `[VENDOR]`: `100100`-`100102` → `060414`, `100200`-`100202` → `060814`,
   `108100`-`108102` → `068414`, `108200`-`108202` → `068814`.
@@ -230,13 +235,13 @@ Nothing is polled after that. Battery, wearing, ANC and game mode arrive as push
   order, joined by dots: `138.138.105`.
 - **Offered codes** `0x8200` = `00 <count> <codes>`. Buds 4 `[CAPTURE]`: `00 09 01 02 03 04 08 0B F1 F2 F3`. Read it
   before deciding that an event does not exist: silence usually means "not subscribed".
-- **Subscribe** `0x0205 <count> <codes>`, count first `[CAPTURE]`. The app asks for `01 02 03`, plus `04` when the bitmap has
-  `0x0405`, `08` when it has `0x040D`, `0B` when it has `0x0412`. It keeps only the codes the buds offered, as the vendor app
+- **Subscribe** `0x0205 <count> <codes>`, count first `[CAPTURE]`. The app asks for `01 02 03`. It adds `04` when the bitmap has
+  `0x0405`, `08` when it has `0x040D`, and `0B` when it has `0x0412`. It keeps only the codes the buds offered, as the vendor app
   registers exactly the offered list `[VENDOR]`.
   - Never send `01 01 02 02`: that is "count 1, battery only". The buds accept it and never push wearing.
   - Never drop `03` when offered. Without it Buds 4 sends no ANC change made on the buds.
   - Nord Buds 3 Pro offers only `02 01` `[CAPTURE]` and sent no `0x8205` when asked for more. OPPO Enco Buds2 also offers `02 01`.
-  - The `0x8205` reply is `01 <count>` then `<code> 00` per code `[GUESS]`. The vendor app reads none of it; the reply ends the setup.
+  - The `0x8205` reply is `01 <count>` then `<code> 00` per code `[GUESS]`. The vendor app reads none of it. The reply ends the setup.
 - Which model the buds are is the app's choice, not the protocol's. The model list matches the Bluetooth name first, then the
   product id.
 
@@ -264,13 +269,13 @@ and `0x0205`.
 - Level `0` means "not known": the app leaves that part out. The realme Buds Air7 Pro sends the case at `0` with the lid
   closed `[CAPTURE]`. HeyMelody hides a part at `0` `[VENDOR]`.
 - The case, and a bud inside it, report only while the lid is open. With the lid closed, the query returns only the bud
-  outside (`01 01 5A`) and nothing is pushed `[CAPTURE]`.
+  outside (`01 01 5A`) and the buds push nothing `[CAPTURE]`.
 - Pushes come every 1-6 minutes on the buds' own clock `[CAPTURE]`.
 
 **Wearing** — query `0x0109`, reply `0x8109`, push `02`. Payload: `<count> <part> <state>...`. A reply can put a status byte
-before the count; the receiver accepts both and checks that every part is `1`-`3` `[CAPTURE]`.
+before the count. The receiver accepts both. It checks that every part is `1`-`3` `[CAPTURE]`.
 
-- The state is a set of bits `[VENDOR]`: bit 0 out of the case, bit 1 in ear, bit 2 lid open, bit 3 "safe remind". The app
+- The state is a set of bits `[VENDOR]`. Bit 0 means out of the case, bit 1 means in ear, bit 2 means lid open. Bit 3 means "safe remind". The app
   clears bit 3.
 
 | State | Meaning |
@@ -326,22 +331,22 @@ Adaptive is bit 11, not bit 8. Bit 8 gives `01 01 00 01`, a different mode.
 - The ANC stop reports whichever level is active. The value is a bitmask, not an enum.
 - The mode tree is per model (`ancModes` in the model list): `mode`, `slot`, `variants`. Mode ids: `1` Off, `2` Transparency,
   `3` Light, `8` Medium, `4` Deep, `5` noise reduction, `7` Smart, `10` Adaptive, `6` transparency with voice.
-  A model with no tree gets no noise control. Before the model is known, the Buds 4 tree is used `[VENDOR]`.
+  A model with no tree gets no noise control. Before the app knows the model, it uses the Buds 4 tree `[VENDOR]`.
 - **realme models** `[VENDOR]`: the write table and the report table are the same. Off `01`, Transparency `02`, Light `04`,
-  Deep and plain ANC `08`, Medium `10`, Smart `20`. The Air7 Pro's owner confirms them `[TESTED]`; the others are unverified.
-- With no bud in an ear, a SET is refused: the reply `0x8404` has status `0E` `[CAPTURE]`. One bud in an ear is enough. The app
+  Deep and plain ANC `08`, Medium `10`, Smart `20`. The Air7 Pro's owner confirms them `[TESTED]`. The others are unverified.
+- With no bud in an ear, the buds refuse a SET. The reply `0x8404` has status `0E` `[CAPTURE]`. One bud in an ear is enough. The app
   then reads `0x010C 01 01` again, so the display shows the real mode.
 - A push is a mode only when its two bytes after the code are `01 01`. A hold-cycle write also raises `03 02 <kind> <mask>`:
   that is the new cycle mask, not a mode.
-- Smart `[CAPTURE]`: the SET is acked and pushed as `0x0080`. Right after, the buds push `03 04 01 20 00` and `03 04 01 40 00`.
+- Smart `[CAPTURE]`: the buds ack the SET and push `0x0080`. Right after, the buds push `03 04 01 20 00` and `03 04 01 40 00`.
   The lowest set bit of that mask is a SET bit: `0x20` Medium, `0x40` Light on Buds 4. The app reads it on connect for models with Smart.
 
 **Hold cycle** — which modes the hold gesture cycles. The gesture table's `fn 08` only says "the hold cycles ANC".
 
 - Write `0x0404 02 <kind> <mask LE>`. The mask uses SET bits and takes 1-4 bytes, the fewest that hold it `[VENDOR]`.
   Adaptive added moved `0x0007` to `0x0807` `[CAPTURE]`.
-- `kind` `01` is one setting for both buds `[TESTED]`. Models with a per-bud hold use `03` left and `04` right; realme models keep `01`.
-- Level bits are dropped silently: `0x0021` was acked `00` and read back as `0x0001` `[CAPTURE]`. The ANC stop in the cycle
+- `kind` `01` is one setting for both buds `[TESTED]`. Models with a per-bud hold use `03` left and `04` right. realme models keep `01`.
+- The buds drop level bits silently. They acked `0x0021` with `00` and read it back as `0x0001` `[CAPTURE]`. The ANC stop in the cycle
   is always bit 1.
 - A single-bit mask is valid. The app never sends `0`. Clearing bit 1 alone has not been tested.
 - `0x0404 01 02 <level>` is a possible level write `[GUESS]`. The app does not send it.
@@ -359,7 +364,7 @@ Adaptive is bit 11, not bit 8. Bit 8 gives `01 01 00 01`, a different mode.
 - `0x0402` is ignored without any reply. A wrong command number fails silently, so the app reads the table again after every
   write and compares.
 - The table changes shape per bud and between writes `[CAPTURE]`. Slide once lived in button `01` on the left and in two unbound
-  buttons on the right. The app writes every slot the table has for a (side, act) pair and never hardcodes a button group or a count.
+  buttons on the right. The app writes every slot that the table has for a (side, act) pair. It never hardcodes a button group or a count.
 - Buds 4 table (`act:fn`): left/`01` `01:00 02:11 03:00 04:08 06:00 05:07`; left/`06` `02:00 03:00 06:00`; right/`01` `01:00 02:00 03:00 04:08 06:00 05:07`;
   right/`06` `02:00 03:00 06:00`. Call control `[CAPTURE]`: `0401 01 04 06 02 1D` (double tap answers and ends), `0401 01 04 06 06 1C` (long hold declines).
 
@@ -380,14 +385,14 @@ next are `04` and `05` `[VENDOR]`. Which functions a row offers is per model (`g
 
 **Push `F1`** — `<side> <button> <act> <fn> <context> <int16 LE options...>` `[CAPTURE]`. Example, right hold: `AA 0D 00 00 04 02 FF 06 00 F1 02 01 04 08 03`.
 
-- `act` and `fn` are the table's pair; `fn` is the effective function (a slide reports `0B`/`0C` or `05`/`06`).
+- `act` and `fn` are the table's pair. `fn` is the effective function (a slide reports `0B`/`0C` or `05`/`06`).
 - A frame with `act 00` is some other event `[GUESS]`. The vendor app stores the frame and reads no field of it.
 - The push is diagnostic. Never use it as a control signal: read the effect from the ANC, game and wearing pushes. One double tap can report twice.
 
 ## 11. Feature switches
 
 Write `0x0403 <id> <01|00>`. Read `0x010D <count> <ids>` → `00 <count> <id> <value>...`. Only ids the firmware has come back
-`[CAPTURE]`; a missing id is a switch these buds do not have.
+`[CAPTURE]`. A missing id is a switch these buds do not have.
 
 The reply `0x8403` carries the same seq byte. `payload[0]` is the status `[CAPTURE]`:
 
@@ -408,12 +413,12 @@ It accepts the same write while the phone plays LHDC V5.
 - The plain status read uses `Seq` `00`. The engine's own reads and writes use `C0`-`DF`, and the reply carries
   that seq (section 2).
 - A longer list drops some links: one fixed 23-id list dropped the Enco Buds2 link (issue #5). `02 05 0D` kept it up `[CAPTURE]`.
-- The id `05` is asked first for every model; the vendor app ignores the value and never writes it.
+- The id `05` is asked first for every model. The vendor app ignores the value and never writes it.
 - Feature `1F` is for OPPO and OnePlus phones and is never asked.
 - A game-mode write is confirmed by push `05`, not by a read. The buds apply the change about 1 s after the ack
   `[CAPTURE 2026-10-24]`.
 - An id in the status reply does not prove the switch. The OPPO Enco Buds3 Pro lists `1B` and reports `1B=1`
-  after a write, but its bitmap has no `0x012A` and two owners hear no 3D audio (reports #60 #61). QuickBuds
+  after a write. Its bitmap has no `0x012A`, and two owners hear no 3D audio (reports #60 #61). QuickBuds
   hides the row through its `statusQuery` (`05 11 06`) `[CAPTURE]`.
 
 | Id | Switch | Notes |
@@ -435,17 +440,17 @@ It accepts the same write while the phone plays LHDC V5.
 | `1C` | Smart volume | `[VENDOR]` |
 | `1D` | BassWave | the apps call it Bass boost `[CAPTURE]` |
 | `1E` | Log collection | asked on 16 models; no constant in the code `[VENDOR]` |
-| `21` | Game equaliser | Section 13 `[VENDOR]` |
+| `21` | Game equalizer | Section 13 `[VENDOR]` |
 | `27` | Game sound effects | `[VENDOR]` |
 | `28` | Game mode, where the model has game sound | both default id lists ask it next to `06`; 10 models `[VENDOR]` |
 | `30` `31` `32` `35` `37` `38` `3A` `3B` | Adaptive volume, adaptive ear, conversation awareness, hold volume, Swift Pair, adaptive sound, pause when asleep, head gestures | `[VENDOR]`, unverified on buds |
 
-Ids the vendor app also builds: `0D` camera tap, `14` voice wake, `15` smart call,
-`19` voice command, `22`-`24` neck health, `34` meeting assistant, `39` incoming-call control. Decided against: voice wake `14`, voice command `19`,
+Ids the vendor app also builds: `0D` camera tap, `14` voice wakeup, `15` smart call,
+`19` voice command, `22`-`24` neck health, `34` meeting assistant, `39` incoming-call control. Decided against: voice wakeup `14`, voice command `19`,
 call control `39`, neck health, meeting assistant `34` `[TESTED]`.
 
 realme Link writes the same ids: dynamic sound `1D`, enhance voice `09`, wind noise `1A`, game mode `06`, wear `04`, dual `11`, Hi-Res `18`,
-3D sound `1B` `[VENDOR]`. It reports power saving as `05`; the id is unresolved.
+3D sound `1B` `[VENDOR]`. It reports power saving as `05`. The id is unresolved.
 
 ## 12. Equalizer and BassWave
 
@@ -460,14 +465,16 @@ push 0x0504 <id>                              the EQ changed
 ```
 
 - A preset in the list: `<selected> <min> <max> <id> <nameLen> <name> <bands> <bands...>`. `FA 06` is gain -6..+6.
-- `0x0418` actions: `01` create (send id `00`; the buds assign it and return it in the reply), `02` save and select (the whole
-  preset, every time, also on every drag step and every rename), `03` delete (the selection falls back to `00`).
+- `0x0418` actions:
+  - `01` create. Send id `00`. The buds assign it and return it in the reply.
+  - `02` save and select. Send the whole preset, every time, also on every drag step and every rename.
+  - `03` delete. The selection falls back to `00`.
 - Ids are renumbered after create and delete. Read `0x0122` again each time.
 - Built-in presets differ per model `[VENDOR]`: `eqPresets` lists `{mode, slot}`; `slot` is the `0x0406` id. Buds 4: 0 Balanced, 1 Clear Vocals, 2 Bass.
   Firmware-gated lists drop entries whose `minFirmware` is above the buds' firmware (the lower non-zero of left and right).
 - realme models `[VENDOR]`: four built-ins. `0x0406` ids: 0 Pure Raw, 1 Deep Bass, 2 Pure Voice, 3 Pure Bass. T110 and T01 have three other presets with unknown ids.
 - A model shows custom presets with `customEq` and `0x0418` in the bitmap, and BassWave with `bassEngine` and `0x041B`. New presets use the model's
-  `customEqBands` (10 bands `31 62 125 250 500 1k 2k 4k 8k 16k` on 8 models), else 6 bands `62 250 1k 4k 8k 16k`. `customEqLimit` caps presets (default 3).
+  `customEqBands` (10 bands `31 62 125 250 500 1k 2k 4k 8k 16k` on 10 models), else 6 bands `62 250 1k 4k 8k 16k`. `customEqLimit` caps presets (default 3).
   Reads go out only where the bitmap lists them.
 
 ## 13. Sound and device settings
@@ -483,22 +490,22 @@ push 0x0504 <id>                              the EQ changed
 | Codecs offered | `0x0123` → `00 <u16 LE mask>` | — | Bit k = codec k + 1. Buds 4 answers `00 46 01`, which decodes to AAC, LDAC and LHDC; the maker lists LHDC 5.0, AAC and SBC only. Trust the mask only on `hiRes` models `[CAPTURE]` |
 | Codec | — | `0x041A <codec> <hiRes> 00` | `hiRes` is set only with codec 3 or 8. The buds restart `[VENDOR]` |
 | Game sound type | `0x012B` → `00 <selected> <count> <types>` | `0x0423 <type> 01` | Type `0` off, `1` a Chinese game, `3` shooting games `[VENDOR]` |
-| Game equaliser | — | `0x0420 01 <state>` | `01` when a game app comes to the foreground, `00` when it leaves. Applies only while feature `21` is on. Bitmap bit 44 `[VENDOR]` |
+| Game equalizer | — | `0x0420 01 <state>` | `01` when a game app comes to the foreground, `00` when it leaves. Applies only while feature `21` is on. Bitmap bit 44 `[VENDOR]` |
 | Find my earbuds | — | `0x0400 <01\|00>` | Rings both buds; no side byte; the reply is `8400 00` `[CAPTURE]`. Warn when the buds are in the ears |
 
 - Codecs: `1` SBC, `2` AAC, `3` LDAC, `4` aptX, `5` aptX HD, `6` aptX Adaptive, `7` LHDC, `8` LHDC V5. The app lists 8, 7, 3, 6, 5, 4, 2, 1 and drops 7 when 8 is offered.
 - Spatial sound and Hi-Res exclude each other `[VENDOR]`. Spatial on is `1B 01` then `18 00`; Hi-Res on is `1B 00` then `18 01`.
 - `18` is a quality switch, not a codec switch `[CAPTURE]`. The phone's Bluetooth settings choose the codec.
   The switch raises the bitrate and the sampling rate only.
-- On a model with a codec list (`0x0123`), `18 01` is accepted (`00`) while the phone plays LDAC (3) or LHDC
-  (7, 8). It is refused (`02`) while the phone plays AAC or SBC `[TESTED 2026-10-24]`. Read `0x0114` first.
+- On a model with a codec list (`0x0123`), the buds accept `18 01` (`00`) when the phone uses LDAC (3) or LHDC
+  (7, 8). They refuse it (`02`) while the phone plays AAC or SBC `[TESTED 2026-10-24]`. Read `0x0114` first.
 - Older models accept `18` on AAC `[CAPTURE: realme Buds Air 5 Pro #4, T500 Pro #21, Air7 Pro #27, OnePlus Nord
-  Buds 3 Pro #50]`. The Nord Buds 3 Pro offers only SBC and AAC, so the switch turns on and the sound does not
+  Buds 3 Pro #50]`. The Nord Buds 3 Pro offers only SBC and AAC. The switch turns on, but the sound does not
   change (report #40).
-- A refused `18` write changes nothing. An accepted write restarts the link; the buds return about 4 s later `[CAPTURE]`.
+- A refused `18` write changes nothing. An accepted write restarts the link. The buds return about 4 s later `[CAPTURE]`.
 - `18` and `0x8114` are per link `[CAPTURE]`: with dual connection each host reads its own value.
 - realme models `[VENDOR]`: 3D sound is feature `1B` alone and Hi-Res is `18` alone, whatever the bitmap says. realme Link never writes one with the other.
-- Smart auto-pause (pause only when both buds leave) is an app feature, not firmware: the app sends a media pause key.
+- Smart auto-pause (pause only when both buds leave) is an app feature, not firmware. The app sends a media pause key.
 
 ## 14. Dual connection
 
@@ -507,12 +514,13 @@ push 0x0504 <id>                              the EQ changed
 entry: <MAC, 6 bytes reversed> <len> <state> <flags> <nameLen> <name UTF-8>
 ```
 
-- `len` counts state, flags, nameLen and name. State `02` connected, `00` not (a dropped device stays listed) `[CAPTURE]`.
+- `len` counts state, flags, nameLen and name.
+- State `02` is connected. State `00` is not connected. A dropped device stays in the list `[CAPTURE]`.
 - Flags: bit 0 this phone, bit 1 main audio device, bit 2 playing, bits 3-5 device type `[VENDOR]`.
 - Toggle: `0x0403 11 <00|01>`, then `0x0413` with auto switch: `08 00 01` after off, `08 00 00` after on. The app sends it also when the screen opens `[CAPTURE]`.
-- `0x0413 <flags> 00 <values>`: the phone's state. One byte per set flag, in bit order: bit 0 protocol version, bit 1 screen on, bit 2 held by hand,
+- `0x0413 <flags> 00 <values>`: the phone's state. One byte for each set flag, in bit order. Bit 0 protocol version, bit 1 screen on, bit 2 held by hand,
   bit 3 auto switch on, bit 4 music playing `[VENDOR]`. A `0` flag byte with no values (`00 00`) is valid.
-- Device manager `[VENDOR]`, wired, unverified: models whose `dualDevice` lists it (bitmap bit 59 `0x0429` `0x0132`; Buds 4 lacks it).
+- Device manager `[VENDOR]`, wired, unverified: models whose `dualDevice` lists it (bitmap bit 59 `0x0429` `0x0132`. Buds 4 lacks it).
   `0x0429 01 <MAC>` connect, `02 <MAC>` disconnect, `03 <MAC>` unpair (unused). The MAC is in written order, the reverse of the list.
   Preferred device: `0x0429 04 00` automatic, `04 01 <MAC>`. Read `0x0132 02` → `00 02 <00 | 01 <MAC>>`.
 - Related-device push `0D` (section 5) and the handheld device in push `0F` bit 2 belong to the same automatic switching. QuickBuds does not use them.
@@ -520,7 +528,7 @@ entry: <MAC, 6 bytes reversed> <len> <state> <flags> <nameLen> <name UTF-8>
 ## 15. Requests from the buds
 
 Some firmwares wait for these answers and reset the link when none comes. Nord Buds 3 Pro (`064414`, issue #2) `[CAPTURE]` sends `0x0500` with a real
-`Seq` and `00 00 00 00`, sends it again, stops answering queries and resets the link 3-5 s after connect, every time, when it goes unanswered. Buds 4 sends
+`Seq` and `00 00 00 00`. It sends the request again, then stops answering queries. It resets the link 3-5 s after connect, every time, if no answer comes. Buds 4 sends
 `0x0500` empty and works either way. Every answer repeats the request's `Seq` and sets bit 15 of its command.
 
 | From the buds | Answer | Meaning |
@@ -533,16 +541,16 @@ Some firmwares wait for these answers and reset the link when none comes. Nord B
 | push `F4` | `00 F4 {"cmd":<its cmd>}` | Diagnostic JSON; `01 F4` when it is not a JSON object; `00 F4` when empty. Buds 4 sends these with `Seq` `FF` |
 | a command outside groups `01`-`05` and `0F` | `01` | Unknown request |
 
-- No other push gets an answer: battery, wearing, ANC, `06` and the rest are not acked by the vendor app either. `0x0501`, `0x0502` and `0x0504` get none.
+- The vendor app does not answer any other push. This includes battery, wearing, ANC and `06`. `0x0501`, `0x0502` and `0x0504` get no answer.
 - The vendor app adds `<zone offset seconds s32 LE>` to the time answer for models its list flags `utcTimeZone`. The list flags none, so the 4-byte form goes out for every model.
 - Buds 4 `[CAPTURE]`: `0x0500` answered within 5 ms, link unchanged.
 - `0x0501` and `0x0502` are the camera state and shutter requests of a feature QuickBuds does not have (decided against).
 
 ## 16. Golden Sound, fit test, personalised ANC
 
-**Golden Sound (hearing profile)** `[VENDOR]` `[CAPTURE]`. On and off: `0x0403 0B <01|00>`; it applies the record stored on the buds. The buds hold only the active
-record; the phone keeps the list. A record: a 4-byte id (big endian, chosen by the phone), 12 hearing values, 168 bytes of ear-scan data. A hearing value is
-`<side 01 L / 02 R> <freq 01..06> <value, signed>`; the 12 values are left ears 1-6 then right ears 1-6. Every frame below matches a HeyMelody capture.
+**Golden Sound (hearing profile)** `[VENDOR]` `[CAPTURE]`. On and off: `0x0403 0B <01|00>`. It applies the record stored on the buds. The buds hold only the active
+record. The phone keeps the list. A record: a 4-byte id (big endian, chosen by the phone), 12 hearing values, 168 bytes of ear-scan data. A hearing value is
+`<side 01 L / 02 R> <freq 01..06> <value, signed>`. The 12 values are left ears 1-6 then right ears 1-6. Every frame below matches a HeyMelody capture.
 
 | Step | Frames |
 |---|---|
@@ -558,18 +566,18 @@ record; the phone keeps the list. A record: a 4-byte id (big endian, chosen by t
 - Floats are little endian, left ear first, then right. A count is a multiple of 12. They are biquads `a0 a1 a2 b0 b1 b2`: 60 floats = 5 per ear, 72 = 6. The `0x0116` filter rate is 44100.
 - A refused write (`0x840D` or `0x840E` with a non-zero status) ends the step.
 - The OPPO Enco Air5 Pro refuses an ear-scan start (`0x040D 04 01 <id>`) with status `01` on Windows (6 times,
-  report #44). The cause is unknown; the wear state is a guess `[CAPTURE]`.
+  report #44). The cause is unknown. The wear state is a guess `[CAPTURE]`.
 - `0x040F 01` in the capture is an unrelated camera feature.
 - Slider: 25 stops `-120 -88 -55 -52 -49 -45 -41 -38 -35 -30 -25 -22 -19 -15 -11 -8 -5 -1 3 5 7 10 13 15 17`. Each move plays a tone, at most every 300 ms, starting near `-30`.
   The saved value is the stop snapped to the nearest of `-55 -49 -41 -35 -25 -19 -11 -5 3 7 13 17`. A loudness warning shows once at 10 or more.
-- Radar graph: per ear, add the hearing and ear-scan biquads in dB (`20 log10 |B/A|`, 44100 Hz default), read at 80, 10000, 4800, 2400, 1200 and 250 Hz (80 at the top, clockwise).
-  Radius = `max(2, -|dB| × 10 / scale + 10)`, scales 7.5, 15, 15, 12.5, 12.5, 7.5; 10 means no change.
-- The ear scan exists only on models whose list has `earScan`.
+- Radar graph: per ear, add the hearing and ear-scan biquads in dB (`20 log10 |B/A|`, 44100 Hz default). Read at 80, 10000, 4800, 2400, 1200 and 250 Hz (80 at the top, clockwise).
+  Radius = `max(2, -|dB| × 10 / scale + 10)`, scales 7.5, 15, 15, 12.5, 12.5, 7.5. 10 means no change.
+- The ear scan exists only on models whose list has `hearingScan`.
 
-**Fit test** `[VENDOR]` `[CAPTURE]`. `0x0405 01` start, `00` stop; the reply is `00`. The result is push `04 <dev> <s> <dev> <s>`: `1` good, `0` average, `6` poor, else an error.
+**Fit test** `[VENDOR]` `[CAPTURE]`. `0x0405 01` start, `00` stop. The reply is `00`. The result is push `04 <dev> <s> <dev> <s>`: `1` good, `0` average, `6` poor, else an error.
 Buds 4: about 8.6 s → `04 01 01 02 01`. Both buds must be in the ears. The app stops after 15 s and when the sheet closes. It needs event `04` subscribed.
 
-**Personalised ANC** `[VENDOR]`, wired, unverified. Model flag `personalAnc` (11 models); bitmap bit 26 (`0x0412`, `0x011A`). Buds 4 lacks it.
+**Personalised ANC** `[VENDOR]`, wired, unverified. Model flag `personalAnc` (11 models), bitmap bit 26 (`0x0412`, `0x011A`). Buds 4 lacks it.
 
 | Step | Frame |
 |---|---|
@@ -598,6 +606,6 @@ or account, or that QuickBuds decided against. The app has no UI for them.
 | `0x0424` | LE Audio action |
 | push `10`, features `14` `19` `39` | Voice wakeup, voice commands, incoming-call voice control |
 
-Commands that share a bitmap bit with the features above, and that no QuickBuds feature reads, are unread: the queries `0x0117`, `0x0125`, `0x0126`, `0x0127`,
-`0x0129`, `0x012E`, `0x0135`, `0x0136` and the writes `0x0408`, `0x0414`, `0x0419`, `0x041D`, `0x041F`, `0x042B`, `0x042C`, `0x0430`, `0x0432`-`0x0435`. Their
+Some commands share a bitmap bit with the features above, and no QuickBuds feature reads them. They are unread. The queries are `0x0117`, `0x0125`, `0x0126`, `0x0127`,
+`0x0129`, `0x012E`, `0x0135`, `0x0136`. The writes are `0x0408`, `0x0414`, `0x0419`, `0x041D`, `0x041F`, `0x042B`, `0x042C`, `0x0430`, `0x0432`-`0x0435`. Their
 layouts and meanings are `[GUESS]`. The app never sends them.

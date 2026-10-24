@@ -3,7 +3,7 @@
 ## Principles
 1. The buds are the only source of truth. Every control shows the buds' last report.
 2. A write is a request. The buds' own report confirms it. Nothing moves on a tap, and nothing goes back, because nothing moved first.
-3. A control moves in two cases only. The buds report a different value (a read reply or a push). Or the buds cannot report the value and they acknowledge our write.
+3. A control moves in two cases only. The buds report a different value (a read reply or a push). Or the buds cannot report the value and they ack our write.
 4. Every failure shows a toast. The toast names the setting and says what went wrong.
 5. No timer settles or hides a state. The only clock is a failure detector.
 6. The rule works for every model. Nothing here depends on a model. A model may override only HOW the app confirms a setting, as data.
@@ -34,7 +34,12 @@ Rules:
    - Any other non-zero status: the toast is `refused_now`. The buds have the setting and refuse it now.
    - Both cases end the operation. If an earlier write of the same operation went through, the engine adds one `read` to re-sync the controls.
    - Status 0: the engine sends the next write. After the last write, it acts on `confirm`.
-3. `report(values, seq)` always updates `value[id]`. It emits `changed` for each value that really changed. A report confirms the operation in two cases. It is the reply to our own read (`seq` equals the read that we sent). Or it is the first REAL push for the key, for `push`. A read reply that is not ours is never a push. It only updates values. A device showed this on 2026-10-24: a connect-time read ended a game-mode wait with a false toast. A confirming report ends the operation. The engine sends `busy(key, off)`. It sends one `not_changed` toast if the setting's value is not the one that we wrote.
+3. `report(values, seq)` handles a report in these steps:
+   - 3a. It always updates `value[id]`. It emits `changed` for each value that really changed.
+   - 3b. A report confirms the operation in two cases. It is the reply to our own read (`seq` equals the read that we sent). Or it is the first REAL push for the key, for `push`.
+   - 3c. A read reply that is not ours is never a push. It only updates values. A device showed this on 2026-10-24: a connect-time read ended a game-mode wait with a false toast.
+   - 3d. A confirming report ends the operation. The engine sends `busy(key, off)`.
+   - 3e. The engine sends one `not_changed` toast if the setting's value is not the one that we wrote.
 4. `tick(now)`: a wait step that reaches 3000 ms ends the operation with the `no_answer` toast. The step is the ack of a write, then the reply or the push. After the ack of a `restarts` write, the limit is 15000 ms.
 5. When an operation ends, the next operation in the queue starts.
 6. `disconnect`: the active operation ends with the `no_answer` toast. One exception is a `restarts` write that was acked: it waits for the reconnect. Queued operations that sent nothing end silently with `busy off`.
@@ -58,13 +63,20 @@ Assumption to check on a real device: the buds answer in order. A late reply to 
 - Every failure writes a log line (`FEATURE REFUSED`, `FEATURE NOT CHANGED`, `FEATURE NO ANSWER`). The line has the setting key, the reason and the codec. The reports then show which model needs a data override.
 
 ## Where it lives
-- Android engine: `app/src/main/kotlin/com/spizganed/quickbuds/protocol/FeatureSync.kt`. `BudsConnectionManager` owns it, because the service shares one engine with the app and the widget.
+- Android engine: `app/src/main/kotlin/com/spizganed/quickbuds/protocol/FeatureSync.kt`. `BudsConnectionManager` owns it. The service shares one engine with the app, the widget and the notification.
 - Android enabled feature ids: `app/src/main/kotlin/com/spizganed/quickbuds/protocol/FeatureSyncConfig.kt`.
 - Desktop engine: `core/src/feature_sync.rs`. Same names, same states.
 - Tests: both engines run `core/tests/feature_sync_scenarios.json`. A change of the rule changes that file first.
 
 ## Removed when it works
-`notePending`, `withPending`, `PENDING_MS`, every `Thread.sleep(VERIFY_DELAY_MS)` after a write, the game-mode special wait, `holds` on desktop, `setSwitchQuiet` and the `syncingFeatures` flags outside the engine's listener, and `audioAfterRestart` as a flag (it becomes `restarts`).
+- `notePending`
+- `withPending`
+- `PENDING_MS`
+- every `Thread.sleep(VERIFY_DELAY_MS)` after a write
+- the game-mode special wait
+- `setSwitchQuiet`
+- the `syncingFeatures` flags outside the engine's listener
+- `audioAfterRestart` as a flag (it becomes `restarts`)
 
 ## Scenarios
 The file `core/tests/feature_sync_scenarios.json` is the contract. It holds 27 scenarios, and both engines must pass all of them.
