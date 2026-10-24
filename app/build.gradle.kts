@@ -85,4 +85,6 @@ kotlin {
 dependencies {
     implementation("androidx.core:core:1.13.1")
     testImplementation("junit:junit:4.13.2")
+    // The Android stub of org.json throws in JVM tests.
+    testImplementation("org.json:json:20240303")
 }
