@@ -65,17 +65,18 @@ pub(crate) fn spatial_cmds(s: &Snapshot, t: u8) -> Vec<Cmd> {
     cmds
 }
 
-/// The writes for one switch. Hi-Res: the codec write on codec-picker models; else 3D audio goes off first
-/// where the two exclude each other.
+/// The writes for one switch. Hi-Res is one feature-sync operation: the codec write on codec-picker models;
+/// else 3D audio goes off first where the two exclude each other.
 pub(crate) fn feature_cmds(s: &Snapshot, id: u8, on: bool) -> Vec<Cmd> {
     match id {
         FEATURE_SPATIAL => spatial_cmds(s, on as u8),
         FEATURE_HIRES if codec_picker(s) => s.codec.map(|c| Cmd::Codec(c, on)).into_iter().collect(),
         FEATURE_HIRES if on && exclusive(s) && spatial_on(s) => if spatial_by_type(s) {
-            vec![Cmd::SpatialType(0), Cmd::Features(vec![(FEATURE_HIRES, true)])]
+            vec![Cmd::SpatialType(0), Cmd::Hires { on: true, drop_spatial: false }]
         } else {
-            vec![Cmd::Features(vec![(FEATURE_SPATIAL, false), (FEATURE_HIRES, true)])]
+            vec![Cmd::Hires { on: true, drop_spatial: true }]
         },
+        FEATURE_HIRES => vec![Cmd::Hires { on, drop_spatial: false }],
         _ => vec![Cmd::Features(vec![(id, on)])],
     }
 }

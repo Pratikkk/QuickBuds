@@ -35,7 +35,8 @@ mod strings { include!(concat!(env!("OUT_DIR"), "/strings.rs")); }
 
 slint::include_modules!();
 
-use types::{AncModes, LEVELS};
+use types::{AncModes, LEVELS, FEATURE_HIRES};
+use buds_core::feature_sync::ToastKind;
 use session::{Cmd, Snapshot, Status};
 use slint::winit_030::{winit, WinitWindowAccessor};
 #[cfg(windows)]
@@ -327,6 +328,25 @@ fn update_rows<T: Clone + PartialEq + 'static>(current: ModelRc<T>, rows: Vec<T>
 
 fn t<'a>(tr: &'a [String], key: &str) -> &'a str {
     &tr[strings::KEYS.iter().position(|k| *k == key).expect(key)]
+}
+
+/// The text of a feature-sync failure, with the setting's name (the phone's strings).
+fn notice_text(tr: &[String], s: &Snapshot) -> String {
+    let Some(n) = &s.notice else { return String::new() };
+    let name = if n.key == FEATURE_HIRES {
+        t(tr, "row_hires_title").to_string()
+    } else if n.key == s.caps.game_mode_id() {
+        t(tr, "row_game_title").to_string()
+    } else {
+        format!("0x{:02X}", n.key)
+    };
+    let key = match n.kind {
+        ToastKind::RefusedMissing => "feature_refused_missing",
+        ToastKind::RefusedNow => "feature_refused_now",
+        ToastKind::NotChanged => "feature_not_changed",
+        ToastKind::NoAnswer => "feature_no_answer",
+    };
+    t(tr, key).replace("%1$s", &name)
 }
 
 fn set_icons(b: &Buds) {
@@ -676,7 +696,11 @@ impl App {
         let globals = [self.main.global::<Buds>(), self.panel.global::<Buds>()];
         #[cfg(not(windows))]
         let globals = [self.main.global::<Buds>()];
+        let notice = notice_text(&self.tr, &s);
+        let notice_seq = s.notice.as_ref().map_or(0, |n| n.seq as i32);
         for b in globals {
+            b.set_notice(notice.as_str().into());
+            b.set_notice_seq(notice_seq);
             b.set_status(match s.status { Status::Off => 0, Status::Connecting => 1, Status::On => 2 });
             b.set_name(s.name.as_str().into());
             let bat = |i: usize| s.battery[i].map_or(-1, |x| x.0 as i32);

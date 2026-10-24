@@ -65,6 +65,7 @@ const STRINGS: &[&str] = &[
     "dual_add_title", "dual_add_message", "dual_connect_q", "dual_disconnect_q", "dual_preferred", "dual_preferred_auto",
     "dual_preferred_sub",
     "row_golden_title", "row_golden_sub", "golden_profiles", "golden_none", "golden_test_row", "golden_test_sub",
+    "feature_applying", "feature_refused_missing", "feature_refused_now", "feature_not_changed", "feature_no_answer",
     "golden_test_title", "golden_prepare", "golden_start", "golden_scanning", "golden_scan_hint", "golden_left",
     "golden_right", "golden_step", "golden_next", "golden_finish", "golden_loud", "golden_creating", "golden_saved",
     "golden_saved_msg", "golden_stopped", "golden_stopped_music", "golden_stopped_wear", "golden_scan_failed", "golden_refused",

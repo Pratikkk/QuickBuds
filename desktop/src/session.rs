@@ -5,9 +5,82 @@ use crate::bt;
 use crate::cmd;
 use crate::types::*;
 use crate::protocol::Framer;
+use buds_core::feature_sync::{Confirm, FeatureSync, Operation, Out, ToastKind};
+use std::collections::HashMap;
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, Sender};
 use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+
+/// A failure toast the engine asked for: the UI names the setting and shows the text.
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct Notice {
+    /// The setting the user touched.
+    pub key: u8,
+    pub kind: ToastKind,
+    /// Changes with each toast, so the same text shows again.
+    pub seq: u32,
+}
+
+/// The feature-sync engine and the wire sequence bytes it used (`local/FEATURE-SYNC.md`).
+#[derive(Default)]
+struct Sync {
+    engine: FeatureSync,
+    /// Wire sequence byte -> the engine's own number, for the writes and the reads the engine sent.
+    wire: HashMap<u8, u32>,
+    /// The settings still applying: kept across a reconnect, for a fresh snapshot.
+    busy: Vec<u8>,
+    /// The last failure: kept, so a disconnect can still show it.
+    notice: Option<Notice>,
+}
+
+impl Sync {
+    /// Runs the failure detector with no link: only a restart wait is active then. True when the UI changed.
+    fn tick_without_link(&mut self, now: u64) -> bool {
+        let mut changed = false;
+        for out in self.engine.tick(now) {
+            match out {
+                Out::Toast { key, kind } => {
+                    log("NOTE", Vec::new(), Some(toast_log(key, kind, None)));
+                    let seq = self.notice.map_or(0, |n| n.seq) + 1;
+                    self.notice = Some(Notice { key, kind, seq });
+                    changed = true;
+                }
+                Out::Busy { key, on } => {
+                    if on {
+                        if !self.busy.contains(&key) { self.busy.push(key); }
+                    } else {
+                        self.busy.retain(|&k| k != key);
+                    }
+                    changed = true;
+                }
+                _ => {}
+            }
+        }
+        changed
+    }
+}
+
+/// Engine seqs travel as `0xC0..0xDF`; the generic counter in [Conn::send] never uses that range.
+fn wire_seq(seq: u32) -> u8 {
+    0xC0 + (seq % 0x20) as u8
+}
+
+/// A monotonic clock for the engine: the desktop can go longer than 49 days.
+fn now_ms() -> u64 {
+    static T0: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
+    T0.get_or_init(Instant::now).elapsed().as_millis() as u64
+}
+
+/// The packet log line for a failed setting, as the phone writes it.
+fn toast_log(key: u8, kind: ToastKind, codec: Option<u8>) -> String {
+    let name = match kind {
+        ToastKind::RefusedMissing | ToastKind::RefusedNow => "REFUSED",
+        ToastKind::NotChanged => "NOT CHANGED",
+        ToastKind::NoAnswer => "NO ANSWER",
+    };
+    let codec = codec.map_or("null".to_string(), |c| c.to_string());
+    format!("FEATURE {name}: key=0x{key:02X} kind={} codec={codec}", kind.name())
+}
 
 pub enum Cmd {
     Anc(String),
@@ -34,6 +107,8 @@ pub enum Cmd {
     SpatialType(u8),
     /// `0x041A` codec and Hi-Res; the buds restart and the link comes back by itself.
     Codec(u8, bool),
+    /// The Hi-Res switch: one engine operation; `drop_spatial` writes 3D audio off first (§9).
+    Hires { on: bool, drop_spatial: bool },
     HeadMotion(u8),
     /// `0x0405` start / stop.
     FitTest(bool),
@@ -128,6 +203,10 @@ pub struct Snapshot {
     pub keyfn: Option<Vec<[u8; 4]>>,
     /// The hold's noise cycles read: (type, mask).
     pub hold_masks: Vec<(u8, u32)>,
+    /// Settings the feature-sync engine is applying: their rows show "Applying…" and take no tap.
+    pub busy: Vec<u8>,
+    /// The last failure: the overview shows it for a moment, then hides it.
+    pub notice: Option<Notice>,
 }
 
 type Emit = Box<dyn Fn(Snapshot) + Send>;
@@ -192,6 +271,7 @@ fn remember(addr: u64) {
 fn run(rx: Receiver<Cmd>, emit: Emit) {
     let mut paused = false;
     let mut manual = false;
+    let mut sync = Sync::default();
     loop {
         if !paused {
             // Auto-connect follows audio: only buds the system has a link to. Buds are found by the vendor's
@@ -206,18 +286,24 @@ fn run(rx: Receiver<Cmd>, emit: Emit) {
                 let Ok(link) = bt::connect(d.addr) else { continue };
                 log("NOTE", Vec::new(), Some(format!("Connected to {}", d.name)));
                 let mut c = Conn::new(link, d.name, d.addr, &emit);
-                match c.serve(&rx) {
+                match c.serve(&rx, &mut sync) {
                     End::Lost => log("NOTE", Vec::new(), Some("Connection lost".into())),
                     End::UserDisconnect => { log("NOTE", Vec::new(), Some("Disconnected".into())); paused = true }
                     End::Quit => return,
                 }
                 break;
             }
-            emit(Snapshot::default());
+            emit(Snapshot { busy: sync.busy.clone(), notice: sync.notice, ..Default::default() });
         }
         manual = false;
-        // ponytail: 5 s rescan while idle; a Windows device-change notification if this ever costs.
-        match rx.recv_timeout(Duration::from_secs(5)) {
+        // An active engine needs its failure detector with no link too (a restart wait).
+        if sync.engine.active() && sync.tick_without_link(now_ms()) {
+            emit(Snapshot { busy: sync.busy.clone(), notice: sync.notice, ..Default::default() });
+        }
+        // ponytail: a 5 s rescan while idle, 500 ms while the engine waits; a Windows device-change
+        // notification if the rescan ever costs.
+        let wait = if sync.engine.active() { Duration::from_millis(500) } else { Duration::from_secs(5) };
+        match rx.recv_timeout(wait) {
             Ok(Cmd::Connect) => { paused = false; manual = true; }
             Ok(Cmd::Disconnect) => paused = true,
             Ok(_) | Err(RecvTimeoutError::Timeout) => {}
@@ -264,7 +350,8 @@ impl<'a> Conn<'a> {
     fn tx(&mut self, f: Frame) -> Result<(), String> { self.send(f.0, None, &f.1) }
 
     fn send(&mut self, cmd: u16, seq: Option<u8>, payload: &[u8]) -> Result<(), String> {
-        let seq = seq.unwrap_or_else(|| { self.seq = self.seq % 0xFE + 1; self.seq });
+        // 0xC0..0xDF belongs to the feature-sync engine: skip it.
+        let seq = seq.unwrap_or_else(|| { self.seq = if self.seq >= 0xBF { 0x01 } else { self.seq + 1 }; self.seq });
         let p = build_packet(cmd, seq, payload);
         if cmd == CMD_SET_FEATURE && !payload.is_empty() {
             if self.feature_writes.len() > 16 { self.feature_writes.clear(); }
@@ -275,8 +362,52 @@ impl<'a> Conn<'a> {
         Ok(())
     }
 
+    /// Runs the feature-sync engine's output list. True when the snapshot changed.
+    fn exec(&mut self, outs: Vec<Out>, sync: &mut Sync) -> Result<bool, String> {
+        let mut changed = false;
+        for out in outs {
+            match out {
+                Out::Send { id, value, seq } => {
+                    sync.wire.insert(wire_seq(seq), seq);
+                    let (cmd, payload) = cmd::feature(id, value == 1);
+                    self.send(cmd, Some(wire_seq(seq)), &payload)?;
+                }
+                Out::Read { seq } => {
+                    sync.wire.insert(wire_seq(seq), seq);
+                    self.send(CMD_QUERY_STATUS, Some(wire_seq(seq)), &status_query(self.s.model))?;
+                }
+                Out::Changed { id, value } => {
+                    match self.s.features.iter_mut().find(|x| x.0 == id) {
+                        Some(x) => x.1 = value,
+                        None => self.s.features.push((id, value)),
+                    }
+                    if id == self.s.caps.game_mode_id() { self.s.low_latency = Some(value == 1); }
+                    changed = true;
+                }
+                Out::Busy { key, on } => {
+                    if on {
+                        if !self.s.busy.contains(&key) { self.s.busy.push(key); }
+                    } else {
+                        self.s.busy.retain(|&k| k != key);
+                    }
+                    changed = true;
+                }
+                Out::Toast { key, kind } => {
+                    log("NOTE", Vec::new(), Some(toast_log(key, kind, self.s.codec)));
+                    // The count goes on across reconnects, so the same text shows again.
+                    let seq = self.s.notice.map_or(0, |n| n.seq) + 1;
+                    self.s.notice = Some(Notice { key, kind, seq });
+                    changed = true;
+                }
+            }
+        }
+        sync.busy = self.s.busy.clone();
+        sync.notice = self.s.notice;
+        Ok(changed)
+    }
+
     /// Reads and applies packets for `ms`.
-    fn pump(&mut self, ms: u64) -> Result<(), String> {
+    fn pump(&mut self, ms: u64, sync: &mut Sync) -> Result<(), String> {
         let end = Instant::now() + Duration::from_millis(ms);
         let mut buf = [0u8; 1024];
         loop {
@@ -299,17 +430,42 @@ impl<'a> Conn<'a> {
                 // A refused ANC write (status 14 with no bud in an ear): read the real mode back (§5).
                 let refused = cmd_of(&p) == CMD_SET_ANC | 0x8000 && payload_of(&p).first().is_some_and(|&st| st != 0);
                 let need_ear = refused && payload_of(&p).first() == Some(&0x0E);
-                // A refused feature write. Status 1: the buds lack the switch. Status 2: they have it and will not take it now
-                // (high-quality audio needs an LDAC or LHDC link on buds that offer a codec list; reports #33, #42, #44).
-                let feature_refusal = (cmd_of(&p) == CMD_SET_FEATURE | 0x8000).then(|| self.feature_writes.remove(&crate::types::seq_of(&p))).flatten()
-                    .zip(payload_of(&p).first().copied().filter(|&st| st != 0));
-                log("RX", p, human);
-                if let Some((id, st)) = feature_refusal {
-                    log("NOTE", Vec::new(), Some(format!("FEATURE REFUSED: id=0x{id:02X} status={st} codec={:?} offered={:?}", self.s.codec, self.s.codecs)));
+                log("RX", p.clone(), human);
+                // A feature-write reply: the engine decides what a refusal means, else the old path logs it.
+                // Status 1: the buds lack the switch. Status 2: they have it and will not take it now
+                // (high-quality audio needs an LDAC or LHDC link on buds that offer a codec list; #33, #42, #44).
+                if cmd_of(&p) == CMD_SET_FEATURE | 0x8000 {
+                    let seq = crate::types::seq_of(&p);
+                    let status = payload_of(&p).first().copied().unwrap_or(0);
+                    match sync.wire.remove(&seq) {
+                        Some(engine_seq) => {
+                            self.feature_writes.remove(&seq);
+                            changed |= self.exec(sync.engine.ack(engine_seq, status, now_ms()), sync)?;
+                        }
+                        None => if let Some(id) = self.feature_writes.remove(&seq) {
+                            if status != 0 {
+                                log("NOTE", Vec::new(), Some(format!("FEATURE REFUSED: id=0x{id:02X} status={status} codec={:?} offered={:?}", self.s.codec, self.s.codecs)));
+                            }
+                        }
+                    }
                 }
                 if let Some(((cmd, pl), seq)) = answer { self.send(cmd, Some(seq), &pl)?; }
                 if refused { self.tx(cmd::anc_read(1, 1))?; }
                 if need_ear { self.s.anc_refused += 1; changed = true; }
+                // The engine's own reports: a status read reply, or a game-mode push.
+                match &e {
+                    Some(Event::Features(f)) => {
+                        let seq = sync.wire.remove(&crate::types::seq_of(&p));
+                        changed |= self.exec(sync.engine.report(f, seq, now_ms(), false), sync)?;
+                    }
+                    Some(Event::GameMode(pl)) => {
+                        if let Some(on) = game_on(pl, crate::load_settings()["product_id"].as_str()) {
+                            let key = self.s.caps.game_mode_id();
+                            changed |= self.exec(sync.engine.report(&[(key, on as u8)], None, now_ms(), true), sync)?;
+                        }
+                    }
+                    _ => {}
+                }
                 if let Some(e) = e { changed |= self.apply(e); }
             }
             let skipped = std::mem::take(&mut self.framer.discarded);
@@ -361,7 +517,8 @@ impl<'a> Conn<'a> {
                 None => return false,
             },
             Event::GameMode(pl) => match game_on(&pl, crate::load_settings()["product_id"].as_str()) {
-                Some(on) => s.low_latency = Some(held(s.caps.game_mode_id(), on)),
+                // The engine moves this switch: a tap never holds it.
+                Some(on) => s.low_latency = Some(on),
                 None => return false,
             },
             Event::AlertVolume(l) => s.alert_volume = Some(l),
@@ -384,10 +541,12 @@ impl<'a> Conn<'a> {
             Event::HoldMask(k, m) => match s.hold_masks.iter_mut().find(|x| x.0 == k) { Some(x) => x.1 = m, None => s.hold_masks.push((k, m)) },
             Event::Features(f) => {
                 let get = |id: u8| f.iter().find(|x| x.0 == id).map(|x| x.1 == 1);
-                s.low_latency = get(s.caps.game_mode_id()).map(|v| held(s.caps.game_mode_id(), v)).or(s.low_latency);
+                // Game mode and Hi-Res follow the engine: no hold, so only the buds move them.
+                let game = s.caps.game_mode_id();
+                s.low_latency = get(game).or(s.low_latency);
                 s.bass_on = get(FEATURE_BASSWAVE).map(|v| held(FEATURE_BASSWAVE, v)).or(s.bass_on);
                 for (id, v) in f {
-                    let v = held(id, v == 1) as u8;
+                    let v = if id == game || id == FEATURE_HIRES { v } else { held(id, v == 1) as u8 };
                     match s.features.iter_mut().find(|x| x.0 == id) { Some(x) => x.1 = v, None => s.features.push((id, v)) }
                 }
             }
@@ -395,28 +554,39 @@ impl<'a> Conn<'a> {
         true
     }
 
-    fn serve(&mut self, rx: &Receiver<Cmd>) -> End {
+    fn serve(&mut self, rx: &Receiver<Cmd>, sync: &mut Sync) -> End {
+        // A new link: forget the last link's sequence bytes, let the engine continue a restart wait,
+        // and show again what it is still applying.
+        sync.wire.clear();
+        self.s.busy = sync.busy.clone();
+        self.s.notice = sync.notice;
+        let _ = self.exec(sync.engine.reconnect(now_ms()), sync);
         (self.emit)(self.s.clone());
-        let init = self.init();
+        let init = self.init(sync);
         // Buds that named their model are remembered, renamed or not.
         if init.is_ok() && self.s.model.is_some() { remember(self.addr); }
-        match init.and_then(|_| self.run(rx)) {
+        let end = match init.and_then(|_| self.run(rx, sync)) {
             Ok(end) => end,
             Err(_) => End::Lost,
+        };
+        if !matches!(end, End::Quit) {
+            let outs = sync.engine.disconnect(now_ms());
+            if self.exec(outs, sync).unwrap_or(false) { (self.emit)(self.s.clone()); }
         }
+        end
     }
 
     /// PROTOCOL-LEGACY.md "Init sequence": 300 ms before the first frame, then 200 ms apart; reads only if listed.
-    fn init(&mut self) -> Result<(), String> {
-        self.pump(300)?;
+    fn init(&mut self, sync: &mut Sync) -> Result<(), String> {
+        self.pump(300, sync)?;
         for f in [cmd::handshake(), cmd::product_id(), cmd::broadcast_codes()] {
             self.tx(f)?;
-            self.pump(200)?;
+            self.pump(200, sync)?;
         }
         let ids = notify_ids(&self.s.caps, self.s.offered.as_deref());
         if !self.s.caps.supports(CMD_REGISTER_NOTIFY) {
             for &id in &ids { self.tx(cmd::register_one(id))?; }
-            self.pump(200)?;
+            self.pump(200, sync)?;
         }
         let smart = self.s.modes.supports("ANC-Smart");
         let queries: [(u16, Option<u8>, Vec<u8>); 7] = [
@@ -436,36 +606,36 @@ impl<'a> Conn<'a> {
             if !self.s.caps.supports(cmd) || cmd == CMD_REGISTER_NOTIFY && ids.is_empty() || cmd == CMD_QUERY_ANC && payload.is_empty() { continue; }
             if batch && cmd != CMD_REGISTER_NOTIFY { reads.push((cmd, payload)); continue; }
             self.send(cmd, seq, &payload)?;
-            self.pump(200)?;
+            self.pump(200, sync)?;
         }
         if batch {
             reads.extend([CMD_QUERY_EQ, CMD_QUERY_EQ_ALL, CMD_QUERY_BASSWAVE].into_iter()
                 .filter(|&c| self.s.caps.supports(c)).map(|c| (c, vec![])));
-            if !reads.is_empty() { self.tx(cmd::batch(&reads))?; self.pump(200)?; }
+            if !reads.is_empty() { self.tx(cmd::batch(&reads))?; self.pump(200, sync)?; }
         } else {
-            self.eq_reads()?;
+            self.eq_reads(sync)?;
         }
         // The Overview's 3D audio type and codec picker, as the phone reads them.
         for cmd in [CMD_QUERY_SPATIAL_TYPE, CMD_QUERY_CODEC_LIST, CMD_QUERY_CODEC] {
             if !self.s.caps.supports(cmd) { continue; }
             self.send(cmd, None, &[])?;
-            self.pump(120)?;
+            self.pump(120, sync)?;
         }
         // realme Link hands 3D audio to the buds on every connect; else the `1B` switch can do nothing (issue #9).
         if self.s.model.is_some_and(|m| m["spatialToggle"] == 1) && self.s.caps.supports(CMD_SPATIAL_SOURCE) {
             self.tx(cmd::spatial_source(0))?;
-            self.pump(120)?;
+            self.pump(120, sync)?;
         }
         Ok(())
     }
 
     /// The EQ reads these buds list, in order (`sendThenRead`); after a write too, since only the buds know
     /// the ids after a create or delete.
-    fn eq_reads(&mut self) -> Result<(), String> {
+    fn eq_reads(&mut self, sync: &mut Sync) -> Result<(), String> {
         for cmd in [CMD_QUERY_EQ, CMD_QUERY_EQ_ALL, CMD_QUERY_BASSWAVE] {
             if !self.s.caps.supports(cmd) { continue; }
             self.send(cmd, None, &[])?;
-            self.pump(120)?;
+            self.pump(120, sync)?;
         }
         Ok(())
     }
@@ -480,16 +650,22 @@ impl<'a> Conn<'a> {
         }
     }
 
-    fn eq_write(&mut self, f: Frame) -> Result<(), String> {
+    fn eq_write(&mut self, f: Frame, sync: &mut Sync) -> Result<(), String> {
         (self.emit)(self.s.clone());
         self.tx(f)?;
-        self.pump(250)?;
-        self.eq_reads()
+        self.pump(250, sync)?;
+        self.eq_reads(sync)
     }
 
-    fn run(&mut self, rx: &Receiver<Cmd>) -> Result<End, String> {
+    fn run(&mut self, rx: &Receiver<Cmd>, sync: &mut Sync) -> Result<End, String> {
+        let mut last_tick = Instant::now();
         loop {
-            self.pump(0)?;
+            // The feature sync's only clock: a 500 ms check, and only while an operation is active.
+            if sync.engine.active() && last_tick.elapsed() >= Duration::from_millis(500) {
+                last_tick = Instant::now();
+                if self.exec(sync.engine.tick(now_ms()), sync)? { (self.emit)(self.s.clone()); }
+            }
+            self.pump(0, sync)?;
             let mut cmds = Vec::new();
             loop {
                 match rx.try_recv() {
@@ -512,62 +688,67 @@ impl<'a> Conn<'a> {
                         self.s.anc = Some(mode);
                     }
                     Cmd::LowLatency(on) => {
-                        let id = self.s.caps.game_mode_id();
-                        self.hold(id, on);
-                        self.s.low_latency = Some(on);
-                        (self.emit)(self.s.clone());
-                        self.tx(cmd::feature(id, on))?;
-                        // Read the status back: what the buds report is what stays.
-                        self.pump(250)?;
-                        self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?;
+                        // One engine operation: the switch moves when the buds push the state.
+                        let key = self.s.caps.game_mode_id();
+                        let op = Operation { key, writes: vec![(key, on as u8)], confirm: Confirm::Push, restarts: false };
+                        self.exec(sync.engine.tap(op, now_ms()), sync)?;
                     }
                     // Each EQ write updates the state first, so the replies before the new values
                     // do not snap the UI back.
                     Cmd::EqBuiltIn(id) => {
                         self.s.eq_current = Some(id);
-                        self.eq_write(cmd::eq_select(id))?;
+                        self.eq_write(cmd::eq_select(id), sync)?;
                     }
                     Cmd::EqSave(p) => {
                         self.s.eq_current = Some(p.id);
                         if let Some(x) = self.s.eq_custom.iter_mut().find(|x| x.id == p.id) { *x = p.clone(); }
-                        self.eq_write((CMD_SAVE_CUSTOM_EQ, p.encode(EQ_SAVE)))?;
+                        self.eq_write((CMD_SAVE_CUSTOM_EQ, p.encode(EQ_SAVE)), sync)?;
                     }
                     // No local update: the buds assign and renumber ids.
-                    Cmd::EqCreate(p) => self.eq_write((CMD_SAVE_CUSTOM_EQ, p.encode(EQ_CREATE)))?,
-                    Cmd::EqDelete(p) => self.eq_write((CMD_SAVE_CUSTOM_EQ, p.encode(EQ_DELETE)))?,
+                    Cmd::EqCreate(p) => self.eq_write((CMD_SAVE_CUSTOM_EQ, p.encode(EQ_CREATE)), sync)?,
+                    Cmd::EqDelete(p) => self.eq_write((CMD_SAVE_CUSTOM_EQ, p.encode(EQ_DELETE)), sync)?,
                     Cmd::BassWave(on) => {
                         self.hold(FEATURE_BASSWAVE, on);
                         self.s.bass_on = Some(on);
                         (self.emit)(self.s.clone());
                         self.tx(cmd::feature(FEATURE_BASSWAVE, on))?;
-                        self.pump(250)?;
+                        self.pump(250, sync)?;
                         self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?;
                     }
                     Cmd::BassLevel(l) => {
                         self.s.bass_level = Some(l);
-                        self.eq_write(cmd::bass_set(l))?;
+                        self.eq_write(cmd::bass_set(l), sync)?;
                     }
                     // As `setFeatures`: the write, then the status read that shows what the buds kept.
                     // Power saving restarts the buds: the link drops and the idle rescan reconnects.
+                    // Game mode and Hi-Res follow the engine: no hold, and no local move.
                     Cmd::Features(changes) => {
+                        let game = self.s.caps.game_mode_id();
                         for &(id, on) in &changes {
+                            if id == FEATURE_HIRES || id == game { continue; }
                             self.hold(id, on);
                             if let Some(x) = self.s.features.iter_mut().find(|x| x.0 == id) { x.1 = on as u8; }
                         }
                         (self.emit)(self.s.clone());
                         for (id, on) in changes {
                             self.tx(cmd::feature(id, on))?;
-                            self.pump(100)?;
+                            self.pump(100, sync)?;
                         }
-                        self.pump(300)?;
+                        self.pump(300, sync)?;
                         self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?;
+                    }
+                    Cmd::Hires { on, drop_spatial } => {
+                        // One engine operation; the Hi-Res write restarts the link. 3D audio off goes first (§9).
+                        let writes = if drop_spatial { vec![(FEATURE_SPATIAL, 0), (FEATURE_HIRES, on as u8)] } else { vec![(FEATURE_HIRES, on as u8)] };
+                        let op = Operation { key: FEATURE_HIRES, writes, confirm: Confirm::Read, restarts: true };
+                        self.exec(sync.engine.tap(op, now_ms()), sync)?;
                     }
                     Cmd::Find(on) => self.tx(cmd::find(on))?,
                     Cmd::FitTest(on) => self.tx(cmd::fit_test(on))?,
                     Cmd::PncQuery => self.tx(cmd::personal_anc_stored())?,
                     Cmd::Pnc(action) => {
                         self.tx(cmd::personal_anc(action))?;
-                        if action == 2 { self.pump(600)?; self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?; }
+                        if action == 2 { self.pump(600, sync)?; self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?; }
                     }
                     Cmd::StatusRead => self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?,
                     // HeyMelody's order: the switch, the status re-read, then the follow-up; the buds push the list.
@@ -576,17 +757,17 @@ impl<'a> Conn<'a> {
                         if let Some(x) = self.s.features.iter_mut().find(|x| x.0 == FEATURE_DUAL) { x.1 = on as u8; }
                         (self.emit)(self.s.clone());
                         self.tx(cmd::feature(FEATURE_DUAL, on))?;
-                        self.pump(250)?;
+                        self.pump(250, sync)?;
                         self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?;
-                        self.pump(250)?;
+                        self.pump(250, sync)?;
                         self.tx(cmd::phone_state(cmd::PhoneState { auto_switch: Some(!on), ..Default::default() }))?;
                     }
                     Cmd::DualReads(preferred) => {
                         self.tx(cmd::devices_read())?;
-                        self.pump(120)?;
+                        self.pump(120, sync)?;
                         self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?;
                         if preferred && self.s.caps.supports(CMD_QUERY_PREFERRED) {
-                            self.pump(120)?;
+                            self.pump(120, sync)?;
                             self.tx(cmd::preferred_read())?;
                         }
                     }
@@ -595,7 +776,7 @@ impl<'a> Conn<'a> {
                     }
                     Cmd::Preferred(mac) => {
                         self.tx(cmd::preferred_set(mac))?;
-                        self.pump(250)?;
+                        self.pump(250, sync)?;
                         self.tx(cmd::preferred_read())?;
                     }
                     // As `writeThenRead`: shown at once, then read back.
@@ -603,14 +784,14 @@ impl<'a> Conn<'a> {
                         if let Some(g) = self.s.game_sound.as_mut() { g.0 = t; }
                         (self.emit)(self.s.clone());
                         self.tx(cmd::game_sound(t))?;
-                        self.pump(400)?;
+                        self.pump(400, sync)?;
                         self.tx(cmd::game_sound_read())?;
                     }
                     Cmd::SpatialType(t) => {
                         self.s.spatial_type = Some(t);
                         (self.emit)(self.s.clone());
                         self.tx(cmd::spatial(t))?;
-                        self.pump(400)?;
+                        self.pump(400, sync)?;
                         self.tx(cmd::spatial_read())?;
                     }
                     Cmd::Codec(c, hires) => self.tx(cmd::codec(c, hires))?,
@@ -618,14 +799,14 @@ impl<'a> Conn<'a> {
                         self.s.head_motion = Some(t);
                         (self.emit)(self.s.clone());
                         self.tx(cmd::head_gesture(t))?;
-                        self.pump(400)?;
+                        self.pump(400, sync)?;
                         self.tx(cmd::head_gesture_read())?;
                     }
                     Cmd::ModelPicked => pick_model(&mut self.s),
                     Cmd::EarbudReads => for cmd in [CMD_QUERY_ALERT_VOLUME, CMD_QUERY_TAP_LEVEL, CMD_QUERY_GAME_SOUND, CMD_QUERY_HEAD_MOTION] {
                         if !self.s.caps.supports(cmd) { continue; }
                         self.send(cmd, None, &[])?;
-                        self.pump(120)?;
+                        self.pump(120, sync)?;
                     },
                     // Sent on release only, so the buds play one prompt per change; the ack carries the level.
                     Cmd::AlertVolume(l) => {
@@ -636,13 +817,13 @@ impl<'a> Conn<'a> {
                     Cmd::TapLevel(l) => {
                         if let Some(t) = self.s.tap_level.as_mut() { t.0 = l; }
                         self.tx(cmd::tap_level(l.clamp(1, 5)))?;
-                        self.pump(250)?;
+                        self.pump(250, sync)?;
                         self.tx(cmd::tap_level_read())?;
                     }
                     Cmd::ControlsReads(types) => {
                         if !self.s.caps.supports(CMD_QUERY_KEY_FUNCTION) { continue; }
                         self.send(CMD_QUERY_KEY_FUNCTION, None, &[])?;
-                        for t in types { self.pump(120)?; self.tx(cmd::anc_read(2, t))?; }
+                        for t in types { self.pump(120, sync)?; self.tx(cmd::anc_read(2, t))?; }
                     }
                     // The whole table goes back with this bud's slots changed; adopted at once so a second
                     // write before the read-back does not undo the first. No table read: nothing is sent.
@@ -654,26 +835,26 @@ impl<'a> Conn<'a> {
                         let p = cmd::gesture_table(&table.iter().map(|e| crate::msg::Binding { dev: e[0], button: e[1], act: e[2], func: e[3] }).collect::<Vec<_>>());
                         (self.emit)(self.s.clone());
                         self.tx(p)?;
-                        self.pump(600)?;
+                        self.pump(600, sync)?;
                         self.send(CMD_QUERY_KEY_FUNCTION, None, &[])?;
                     }
                     Cmd::HoldModes(mask, t) => {
                         self.tx(cmd::hold_cycle(t, mask))?;
-                        self.pump(400)?;
+                        self.pump(400, sync)?;
                         self.tx(cmd::anc_read(2, t))?;
                     }
                     Cmd::OnCall(btn, act, f) => {
                         self.tx(cmd::gesture_table(&[crate::msg::Binding { dev: 4, button: btn, act, func: f }]))?;
-                        self.pump(400)?;
+                        self.pump(400, sync)?;
                         self.send(CMD_QUERY_KEY_FUNCTION, None, &[])?;
                     }
                     Cmd::Hearing(frames) => {
                         let switch = frames.iter().any(|f| f.0 == CMD_SET_FEATURE);
                         for (cmd, p) in frames {
                             self.send(cmd, None, &p)?;
-                            self.pump(60)?;
+                            self.pump(60, sync)?;
                         }
-                        if switch { self.pump(400)?; self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?; }
+                        if switch { self.pump(400, sync)?; self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?; }
                     }
                     Cmd::Disconnect => return Ok(End::UserDisconnect),
                     Cmd::Connect => continue,

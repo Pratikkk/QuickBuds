@@ -42,6 +42,8 @@ pub fn home(a: &App) {
     let s = &a.snap;
     let listed = |id: u8| s.features.iter().find(|f| f.0 == id).map(|f| f.1);
     let flag = |k: &str| s.model.is_some_and(|m| m[k] == 1);
+    // The feature-sync engine is applying this setting: its row says so and takes no tap.
+    let busy = |id: u8| s.busy.contains(&id);
     let item = |id: i32, icon: &str, title: &str, sub: &str, on: bool, confirm: &str, confirm_off: bool| FeatureItem {
         id, icon: svg(icon), title: t(&a.tr, title).into(), sub: t(&a.tr, sub).into(), on,
         confirm: if confirm.is_empty() { "".into() } else { t(&a.tr, confirm).into() }, confirm_off, ..Default::default()
@@ -51,7 +53,10 @@ pub fn home(a: &App) {
         rows.push(item(FEATURE_WIND_NOISE as i32, icons::ANC, "row_wind_noise_title", "row_wind_noise_sub", v == 1, "", false));
     }
     if a.has.game {
-        rows.push(item(-1, icons::LOW_LATENCY, "row_game_title", "row_game_sub", s.low_latency.unwrap_or(false), "", false));
+        let id = s.caps.game_mode_id();
+        let mut r = item(-1, icons::LOW_LATENCY, "row_game_title", "row_game_sub", s.low_latency.unwrap_or(false), "", false);
+        if busy(id) { r.sub = t(&a.tr, "feature_applying").into(); r.locked = true; }
+        rows.push(r);
     }
     let hires_on = listed(FEATURE_HIRES) == Some(1);
     let picker = codec_picker(s);
@@ -67,6 +72,7 @@ pub fn home(a: &App) {
             r.choice_title = t(&a.tr, "row_hires_title").into();
             r.choice = name.unwrap_or("—".into()).into();
         }
+        if busy(FEATURE_HIRES) { r.sub = t(&a.tr, "feature_applying").into(); r.locked = true; }
         rows.push(r);
     }
     if listed(FEATURE_SPATIAL).is_some() || spatial_by_type(s) {

@@ -354,6 +354,9 @@ export global Buds {
     in property <string> anc;
     // Counts ANC writes the buds refused with no bud in an ear.
     in property <int> anc-refused;
+    // Feature sync: the last failure's text ("" = none), and a count that changes with each one.
+    in property <string> notice;
+    in property <int> notice-seq;
     in property <bool> anc-is-level;
     in property <bool> has-off;
     in property <bool> has-adaptive;
@@ -3405,6 +3408,11 @@ export component MainWindow inherits Window {
     property <int> pick-kind;
     property <string> pick-title;
     property <string> pick-confirm;
+    // A feature-sync failure: the Overview shows it for a moment, then hides it.
+    property <int> notice-seq: Buds.notice-seq;
+    property <bool> notice-shown;
+    changed notice-seq => { notice-shown = true; }
+    Timer { interval: 4s; running: notice-shown; triggered => { notice-shown = false; } }
 
     VerticalLayout {
     TitleBar {
@@ -3537,6 +3545,18 @@ export component MainWindow inherits Window {
                 spacing: 16px;
                 alignment: start;
                 Text { text: root.nav[0].name; color: Palette.text; font-size: Dots.material ? 28px : 26px; font-weight: Dots.material ? 400 : 700; }
+                // A setting the buds refused: the phone's toast, as a card that hides by itself.
+                if Buds.notice != "" && root.notice-shown: Rectangle {
+                    height: notice-label.preferred-height + 20px;
+                    border-radius: 12px;
+                    background: Palette.container;
+                    border-width: 1px;
+                    border-color: Palette.outline;
+                    notice-label := Text {
+                        x: 14px; width: parent.width - 28px; y: 10px;
+                        text: Buds.notice; color: Palette.text; font-size: 13px; wrap: word-wrap;
+                    }
+                }
                 if Update.available != "": Card {
                     live: true;
                     border-radius: 24px;
