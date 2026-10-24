@@ -34,6 +34,7 @@
     <string name="row_hires_sub">Upp till 192 kHz, 400 kbit/s</string>
     <string name="row_hires_sub_off">Standardkvalitet (48 kHz)</string>
     <string name="row_hires_sub_codec">Telefonen använder %1$s, inte LHDC. Kvaliteten ändras inte</string>
+    <string name="hires_needs_codec">Ljud av hög kvalitet kräver en LDAC- eller LHDC-anslutning. Telefonen spelar %1$s nu.</string>
     <string name="codec_dialog_title">Hörlurarna ansluter igen</string>
     <string name="codec_dialog_accept">Godkänn</string>
     <string name="codec_dialog_deny">Avvisa</string>
@@ -522,6 +523,8 @@
     <string name="issues_dialog_action">Visa</string>
     <string name="issue_spatial_silent_title">3D-ljud kan låta likadant</string>
     <string name="issue_spatial_silent_body">Vissa användare hör ingen rumseffekt på den här modellen. Vi vet ännu inte om hörlurarna eller appen är orsaken.</string>
+    <string name="issue_hires_no_codec_title">Ljud i hög kvalitet ändrar inget</string>
+    <string name="issue_hires_no_codec_body">Den här modellen stöder bara SBC och AAC, så hörlurarna har ingen codec för hög kvalitet. Reglaget slås på, men ljudet ändras inte.</string>
     <string name="issue_samsung_codec_title">Inget kodekval på Samsung-telefoner</string>
     <string name="issue_samsung_codec_body">Samsung-telefoner visar inte kodekvalet i Bluetooth-inställningarna. Högkvalitativt ljud kanske inte gör något.</string>
     <string name="issue_hires_spatial_title">Högkvalitativt ljud och 3D-ljud</string>

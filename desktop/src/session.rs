@@ -240,6 +240,8 @@ struct Conn<'a> {
     /// Switches just written: (feature id, the value written, until). The buds' next reports may still carry the
     /// old value; they do not undo the click. The status read after the write is the last word.
     holds: Vec<(u8, bool, Instant)>,
+    /// The feature id of each `0x0403` write by sequence byte, so a refusal in the log names its switch.
+    feature_writes: std::collections::HashMap<u8, u8>,
     s: Snapshot,
     emit: &'a Emit,
 }
@@ -249,7 +251,7 @@ impl<'a> Conn<'a> {
         let model = find_model(None, Some(&name));
         let mut s = Snapshot { status: Status::On, name, detected: model, ..Default::default() };
         pick_model(&mut s);
-        Conn { link, addr, framer: Framer::default(), rx: 0, seq: 0, level: None, holds: Vec::new(), s, emit }
+        Conn { link, addr, framer: Framer::default(), rx: 0, seq: 0, level: None, holds: Vec::new(), feature_writes: Default::default(), s, emit }
     }
 
     /// A switch written just now keeps the value written for a moment.
@@ -264,6 +266,10 @@ impl<'a> Conn<'a> {
     fn send(&mut self, cmd: u16, seq: Option<u8>, payload: &[u8]) -> Result<(), String> {
         let seq = seq.unwrap_or_else(|| { self.seq = self.seq % 0xFE + 1; self.seq });
         let p = build_packet(cmd, seq, payload);
+        if cmd == CMD_SET_FEATURE && !payload.is_empty() {
+            if self.feature_writes.len() > 16 { self.feature_writes.clear(); }
+            self.feature_writes.insert(seq, payload[0]);
+        }
         log("TX", p.clone(), describe_tx(cmd, payload));
         self.link.write(&p)?;
         Ok(())
@@ -293,7 +299,14 @@ impl<'a> Conn<'a> {
                 // A refused ANC write (status 14 with no bud in an ear): read the real mode back (§5).
                 let refused = cmd_of(&p) == CMD_SET_ANC | 0x8000 && payload_of(&p).first().is_some_and(|&st| st != 0);
                 let need_ear = refused && payload_of(&p).first() == Some(&0x0E);
+                // A refused feature write. Status 1: the buds lack the switch. Status 2: they have it and will not take it now
+                // (high-quality audio needs an LDAC or LHDC link on buds that offer a codec list; reports #33, #42, #44).
+                let feature_refusal = (cmd_of(&p) == CMD_SET_FEATURE | 0x8000).then(|| self.feature_writes.remove(&crate::types::seq_of(&p))).flatten()
+                    .zip(payload_of(&p).first().copied().filter(|&st| st != 0));
                 log("RX", p, human);
+                if let Some((id, st)) = feature_refusal {
+                    log("NOTE", Vec::new(), Some(format!("FEATURE REFUSED: id=0x{id:02X} status={st} codec={:?} offered={:?}", self.s.codec, self.s.codecs)));
+                }
                 if let Some(((cmd, pl), seq)) = answer { self.send(cmd, Some(seq), &pl)?; }
                 if refused { self.tx(cmd::anc_read(1, 1))?; }
                 if need_ear { self.s.anc_refused += 1; changed = true; }

@@ -34,6 +34,7 @@
     <string name="row_hires_sub">最大 192 kHz、400 kbps</string>
     <string name="row_hires_sub_off">標準音質（48 kHz）</string>
     <string name="row_hires_sub_codec">スマホは LHDC ではなく %1$s を使用中です。音質は変わりません</string>
+    <string name="hires_needs_codec">高音質の音声には LDAC または LHDC の接続が必要です。スマホは現在 %1$s を再生しています。</string>
     <string name="codec_dialog_title">イヤホンが再接続されます</string>
     <string name="codec_dialog_accept">OK</string>
     <string name="codec_dialog_deny">拒否</string>
@@ -522,6 +523,8 @@
     <string name="issues_dialog_action">表示</string>
     <string name="issue_spatial_silent_title">3Dオーディオが同じように聞こえる場合があります</string>
     <string name="issue_spatial_silent_body">このモデルで空間効果が聞こえないという声があります。原因がイヤホンかアプリかは、まだ分かっていません。</string>
+    <string name="issue_hires_no_codec_title">高音質オーディオでも変化しません</string>
+    <string name="issue_hires_no_codec_body">このモデルは SBC と AAC のみに対応しているため、イヤホンに高音質コーデックはありません。スイッチはオンになりますが、音は変わりません。</string>
     <string name="issue_samsung_codec_title">Samsung のスマートフォンではコーデックを選べません</string>
     <string name="issue_samsung_codec_body">Samsung のスマートフォンは Bluetooth 設定にコーデックの選択を表示しません。高音質オーディオが働かないことがあります。</string>
     <string name="issue_hires_spatial_title">高音質オーディオと3Dオーディオ</string>

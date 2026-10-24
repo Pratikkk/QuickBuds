@@ -34,6 +34,7 @@
     <string name="row_hires_sub">สูงสุด 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">คุณภาพมาตรฐาน (48 kHz)</string>
     <string name="row_hires_sub_codec">โทรศัพท์ใช้ %1$s ไม่ใช่ LHDC คุณภาพจะไม่เปลี่ยน</string>
+    <string name="hires_needs_codec">เสียงคุณภาพสูงต้องใช้ลิงก์ LDAC หรือ LHDC โทรศัพท์กำลังเล่น %1$s อยู่</string>
     <string name="codec_dialog_title">หูฟังจะเชื่อมต่อใหม่</string>
     <string name="codec_dialog_accept">ยอมรับ</string>
     <string name="codec_dialog_deny">ปฏิเสธ</string>
@@ -524,6 +525,8 @@
     <string name="issues_dialog_action">แสดง</string>
     <string name="issue_spatial_silent_title">เสียง 3D อาจฟังดูเหมือนเดิม</string>
     <string name="issue_spatial_silent_body">ผู้ใช้บางคนไม่ได้ยินเอฟเฟกต์เสียงรอบทิศทางในรุ่นนี้ เรายังไม่ทราบว่าสาเหตุมาจากหูฟังหรือแอป</string>
+    <string name="issue_hires_no_codec_title">เสียงคุณภาพสูงไม่เปลี่ยนอะไร</string>
+    <string name="issue_hires_no_codec_body">รุ่นนี้รองรับเฉพาะ SBC และ AAC หูฟังจึงไม่มีโคเดกคุณภาพสูง สวิตช์เปิดได้ แต่เสียงไม่เปลี่ยน</string>
     <string name="issue_samsung_codec_title">โทรศัพท์ Samsung ไม่มีตัวเลือกโคเดก</string>
     <string name="issue_samsung_codec_body">โทรศัพท์ Samsung ไม่แสดงตัวเลือกโคเดกในการตั้งค่าบลูทูธ เสียงคุณภาพสูงอาจไม่ทำงาน</string>
     <string name="issue_hires_spatial_title">เสียงคุณภาพสูงและเสียง 3D</string>

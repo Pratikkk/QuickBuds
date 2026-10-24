@@ -34,6 +34,7 @@
     <string name="row_hires_sub">Hingga 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Kualitas standar (48 kHz)</string>
     <string name="row_hires_sub_codec">Ponsel memakai %1$s, bukan LHDC. Kualitas tidak berubah</string>
+    <string name="hires_needs_codec">Audio berkualitas tinggi butuh tautan LDAC atau LHDC. Ponsel sekarang memutar %1$s.</string>
     <string name="codec_dialog_title">Earbud akan terhubung ulang</string>
     <string name="codec_dialog_accept">Terima</string>
     <string name="codec_dialog_deny">Tolak</string>
@@ -524,6 +525,8 @@
     <string name="issues_dialog_action">Tampilkan</string>
     <string name="issue_spatial_silent_title">Audio 3D mungkin terdengar sama</string>
     <string name="issue_spatial_silent_body">Beberapa pemilik tidak mendengar efek spasial pada model ini. Kami belum tahu apakah penyebabnya earbud atau aplikasi.</string>
+    <string name="issue_hires_no_codec_title">Audio berkualitas tinggi tanpa perubahan</string>
+    <string name="issue_hires_no_codec_body">Model ini hanya mendukung SBC dan AAC, jadi earbud tidak punya codec berkualitas tinggi. Tombol menyala, tetapi suara tidak berubah.</string>
     <string name="issue_samsung_codec_title">Tidak ada pilihan codec di ponsel Samsung</string>
     <string name="issue_samsung_codec_body">Ponsel Samsung tidak menampilkan pilihan codec di pengaturan Bluetooth. Audio berkualitas tinggi mungkin tidak berfungsi.</string>
     <string name="issue_hires_spatial_title">Audio berkualitas tinggi dan audio 3D</string>

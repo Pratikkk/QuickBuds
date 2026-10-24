@@ -966,6 +966,12 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
                     manager.setCodec(codec, isChecked)
                 }
             }
+            // Buds that offer a codec list refuse this switch unless the phone plays LDAC or LHDC (status 2, reports #33 #42 #44).
+            val played = manager.codec
+            if (isChecked && manager.codecs.isNotEmpty() && played != null && played != 3 && played != 7 && played != 8) {
+                Toast.makeText(this, getString(R.string.hires_needs_codec, codecName(played)), Toast.LENGTH_LONG).show()
+                return@setOnCheckedChangeListener
+            }
             val dropSpatial = isChecked && spatialOn() && !spatialSwitchOnly()
             confirmReconnect(
                 if (dropSpatial) R.string.codec_msg_hires_drops_spatial else R.string.codec_msg_reconnect

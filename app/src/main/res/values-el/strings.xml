@@ -34,6 +34,7 @@
     <string name="row_hires_sub">Έως 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Τυπική ποιότητα (48 kHz)</string>
     <string name="row_hires_sub_codec">Το τηλέφωνο χρησιμοποιεί %1$s, όχι LHDC. Η ποιότητα δεν αλλάζει</string>
+    <string name="hires_needs_codec">Ο ήχος υψηλής ποιότητας χρειάζεται σύνδεση LDAC ή LHDC. Το τηλέφωνο παίζει τώρα %1$s.</string>
     <string name="codec_dialog_title">Τα ακουστικά θα επανασυνδεθούν</string>
     <string name="codec_dialog_accept">Αποδοχή</string>
     <string name="codec_dialog_deny">Απόρριψη</string>
@@ -522,6 +523,8 @@
     <string name="issues_dialog_action">Εμφάνιση</string>
     <string name="issue_spatial_silent_title">Ο ήχος 3D μπορεί να ακούγεται ίδιος</string>
     <string name="issue_spatial_silent_body">Ορισμένοι χρήστες δεν ακούν χωρικό εφέ σε αυτό το μοντέλο. Δεν γνωρίζουμε ακόμη αν φταίνε τα ακουστικά ή η εφαρμογή.</string>
+    <string name="issue_hires_no_codec_title">Ο ήχος υψηλής ποιότητας δεν αλλάζει</string>
+    <string name="issue_hires_no_codec_body">Αυτό το μοντέλο υποστηρίζει μόνο SBC και AAC, οπότε τα ακουστικά δεν έχουν κωδικοποιητή υψηλής ποιότητας. Ο διακόπτης ενεργοποιείται, αλλά ο ήχος δεν αλλάζει.</string>
     <string name="issue_samsung_codec_title">Δεν υπάρχει επιλογή κωδικοποιητή σε τηλέφωνα Samsung</string>
     <string name="issue_samsung_codec_body">Τα τηλέφωνα Samsung δεν δείχνουν την επιλογή κωδικοποιητή στις ρυθμίσεις Bluetooth. Ο ήχος υψηλής ποιότητας μπορεί να μην κάνει τίποτα.</string>
     <string name="issue_hires_spatial_title">Ήχος υψηλής ποιότητας και ήχος 3D</string>

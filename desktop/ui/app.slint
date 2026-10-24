@@ -239,6 +239,8 @@ export global Tr {
     in property <string> issue-spatial-silent-body;
     in property <string> issue-hires-spatial-title;
     in property <string> issue-hires-spatial-body;
+    in property <string> issue-hires-no-codec-title;
+    in property <string> issue-hires-no-codec-body;
     in property <string> discord-desc;
     in property <string> reply-title;
     in property <string> firmware-title;
@@ -2381,6 +2383,7 @@ component DualPage inherits Rectangle {
 export global Community {
     in property <bool> spatial-silent;
     in property <bool> hires-spatial;
+    in property <bool> hires-no-codec;
     in-out property <string> reply;
     callback refresh();
     callback open-discord();
@@ -3355,7 +3358,8 @@ component SettingsPage inherits Rectangle {
         title: Tr.issues-title; ok: Tr.close; cancel: "";
         body: (Community.spatial-silent ? Tr.issue-spatial-silent-title + "\n" + Tr.issue-spatial-silent-body + "\n\n" : "")
             + (Community.hires-spatial ? Tr.issue-hires-spatial-title + "\n" + Tr.issue-hires-spatial-body + "\n\n" : "")
-            + (!Community.spatial-silent && !Community.hires-spatial ? Tr.issues-none : "");
+            + (Community.hires-no-codec ? Tr.issue-hires-no-codec-title + "\n" + Tr.issue-hires-no-codec-body + "\n\n" : "")
+            + (!Community.spatial-silent && !Community.hires-spatial && !Community.hires-no-codec ? Tr.issues-none : "");
     }
     lang := ChoiceDialog {
         x: (root.width - self.width) / 2; y: 60px;

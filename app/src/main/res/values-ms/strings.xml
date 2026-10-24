@@ -34,6 +34,7 @@
     <string name="row_hires_sub">Sehingga 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Kualiti standard (48 kHz)</string>
     <string name="row_hires_sub_codec">Telefon guna %1$s, bukan LHDC. Kualiti tidak berubah</string>
+    <string name="hires_needs_codec">Audio berkualiti tinggi perlukan pautan LDAC atau LHDC. Telefon kini memainkan %1$s.</string>
     <string name="codec_dialog_title">Fon telinga akan bersambung semula</string>
     <string name="codec_dialog_accept">Terima</string>
     <string name="codec_dialog_deny">Tolak</string>
@@ -522,6 +523,8 @@
     <string name="issues_dialog_action">Tunjuk</string>
     <string name="issue_spatial_silent_title">Audio 3D mungkin kedengaran sama</string>
     <string name="issue_spatial_silent_body">Sesetengah pemilik tidak mendengar kesan ruang pada model ini. Kami belum tahu sama ada earbud atau aplikasi puncanya.</string>
+    <string name="issue_hires_no_codec_title">Audio berkualiti tinggi tiada perubahan</string>
+    <string name="issue_hires_no_codec_body">Model ini hanya menyokong SBC dan AAC, jadi earbud tiada kodek berkualiti tinggi. Suis dihidupkan, tetapi bunyi tidak berubah.</string>
     <string name="issue_samsung_codec_title">Tiada pilihan kodek pada telefon Samsung</string>
     <string name="issue_samsung_codec_body">Telefon Samsung tidak menunjukkan pilihan kodek dalam tetapan Bluetooth. Audio berkualiti tinggi mungkin tidak berfungsi.</string>
     <string name="issue_hires_spatial_title">Audio berkualiti tinggi dan audio 3D</string>

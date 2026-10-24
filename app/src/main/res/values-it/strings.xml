@@ -34,6 +34,7 @@
     <string name="row_hires_sub">Fino a 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Qualità standard (48 kHz)</string>
     <string name="row_hires_sub_codec">Il telefono usa %1$s, non LHDC. La qualità non cambia</string>
+    <string name="hires_needs_codec">L\'audio di alta qualità richiede un collegamento LDAC o LHDC. Il telefono ora riproduce %1$s.</string>
     <string name="codec_dialog_title">Gli auricolari si riconnetteranno</string>
     <string name="codec_dialog_accept">Accetta</string>
     <string name="codec_dialog_deny">Rifiuta</string>
@@ -522,6 +523,8 @@
     <string name="issues_dialog_action">Mostra</string>
     <string name="issue_spatial_silent_title">L’audio 3D potrebbe suonare uguale</string>
     <string name="issue_spatial_silent_body">Alcuni utenti non sentono alcun effetto spaziale su questo modello. Non sappiamo ancora se la causa sono gli auricolari o l’app.</string>
+    <string name="issue_hires_no_codec_title">L\'audio di alta qualità non cambia nulla</string>
+    <string name="issue_hires_no_codec_body">Questo modello supporta solo SBC e AAC, quindi gli auricolari non hanno un codec di alta qualità. L\'interruttore si attiva, ma il suono non cambia.</string>
     <string name="issue_samsung_codec_title">Nessuna scelta del codec sui telefoni Samsung</string>
     <string name="issue_samsung_codec_body">I telefoni Samsung non mostrano la scelta del codec nelle impostazioni Bluetooth. L’audio di alta qualità potrebbe non fare nulla.</string>
     <string name="issue_hires_spatial_title">Audio di alta qualità e audio 3D</string>

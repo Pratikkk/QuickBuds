@@ -34,6 +34,7 @@
     <string name="row_hires_sub">Až 192 kHz, 400 kb/s</string>
     <string name="row_hires_sub_off">Standardní kvalita (48 kHz)</string>
     <string name="row_hires_sub_codec">Telefon používá %1$s, ne LHDC. Kvalita se nezmění</string>
+    <string name="hires_needs_codec">Kvalitní zvuk potřebuje spojení LDAC nebo LHDC. Telefon teď přehrává %1$s.</string>
     <string name="codec_dialog_title">Sluchátka se znovu připojí</string>
     <string name="codec_dialog_accept">Přijmout</string>
     <string name="codec_dialog_deny">Odmítnout</string>
@@ -522,6 +523,8 @@
     <string name="issues_dialog_action">Zobrazit</string>
     <string name="issue_spatial_silent_title">3D zvuk může znít stejně</string>
     <string name="issue_spatial_silent_body">Někteří majitelé u tohoto modelu neslyší prostorový efekt. Zatím nevíme, zda je příčinou sluchátko, nebo aplikace.</string>
+    <string name="issue_hires_no_codec_title">Kvalitní zvuk nic nemění</string>
+    <string name="issue_hires_no_codec_body">Tento model podporuje jen SBC a AAC, takže sluchátko nemá kvalitní kodek. Přepínač se zapne, ale zvuk se nezmění.</string>
     <string name="issue_samsung_codec_title">Telefony Samsung nenabízejí výběr kodeku</string>
     <string name="issue_samsung_codec_body">Telefony Samsung nezobrazují výběr kodeku v nastavení Bluetooth. Vysoce kvalitní zvuk nemusí fungovat.</string>
     <string name="issue_hires_spatial_title">Vysoce kvalitní zvuk a 3D zvuk</string>

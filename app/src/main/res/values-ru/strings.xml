@@ -34,6 +34,7 @@
     <string name="row_hires_sub">До 192 кГц, 400 кбит/с</string>
     <string name="row_hires_sub_off">Стандартное качество (48 кГц)</string>
     <string name="row_hires_sub_codec">Телефон использует %1$s, а не LHDC. Качество не изменится</string>
+    <string name="hires_needs_codec">Для звука высокого качества нужен канал LDAC или LHDC. Телефон сейчас воспроизводит %1$s.</string>
     <string name="codec_dialog_title">Наушники переподключатся</string>
     <string name="codec_dialog_accept">Принять</string>
     <string name="codec_dialog_deny">Отклонить</string>
@@ -522,6 +523,8 @@
     <string name="issues_dialog_action">Показать</string>
     <string name="issue_spatial_silent_title">3D-звук может звучать так же</string>
     <string name="issue_spatial_silent_body">Некоторые владельцы не слышат пространственного эффекта в этой модели. Мы пока не знаем, виноваты наушники или приложение.</string>
+    <string name="issue_hires_no_codec_title">Звук высокого качества ничего не меняет</string>
+    <string name="issue_hires_no_codec_body">Эта модель поддерживает только SBC и AAC, поэтому у наушников нет кодека высокого качества. Переключатель включается, но звук не меняется.</string>
     <string name="issue_samsung_codec_title">На телефонах Samsung нет выбора кодека</string>
     <string name="issue_samsung_codec_body">Телефоны Samsung не показывают выбор кодека в настройках Bluetooth. Звук высокого качества может ничего не менять.</string>
     <string name="issue_hires_spatial_title">Звук высокого качества и 3D-звук</string>

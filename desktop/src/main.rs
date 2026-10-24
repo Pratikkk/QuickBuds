@@ -478,6 +478,8 @@ fn set_texts(tr: &Tr, s: &[String]) {
     tr.set_issue_spatial_silent_body(t(s, "issue_spatial_silent_body").into());
     tr.set_issue_hires_spatial_title(t(s, "issue_hires_spatial_title").into());
     tr.set_issue_hires_spatial_body(t(s, "issue_hires_spatial_body").into());
+    tr.set_issue_hires_no_codec_title(t(s, "issue_hires_no_codec_title").into());
+    tr.set_issue_hires_no_codec_body(t(s, "issue_hires_no_codec_body").into());
     tr.set_discord_desc(t(s, "about_discord_desc").into());
     tr.set_reply_title(t(s, "reply_title").into());
     tr.set_firmware_title(t(s, "row_firmware_title").into());

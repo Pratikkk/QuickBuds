@@ -34,6 +34,7 @@
     <string name="row_hires_sub">最高 192 kHz，400 kbps</string>
     <string name="row_hires_sub_off">標準音質（48 kHz）</string>
     <string name="row_hires_sub_codec">手機正在使用 %1$s，而不是 LHDC。音質不會改變</string>
+    <string name="hires_needs_codec">高品質音訊需要 LDAC 或 LHDC 連線。手機現在播放 %1$s。</string>
     <string name="codec_dialog_title">耳機將重新連線</string>
     <string name="codec_dialog_accept">確定</string>
     <string name="codec_dialog_deny">拒絕</string>
@@ -524,6 +525,8 @@
     <string name="issues_dialog_action">查看</string>
     <string name="issue_spatial_silent_title">3D 音訊聽起來可能沒有變化</string>
     <string name="issue_spatial_silent_body">部分使用者在這款型號上聽不到空間效果。我們還不知道原因在耳機還是應用程式。</string>
+    <string name="issue_hires_no_codec_title">高音質音訊沒有任何變化</string>
+    <string name="issue_hires_no_codec_body">此型號僅支援 SBC 和 AAC，因此耳機沒有高音質編解碼器。開關會開啟，但聲音不會改變。</string>
     <string name="issue_samsung_codec_title">三星手機沒有編碼器選項</string>
     <string name="issue_samsung_codec_body">三星手機在藍牙設定中不顯示編碼器選項。高音質音訊可能不起作用。</string>
     <string name="issue_hires_spatial_title">高音質音訊和 3D 音訊</string>

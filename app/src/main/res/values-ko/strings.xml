@@ -34,6 +34,7 @@
     <string name="row_hires_sub">최대 192kHz, 400kbps</string>
     <string name="row_hires_sub_off">표준 음질(48kHz)</string>
     <string name="row_hires_sub_codec">휴대폰이 LHDC가 아닌 %1$s를 사용 중입니다. 음질이 바뀌지 않습니다</string>
+    <string name="hires_needs_codec">고음질 오디오에는 LDAC 또는 LHDC 연결이 필요합니다. 휴대폰은 지금 %1$s를 재생합니다.</string>
     <string name="codec_dialog_title">이어버드가 다시 연결됩니다</string>
     <string name="codec_dialog_accept">확인</string>
     <string name="codec_dialog_deny">거부</string>
@@ -522,6 +523,8 @@
     <string name="issues_dialog_action">보기</string>
     <string name="issue_spatial_silent_title">3D 오디오가 같게 들릴 수 있습니다</string>
     <string name="issue_spatial_silent_body">일부 사용자는 이 모델에서 공간 효과를 듣지 못합니다. 원인이 이어버드인지 앱인지 아직 모릅니다.</string>
+    <string name="issue_hires_no_codec_title">고음질 오디오가 아무것도 바꾸지 않습니다</string>
+    <string name="issue_hires_no_codec_body">이 모델은 SBC와 AAC만 지원하므로 이어버드에 고음질 코덱이 없습니다. 스위치는 켜지지만 소리는 바뀌지 않습니다.</string>
     <string name="issue_samsung_codec_title">Samsung 휴대폰에는 코덱 선택이 없습니다</string>
     <string name="issue_samsung_codec_body">Samsung 휴대폰은 Bluetooth 설정에 코덱 선택을 표시하지 않습니다. 고음질 오디오가 작동하지 않을 수 있습니다.</string>
     <string name="issue_hires_spatial_title">고음질 오디오와 3D 오디오</string>

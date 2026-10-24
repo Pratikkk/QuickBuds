@@ -34,6 +34,7 @@
     <string name="row_hires_sub">192 kHz, 400 kbps\'ye kadar</string>
     <string name="row_hires_sub_off">Standart kalite (48 kHz)</string>
     <string name="row_hires_sub_codec">Telefon LHDC değil, %1$s kullanıyor. Kalite değişmez</string>
+    <string name="hires_needs_codec">Yüksek kaliteli ses için LDAC veya LHDC bağlantısı gerekir. Telefon şu anda %1$s çalıyor.</string>
     <string name="codec_dialog_title">Kulaklıklar yeniden bağlanacak</string>
     <string name="codec_dialog_accept">Kabul et</string>
     <string name="codec_dialog_deny">Reddet</string>
@@ -522,6 +523,8 @@
     <string name="issues_dialog_action">Göster</string>
     <string name="issue_spatial_silent_title">3D ses aynı duyulabilir</string>
     <string name="issue_spatial_silent_body">Bazı kullanıcılar bu modelde uzamsal etki duymuyor. Nedenin kulaklık mı uygulama mı olduğunu henüz bilmiyoruz.</string>
+    <string name="issue_hires_no_codec_title">Yüksek kaliteli ses bir şey değiştirmez</string>
+    <string name="issue_hires_no_codec_body">Bu model yalnızca SBC ve AAC destekler, bu yüzden kulaklıkta yüksek kaliteli kodek yok. Anahtar açılır, ama ses değişmez.</string>
     <string name="issue_samsung_codec_title">Samsung telefonlarda codec seçimi yok</string>
     <string name="issue_samsung_codec_body">Samsung telefonlar Bluetooth ayarlarında codec seçimini göstermez. Yüksek kaliteli ses hiçbir şey yapmayabilir.</string>
     <string name="issue_hires_spatial_title">Yüksek kaliteli ses ve 3D ses</string>

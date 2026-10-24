@@ -34,6 +34,7 @@
     <string name="row_hires_sub">Până la 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Calitate standard (48 kHz)</string>
     <string name="row_hires_sub_codec">Telefonul folosește %1$s, nu LHDC. Calitatea nu se schimbă</string>
+    <string name="hires_needs_codec">Audio de calitate superioară necesită o conexiune LDAC sau LHDC. Telefonul redă acum %1$s.</string>
     <string name="codec_dialog_title">Căștile se vor reconecta</string>
     <string name="codec_dialog_accept">Accept</string>
     <string name="codec_dialog_deny">Refuză</string>
@@ -522,6 +523,8 @@
     <string name="issues_dialog_action">Afișează</string>
     <string name="issue_spatial_silent_title">Sunetul 3D poate suna la fel</string>
     <string name="issue_spatial_silent_body">Unii utilizatori nu aud efect spațial la acest model. Nu știm încă dacă cauza sunt căștile sau aplicația.</string>
+    <string name="issue_hires_no_codec_title">Sunetul de calitate nu schimbă nimic</string>
+    <string name="issue_hires_no_codec_body">Acest model acceptă doar SBC și AAC, așa că căștile nu au codec de calitate înaltă. Comutatorul pornește, dar sunetul nu se schimbă.</string>
     <string name="issue_samsung_codec_title">Fără alegerea codecului pe telefoanele Samsung</string>
     <string name="issue_samsung_codec_body">Telefoanele Samsung nu arată alegerea codecului în setările Bluetooth. Sunetul de înaltă calitate poate să nu facă nimic.</string>
     <string name="issue_hires_spatial_title">Sunet de înaltă calitate și sunet 3D</string>
