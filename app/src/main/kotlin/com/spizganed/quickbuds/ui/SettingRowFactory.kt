@@ -1,6 +1,7 @@
 package com.spizganed.quickbuds.ui
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.view.Gravity
 import android.view.View
 import android.graphics.PorterDuff
@@ -176,67 +177,71 @@ object SettingRowFactory {
             trackTintMode = PorterDuff.Mode.SRC_IN
             // No press halo: the stock ripple drew a see-through circle twice the knob's size.
             background = null
-            // Nothing style: a dotted pill track and a dot-disc thumb (DotArt), coloured by the same tint lists.
-            if (ThemeRes.nothing(context)) {
-                trackDrawable = DotArt.Part(context, 44f, 24f, track) { c, b, p -> c.drawRoundRect(b, b.height() / 2, b.height() / 2, p) }
-                thumbDrawable = DotArt.Part(context, 24f, 24f, thumb) { c, b, p ->
-                    // As tall as the track (no padding around the thumb).
-                    c.drawCircle(b.centerX(), b.centerY(), b.height() / 2, p)
-                }
-                thumbTintList = null
-                trackTintList = null
-                switchMinWidth = 0
-            }
-            // Material style: the M3 switch. A 52x32dp pill track (outlined when off) and a thumb
-            // that grows from 16dp to 24dp when on.
-            if (ThemeRes.material(context)) {
-                val p = ThemeRes.palette(context)
-                val dp = { v: Float -> ThemeRes.dp(context, v) }
-                val checkedState = intArrayOf(android.R.attr.state_checked)
-                trackDrawable = android.graphics.drawable.StateListDrawable().apply {
-                    setEnterFadeDuration(160); setExitFadeDuration(160)
-                    // Glass: a tinted track and a white thumb that keeps its size, as the system's own glass switch.
-                    addState(checkedState, ThemeRes.shape(context, p.accent, null, ThemeRes.FULL).apply { setSize(dp(52f), dp(32f)) })
-                    addState(intArrayOf(), (if (p.glass) ThemeRes.shape(context, if (p.glassLight) 0x3314152B else 0x4D0A0A28, p.outline, ThemeRes.FULL, 1f)
-                        else ThemeRes.shape(context, p.container, p.textSecondary, ThemeRes.FULL, 2f)).apply { setSize(dp(52f), dp(32f)) })
-                }
-                // A plain disc with no padding: Switch shifts a thumb outward by its padding (an inset
-                // drawable's knob passed the track's end). The box is half the track wide, as Switch makes
-                // itself twice the thumb's width; the disc's centre is 16dp from the track end it sits at.
-                // One thumb for both states, drawn from where the Switch's own animation has put its box: the disc glides
-                // from 16dp to 36dp, grows and changes colour on the way (so a toggle animates, not snaps).
-                val off = if (p.glass) android.graphics.Color.WHITE else p.textSecondary
-                val on = if (p.glass) android.graphics.Color.WHITE else p.onAccent
-                val offR = if (p.glass) 13f else 8f
-                val onR = if (p.glass) 13f else 12f
-                thumbDrawable = object : android.graphics.drawable.Drawable() {
-                    private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-                    private val shade = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-                    override fun draw(c: android.graphics.Canvas) {
-                        val pad = (callback as? View)?.paddingLeft ?: 0
-                        val t = ((bounds.left - pad) / dp(26f).toFloat()).coerceIn(0f, 1f)
-                        val cx = pad + dp(16f) + t * dp(20f)
-                        val r = dp(offR + (onR - offR) * t).toFloat()
-                        if (p.glass) {
-                            shade.shader = android.graphics.RadialGradient(cx, bounds.exactCenterY() + dp(1.5f), r + dp(5f),
-                                intArrayOf(0x4D000000, 0x4D000000, 0), floatArrayOf(0f, r / (r + dp(5f)), 1f), android.graphics.Shader.TileMode.CLAMP)
-                            c.drawCircle(cx, bounds.exactCenterY() + dp(1.5f), r + dp(5f), shade)
-                        }
-                        paint.color = androidx.core.graphics.ColorUtils.blendARGB(off, on, t)
-                        c.drawCircle(cx, bounds.exactCenterY(), r, paint)
-                    }
-                    override fun getIntrinsicWidth() = dp(26f)
-                    override fun getIntrinsicHeight() = dp(32f)
-                    override fun setAlpha(alpha: Int) { paint.alpha = alpha }
-                    override fun setColorFilter(cf: android.graphics.ColorFilter?) { paint.colorFilter = cf }
-                    @Deprecated("Deprecated in Java")
-                    override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
-                }
-                thumbTintList = null
-                trackTintList = null
-                switchMinWidth = dp(52f)
-            }
+            if (ThemeRes.nothing(context)) styleNothing(context, this, track, thumb)
+            if (ThemeRes.material(context)) styleMaterial(context, this)
         }
+    }
+
+    /** Nothing style: a dotted pill track and a dot-disc thumb (DotArt), coloured by the same tint lists. */
+    private fun styleNothing(context: Context, sw: Switch, track: ColorStateList, thumb: ColorStateList) = sw.apply {
+        trackDrawable = DotArt.Part(context, 44f, 24f, track) { c, b, p -> c.drawRoundRect(b, b.height() / 2, b.height() / 2, p) }
+        thumbDrawable = DotArt.Part(context, 24f, 24f, thumb) { c, b, p ->
+            // As tall as the track (no padding around the thumb).
+            c.drawCircle(b.centerX(), b.centerY(), b.height() / 2, p)
+        }
+        thumbTintList = null
+        trackTintList = null
+        switchMinWidth = 0
+    }
+
+    // Material style: the M3 switch. A 52x32dp pill track (outlined when off) and a thumb
+    // that grows from 16dp to 24dp when on.
+    private fun styleMaterial(context: Context, sw: Switch) = sw.apply {
+        val p = ThemeRes.palette(context)
+        val dp = { v: Float -> ThemeRes.dp(context, v) }
+        val checkedState = intArrayOf(android.R.attr.state_checked)
+        trackDrawable = android.graphics.drawable.StateListDrawable().apply {
+            setEnterFadeDuration(160); setExitFadeDuration(160)
+            // Glass: a tinted track and a white thumb that keeps its size, as the system's own glass switch.
+            addState(checkedState, ThemeRes.shape(context, p.accent, null, ThemeRes.FULL).apply { setSize(dp(52f), dp(32f)) })
+            addState(intArrayOf(), (if (p.glass) ThemeRes.shape(context, if (p.glassLight) 0x3314152B else 0x4D0A0A28, p.outline, ThemeRes.FULL, 1f)
+                else ThemeRes.shape(context, p.container, p.textSecondary, ThemeRes.FULL, 2f)).apply { setSize(dp(52f), dp(32f)) })
+        }
+        // A plain disc with no padding: Switch shifts a thumb outward by its padding (an inset
+        // drawable's knob passed the track's end). The box is half the track wide, as Switch makes
+        // itself twice the thumb's width; the disc's centre is 16dp from the track end it sits at.
+        // One thumb for both states, drawn from where the Switch's own animation has put its box: the disc glides
+        // from 16dp to 36dp, grows and changes colour on the way (so a toggle animates, not snaps).
+        val off = if (p.glass) android.graphics.Color.WHITE else p.textSecondary
+        val on = if (p.glass) android.graphics.Color.WHITE else p.onAccent
+        val offR = if (p.glass) 13f else 8f
+        val onR = if (p.glass) 13f else 12f
+        thumbDrawable = object : android.graphics.drawable.Drawable() {
+            private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+            private val shade = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+            override fun draw(c: android.graphics.Canvas) {
+                val pad = (callback as? View)?.paddingLeft ?: 0
+                val t = ((bounds.left - pad) / dp(26f).toFloat()).coerceIn(0f, 1f)
+                val cx = pad + dp(16f) + t * dp(20f)
+                val r = dp(offR + (onR - offR) * t).toFloat()
+                if (p.glass) {
+                    shade.shader = android.graphics.RadialGradient(cx, bounds.exactCenterY() + dp(1.5f), r + dp(5f),
+                        intArrayOf(0x4D000000, 0x4D000000, 0), floatArrayOf(0f, r / (r + dp(5f)), 1f), android.graphics.Shader.TileMode.CLAMP)
+                    c.drawCircle(cx, bounds.exactCenterY() + dp(1.5f), r + dp(5f), shade)
+                }
+                paint.color = androidx.core.graphics.ColorUtils.blendARGB(off, on, t)
+                c.drawCircle(cx, bounds.exactCenterY(), r, paint)
+            }
+            override fun getIntrinsicWidth() = dp(26f)
+            override fun getIntrinsicHeight() = dp(32f)
+            override fun setAlpha(alpha: Int) { paint.alpha = alpha }
+            override fun setColorFilter(cf: android.graphics.ColorFilter?) { paint.colorFilter = cf }
+            @Deprecated("Deprecated in Java")
+            override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
+        }
+        thumbTintList = null
+        trackTintList = null
+        switchMinWidth = dp(52f)
     }
 
     /** Chevron for rows that open another screen: 22dp, accent, no frame. */

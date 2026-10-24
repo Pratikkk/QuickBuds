@@ -214,7 +214,7 @@ class DualDeviceActivity : Activity(), BudsConnectionManager.Listener {
     override fun onFeatureStates(states: Map<Int, Int>) {
         val v = states[Feature.DUAL_DEVICE] ?: return
         syncing = true
-        dualSwitch.isChecked = v == 1
+        dualSwitch.setFromBuds(v == 1)
         syncing = false
     }
 

@@ -246,7 +246,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
 
     override fun onFeatureStates(states: Map<Int, Int>) {
         wearSheet?.onFeatureStates(states)
-        quiet { for ((id, sw) in featureSwitches) states[id]?.let { sw.isChecked = it == 1 } }
+        quiet { for ((id, sw) in featureSwitches) states[id]?.let { sw.setFromBuds(it == 1) } }
         paintGameSound()
         paintHeadMotion()
     }

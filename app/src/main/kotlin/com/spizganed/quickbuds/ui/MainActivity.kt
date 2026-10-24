@@ -240,8 +240,8 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         // Neutral switches while disconnected, set quietly so no listener sends a write.
         // The buds' real state is repainted on connect.
         syncingFeatures = true
-        gameSwitch?.isChecked = connected && gameModeOn
-        if (!connected) { hiresSwitch?.isChecked = false; spatialSwitch?.isChecked = false; goldenSwitch?.isChecked = false; windSwitch?.isChecked = false }
+        gameSwitch?.setFromBuds(connected && gameModeOn)
+        if (!connected) { hiresSwitch?.setFromBuds(false); spatialSwitch?.setFromBuds(false); goldenSwitch?.setFromBuds(false); windSwitch?.setFromBuds(false) }
         syncingFeatures = false
         if (connected && ::manager.isInitialized) onFeatureStates(manager.featureStates)
         renderAnc(activeAncMode)
@@ -289,7 +289,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         renderWear(state)
         gameSwitch?.let { sw ->
             if (state.connected && sw.isChecked != state.gameMode) {
-                sw.isChecked = state.gameMode
+                sw.setFromBuds(state.gameMode)
             }
         }
     }
@@ -1084,7 +1084,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
 
     private fun setSwitchQuiet(s: Switch, on: Boolean) {
         syncingFeatures = true
-        s.isChecked = on
+        s.setFromBuds(on)
         syncingFeatures = false
     }
 

@@ -208,7 +208,7 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
     override fun onFeatureStates(states: Map<Int, Int>) {
         val v = states[Feature.GOLDEN_SOUND] ?: return
         syncing = true
-        toggle.isChecked = v == 1
+        toggle.setFromBuds(v == 1)
         syncing = false
     }
 

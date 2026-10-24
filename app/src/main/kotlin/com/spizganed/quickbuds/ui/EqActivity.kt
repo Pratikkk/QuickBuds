@@ -307,7 +307,7 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
 
         syncing = true
         val bassOn = m?.featureStates?.get(Feature.BASSWAVE) == 1
-        bassSwitch.isChecked = bassOn
+        bassSwitch.setFromBuds(bassOn)
         m?.bassWaveLevel?.let { bassSlider.value = it }
         syncing = false
 

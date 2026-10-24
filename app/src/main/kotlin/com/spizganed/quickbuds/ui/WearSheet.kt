@@ -44,7 +44,7 @@ class WearSheet(private val activity: Activity, private val setFirmware: (Boolea
     fun onFeatureStates(states: Map<Int, Int>) {
         val v = states[Feature.AUTO_PLAY_PAUSE] ?: return
         syncing = true
-        firmwareSwitch.isChecked = v == 1
+        firmwareSwitch.setFromBuds(v == 1)
         syncing = false
     }
 }
