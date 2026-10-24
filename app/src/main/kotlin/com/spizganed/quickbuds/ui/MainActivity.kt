@@ -97,6 +97,8 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     private var windSwitch: Switch? = null
     private var spatialSubtitle: TextView? = null
     private var goldenSwitch: Switch? = null
+    private var windSubtitle: TextView? = null
+    private var goldenSubtitle: TextView? = null
 
     /** Last state rendered, so a redundant notify does not rebuild the UI. */
     private var lastRendered: WidgetStateStore.State? = null
@@ -904,6 +906,40 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         )
     }
 
+    /** A tap on the Golden Sound switch asks for [wantOn]; the buds' own report moves it. */
+    private fun requestGolden(wantOn: Boolean) = manager.requestSetting(
+        Feature.GOLDEN_SOUND,
+        listOf(Feature.GOLDEN_SOUND to (if (wantOn) 1 else 0)),
+        FeatureSync.Confirm.READ
+    )
+
+    /** A tap on the wind noise switch asks for [wantOn]; the buds' own report moves it. */
+    private fun requestWind(wantOn: Boolean) = manager.requestSetting(
+        Feature.WIND_NOISE,
+        listOf(Feature.WIND_NOISE to (if (wantOn) 1 else 0)),
+        FeatureSync.Confirm.READ
+    )
+
+    /**
+     * A tap on the plain 3D audio switch. On with Hi-Res on is ONE operation: spatial first, then
+     * Hi-Res off, and the link restarts (HeyMelody's order). Models with a spatial type stay old.
+     */
+    private fun requestSpatial(wantOn: Boolean) {
+        if (spatialByType()) return setSpatial(if (wantOn) 1 else 0)
+        if (wantOn == spatialOn()) return
+        val dropHires = wantOn && featureOn(Feature.HIRES_CODEC) && !spatialSwitchOnly()
+        val write = {
+            manager.requestSetting(
+                Feature.SPATIAL_SOUND,
+                if (dropHires) listOf(Feature.SPATIAL_SOUND to 1, Feature.HIRES_CODEC to 0)
+                else listOf(Feature.SPATIAL_SOUND to (if (wantOn) 1 else 0)),
+                FeatureSync.Confirm.READ,
+                restarts = dropHires
+            )
+        }
+        if (dropHires) confirmReconnect(R.string.codec_msg_spatial_drops_hires, write) else write()
+    }
+
     /**
      * A tap on the Hi-Res switch asks for [wantOn]; the switch itself does not move, the buds' own
      * report moves it. Every dialog, the codec guard and the codec refresh are as before.
@@ -1000,18 +1036,18 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         spatialSwitch = null
         goldenSwitch = null
         windSwitch = null
+        windSubtitle = null
+        goldenSubtitle = null
 
         // --- Wind noise reduction, feature 0x1A (realme Link data, PROTOCOL-LEGACY.md §9), under noise control ---
         val wind = SettingRowFactory.buildSwitch(this, false)
         windSwitch = wind
-        wind.setOnCheckedChangeListener { _, isChecked ->
-            if (syncingFeatures) return@setOnCheckedChangeListener
-            manager.setFeatures(Feature.WIND_NOISE to isChecked)
-        }
+        // A tap asks for the opposite value; the switch moves only when the buds report one.
+        (wind as RequestSwitch).onRequest = { wantOn -> requestWind(wantOn) }
         addRow("wind",
             SettingRowFactory.build(
                 this, R.drawable.ic_anc, R.string.row_wind_noise_title, R.string.row_wind_noise_sub, wind
-            ) { wind.performClick() }
+            ) { wind.performClick() }.also { windSubtitle = it.findViewWithTag(SettingRowFactory.SUBTITLE_TAG) }
         )
 
         // --- 1. Game mode / low latency ---
@@ -1045,10 +1081,8 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
 
         val spatial = SettingRowFactory.buildSwitch(this, false)
         spatialSwitch = spatial
-        spatial.setOnCheckedChangeListener { _, isChecked ->
-            if (syncingFeatures) return@setOnCheckedChangeListener
-            setSpatial(if (isChecked) 1 else 0)
-        }
+        // A tap asks for the opposite value; the switch moves only when the buds report one.
+        (spatial as RequestSwitch).onRequest = { wantOn -> requestSpatial(wantOn) }
         val spatialRow = SettingRowFactory.build(
             this, R.drawable.ic_spatial, R.string.row_spatial_title, R.string.row_spatial_sub, spatial
         ) { if (spatialHeadTracking()) spatialSheet() else spatial.performClick() }
@@ -1059,14 +1093,13 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         // The row opens the Golden Sound screen (profiles, hearing test); the switch toggles it.
         val golden = SettingRowFactory.buildSwitch(this, false)
         goldenSwitch = golden
-        golden.setOnCheckedChangeListener { _, isChecked ->
-            if (syncingFeatures) return@setOnCheckedChangeListener
-            manager.setFeatures(Feature.GOLDEN_SOUND to isChecked)
-        }
+        // A tap asks for the opposite value; the switch moves only when the buds report one.
+        (golden as RequestSwitch).onRequest = { wantOn -> requestGolden(wantOn) }
         addRow("golden",
             SettingRowFactory.build(
                 this, R.drawable.ic_hearing, R.string.row_golden_title, R.string.row_golden_sub, golden
             ) { startActivity(Intent(this, GoldenSoundActivity::class.java)) }
+                .also { goldenSubtitle = it.findViewWithTag(SettingRowFactory.SUBTITLE_TAG) }
         )
 
         // --- 4. Equalizer ---
@@ -1183,7 +1216,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     /** Switch and (head-tracking models) subtitle from the buds' last state. */
     private fun paintSpatial() {
         if (connectedUi == false) return
-        spatialSwitch?.let { setSwitchQuiet(it, spatialOn()) }
+        spatialSwitch?.let { setSwitchFromBuds(it, spatialOn()) }
         if (spatialHeadTracking()) spatialSubtitle?.text = spatialLabel(manager.spatialType ?: 0)
         else spatialSubtitle?.setText(R.string.row_spatial_sub)
     }
@@ -1216,10 +1249,10 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         hiresSwitch?.isEnabled = codec == null || codec == 3 || codec == 8
         paintSpatial()
         states[Feature.GOLDEN_SOUND]?.let { v ->
-            goldenSwitch?.let { setSwitchQuiet(it, v == 1) }
+            goldenSwitch?.let { setSwitchFromBuds(it, v == 1) }
         }
         states[Feature.WIND_NOISE]?.let { v ->
-            windSwitch?.let { setSwitchQuiet(it, v == 1) }
+            windSwitch?.let { setSwitchFromBuds(it, v == 1) }
         }
     }
 
@@ -1229,23 +1262,32 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
      */
     override fun onSettingBusy(key: Int, on: Boolean) {
         val gameId = Capabilities.gameModeId(this)
-        if (key != Feature.HIRES_CODEC && key != gameId) return
-        val isHires = key == Feature.HIRES_CODEC
-        val sw = if (isHires) hiresSwitch else gameSwitch
-        val sub = if (isHires) hiresSubtitle else gameSubtitle
+        val sw: Switch?
+        val sub: TextView?
+        when (key) {
+            Feature.HIRES_CODEC -> { sw = hiresSwitch; sub = hiresSubtitle }
+            gameId -> { sw = gameSwitch; sub = gameSubtitle }
+            Feature.SPATIAL_SOUND -> { sw = spatialSwitch; sub = spatialSubtitle }
+            Feature.GOLDEN_SOUND -> { sw = goldenSwitch; sub = goldenSubtitle }
+            Feature.WIND_NOISE -> { sw = windSwitch; sub = windSubtitle }
+            else -> return
+        }
         if (on) {
             sw?.isEnabled = false
             sub?.setText(R.string.feature_applying)
             return
         }
         onFeatureStates(manager.featureStates)
-        if (isHires) {
-            // onFeatureStates returns early while disconnected: take "Applying…" away by hand.
-            if (connectedUi == false) sub?.setText(R.string.row_hires_sub_off)
-            return
+        // onFeatureStates returns early while disconnected: take "Applying…" away by hand.
+        when (key) {
+            Feature.HIRES_CODEC -> if (connectedUi == false) sub?.setText(R.string.row_hires_sub_off)
+            gameId -> sub?.setText(R.string.row_game_sub)
+            Feature.SPATIAL_SOUND -> if (connectedUi == false) sub?.setText(R.string.row_spatial_sub)
+            Feature.GOLDEN_SOUND -> sub?.setText(R.string.row_golden_sub)
+            Feature.WIND_NOISE -> sub?.setText(R.string.row_wind_noise_sub)
         }
-        sub?.setText(R.string.row_game_sub)
-        gameSwitch?.isEnabled = connectedUi != false
+        // onFeatureStates leaves the Hi-Res switch disabled for a codec it cannot run with.
+        if (key != Feature.HIRES_CODEC) sw?.isEnabled = connectedUi != false
     }
 
     override fun onCapabilities() { showModelName(); relayoutIfSupportChanged(); scheduleAskTest() }

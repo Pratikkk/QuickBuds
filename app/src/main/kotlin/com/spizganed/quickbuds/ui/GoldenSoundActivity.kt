@@ -19,6 +19,7 @@ import com.spizganed.quickbuds.protocol.GoldenSound
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.Feature
+import com.spizganed.quickbuds.protocol.FeatureSync
 
 /**
  * Golden Sound (PROTOCOL-LEGACY.md §9): the on/off switch, the profiles kept on this phone (a tap applies
@@ -30,8 +31,8 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
     private var manager: BudsConnectionManager? = null
     private var bound = false
     private lateinit var toggle: Switch
+    private lateinit var toggleRow: LinearLayout
     private lateinit var list: LinearLayout
-    private var syncing = false
     private var activeUid = 0
     private var testSheet: GoldenTestSheet? = null
     private lateinit var radar: HearingRadarView
@@ -64,13 +65,17 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
         root.addView(SettingRowFactory.title(this, R.string.row_golden_title))
 
         toggle = SettingRowFactory.buildSwitch(this, false)
-        toggle.setOnCheckedChangeListener { _, on ->
-            if (!syncing) manager?.setFeatures(Feature.GOLDEN_SOUND to on)
+        // A tap asks for the opposite value; the switch moves only when the buds report one.
+        (toggle as RequestSwitch).onRequest = { wantOn ->
+            manager?.requestSetting(
+                Feature.GOLDEN_SOUND,
+                listOf(Feature.GOLDEN_SOUND to (if (wantOn) 1 else 0)),
+                FeatureSync.Confirm.READ
+            )
         }
-        root.addView(SettingRowFactory.card(this).apply {
-            addView(SettingRowFactory.build(this@GoldenSoundActivity, R.drawable.ic_hearing,
-                R.string.row_golden_title, R.string.row_golden_sub, toggle) { toggle.performClick() })
-        })
+        toggleRow = SettingRowFactory.build(this@GoldenSoundActivity, R.drawable.ic_hearing,
+            R.string.row_golden_title, R.string.row_golden_sub, toggle) { toggle.performClick() }
+        root.addView(SettingRowFactory.card(this).apply { addView(toggleRow) })
 
         // The active profile as HeyMelody's radar, drawn from the filters the buds compute for it.
         radar = HearingRadarView(this)
@@ -207,9 +212,20 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
 
     override fun onFeatureStates(states: Map<Int, Int>) {
         val v = states[Feature.GOLDEN_SOUND] ?: return
-        syncing = true
         toggle.setFromBuds(v == 1)
-        syncing = false
+    }
+
+    /** The engine applies a tap: the row says "Applying…" and its switch stays still. */
+    override fun onSettingBusy(key: Int, on: Boolean) {
+        if (key != Feature.GOLDEN_SOUND) return
+        toggle.isEnabled = !on
+        val sub = SettingRowFactory.subtitle(this, toggleRow)
+        if (on) {
+            sub.setText(R.string.feature_applying)
+            return
+        }
+        manager?.featureStates?.let { onFeatureStates(it) }
+        sub.setText(R.string.row_golden_sub)
     }
 
     override fun onGoldenActive(uid: Int, name: String, values: IntArray) {

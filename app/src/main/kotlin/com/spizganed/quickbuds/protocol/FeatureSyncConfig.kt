@@ -1,0 +1,32 @@
+package com.spizganed.quickbuds.protocol
+
+/**
+ * Which settings go through the feature-sync engine ([FeatureSync]) on Android.
+ * Remove one key from [ENABLED] to put that setting back on the old `setFeatures` path.
+ */
+object FeatureSyncConfig {
+    /** The engine sets these keys. `BudsConnectionManager.requestSetting` checks this set. */
+    val ENABLED: Set<Int> = setOf(
+        Feature.GAME_MODE,
+        Feature.GAME_MODE_MAIN,
+        Feature.HIRES_CODEC,
+        Feature.SPATIAL_SOUND,
+        Feature.GOLDEN_SOUND,
+        Feature.WIND_NOISE,
+        Feature.BASSWAVE,
+        Feature.AUTO_PLAY_PAUSE,
+        Feature.VOCAL_ENHANCE,
+        Feature.GAME_SOUND,
+        Feature.GAME_EQ,
+        Feature.SMART_VOLUME,
+        Feature.ADAPTIVE_VOLUME,
+        Feature.ADAPTIVE_EAR,
+        Feature.SLEEP_PAUSE,
+        Feature.LOST_REMIND,
+        Feature.SPEECH_PERCEPTION,
+        Feature.HEARING_OPTIMIZE,
+        Feature.LONG_PRESS_VOLUME,
+        Feature.HEAD_MOTION,
+        Feature.SWIFT_PAIR,
+    )
+}

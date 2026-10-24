@@ -25,6 +25,7 @@ import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.Feature
 import com.spizganed.quickbuds.protocol.FeatureSync
+import com.spizganed.quickbuds.protocol.FeatureSyncConfig
 import com.spizganed.quickbuds.protocol.GoldenSound
 import com.spizganed.quickbuds.protocol.OppoPacketFramer
 import com.spizganed.quickbuds.protocol.UserInteractionParser
@@ -741,6 +742,11 @@ class BudsConnectionManager(private val context: Context) {
      * kind given; [key] is the control that shows "applying". See local/FEATURE-SYNC.md.
      */
     fun requestSetting(key: Int, writes: List<Pair<Int, Int>>, confirm: FeatureSync.Confirm, restarts: Boolean = false) {
+        if (key !in FeatureSyncConfig.ENABLED) {
+            // This key is switched back to the old path: one write per pair, then a status read.
+            setFeatures(*writes.map { it.first to (it.second == 1) }.toTypedArray())
+            return
+        }
         syncHandler.post {
             if (restarts) audioAfterRestart = true
             execute(sync.tap(FeatureSync.Operation(key, writes, confirm, restarts), SystemClock.elapsedRealtime()))
@@ -821,6 +827,24 @@ class BudsConnectionManager(private val context: Context) {
     private fun settingName(key: Int): String = when (key) {
         Feature.HIRES_CODEC -> context.getString(R.string.row_hires_title)
         Capabilities.gameModeId(context) -> context.getString(R.string.row_game_title)
+        Feature.SPATIAL_SOUND -> context.getString(R.string.row_spatial_title)
+        Feature.GOLDEN_SOUND -> context.getString(R.string.row_golden_title)
+        Feature.WIND_NOISE -> context.getString(R.string.row_wind_noise_title)
+        Feature.BASSWAVE -> context.getString(R.string.eq_basswave)
+        Feature.AUTO_PLAY_PAUSE -> context.getString(R.string.wear_firmware_title)
+        Feature.VOCAL_ENHANCE -> context.getString(R.string.row_vocal_title)
+        Feature.GAME_SOUND -> context.getString(R.string.row_game_sound_title)
+        Feature.GAME_EQ -> context.getString(R.string.row_game_eq_title)
+        Feature.SMART_VOLUME -> context.getString(R.string.row_smart_volume_title)
+        Feature.ADAPTIVE_VOLUME -> context.getString(R.string.row_adaptive_volume_title)
+        Feature.ADAPTIVE_EAR -> context.getString(R.string.row_adaptive_ear_title)
+        Feature.SLEEP_PAUSE -> context.getString(R.string.row_sleep_title)
+        Feature.LOST_REMIND -> context.getString(R.string.row_lost_title)
+        Feature.SPEECH_PERCEPTION -> context.getString(R.string.row_speech_title)
+        Feature.HEARING_OPTIMIZE -> context.getString(R.string.row_hearing_optimize_title)
+        Feature.LONG_PRESS_VOLUME -> context.getString(R.string.row_long_press_volume_title)
+        Feature.HEAD_MOTION -> context.getString(R.string.row_head_motion_title)
+        Feature.SWIFT_PAIR -> context.getString(R.string.row_swift_pair_title)
         else -> "0x%02X".format(key)
     }
 

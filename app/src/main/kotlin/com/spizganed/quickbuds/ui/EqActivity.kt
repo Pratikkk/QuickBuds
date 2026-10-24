@@ -31,6 +31,7 @@ import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.Feature
+import com.spizganed.quickbuds.protocol.FeatureSync
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -162,12 +163,14 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
     private lateinit var builtInLabel: TextView
     private lateinit var builtInCard: LinearLayout
     private lateinit var bassSwitch: Switch
+    private lateinit var bassRow: LinearLayout
     private lateinit var bassSlider: LevelSliderView
     private lateinit var customHeader: TextView
     private lateinit var customCard: LinearLayout
     private lateinit var customActions: LinearLayout
 
-    private var syncing = false
+    /** False until the BassWave slider was placed once, so the first paint does not animate. */
+    private var bassPainted = false
 
     /** What the preset lists last showed; see [render]. */
     private var shownSignature: String? = null
@@ -233,19 +236,18 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         // BassWave: a switch row, and the -5..+5 level slider under it while it is on.
         val bassCard = card()
         bassSwitch = SettingRowFactory.buildSwitch(this, false)
-        bassSwitch.setOnCheckedChangeListener { _, on ->
-            if (!syncing) manager?.setFeatures(Feature.BASSWAVE to on)
-            if (on != (bassSlider.visibility == View.VISIBLE)) {
-                // A user toggle unfolds the slider; a re-read syncing the state just places it.
-                if (syncing) bassSlider.visibility = if (on) View.VISIBLE else View.GONE
-                else slide(bassSlider, on, if (on) 450 else 320)
-            }
+        // A tap asks for the opposite value; the switch moves only when the buds report one.
+        (bassSwitch as RequestSwitch).onRequest = { wantOn ->
+            manager?.requestSetting(
+                Feature.BASSWAVE,
+                listOf(Feature.BASSWAVE to (if (wantOn) 1 else 0)),
+                FeatureSync.Confirm.READ
+            )
         }
-        bassCard.addView(
-            SettingRowFactory.build(
-                this, R.drawable.ic_equalizer, R.string.eq_basswave, R.string.eq_basswave_sub, bassSwitch
-            ) { bassSwitch.performClick() }
-        )
+        bassRow = SettingRowFactory.build(
+            this, R.drawable.ic_equalizer, R.string.eq_basswave, R.string.eq_basswave_sub, bassSwitch
+        ) { bassSwitch.performClick() }
+        bassCard.addView(bassRow)
         bassSlider = LevelSliderView(this, -5, 5).apply {
             onRelease = { manager?.setBassWaveLevel(it) }
             visibility = View.GONE
@@ -305,11 +307,15 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         notConnected.visibility = if (connected) View.GONE else View.VISIBLE
         val current = m?.eqCurrent
 
-        syncing = true
         val bassOn = m?.featureStates?.get(Feature.BASSWAVE) == 1
         bassSwitch.setFromBuds(bassOn)
         m?.bassWaveLevel?.let { bassSlider.value = it }
-        syncing = false
+        // The buds move the switch; the slider follows it, animated only after the first paint.
+        if (bassOn != (bassSlider.visibility == View.VISIBLE)) {
+            if (bassPainted) slide(bassSlider, bassOn, if (bassOn) 450 else 320)
+            else bassSlider.visibility = if (bassOn) View.VISIBLE else View.GONE
+        }
+        bassPainted = true
 
         // A row folded shut by a delete stays hidden until the re-read drops it; without this,
         // a read landing first (the selection one) flashed it back for a frame.
@@ -522,6 +528,14 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
 
     override fun onEqState() = render()
     override fun onFeatureStates(states: Map<Int, Int>) = render()
+
+    /** The engine applies a tap: the row says "Applying…" and its switch stays still. */
+    override fun onSettingBusy(key: Int, on: Boolean) {
+        if (key != Feature.BASSWAVE) return
+        bassSwitch.isEnabled = !on
+        val sub = SettingRowFactory.subtitle(this, bassRow)
+        sub.setText(if (on) R.string.feature_applying else R.string.eq_basswave_sub)
+    }
     override fun onConnected(connected: Boolean) {
         if (connected) manager?.refreshEq()
         render()

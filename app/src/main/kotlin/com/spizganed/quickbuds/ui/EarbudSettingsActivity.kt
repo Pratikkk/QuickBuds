@@ -22,6 +22,7 @@ import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.Feature
+import com.spizganed.quickbuds.protocol.FeatureSync
 
 /**
  * Earbud settings — the hub for everything about the buds themselves rather than the sound
@@ -46,6 +47,9 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
         PersonalNoiseFlow(this, { manager?.personalNoise(it) }, { manager?.queryPersonalNoise() }, { manager?.requestFullStatus() })
     }
     private val featureSwitches = HashMap<Int, android.widget.Switch>()
+    /** The row and its default subtitle of each feature switch, for the "Applying…" state. */
+    private val featureRows = HashMap<Int, LinearLayout>()
+    private val featureSubs = HashMap<Int, Int>()
     private var syncing = false
 
     private val connection = object : ServiceConnection {
@@ -96,7 +100,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
         }
         sheetRow(R.drawable.ic_earbud, R.string.row_wear_title, R.string.row_wear_sub,
             Capabilities.hasFeature(this, Feature.AUTO_PLAY_PAUSE)) {
-            wearSheet = WearSheet(this, { manager?.setFeatures(Feature.AUTO_PLAY_PAUSE to it) },
+            wearSheet = WearSheet(this, { requestFeature(Feature.AUTO_PLAY_PAUSE, it) },
                 manager?.featureStates?.get(Feature.AUTO_PLAY_PAUSE)).also { it.show() }
         }
         sheetRow(R.drawable.ic_find_buds, R.string.row_find_title, R.string.row_find_sub,
@@ -142,10 +146,18 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
      */
     private fun features(root: LinearLayout) {
         val card = cardView()
+        fun addSwitch(id: Int, icon: Int, title: Int, sub: Int, sw: android.widget.Switch) {
+            featureSwitches[id] = sw
+            featureSubs[id] = sub
+            if (card.childCount > 0) card.addView(SettingRowFactory.buildDivider(this))
+            val row = SettingRowFactory.build(this, icon, title, sub, sw) { sw.performClick() }
+            featureRows[id] = row
+            card.addView(row)
+        }
+        /** An old-path switch: it moves on the tap, then one write and a status read go out. */
         fun switch(id: Int, flag: String?, icon: Int, title: Int, sub: Int, confirm: Int = 0) {
             if (!Capabilities.offered(this, id, flag)) return
             val sw = SettingRowFactory.buildSwitch(this, manager?.featureStates?.get(id) == 1)
-            featureSwitches[id] = sw
             sw.setOnCheckedChangeListener { _, on ->
                 if (syncing) return@setOnCheckedChangeListener
                 // Power saving restarts the buds (asks both ways); adaptive sound costs battery (asks only to
@@ -158,8 +170,19 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
                     manager?.setFeatures(id to on)
                 }
             }
-            if (card.childCount > 0) card.addView(SettingRowFactory.buildDivider(this))
-            card.addView(SettingRowFactory.build(this, icon, title, sub, sw) { sw.performClick() })
+            addSwitch(id, icon, title, sub, sw)
+        }
+        /** The feature-sync engine sets it: a tap asks, the buds' report moves the switch. Every dialog stays. */
+        fun syncSwitch(id: Int, flag: String?, icon: Int, title: Int, sub: Int, confirm: Int = 0) {
+            if (!Capabilities.offered(this, id, flag)) return
+            val sw = SettingRowFactory.buildSwitch(this, manager?.featureStates?.get(id) == 1)
+            (sw as RequestSwitch).onRequest = { wantOn ->
+                if (confirm == 0 || (!wantOn && id == Feature.HEARING_OPTIMIZE)) requestFeature(id, wantOn)
+                else ConfirmDialog.show(this, getString(title), getString(confirm), getString(R.string.dual_add_ok)) {
+                    requestFeature(id, wantOn)
+                }
+            }
+            addSwitch(id, icon, title, sub, sw)
         }
         // Personalized ANC: off is a plain switch write, on runs HeyMelody's test flow (PROTOCOL-LEGACY.md §9).
         // The model's flag too: HeyMelody gates on it alone, and Buds 4 list 0x0C without having the feature.
@@ -179,9 +202,9 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
                 sw.performClick()
             })
         }
-        switch(Feature.VOCAL_ENHANCE, "voiceBoost", R.drawable.ic_equalizer,
+        syncSwitch(Feature.VOCAL_ENHANCE, "voiceBoost", R.drawable.ic_equalizer,
             R.string.row_vocal_title, R.string.row_vocal_sub)
-        switch(Feature.GAME_SOUND, "gameSoundFx", R.drawable.ic_low_latency,
+        syncSwitch(Feature.GAME_SOUND, "gameSoundFx", R.drawable.ic_low_latency,
             R.string.row_game_sound_title, R.string.row_game_sound_sub)
         // Which effect it applies: `0x0423 <type> 01`, HeyMelody's radio list (PROTOCOL-LEGACY.md §9).
         if (featureSwitches.containsKey(Feature.GAME_SOUND) &&
@@ -195,7 +218,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
         }
         // Game equalizer: the switch, and the Usage access it needs to see which app is open (PROTOCOL-LEGACY.md §9).
         if (Capabilities.supports(this, OpoProtocol.CMD_GAME_EQ_STATE)) {
-            switch(Feature.GAME_EQ, null, R.drawable.ic_low_latency,
+            syncSwitch(Feature.GAME_EQ, null, R.drawable.ic_low_latency,
                 R.string.row_game_eq_title, R.string.row_game_eq_sub)
             if (featureSwitches.containsKey(Feature.GAME_EQ) && !GameEqWatcher.hasUsageAccess(this)) {
                 card.addView(SettingRowFactory.buildDivider(this))
@@ -205,23 +228,23 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
                 })
             }
         }
-        switch(Feature.SMART_VOLUME, "autoVolume", R.drawable.ic_volume,
+        syncSwitch(Feature.SMART_VOLUME, "autoVolume", R.drawable.ic_volume,
             R.string.row_smart_volume_title, R.string.row_smart_volume_sub)
-        switch(Feature.ADAPTIVE_VOLUME, null, R.drawable.ic_volume,
+        syncSwitch(Feature.ADAPTIVE_VOLUME, null, R.drawable.ic_volume,
             R.string.row_adaptive_volume_title, R.string.row_adaptive_volume_sub)
-        switch(Feature.ADAPTIVE_EAR, null, R.drawable.ic_earbud,
+        syncSwitch(Feature.ADAPTIVE_EAR, null, R.drawable.ic_earbud,
             R.string.row_adaptive_ear_title, R.string.row_adaptive_ear_sub)
-        switch(Feature.SLEEP_PAUSE, null, R.drawable.ic_earbud,
+        syncSwitch(Feature.SLEEP_PAUSE, null, R.drawable.ic_earbud,
             R.string.row_sleep_title, R.string.row_sleep_sub)
-        switch(Feature.LOST_REMIND, null, R.drawable.ic_find_buds,
+        syncSwitch(Feature.LOST_REMIND, null, R.drawable.ic_find_buds,
             R.string.row_lost_title, R.string.row_lost_sub)
-        switch(Feature.SPEECH_PERCEPTION, null, R.drawable.ic_transparency,
+        syncSwitch(Feature.SPEECH_PERCEPTION, null, R.drawable.ic_transparency,
             R.string.row_speech_title, R.string.row_speech_sub)
-        switch(Feature.HEARING_OPTIMIZE, null, R.drawable.ic_hearing,
+        syncSwitch(Feature.HEARING_OPTIMIZE, null, R.drawable.ic_hearing,
             R.string.row_hearing_optimize_title, R.string.row_hearing_optimize_sub, R.string.hearing_optimize_confirm)
-        switch(Feature.LONG_PRESS_VOLUME, "holdVolume", R.drawable.ic_volume,
+        syncSwitch(Feature.LONG_PRESS_VOLUME, "holdVolume", R.drawable.ic_volume,
             R.string.row_long_press_volume_title, R.string.row_long_press_volume_sub)
-        switch(Feature.HEAD_MOTION, null, R.drawable.ic_gesture,
+        syncSwitch(Feature.HEAD_MOTION, null, R.drawable.ic_gesture,
             R.string.row_head_motion_title, R.string.row_head_motion_sub)
         // Which gesture answers: `0x0431 <type>`, HeyMelody's nod / shake choice (PROTOCOL-LEGACY.md §9).
         if (featureSwitches.containsKey(Feature.HEAD_MOTION) &&
@@ -233,7 +256,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
             paintHeadMotion()
             card.addView(row)
         }
-        switch(Feature.SWIFT_PAIR, "fastPair", R.drawable.ic_devices,
+        syncSwitch(Feature.SWIFT_PAIR, "fastPair", R.drawable.ic_devices,
             R.string.row_swift_pair_title, R.string.row_swift_pair_sub)
         switch(Feature.POWER_SAVING, null, R.drawable.ic_power,
             R.string.row_power_saving_title, R.string.row_power_saving_sub, R.string.power_saving_confirm)
@@ -243,6 +266,25 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
     }
 
     private fun quiet(block: () -> Unit) { syncing = true; block(); syncing = false }
+
+    /** One tap on a feature switch: the buds' own report moves the switch. */
+    private fun requestFeature(id: Int, on: Boolean) = manager?.requestSetting(
+        id, listOf(id to (if (on) 1 else 0)), FeatureSync.Confirm.READ
+    )
+
+    /** The engine applies a tap: the row says "Applying…" and its switch stays still. */
+    override fun onSettingBusy(key: Int, on: Boolean) {
+        wearSheet?.onSettingBusy(key, on)
+        val sw = featureSwitches[key] ?: return
+        val sub = featureRows[key]?.findViewWithTag<TextView>(SettingRowFactory.SUBTITLE_TAG)
+        if (on) {
+            sw.isEnabled = false
+            sub?.setText(R.string.feature_applying)
+            return
+        }
+        sw.isEnabled = true
+        featureSubs[key]?.let { sub?.setText(it) }
+    }
 
     override fun onFeatureStates(states: Map<Int, Int>) {
         wearSheet?.onFeatureStates(states)
