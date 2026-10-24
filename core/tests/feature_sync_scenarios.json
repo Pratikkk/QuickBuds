@@ -1,0 +1,777 @@
+{
+ "about": "One rule for every switch that writes to and reads from the buds. Events: tap, ack, report (a read reply or a push), tick, disconnect, reconnect. Output tokens: busy:<id>:on|off, send:<id>:0|1, read:<id>, changed:<id>:<value>, toast:<id>:refused_missing|refused_now|not_changed|no_answer. Timeouts: 3000 ms for an ack or a read reply, 15000 ms after the ack of a write with the restarts trait. Traits: ackOnly (the buds cannot report the value in time), restarts (the write restarts the link). local/FEATURE-SYNC.md has the rules.",
+ "scenarios": [
+  {
+   "name": "plain accept: the value moves once, at the read",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 5,
+     "status": 0,
+     "now": 50,
+     "expect": [
+      "read:24"
+     ]
+    },
+    {
+     "ev": "report",
+     "id": 24,
+     "value": 1,
+     "now": 120,
+     "expect": [
+      "changed:24:1",
+      "busy:24:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "accepted but the buds report the old value: no move, one toast",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 5,
+     "status": 0,
+     "now": 50,
+     "expect": [
+      "read:24"
+     ]
+    },
+    {
+     "ev": "report",
+     "id": 24,
+     "value": 0,
+     "now": 120,
+     "expect": [
+      "toast:24:not_changed",
+      "busy:24:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "late apply (ackOnly): the value moves at the ack, a later read can correct it",
+   "init": {
+    "6": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 6,
+     "on": true,
+     "seq": 7,
+     "now": 0,
+     "traits": [
+      "ackOnly"
+     ],
+     "expect": [
+      "busy:6:on",
+      "send:6:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 7,
+     "status": 0,
+     "now": 60,
+     "expect": [
+      "changed:6:1",
+      "busy:6:off"
+     ]
+    },
+    {
+     "ev": "report",
+     "id": 6,
+     "value": 1,
+     "now": 1700,
+     "expect": []
+    },
+    {
+     "ev": "report",
+     "id": 6,
+     "value": 0,
+     "now": 2000,
+     "expect": [
+      "changed:6:0"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "refused now (status 2): the value never moves",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 5,
+     "status": 2,
+     "now": 40,
+     "expect": [
+      "toast:24:refused_now",
+      "busy:24:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "refused, the buds lack the switch (status 1)",
+   "init": {
+    "4": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 4,
+     "on": true,
+     "seq": 9,
+     "now": 0,
+     "traits": [],
+     "expect": [
+      "busy:4:on",
+      "send:4:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 9,
+     "status": 1,
+     "now": 40,
+     "expect": [
+      "toast:4:refused_missing",
+      "busy:4:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "any other non-zero status counts as refused now",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 5,
+     "status": 3,
+     "now": 40,
+     "expect": [
+      "toast:24:refused_now",
+      "busy:24:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "link restart: busy stays until the full read after the reconnect",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [
+      "restarts"
+     ],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 5,
+     "status": 0,
+     "now": 50,
+     "expect": []
+    },
+    {
+     "ev": "disconnect",
+     "now": 200,
+     "expect": []
+    },
+    {
+     "ev": "reconnect",
+     "now": 4200,
+     "expect": []
+    },
+    {
+     "ev": "report",
+     "id": 24,
+     "value": 1,
+     "now": 4300,
+     "expect": [
+      "changed:24:1",
+      "busy:24:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "link restart: no reconnect within 15 s gives one toast",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [
+      "restarts"
+     ],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 5,
+     "status": 0,
+     "now": 50,
+     "expect": []
+    },
+    {
+     "ev": "tick",
+     "now": 14999,
+     "expect": []
+    },
+    {
+     "ev": "tick",
+     "now": 15050,
+     "expect": [
+      "toast:24:no_answer",
+      "busy:24:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "link restart: the buds come back with the old value",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [
+      "restarts"
+     ],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 5,
+     "status": 0,
+     "now": 50,
+     "expect": []
+    },
+    {
+     "ev": "disconnect",
+     "now": 200,
+     "expect": []
+    },
+    {
+     "ev": "reconnect",
+     "now": 4200,
+     "expect": []
+    },
+    {
+     "ev": "report",
+     "id": 24,
+     "value": 0,
+     "now": 4300,
+     "expect": [
+      "toast:24:not_changed",
+      "busy:24:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "a second tap while a write is in flight is ignored",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": false,
+     "seq": 6,
+     "now": 10,
+     "traits": [],
+     "expect": []
+    },
+    {
+     "ev": "ack",
+     "seq": 5,
+     "status": 0,
+     "now": 50,
+     "expect": [
+      "read:24"
+     ]
+    },
+    {
+     "ev": "report",
+     "id": 24,
+     "value": 1,
+     "now": 100,
+     "expect": [
+      "changed:24:1",
+      "busy:24:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "a push from the buds while idle moves the value at once",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "report",
+     "id": 24,
+     "value": 1,
+     "now": 0,
+     "expect": [
+      "changed:24:1"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "a report with the same value does nothing",
+   "init": {
+    "24": 1
+   },
+   "events": [
+    {
+     "ev": "report",
+     "id": 24,
+     "value": 1,
+     "now": 0,
+     "expect": []
+    },
+    {
+     "ev": "report",
+     "id": 24,
+     "value": 1,
+     "now": 10,
+     "expect": []
+    }
+   ]
+  },
+  {
+   "name": "no ack in 3 s: one toast",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "tick",
+     "now": 2999,
+     "expect": []
+    },
+    {
+     "ev": "tick",
+     "now": 3000,
+     "expect": [
+      "toast:24:no_answer",
+      "busy:24:off"
+     ]
+    },
+    {
+     "ev": "tick",
+     "now": 9000,
+     "expect": []
+    }
+   ]
+  },
+  {
+   "name": "ack but no read reply in 3 s: one toast",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 5,
+     "status": 0,
+     "now": 100,
+     "expect": [
+      "read:24"
+     ]
+    },
+    {
+     "ev": "tick",
+     "now": 3099,
+     "expect": []
+    },
+    {
+     "ev": "tick",
+     "now": 3100,
+     "expect": [
+      "toast:24:no_answer",
+      "busy:24:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "disconnect during a plain write: one toast",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "disconnect",
+     "now": 30,
+     "expect": [
+      "toast:24:no_answer",
+      "busy:24:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "a stale ack (not the current seq) is ignored",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 4,
+     "status": 0,
+     "now": 20,
+     "expect": []
+    },
+    {
+     "ev": "ack",
+     "seq": 5,
+     "status": 0,
+     "now": 50,
+     "expect": [
+      "read:24"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "two features in flight at once keep their own state",
+   "init": {
+    "24": 0,
+    "6": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "tap",
+     "id": 6,
+     "on": true,
+     "seq": 6,
+     "now": 5,
+     "traits": [
+      "ackOnly"
+     ],
+     "expect": [
+      "busy:6:on",
+      "send:6:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 6,
+     "status": 0,
+     "now": 40,
+     "expect": [
+      "changed:6:1",
+      "busy:6:off"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 5,
+     "status": 0,
+     "now": 50,
+     "expect": [
+      "read:24"
+     ]
+    },
+    {
+     "ev": "report",
+     "id": 24,
+     "value": 1,
+     "now": 100,
+     "expect": [
+      "changed:24:1",
+      "busy:24:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "a report for another feature does not end the wait",
+   "init": {
+    "24": 0,
+    "6": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 5,
+     "status": 0,
+     "now": 50,
+     "expect": [
+      "read:24"
+     ]
+    },
+    {
+     "ev": "report",
+     "id": 6,
+     "value": 1,
+     "now": 60,
+     "expect": [
+      "changed:6:1"
+     ]
+    },
+    {
+     "ev": "report",
+     "id": 24,
+     "value": 1,
+     "now": 100,
+     "expect": [
+      "changed:24:1",
+      "busy:24:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "a push that arrives before the ack moves the value; the ack then asks for the read",
+   "init": {
+    "24": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "id": 24,
+     "on": true,
+     "seq": 5,
+     "now": 0,
+     "traits": [],
+     "expect": [
+      "busy:24:on",
+      "send:24:1"
+     ]
+    },
+    {
+     "ev": "report",
+     "id": 24,
+     "value": 1,
+     "now": 20,
+     "expect": [
+      "changed:24:1"
+     ]
+    },
+    {
+     "ev": "ack",
+     "seq": 5,
+     "status": 0,
+     "now": 50,
+     "expect": [
+      "read:24"
+     ]
+    },
+    {
+     "ev": "report",
+     "id": 24,
+     "value": 1,
+     "now": 90,
+     "expect": [
+      "busy:24:off"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "after a disconnect the idle value is kept",
+   "init": {
+    "24": 1
+   },
+   "events": [
+    {
+     "ev": "disconnect",
+     "now": 0,
+     "expect": []
+    },
+    {
+     "ev": "reconnect",
+     "now": 5000,
+     "expect": []
+    },
+    {
+     "ev": "report",
+     "id": 24,
+     "value": 1,
+     "now": 5100,
+     "expect": []
+    }
+   ]
+  }
+ ]
+}
