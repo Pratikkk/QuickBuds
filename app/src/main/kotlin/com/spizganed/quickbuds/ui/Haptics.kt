@@ -11,7 +11,7 @@ import android.view.HapticFeedbackConstants
 import android.view.View
 
 /**
- * SPEC section 4: a CONFIRM tick when a setting is committed (finger lift, toggle, selection),
+ * A CONFIRM tick when a setting is committed (finger lift, toggle, selection),
  * VIRTUAL_KEY below API 30. Gated on Settings › Haptic feedback (default on).
  */
 object Haptics {

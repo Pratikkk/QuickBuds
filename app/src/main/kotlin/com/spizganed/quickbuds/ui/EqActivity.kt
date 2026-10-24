@@ -36,7 +36,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Equalizer — HeyMelody's layout: built-in presets, BassWave, custom presets with a 6-band editor.
+ * Equalizer — HeyMelody's layout: built-in presets, BassWave, custom presets with a band editor (6 bands, 10 on some models).
  * Every command is `[CAPTURE]` 2026-09-23 (PROTOCOL-LEGACY.md §9).
  *
  * The screen shows the BUDS' state, never its own guess: it binds the service, reads the EQ on
@@ -425,7 +425,7 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
             gravity = Gravity.CENTER
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
-        // SPEC 3.5 header: Rename left, name centred, Done (check) right. Every release already
+        // Header: Rename left, name centred, Done (check) right. Every release already
         // saved the preset, so Done only closes; there is no "saved" feedback by design.
         root.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -450,7 +450,7 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
             ).apply { topMargin = dp(8f) }
         })
 
-        // Duplicate and Delete, 48dp, bottom right (SPEC 3.5).
+        // Duplicate and Delete, 48dp, bottom right.
         val fortyEight = { v: android.view.View -> v.layoutParams = LinearLayout.LayoutParams(dp(48f), dp(48f)); v.setPadding(dp(13f), dp(13f), dp(13f), dp(13f)) }
         root.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -520,7 +520,7 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         setOnClickListener { Haptics.commit(it); onClick() }
     }
 
-    /** SPEC icon button (44dp, accent icon). */
+    /** Icon button (44dp, accent icon). */
     private fun iconButton(iconRes: Int, descRes: Int, onClick: () -> Unit) =
         SettingRowFactory.iconButton(this, iconRes, descRes, onClick)
 

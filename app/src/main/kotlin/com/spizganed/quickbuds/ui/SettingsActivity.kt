@@ -11,7 +11,7 @@ import com.spizganed.quickbuds.bluetooth.BudsService
 
 /**
  * Settings, a full screen reached from the header cog. Same layout pattern
- * as Earbud settings: title, then sectioned cards. Toggles save on change; no confirmation.
+ * as Earbud settings: title, then sectioned cards. Toggles save on change. The background service switch asks first.
  */
 class SettingsActivity : Activity() {
 

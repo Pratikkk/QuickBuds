@@ -36,7 +36,7 @@ import com.spizganed.quickbuds.widget.AncWidgetProvider
 import com.spizganed.quickbuds.widget.BatteryWidgetProvider
 
 /**
- * First-run setup, once: welcome, look, permissions, the earbuds, the background service, widgets, feedback, privacy, done.
+ * First-run setup, once: welcome, look, permissions, the earbuds, the background service, widgets, feedback, known issues, privacy, done.
  * Every choice stays in Settings. The crash report and the model test keep their own prompts (they depend on what just happened).
  */
 class SetupActivity : Activity() {

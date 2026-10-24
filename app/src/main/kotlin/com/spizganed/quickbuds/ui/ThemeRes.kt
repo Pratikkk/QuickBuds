@@ -39,7 +39,7 @@ import java.util.WeakHashMap
  * HOW A THEME IS APPLIED — the third design, and why the first two failed
  *
  * Attempt 1: applyOverrideConfiguration() with a uiMode override, so the
- *   values-night / values-notnight palette folders would resolve.
+ *   values-night-v31 palette folder would resolve.
  *   FAILED: throws "getResources() or getAssets() has already been called" on
  *   this device, because something in the Activity ATTACH path touches resources
  *   before onCreate. Five reorderings inside onCreate all failed identically.
@@ -52,9 +52,9 @@ import java.util.WeakHashMap
  *   follow the SYSTEM dark-mode setting, not the in-app choice. So choosing
  *   "Light" in the app still rendered the OLED palette.
  *
- * Attempt 3 (this one): make the distinction an ATTRIBUTE. Theme.App.Base sets
- *   appPalette, and each of the three themes points appPalette at a different
- *   colour set defined in values/themes.xml. Colours are then read through
+ * Attempt 3 (this one): make the distinction an ATTRIBUTE. Theme.App.Base defines
+ *   six `appColor*` attributes. Each of the three themes sets all six to its own colours
+ *   in values/themes.xml. Colours are then read through
  *   ThemeRes.color(), which resolves the attribute against the CURRENT theme.
  *   That is a normal resource lookup at inflate/query time, so it follows the
  *   in-app choice and cannot throw.
@@ -68,7 +68,7 @@ import java.util.WeakHashMap
  * with the matching light/dark window and installs [PaletteFactory], which swaps each
  * `?attr/appColor*` reference in inflated XML for the preset's value. Code-built views
  * read colours through [color] and [palette], which return the preset's tokens. No
- * view-tree walk after inflation (SPEC's PaletteApplier) — deliberately.
+ * view-tree walk after inflation — deliberately.
  */
 object ThemeRes {
 
@@ -760,7 +760,7 @@ object ThemeRes {
         )
     }
 
-    /** SPEC screen padding (16dp sides, 20dp top/bottom) plus the system bar insets. */
+    /** Screen padding (16dp on every side) plus the system bar insets. */
     fun screenPadding(view: View, sideDp: Float = 16f, vertDp: Float = 16f) {
         val side = dp(view.context, sideDp)
         val vert = dp(view.context, vertDp)
@@ -790,7 +790,7 @@ object ThemeRes {
     fun sheet(context: Context): Drawable = card(context, if (material(context)) 28f else 20f, topOnly = true, base = palette(context).background)
 
 
-    /** Thumb / track tint lists for a platform Switch (SPEC section 1, derived colours). */
+    /** Thumb / track tint lists for a platform Switch (derived colours). */
     fun switchTints(context: Context): Pair<ColorStateList, ColorStateList> {
         val p = palette(context)
         val states = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())

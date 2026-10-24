@@ -381,8 +381,8 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             if (Palette.luminance(p.card) < 0.005) Palette.blend(p.card, p.text, 0.11f) else p.card
 
         /**
-         * Battery panel colour: `card` lightened ~4% toward `text` (WIDGETS.md 2). The Nothing style has
-         * no boxes: `card` itself, so panels melt into the widget background.
+         * Battery panel colour: `card` lightened ~4% toward `text`. The Nothing style lightens
+         * the panel 7% toward `text`.
          */
         private fun panelColor(c: Context, p: Palette) =
             // Material: one background, as Google's widgets have; panels melt into the box and only a selection is filled.

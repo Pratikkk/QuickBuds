@@ -8,8 +8,8 @@ import com.spizganed.quickbuds.protocol.Feature
 import com.spizganed.quickbuds.ui.ThemeRes
 
 /**
- * Widget settings, shared by every placed widget. Each setter
- * repaints all widgets. Also holds the per-widget "mode list is open" stamp (WIDGETS.md 4).
+ * Widget settings, shared by every placed widget. setBackground repaints all widgets.
+ * Also holds the per-widget "mode list is open" stamp.
  */
 object WidgetSettings {
 

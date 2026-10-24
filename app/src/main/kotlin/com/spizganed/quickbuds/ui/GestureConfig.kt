@@ -440,7 +440,7 @@ object GestureConfigStore {
     /**
      * TAP_HOLD IS DELIBERATELY SIDE-INDEPENDENT, unlike every other gesture,
      * confirmed by a captured HeyMelody write with no `deviceType` field at all in the hold-mask
-     * command (PROTOCOL-LEGACY.md §5.1): the ANC cycle's membership is ONE setting for both buds, not two.
+     * command (PROTOCOL-LEGACY.md §5, "The hold's ANC cycle"): the ANC cycle's membership is ONE setting for both buds, not two.
      * Keying its storage by `side` — as this function did until now — meant switching the Left/Right
      * tab showed a SEPARATE, likely stale selection for Hold that had nothing to do with either bud's
      * actual state. Every other gesture genuinely can differ per bud (their key-function bind is a

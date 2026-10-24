@@ -47,14 +47,12 @@ import com.spizganed.quickbuds.widget.WidgetStateStore
  *      in a row with a dead column beside it) is gone. The battery block is now a
  *      full-width card at the top of the scroll, with the L/C/R bars beside the
  *      icons instead of underneath them, and the letters moved into circles.
- *   2. ANC is four circular buttons. Tapping the ACTIVE one opens a chooser with
- *      the full mode list, because four buttons cannot represent five modes and
- *      the request was for a pop-out rather than a fifth circle.
+ *   2. ANC is four circular buttons. A tap on ANC opens the strength picker under them.
  *   3. The settings rows are a real card with themed switches and chevrons.
  *
  * THEMING
- * Colours come from resources (values/app_colors.xml + the two override folders)
- * and are swapped by ThemeRes.apply() before super.onCreate(). Nothing here sets a
+ * Colours come from resources (values/colors.xml + the two override folders)
+ * and are swapped by ThemeRes.select() before super.onCreate(). Nothing here sets a
  * raw colour on a view; the only colour work done in code is tinting vector
  * drawables, which cannot be themed from XML.
  */
@@ -100,12 +98,12 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     private var windSubtitle: TextView? = null
     private var goldenSubtitle: TextView? = null
 
-    /** Last state rendered, so a redundant notify does not rebuild the UI. */
+    /** Last state from the store. */
     private var lastRendered: WidgetStateStore.State? = null
 
     private val REQUEST_PERMISSIONS = 1001
 
-    /** Card collapse/expand when the app connects or disconnects. */
+    /** Fade time for the connection change. */
     private val CARD_ANIM_MS = 240L
 
     /** Alpha for controls that cannot act without a connection. */
@@ -127,10 +125,8 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
      * would show the new word at full opacity for one frame before the fade started,
      * which is a flicker, not a transition.
      *
-     * Colours are the STATE colours (app_conn_on / app_conn_off), NOT theme
-     * attributes. Green means connected in every theme; a themed connection colour
-     * would change meaning with the theme. The pill's own background IS themed, so
-     * the container still matches the app.
+     * The dot takes the accent when connected and the secondary text when not. Glass uses a
+     * mint dot. The pill's own background IS themed, so the container still matches the app.
      */
     private fun renderConnectionPill(connected: Boolean, ready: Boolean = true) {
         // The link is up but the buds have told nothing yet: "Connecting" until the first level arrives or 8 s pass.
@@ -146,7 +142,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         lastReadyShown = !reading
 
         fun apply() {
-            // SPEC 3.1 / 3.2: accent dot + text label when connected, grey ring + grey label when not.
+            // Accent dot + text label when connected, grey ring + grey label when not.
             val p = ThemeRes.palette(this)
             val dotRes = if (connected && !reading) R.drawable.ic_status_dot_filled else R.drawable.ic_status_dot_empty
             val dotColor = if (connected && !reading) p.accent else p.textSecondary
@@ -212,7 +208,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     private var connectedUi: Boolean? = null
 
     /**
-     * SPEC 3.2: disconnected, the battery tile keeps its exact size (track-only rings, "—") and
+     * Disconnected, the battery tile keeps its exact size (track-only rings, "—") and
      * every other tile is dimmed to 0.35 and made inert, recursively. Icons keep their accent
      * (dimmed, not greyed); toggles and segments show a neutral state. Nothing collapses, so
      * nothing jumps on connect.
@@ -298,32 +294,6 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         }
     }
 
-    /**
-     * Renders the three icons using THE WIDGET'S OWN LOGIC, ported verbatim.
-     *
-     * WHY A PORT RATHER THAN ANOTHER REDESIGN: the app and the widget had drifted
-     * into two different icon treatments — different colours, different shapes,
-     * different in-case behaviour — and the widget's version is the one that looks
-     * right. Reimplementing it here means one source of truth for the rule, and the
-     * two surfaces cannot disagree again.
-     *
-     * The rule, copied from AncWidgetProvider.budStyle():
-     *
-     *     status 4 or 0   ->  INVISIBLE   (in case)
-     *     status 3 or 7   ->  VISIBLE, colourActive  (#FFFFFF, white)
-     *     anything else   ->  VISIBLE, colourIdle    (#8A8A8A, grey)
-     *
-     * COLOURS ARE THE WIDGET'S PALETTE, deliberately, not the app's theme
-     * attributes. The user's stated goal is that the panel matches the widget, and
-     * the widget is always dark — so white/grey are correct here even on the Light
-     * app theme. That is the same reasoning the widget panel used before this
-     * redesign, and it is why these two colours are hardcoded rather than themed.
-     *
-     * The case icon is drawn in the widget's idle/secondary colour and is always
-     * visible: the widget has no case icon at all (it labels the bars instead), so
-     * there is no widget behaviour to copy for it. Grey is used so it reads as a
-     * static reference object rather than competing with the two bud icons.
-     */
     private fun renderWear(state: WidgetStateStore.State) {
         setConnectedUi(state.connected)
         // The header pill shows the same state, with its own transition.
@@ -386,7 +356,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         // one): the dot shows the state, the word is the action. Same service actions as Dev Tools.
         connPill.setOnClickListener {
             val connected = lastConnShown == true
-            // SPEC 3.4: disconnecting asks first; connecting does not.
+            // Disconnecting asks first; connecting does not.
             if (connected) {
                 ConfirmDialog.show(
                     this, getString(R.string.disconnect_title, deviceNameText.text),
@@ -679,30 +649,6 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     // ==================== Theme ====================
 
     /**
-     * Tints every vector glyph and restyles the header icon frames.
-     *
-     * Vectors are the only thing that cannot read a theme from XML: the drawable
-     * carries fillColor="#FFFFFF" from its widget usage, so on the light theme it
-     * would render white-on-white without an explicit tint. Read through the theme
-     * attribute so the tint follows the in-app theme choice.
-     *
-     * ICONS: uses the WIDGET's bud drawables (ic_bud_left / ic_bud_right), not the
-     * _hq variants. The user preferred the widget artwork — its proportions read
-     * better — and the _hq re-trace is now unused by the app. It is kept in the
-     * tree only because removing it would be an unrelated change.
-     *
-     * WHY THE EDGES LOOKED PIXELATED, and what fixes it: the widget's drawables
-     * declare width/height of 48dp, and drawing one at 52dp (battery card) or
-     * 120dp (find my earbuds) makes the platform rasterise the vector at its
-     * INTRINSIC size and then BITMAP-SCALE the result up — which is where the
-     * blocky edges came from. It is not a fault in the artwork. Setting the bounds
-     * explicitly at the target pixel size forces a vector re-rasterisation at that
-     * exact size, so the result is anti-aliased and sharp at any scale.
-     *
-     * That is what setVectorBounds does below. Do not replace it with a plain
-     * setImageDrawable().
-     */
-    /**
      * Tints the ICON BUTTONS in the header, and nothing else.
      *
      * IT MUST NOT TOUCH THE BATTERY-CARD ICONS. It used to, and that was a real bug:
@@ -710,12 +656,11 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
      * ImageViews — this one setting a themed tint, renderWear overwriting with the
      * widget's white/grey. Whichever ran last won, so the case appeared to change
      * size and colour depending on when a packet happened to arrive, and the buds
-     * sometimes showed a stale drawable. All three card icons are now owned solely
-     * by renderWear(); do not set them here.
+     * sometimes showed a stale drawable. All three card icons are owned solely by
+     * BudsStatusView.
      *
-     * The header frames keep the widget's dark chip in EVERY theme (see
-     * header_icon_bg), so their glyphs take the accent, like the EQ and row-chevron buttons —
-     * never appColorIconTint, which would turn them black on a dark chip.
+     * The header frames use ThemeRes.iconButton in EVERY theme, so their glyphs take
+     * the accent, like the EQ and row-chevron buttons.
      */
     private fun applyThemeTints() {
         ThemeRes.screenPadding(mainLayout)
@@ -941,8 +886,9 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     }
 
     /**
-     * A tap on the Hi-Res switch asks for [wantOn]; the switch itself does not move, the buds' own
-     * report moves it. Every dialog, the codec guard and the codec refresh are as before.
+     * A tap on the Hi-Res switch asks for [wantOn]. On codec-picker models the switch moves at
+     * once. On the other models the buds' report moves it. Every dialog, the codec guard and the
+     * codec refresh are as before.
      */
     private fun requestHires(wantOn: Boolean) {
         val hires = hiresSwitch ?: return
@@ -1023,9 +969,8 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     /**
      * Builds the settings card.
      *
-     * Row order is the order specified: game mode and the two switches first, so
-     * the block above the fold is the one that gets used most, then the three rows
-     * that open another screen.
+     * Rows build in this order: wind, game, Hi-Res, spatial, Golden Sound, equalizer,
+     * dual connection, earbud settings.
      *
      * Every row through here must be honest about what it does.
      */
@@ -1239,7 +1184,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     override fun onFeatureStates(states: Map<Int, Int>) {
         relayoutIfSupportChanged()
         scheduleAskTest()
-        // Disconnected, the switches stay neutral (SPEC 3.2); setConnectedUi repaints on connect.
+        // Disconnected, the switches stay neutral; setConnectedUi repaints on connect.
         if (connectedUi == false) return
         states[Feature.HIRES_CODEC]?.let { v ->
             hiresSwitch?.let { setSwitchFromBuds(it, v == 1) }
@@ -1522,17 +1467,17 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
                 (ModelCatalog.manual(c) != null && spatialHeadTracking(c)))
 
         /**
-         * Our own key `spatialSwitch` (realme Link data, PROTOCOL-LEGACY.md §9): spatial is feature `1B` alone and
+         * Our own key `spatialToggle` (realme Link data, PROTOCOL-LEGACY.md §9): spatial is feature `1B` alone and
          * Hi-Res `18` alone, never written together, whatever the bitmap says.
          */
         fun spatialSwitchOnly(c: Context) = ModelCatalog.current(c)?.json?.optInt("spatialToggle") == 1
 
-        /** The model's `spatialTypes` has `2`: Off / Fixed / Head tracking instead of a plain switch. */
+        /** The model's `spatialModes` has `2`: Off / Fixed / Head tracking instead of a plain switch. */
         fun spatialHeadTracking(c: Context) =
             ModelCatalog.current(c)?.json?.optJSONArray("spatialModes")?.toString()?.contains('2') == true
 
         /**
-         * `[VENDOR]` HeyMelody's "High-quality audio" screen on `highAudio` models (PROTOCOL-LEGACY.md §9): the row
+         * `[VENDOR]` HeyMelody's "High-quality audio" screen on `hiRes` models (PROTOCOL-LEGACY.md §9): the row
          * picks the codec, and the switch (Hi-Res) is live only with LDAC or LHDC V5, as there.
          */
         fun codecPicker(c: Context) = ModelCatalog.current(c)?.json?.optInt("hiRes") == 1 &&

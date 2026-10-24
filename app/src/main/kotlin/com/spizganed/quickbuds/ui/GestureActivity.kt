@@ -212,7 +212,7 @@ class GestureActivity : Activity() {
      * THE HOLD'S NON-EMPTY CASE SENDS THREE WRITES, ON PURPOSE. The key-function write binds the
      * gesture to "cycles ANC" at all — sent for BOTH [GestureSide.LEFT] and [GestureSide.RIGHT],
      * unlike every other gesture, because the hold is a SHARED control
-     * (PROTOCOL-LEGACY.md §5.1) and every capture has shown both buds' key-function slots holding the same
+     * (PROTOCOL-LEGACY.md §5, "The hold's ANC cycle") and every capture has shown both buds' key-function slots holding the same
      * `fn`. Writing only the currently-selected side would leave the OTHER bud's table entry
      * disagreeing with what the cycle actually does on it. A third write, to
      * [BudsService.ACTION_SET_HOLD_MODES], carries WHICH modes are in the cycle
@@ -318,8 +318,8 @@ class GestureActivity : Activity() {
     /**
      * One gesture row: name on the left, current binding on the right, chevron.
      *
-     * Reuses SettingRowFactory so a row looks identical to the main screen's rows
-     * (same 56dp height, same 14dp inset, same chevron). A second row style would
+     * Reuses SettingRowFactory so a row looks identical to the main screen's rows: same
+     * 62dp height (56dp in Material), same 16dp inset, same chevron. A second row style would
      * be a second thing to keep in sync.
      */
     private fun buildGestureRow(gesture: Gesture): View {

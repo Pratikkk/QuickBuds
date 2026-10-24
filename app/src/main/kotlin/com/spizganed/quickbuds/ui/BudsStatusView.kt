@@ -16,13 +16,15 @@ import kotlin.math.min
 
 /**
  * The home screen's battery tile: left bud, case and right bud, each in a
- * 104dp battery ring, with the percentage and a wear label under it. Drawn in one view, in the
+ * 90dp battery ring, with the percentage and a wear label under it. Drawn in one view, in the
  * same language as [EqCurveView] / [LevelSliderView].
  *
  * Wear, from the buds' status codes (same meaning the widget uses):
- *   3 / 7 = in ear  -> glyph `text`,                   label "In ear" in `text`, semibold
- *   4 / 0 = in case -> glyph `textSecondary` at 45%,   label "In case" (no badge)
- *   other known     -> glyph `textSecondary`,          label "Out of ear"
+ *   3 / 7 = in ear  -> glyph accent,                              label "In ear" in `text`, semibold
+ *   4 / 0 = in case -> glyph card blended 28% toward accent,       label "In case" (no badge)
+ *   other known     -> glyph card blended 55% toward accent,       label "Out of ear"
+ *
+ * The case glyph is always visible and takes the accent, like a bud in the ear.
  *
  * Disconnected ([connected] false) keeps exactly the same size: track-only rings, glyphs in the
  * disabled colour, "—" and the bare names. Rings animate to a new level.
@@ -46,7 +48,7 @@ class BudsStatusView(context: Context) : View(context) {
     /** Nothing style: dot-matrix rings (the widget's, [QuickBudsWidget.dotRing]), Doto numbers without `%`. */
     private val nothing = ThemeRes.nothing(context)
 
-    /** False draws the disconnected state (SPEC 3.2). */
+    /** False draws the disconnected state. */
     var connected = true
         set(v) {
             if (field == v) return
@@ -68,7 +70,7 @@ class BudsStatusView(context: Context) : View(context) {
     private var connAnim: ValueAnimator? = null
     private var drawn = false
 
-    // Glyphs keep their SVG's true ratio (buds 176x272, case 496x400), fitted inside the SPEC's
+    // Glyphs keep their SVG's true ratio (buds 176x272, case 496x400), fitted inside the
     // boxes (bud 42x56, case 58x42). The right bud is its own mirrored drawable.
     private val slots = listOf(
         Slot(context.getDrawable(R.drawable.ic_bud_left)!!.mutate(), 176f / 272f, 42f, 56f, 31f, 42f),
@@ -105,7 +107,7 @@ class BudsStatusView(context: Context) : View(context) {
     private val sweepMatrix = android.graphics.Matrix()
     private val semibold = ThemeRes.medium(context)
 
-    /** 90dp (SPEC 104, made ~13% shorter), shrunk only if three columns cannot fit on a very narrow screen. */
+    /** 90dp, shrunk only if three columns cannot fit on a very narrow screen. */
     private val ringSize get() = min(dp(90f), width / 3f - dp(8f))
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -199,7 +201,7 @@ class BudsStatusView(context: Context) : View(context) {
                     if (s.shown > 0f) canvas.drawArc(arcBox, -90f, 360f * s.shown, false, arcPaint)
                 }
 
-                // Glyph: fit the SPEC box, keeping the SVG's own ratio. Glass: the design's smaller glyph (bud 31x42 in a 90 ring).
+                // Glyph: fit the glyph box, keeping the SVG's own ratio. Glass: the design's smaller glyph (bud 31x42 in a 90 ring).
                 val gscale = if (glass) ring / dp(90f) else scale
                 val bw = dp(if (glass) s.glassW else s.boxW) * gscale
                 val bh = dp(if (glass) s.glassH else s.boxH) * gscale

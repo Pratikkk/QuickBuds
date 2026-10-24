@@ -166,7 +166,7 @@ class PresetEditActivity : Activity() {
     }
 
     /**
-     * SPEC section 1 contrast warning (WCAG 2): text and secondary text below 4.5:1 on card or
+     * Contrast warning (WCAG 2): text and secondary text below 4.5:1 on card or
      * background, accent below 3:1 on background. Reports the worse surface. Warning only.
      */
     private fun warning(i: Int): String? {

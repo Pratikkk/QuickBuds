@@ -16,7 +16,7 @@ import android.widget.TextView
 import com.spizganed.quickbuds.R
 
 /**
- * Theme & colors: the style (Classic / Nothing / Material), the three built-in presets as preview tiles, then the
+ * Theme & colors: the style (Material / Classic / Nothing / Glass), the three built-in presets as preview tiles, then the
  * custom presets (at most 3) as rows, then "New preset". Tapping a tile or a row applies that
  * preset at once; the pencil opens [PresetEditActivity].
  */
@@ -75,7 +75,7 @@ class ThemeActivity : Activity() {
         if (!::selection.isInitialized) selection = SelectionSlider(root, "theme")
         root.addView(SettingRowFactory.title(this, R.string.theme_title))
 
-        // --- Style: Material, QuickBuds (Classic) or Pixel art (dot matrix), for the app and the widgets ---
+        // --- Style: Material, QuickBuds (Classic), Pixel art (dot matrix) or Glass, for the app and the widgets ---
         // Listed in that order; ORDER maps a segment to the stored style index.
         val order = intArrayOf(2, 0, 1, 3)
         root.addView(SettingRowFactory.sectionLabel(this, R.string.widget_style_title))

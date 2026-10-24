@@ -17,10 +17,10 @@ import com.spizganed.quickbuds.widget.QuickBudsWidget
 
 /**
  * Noise-control switcher: a card-style container (22dp radius, 4dp padding)
- * holding equal-width 64dp segments, each a 22dp icon over an 11.5sp label. The accent fill SLIDES
+ * holding equal-width 62dp segments, each a 22dp icon over an 11.5sp label. The accent fill SLIDES
  * to the active segment. A tap reports the segment index through [onSegmentTapped]; the fill only
  * moves when [selected] is set — i.e. when the buds' state says so. [selected] = -1 is the neutral
- * (disconnected) state: no fill. With no icons (Dev Tools' Human / Raw) it is a 48dp text-only switch.
+ * (disconnected) state: no fill. With no icons (Dev Tools' Simple / Detailed tabs) it is a 48dp text-only switch.
  */
 class AncSegmentedView(
     context: Context,

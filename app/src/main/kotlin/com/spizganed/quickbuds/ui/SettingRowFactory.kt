@@ -28,7 +28,7 @@ import com.spizganed.quickbuds.R
 object SettingRowFactory {
 
     /**
-     * One settings row (SPEC section 2): 72dp, 16dp padding, 14dp gap, 24dp accent icon (none
+     * One settings row: 62dp (56dp in Material), 16dp padding, 14dp gap, 24dp accent icon (none
      * when [iconRes] is 0), title + optional subtitle, optional [value] text, then [trailing] in
      * a fixed 52dp slot so every toggle and chevron shares one right edge. The whole row is the
      * hit target, with a ripple.
@@ -159,8 +159,9 @@ object SettingRowFactory {
     const val ICON_TAG = "setting_row_icon"
 
     /**
-     * Themed toggle: a plain android.widget.Switch (no Material dependency) with the SPEC's
-     * derived tints — `track` for the track, accent thumb when on, `text` at 90% when off.
+     * Themed toggle: a plain android.widget.Switch (no Material dependency) with the
+     * derived tints — `track` for the track, accent thumb when on, the `thumbOff` colour when off
+     * (text at 90% on dark, the card colour on light).
      */
     fun buildSwitch(context: Context, checked: Boolean): Switch {
         val (thumb, track) = ThemeRes.switchTints(context)
@@ -295,7 +296,7 @@ object SettingRowFactory {
         setBackgroundColor(outline)
     }
 
-    /** Card (SPEC section 2): 24dp radius, `outline` stroke, rows clipped to the corners. The dot style draws the same outline in dots. */
+    /** Card: 24dp radius, `outline` stroke, rows clipped to the corners. The dot style draws the same outline in dots. */
     fun card(context: Context, radiusDp: Float = 24f): LinearLayout = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
         background = if (ThemeRes.material(context)) ThemeRes.Segments(context) else ThemeRes.card(context, radiusDp)
@@ -352,7 +353,7 @@ object SettingRowFactory {
         setPadding(ThemeRes.dp(context, 4f), 0, 0, ThemeRes.dp(context, 4f))
     }
 
-    /** Section label: 14sp, `textSecondary` (Material: accent, medium), 4dp start inset, 9dp above its card. */
+    /** Section label: 14sp, `textSecondary` (Material: accent, medium), 4dp start inset, 8dp above its card. */
     fun sectionLabel(context: Context, textRes: Int): TextView = TextView(context).apply {
         setText(textRes)
         val material = ThemeRes.material(context)
@@ -364,7 +365,7 @@ object SettingRowFactory {
     }
 
     /**
-     * Screen root (SPEC section 2): vertical column on `background`, 16dp sides, 20dp top and
+     * Screen root: vertical column on `background`, 16dp sides, 16dp top and
      * bottom plus the system bars (the app draws edge to edge on target SDK 35+).
      */
     fun screen(context: Context): LinearLayout = LinearLayout(context).apply {
@@ -373,7 +374,7 @@ object SettingRowFactory {
         ThemeRes.screenPadding(this)
     }
 
-    /** Icon button (SPEC section 2): 44dp, `card` fill, `outline` stroke, 14dp radius, 22dp accent icon. */
+    /** Icon button: 44dp, `card` fill, `outline` stroke, 14dp radius, 22dp accent icon. */
     fun iconButton(context: Context, iconRes: Int, descRes: Int, onClick: () -> Unit): ImageView {
         val dp = { v: Float -> ThemeRes.dp(context, v) }
         return ImageView(context).apply {

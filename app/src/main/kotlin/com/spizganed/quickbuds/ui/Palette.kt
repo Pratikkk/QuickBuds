@@ -49,7 +49,7 @@ data class Palette(
         else -> copy(outline = color)
     }
 
-    // ---- Derived colours (SPEC section 1): computed, never user-editable ----
+    // ---- Derived colours: computed, never user-editable ----
 
     /**
      * Label on an accent fill: the lighter of text / background when it reaches 3:1 (WCAG for
