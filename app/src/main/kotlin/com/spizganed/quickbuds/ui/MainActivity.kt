@@ -647,6 +647,29 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         // Settings › Developer › Dev tools button (default on).
         btnDevTools.visibility = if (getSharedPreferences(ThemeRes.PREFS_NAME, MODE_PRIVATE)
                 .getBoolean(SettingsActivity.KEY_DEV_TOOLS_BUTTON, true)) View.VISIBLE else View.GONE
+        // The phone may have changed its codec while the app was away, or does so when a stream starts.
+        refreshCodecRow()
+        val filter = IntentFilter(android.bluetooth.BluetoothA2dp.ACTION_PLAYING_STATE_CHANGED)
+        if (Build.VERSION.SDK_INT >= 33) registerReceiver(a2dpReceiver, filter, RECEIVER_NOT_EXPORTED) else registerReceiver(a2dpReceiver, filter)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        try { unregisterReceiver(a2dpReceiver) } catch (_: IllegalArgumentException) {}
+    }
+
+    /** A stream starting or stopping is when the phone settles on a codec: read it again, 0.5 s later. */
+    private val a2dpReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            window.decorView.postDelayed({ refreshCodecRow() }, 500)
+        }
+    }
+
+    /** Reads the phone link's codec again, then repaints the Hi-Res row from it. The reply sets the codec within 0.4 s. */
+    private fun refreshCodecRow() {
+        if (!::manager.isInitialized || connectedUi != true || !rowSupported("hires")) return
+        manager.refreshCodec()
+        window.decorView.postDelayed({ if (connectedUi == true) onFeatureStates(manager.featureStates) }, 400)
     }
 
     // ==================== Theme ====================
