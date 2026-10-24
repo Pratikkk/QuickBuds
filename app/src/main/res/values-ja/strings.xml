@@ -525,6 +525,11 @@
     <string name="issue_spatial_silent_body">このモデルで空間効果が聞こえないという声があります。原因がイヤホンかアプリかは、まだ分かっていません。</string>
     <string name="issue_hires_no_codec_title">高音質オーディオでも変化しません</string>
     <string name="issue_hires_no_codec_body">このモデルは SBC と AAC のみに対応しているため、イヤホンに高音質コーデックはありません。スイッチはオンになりますが、音は変わりません。</string>
+    <string name="feature_applying">適用中…</string>
+    <string name="feature_refused_missing">%1$s: このイヤホンにはこの設定がありません</string>
+    <string name="feature_refused_now">%1$s: イヤホンが現在拒否しています</string>
+    <string name="feature_not_changed">%1$s: イヤホンは変更しませんでした</string>
+    <string name="feature_no_answer">%1$s: イヤホンから応答がありません</string>
     <string name="issue_samsung_codec_title">Samsung のスマートフォンではコーデックを選べません</string>
     <string name="issue_samsung_codec_body">Samsung のスマートフォンは Bluetooth 設定にコーデックの選択を表示しません。高音質オーディオが働かないことがあります。</string>
     <string name="issue_hires_spatial_title">高音質オーディオと3Dオーディオ</string>

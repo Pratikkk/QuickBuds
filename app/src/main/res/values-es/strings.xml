@@ -525,6 +525,11 @@
     <string name="issue_spatial_silent_body">Algunos usuarios no oyen efecto espacial en este modelo. Aún no sabemos si la causa son los auriculares o la app.</string>
     <string name="issue_hires_no_codec_title">El audio de alta calidad no cambia nada</string>
     <string name="issue_hires_no_codec_body">Este modelo solo admite SBC y AAC, así que los auriculares no tienen códec de alta calidad. El interruptor se activa, pero el sonido no cambia.</string>
+    <string name="feature_applying">Aplicando…</string>
+    <string name="feature_refused_missing">%1$s: estos auriculares no tienen este ajuste</string>
+    <string name="feature_refused_now">%1$s: los auriculares lo rechazan ahora mismo</string>
+    <string name="feature_not_changed">%1$s: los auriculares no lo han cambiado</string>
+    <string name="feature_no_answer">%1$s: los auriculares no han respondido</string>
     <string name="issue_samsung_codec_title">Sin elección de códec en teléfonos Samsung</string>
     <string name="issue_samsung_codec_body">Los teléfonos Samsung no muestran la elección de códec en los ajustes de Bluetooth. El audio de alta calidad puede no hacer nada.</string>
     <string name="issue_hires_spatial_title">Audio de alta calidad y audio 3D</string>

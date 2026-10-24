@@ -525,6 +525,11 @@
     <string name="issue_spatial_silent_body">Unii utilizatori nu aud efect spațial la acest model. Nu știm încă dacă cauza sunt căștile sau aplicația.</string>
     <string name="issue_hires_no_codec_title">Sunetul de calitate nu schimbă nimic</string>
     <string name="issue_hires_no_codec_body">Acest model acceptă doar SBC și AAC, așa că căștile nu au codec de calitate înaltă. Comutatorul pornește, dar sunetul nu se schimbă.</string>
+    <string name="feature_applying">Se aplică…</string>
+    <string name="feature_refused_missing">%1$s: aceste căști nu au această setare</string>
+    <string name="feature_refused_now">%1$s: căștile o refuză acum</string>
+    <string name="feature_not_changed">%1$s: căștile nu au schimbat-o</string>
+    <string name="feature_no_answer">%1$s: căștile nu au răspuns</string>
     <string name="issue_samsung_codec_title">Fără alegerea codecului pe telefoanele Samsung</string>
     <string name="issue_samsung_codec_body">Telefoanele Samsung nu arată alegerea codecului în setările Bluetooth. Sunetul de înaltă calitate poate să nu facă nimic.</string>
     <string name="issue_hires_spatial_title">Sunet de înaltă calitate și sunet 3D</string>

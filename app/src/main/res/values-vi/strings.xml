@@ -527,6 +527,11 @@
     <string name="issue_spatial_silent_body">Một số người dùng không nghe thấy hiệu ứng không gian ở mẫu này. Chúng tôi chưa biết nguyên nhân là tai nghe hay ứng dụng.</string>
     <string name="issue_hires_no_codec_title">Âm thanh chất lượng cao không đổi gì</string>
     <string name="issue_hires_no_codec_body">Mẫu này chỉ hỗ trợ SBC và AAC, nên tai nghe không có codec chất lượng cao. Công tắc bật, nhưng âm thanh không đổi.</string>
+    <string name="feature_applying">Đang áp dụng…</string>
+    <string name="feature_refused_missing">%1$s: tai nghe này không có cài đặt này</string>
+    <string name="feature_refused_now">%1$s: tai nghe đang từ chối ngay bây giờ</string>
+    <string name="feature_not_changed">%1$s: tai nghe không thay đổi</string>
+    <string name="feature_no_answer">%1$s: tai nghe không trả lời</string>
     <string name="issue_samsung_codec_title">Điện thoại Samsung không có lựa chọn codec</string>
     <string name="issue_samsung_codec_body">Điện thoại Samsung không hiển thị lựa chọn codec trong cài đặt Bluetooth. Âm thanh chất lượng cao có thể không làm gì.</string>
     <string name="issue_hires_spatial_title">Âm thanh chất lượng cao và âm thanh 3D</string>

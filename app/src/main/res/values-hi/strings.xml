@@ -527,6 +527,11 @@
     <string name="issue_spatial_silent_body">कुछ उपयोगकर्ताओं को इस मॉडल में स्पेशियल प्रभाव सुनाई नहीं देता। हम अभी नहीं जानते कि कारण इयरबड हैं या ऐप।</string>
     <string name="issue_hires_no_codec_title">हाई-क्वालिटी ऑडियो से कुछ नहीं बदलता</string>
     <string name="issue_hires_no_codec_body">यह मॉडल सिर्फ़ SBC और AAC सपोर्ट करता है, इसलिए इयरबड में हाई-क्वालिटी कोडेक नहीं है। स्विच चालू होता है, लेकिन आवाज़ नहीं बदलती।</string>
+    <string name="feature_applying">लागू किया जा रहा है…</string>
+    <string name="feature_refused_missing">%1$s: इस इयरबड में यह सेटिंग नहीं है</string>
+    <string name="feature_refused_now">%1$s: इयरबड अभी इसे अस्वीकार कर रहा है</string>
+    <string name="feature_not_changed">%1$s: इयरबड ने इसे नहीं बदला</string>
+    <string name="feature_no_answer">%1$s: इयरबड ने जवाब नहीं दिया</string>
     <string name="issue_samsung_codec_title">Samsung फ़ोन में कोडेक चुनने का विकल्प नहीं</string>
     <string name="issue_samsung_codec_body">Samsung फ़ोन ब्लूटूथ सेटिंग में कोडेक का विकल्प नहीं दिखाते। हाई-क्वालिटी ऑडियो शायद कुछ न करे।</string>
     <string name="issue_hires_spatial_title">हाई-क्वालिटी ऑडियो और 3D ऑडियो</string>

@@ -614,6 +614,11 @@
     <string name="issue_spatial_silent_body">Some owners hear no spatial effect on this model. We do not know yet if the earbuds or the app cause it.</string>
     <string name="issue_hires_no_codec_title">High-quality audio changes nothing</string>
     <string name="issue_hires_no_codec_body">This model supports only SBC and AAC, so the earbuds have no high-quality codec. The switch turns on, but the sound does not change.</string>
+    <string name="feature_applying">Applying…</string>
+    <string name="feature_refused_missing">%1$s: these earbuds do not have this setting</string>
+    <string name="feature_refused_now">%1$s: the earbuds refuse it right now</string>
+    <string name="feature_not_changed">%1$s: the earbuds did not change it</string>
+    <string name="feature_no_answer">%1$s: the earbuds did not answer</string>
     <string name="issue_samsung_codec_title">No codec choice on Samsung phones</string>
     <string name="issue_samsung_codec_body">Samsung phones do not show the codec choice in Bluetooth settings. High-quality audio may do nothing.</string>
     <string name="issue_hires_spatial_title">High-quality audio and 3D audio</string>

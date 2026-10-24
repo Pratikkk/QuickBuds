@@ -525,6 +525,11 @@
     <string name="issue_spatial_silent_body">Někteří majitelé u tohoto modelu neslyší prostorový efekt. Zatím nevíme, zda je příčinou sluchátko, nebo aplikace.</string>
     <string name="issue_hires_no_codec_title">Kvalitní zvuk nic nemění</string>
     <string name="issue_hires_no_codec_body">Tento model podporuje jen SBC a AAC, takže sluchátko nemá kvalitní kodek. Přepínač se zapne, ale zvuk se nezmění.</string>
+    <string name="feature_applying">Uplatňování…</string>
+    <string name="feature_refused_missing">%1$s: toto sluchátko toto nastavení nemá</string>
+    <string name="feature_refused_now">%1$s: sluchátko to teď odmítá</string>
+    <string name="feature_not_changed">%1$s: sluchátko to nezměnilo</string>
+    <string name="feature_no_answer">%1$s: sluchátko neodpovědělo</string>
     <string name="issue_samsung_codec_title">Telefony Samsung nenabízejí výběr kodeku</string>
     <string name="issue_samsung_codec_body">Telefony Samsung nezobrazují výběr kodeku v nastavení Bluetooth. Vysoce kvalitní zvuk nemusí fungovat.</string>
     <string name="issue_hires_spatial_title">Vysoce kvalitní zvuk a 3D zvuk</string>

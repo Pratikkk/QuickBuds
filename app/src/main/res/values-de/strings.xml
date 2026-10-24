@@ -525,6 +525,11 @@
     <string name="issue_spatial_silent_body">Manche Nutzer hören bei diesem Modell keinen Raumklang. Wir wissen noch nicht, ob die Ohrhörer oder die App die Ursache sind.</string>
     <string name="issue_hires_no_codec_title">Hohe Audioqualität ändert nichts</string>
     <string name="issue_hires_no_codec_body">Dieses Modell unterstützt nur SBC und AAC, daher haben die Ohrhörer keinen hochwertigen Codec. Der Schalter geht an, aber der Klang ändert sich nicht.</string>
+    <string name="feature_applying">Wird angewendet…</string>
+    <string name="feature_refused_missing">%1$s: diese Ohrhörer haben diese Einstellung nicht</string>
+    <string name="feature_refused_now">%1$s: die Ohrhörer lehnen es gerade ab</string>
+    <string name="feature_not_changed">%1$s: die Ohrhörer haben es nicht geändert</string>
+    <string name="feature_no_answer">%1$s: die Ohrhörer haben nicht geantwortet</string>
     <string name="issue_samsung_codec_title">Keine Codec-Auswahl bei Samsung-Telefonen</string>
     <string name="issue_samsung_codec_body">Samsung-Telefone zeigen die Codec-Auswahl nicht in den Bluetooth-Einstellungen. Hochwertiges Audio bewirkt eventuell nichts.</string>
     <string name="issue_hires_spatial_title">Hochwertiges Audio und 3D-Audio</string>

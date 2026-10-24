@@ -525,6 +525,11 @@
     <string name="issue_spatial_silent_body">일부 사용자는 이 모델에서 공간 효과를 듣지 못합니다. 원인이 이어버드인지 앱인지 아직 모릅니다.</string>
     <string name="issue_hires_no_codec_title">고음질 오디오가 아무것도 바꾸지 않습니다</string>
     <string name="issue_hires_no_codec_body">이 모델은 SBC와 AAC만 지원하므로 이어버드에 고음질 코덱이 없습니다. 스위치는 켜지지만 소리는 바뀌지 않습니다.</string>
+    <string name="feature_applying">적용 중…</string>
+    <string name="feature_refused_missing">%1$s: 이 이어버드에는 이 설정이 없습니다</string>
+    <string name="feature_refused_now">%1$s: 이어버드가 지금 거부합니다</string>
+    <string name="feature_not_changed">%1$s: 이어버드가 변경하지 않았습니다</string>
+    <string name="feature_no_answer">%1$s: 이어버드가 응답하지 않았습니다</string>
     <string name="issue_samsung_codec_title">Samsung 휴대폰에는 코덱 선택이 없습니다</string>
     <string name="issue_samsung_codec_body">Samsung 휴대폰은 Bluetooth 설정에 코덱 선택을 표시하지 않습니다. 고음질 오디오가 작동하지 않을 수 있습니다.</string>
     <string name="issue_hires_spatial_title">고음질 오디오와 3D 오디오</string>

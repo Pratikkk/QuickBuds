@@ -525,6 +525,11 @@
     <string name="issue_spatial_silent_body">Egyes tulajdonosok nem hallanak térhatást ennél a modellnél. Még nem tudjuk, hogy a fülhallgató vagy az alkalmazás az oka.</string>
     <string name="issue_hires_no_codec_title">A jó minőségű hang nem változtat semmit</string>
     <string name="issue_hires_no_codec_body">Ez a modell csak az SBC és AAC kodeket támogatja, ezért a fülhallgatónak nincs jó minőségű kodekje. A kapcsoló bekapcsol, de a hang nem változik.</string>
+    <string name="feature_applying">Alkalmazás…</string>
+    <string name="feature_refused_missing">%1$s: ez a fülhallgató nem tudja ezt a beállítást</string>
+    <string name="feature_refused_now">%1$s: a fülhallgató most elutasítja</string>
+    <string name="feature_not_changed">%1$s: a fülhallgató nem változtatta meg</string>
+    <string name="feature_no_answer">%1$s: a fülhallgató nem válaszolt</string>
     <string name="issue_samsung_codec_title">Samsung telefonon nincs kodekválasztás</string>
     <string name="issue_samsung_codec_body">A Samsung telefonok nem mutatják a kodekválasztást a Bluetooth-beállításokban. A kiváló minőségű hang lehet, hogy nem csinál semmit.</string>
     <string name="issue_hires_spatial_title">Kiváló minőségű hang és 3D hang</string>

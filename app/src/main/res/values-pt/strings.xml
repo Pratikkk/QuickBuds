@@ -525,6 +525,11 @@
     <string name="issue_spatial_silent_body">Alguns usuários não ouvem efeito espacial neste modelo. Ainda não sabemos se a causa são os fones ou o app.</string>
     <string name="issue_hires_no_codec_title">O áudio de alta qualidade não muda nada</string>
     <string name="issue_hires_no_codec_body">Este modelo suporta apenas SBC e AAC, então os fones não têm codec de alta qualidade. A chave liga, mas o som não muda.</string>
+    <string name="feature_applying">A aplicar…</string>
+    <string name="feature_refused_missing">%1$s: estes fones não têm esta definição</string>
+    <string name="feature_refused_now">%1$s: os fones recusam-no agora</string>
+    <string name="feature_not_changed">%1$s: os fones não o alteraram</string>
+    <string name="feature_no_answer">%1$s: os fones não responderam</string>
     <string name="issue_samsung_codec_title">Sem escolha de codec em telefones Samsung</string>
     <string name="issue_samsung_codec_body">Telefones Samsung não mostram a escolha de codec nas configurações de Bluetooth. O áudio de alta qualidade pode não fazer nada.</string>
     <string name="issue_hires_spatial_title">Áudio de alta qualidade e áudio 3D</string>
