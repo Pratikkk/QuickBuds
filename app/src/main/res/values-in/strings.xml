@@ -34,6 +34,7 @@
     <string name="row_hires_sub">Hingga 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Kualitas standar (48 kHz)</string>
     <string name="row_hires_sub_codec">Ponsel memakai %1$s, bukan LHDC. Kualitas tidak berubah</string>
+    <string name="hires_needs_codec">Audio berkualitas tinggi butuh tautan LDAC atau LHDC. Ponsel sekarang memutar %1$s.</string>
     <string name="codec_dialog_title">Earbud akan terhubung ulang</string>
     <string name="codec_dialog_accept">Terima</string>
     <string name="codec_dialog_deny">Tolak</string>

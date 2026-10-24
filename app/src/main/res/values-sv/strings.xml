@@ -34,6 +34,7 @@
     <string name="row_hires_sub">Upp till 192 kHz, 400 kbit/s</string>
     <string name="row_hires_sub_off">Standardkvalitet (48 kHz)</string>
     <string name="row_hires_sub_codec">Telefonen använder %1$s, inte LHDC. Kvaliteten ändras inte</string>
+    <string name="hires_needs_codec">Ljud av hög kvalitet kräver en LDAC- eller LHDC-anslutning. Telefonen spelar %1$s nu.</string>
     <string name="codec_dialog_title">Hörlurarna ansluter igen</string>
     <string name="codec_dialog_accept">Godkänn</string>
     <string name="codec_dialog_deny">Avvisa</string>

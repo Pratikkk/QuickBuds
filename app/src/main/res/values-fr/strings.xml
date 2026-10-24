@@ -34,6 +34,7 @@
     <string name="row_hires_sub">Jusqu\'à 192 kHz, 400 kbit/s</string>
     <string name="row_hires_sub_off">Qualité standard (48 kHz)</string>
     <string name="row_hires_sub_codec">Le téléphone utilise %1$s, pas LHDC. La qualité ne change pas</string>
+    <string name="hires_needs_codec">L\'audio de haute qualité nécessite une liaison LDAC ou LHDC. Le téléphone lit %1$s maintenant.</string>
     <string name="codec_dialog_title">Les écouteurs vont se reconnecter</string>
     <string name="codec_dialog_accept">Accepter</string>
     <string name="codec_dialog_deny">Refuser</string>

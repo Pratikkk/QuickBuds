@@ -58,6 +58,7 @@
     <string name="row_hires_sub">Up to 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Standard quality (48 kHz)</string>
     <string name="row_hires_sub_codec">The phone plays %1$s, not LHDC. Quality does not change</string>
+    <string name="hires_needs_codec">High-quality audio needs an LDAC or LHDC link. The phone plays %1$s now.</string>
     <string name="codec_dialog_title">Earbuds will reconnect</string>
     <string name="codec_dialog_accept">Accept</string>
     <string name="codec_dialog_deny">Deny</string>

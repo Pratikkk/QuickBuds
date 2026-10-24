@@ -34,6 +34,7 @@
     <string name="row_hires_sub">192 kHz, 400 kbps পর্যন্ত</string>
     <string name="row_hires_sub_off">সাধারণ মান (48 kHz)</string>
     <string name="row_hires_sub_codec">ফোন LHDC নয়, %1$s ব্যবহার করছে। মানে পরিবর্তন নেই</string>
+    <string name="hires_needs_codec">উচ্চ মানের অডিওর জন্য LDAC বা LHDC লিংক দরকার। ফোন এখন %1$s বাজাচ্ছে।</string>
     <string name="codec_dialog_title">ইয়ারবাড আবার সংযুক্ত হবে</string>
     <string name="codec_dialog_accept">গ্রহণ করুন</string>
     <string name="codec_dialog_deny">প্রত্যাখ্যান করুন</string>

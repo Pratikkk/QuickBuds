@@ -34,6 +34,7 @@
     <string name="row_hires_sub">Legfeljebb 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Normál minőség (48 kHz)</string>
     <string name="row_hires_sub_codec">A telefon %1$s kodeket használ, nem LHDC-t. A minőség nem változik</string>
+    <string name="hires_needs_codec">A jó minőségű hanghoz LDAC vagy LHDC kapcsolat kell. A telefon most %1$s-t játssza le.</string>
     <string name="codec_dialog_title">A fülhallgató újracsatlakozik</string>
     <string name="codec_dialog_accept">Elfogadás</string>
     <string name="codec_dialog_deny">Elutasítás</string>

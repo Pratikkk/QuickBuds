@@ -34,6 +34,7 @@
     <string name="row_hires_sub">最高 192 kHz，400 kbps</string>
     <string name="row_hires_sub_off">标准音质（48 kHz）</string>
     <string name="row_hires_sub_codec">手机正在使用 %1$s，而不是 LHDC。音质不会改变</string>
+    <string name="hires_needs_codec">高品质音频需要 LDAC 或 LHDC 连接。手机现在播放 %1$s。</string>
     <string name="codec_dialog_title">耳机将重新连接</string>
     <string name="codec_dialog_accept">确定</string>
     <string name="codec_dialog_deny">拒绝</string>

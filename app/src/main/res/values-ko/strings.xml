@@ -34,6 +34,7 @@
     <string name="row_hires_sub">최대 192kHz, 400kbps</string>
     <string name="row_hires_sub_off">표준 음질(48kHz)</string>
     <string name="row_hires_sub_codec">휴대폰이 LHDC가 아닌 %1$s를 사용 중입니다. 음질이 바뀌지 않습니다</string>
+    <string name="hires_needs_codec">고음질 오디오에는 LDAC 또는 LHDC 연결이 필요합니다. 휴대폰은 지금 %1$s를 재생합니다.</string>
     <string name="codec_dialog_title">이어버드가 다시 연결됩니다</string>
     <string name="codec_dialog_accept">확인</string>
     <string name="codec_dialog_deny">거부</string>

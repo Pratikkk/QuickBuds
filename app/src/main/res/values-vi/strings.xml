@@ -34,6 +34,7 @@
     <string name="row_hires_sub">Tối đa 192 kHz, 400 kbps</string>
     <string name="row_hires_sub_off">Chất lượng chuẩn (48 kHz)</string>
     <string name="row_hires_sub_codec">Điện thoại dùng %1$s, không phải LHDC. Chất lượng không đổi</string>
+    <string name="hires_needs_codec">Âm thanh chất lượng cao cần kết nối LDAC hoặc LHDC. Điện thoại đang phát %1$s.</string>
     <string name="codec_dialog_title">Tai nghe sẽ kết nối lại</string>
     <string name="codec_dialog_accept">Đồng ý</string>
     <string name="codec_dialog_deny">Từ chối</string>
