@@ -8,7 +8,7 @@ use eframe::egui::{self, Align2, Color32, Pos2, Rect, Sense, Ui, Vec2};
 const ROW: f32 = 72.0;
 const MAX_W: f32 = 760.0;
 
-/// Settings > Language, as on the phone: (tag in `strings::LOCALES`, native name); "" is the system default.
+/// Settings › Language: (locale tag or "en" for the English default table, native name); "" is the system default.
 pub const LANGUAGES: &[(&str, &str)] = &[
     ("", ""), ("en", "English"), ("zh-CN", "简体中文"), ("zh-TW", "繁體中文"), ("ja", "日本語"), ("ko", "한국어"),
     ("in", "Bahasa Indonesia"), ("ms", "Bahasa Melayu"), ("cs", "Čeština"), ("de", "Deutsch"), ("es", "Español"),

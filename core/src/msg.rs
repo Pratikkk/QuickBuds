@@ -63,7 +63,7 @@ pub struct Cell { pub part: u8, pub level: u8, pub charging: bool }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Anc {
-    /// The current mode as a bitmask (the report table of §6, not the SET table).
+    /// The current mode as a bitmask (the report table of §9, not the SET table).
     Mode(u32),
     /// The modes the hold cycles: `kind` `01` shared, `03` left, `04` right; mask in SET bits.
     HoldCycle { kind: u8, mask: u32 },
@@ -509,7 +509,7 @@ fn json_ack(json: &[u8]) -> Vec<u8> {
     }
 }
 
-// --- Batch (§4) ---
+// --- Batch (§7) ---
 
 /// `0x812F`: `00 <count>`, then `<cmd LE> <len LE> <reply payload>` per answer. Each answer is the reply
 /// `cmd | 0x8000` with the batch's `seq`. Stops at an answer that runs past the end.
@@ -526,5 +526,3 @@ pub fn unbatch(m: &Message) -> Vec<Message> {
     }
     out
 }
-
-// --- Bridge to the shipping session ---

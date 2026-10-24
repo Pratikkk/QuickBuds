@@ -26,7 +26,7 @@ mod session;
 mod theme;
 mod update;
 
-// The core crate owns the wire format, the typed messages and the commands.
+// The core crate owns the new protocol's frames and messages, and the commands this app sends.
 #[allow(unused_imports)]
 pub use buds_core::{cmd, msg, wire};
 
@@ -134,7 +134,6 @@ fn local_now() -> [u32; 7] {
     [st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds].map(u32::from)
 }
 
-/// `settings.json` in the user's config folder (`%APPDATA%\QuickBuds`, `~/.config/quickbuds`).
 /// Linux: the desktop's accent from the XDG settings portal (Slint reads none there). None when the portal has no accent.
 #[cfg(not(windows))]
 fn portal_accent() -> Option<slint::Color> {
@@ -163,6 +162,7 @@ fn wear_sensor_seen(s: &session::Snapshot) -> bool {
     true
 }
 
+/// `settings.json` in the user's config folder (`%APPDATA%\QuickBuds`, `~/.config/quickbuds`).
 fn settings_path() -> Option<std::path::PathBuf> {
     #[cfg(windows)]
     let dir = std::env::var_os("APPDATA").map(|d| std::path::PathBuf::from(d).join("QuickBuds"));
@@ -250,7 +250,7 @@ fn nav(h: Has, tr: &[String]) -> ModelRc<NavEntry> {
     ModelRc::new(VecModel::from(nav))
 }
 
-/// Settings › Language, as on the phone: (tag in `strings::LOCALES`, native name); "" is the system default.
+/// Settings › Language: (locale tag or "en" for the English default table, native name); "" is the system default.
 const LANGUAGES: &[(&str, &str)] = &[
     ("", ""), ("en", "English"), ("zh-CN", "简体中文"), ("zh-TW", "繁體中文"), ("ja", "日本語"), ("ko", "한국어"),
     ("in", "Bahasa Indonesia"), ("ms", "Bahasa Melayu"), ("cs", "Čeština"), ("de", "Deutsch"), ("es", "Español"),

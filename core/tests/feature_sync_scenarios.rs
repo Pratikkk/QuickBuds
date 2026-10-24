@@ -1,5 +1,5 @@
 //! Runs every scenario of `feature_sync_scenarios.json`: the contract both the phone and the desktop
-//! must keep (local/FEATURE-SYNC.md).
+//! must keep (docs/FEATURE-SYNC.md).
 
 use buds_core::feature_sync::{Confirm, FeatureSync, Operation, Out};
 use serde_json::Value;

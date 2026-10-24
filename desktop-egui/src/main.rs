@@ -132,7 +132,7 @@ pub fn t<'a>(tr: &'a [String], key: &str) -> &'a str {
 #[derive(Clone, Copy, PartialEq)]
 pub enum Page { Overview, Eq, Gestures, Hearing, Dual, Earbuds, Models, Settings, Dev }
 
-/// What the connected buds offer; decides which sidebar entries are ready.
+/// What the connected buds offer; decides which Overview rows show.
 #[derive(Clone, Copy, PartialEq)]
 pub struct Has { eq: bool, controls: bool, hearing: bool, dual: bool }
 

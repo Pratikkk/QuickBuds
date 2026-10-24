@@ -81,7 +81,7 @@ fn start(app: &mut App) {
     app.hearing.uid = uid;
     app.hearing.scan_data.clear();
     app.hearing.warned = false;
-    // Ear scan only where HeyMelody's model list has it (`earScan`).
+    // Ear scan only where the model list has it (`hearingScan`).
     let scan = app.snap.model.is_some_and(|m| m["hearingScan"] == 1) && app.snap.caps.supports(CMD_HEARING_SCAN_DATA);
     if scan {
         app.hearing.step = Step::Scan;

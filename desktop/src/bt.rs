@@ -1,7 +1,7 @@
 //! RFCOMM link to the buds. Windows: Winsock Bluetooth, built into Windows (no driver, no service).
 //! Linux: BlueZ (D-Bus for the paired list, kernel RFCOMM socket, channel from the buds' SDP record).
 //! Dev: `QB_BRIDGE=127.0.0.1:7979` uses the Android app's RFCOMM bridge (Dev tools › Bridge) instead,
-//! for running this app on the phone itself. It connects on a user Connect only.
+//! for running this app on the phone itself. The bridge connects at start, like any other device that is already linked.
 
 use std::io::{ErrorKind, Read, Write};
 use std::net::TcpStream;

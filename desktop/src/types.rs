@@ -1,6 +1,6 @@
 //! Types, constants and model data both protocols share: command and feature ids, the model list, `Event` (what
 //! either decoder produces), `Caps`, `AncModes`, equalizer and hearing helpers, and the packet log's text.
-//! No wire parsing here: that is `protocol.rs` (legacy) and `buds_core` (new).
+//! No decoding of typed messages here: that is `protocol.rs` (legacy) and `buds_core` (new). The packet bytes are built here.
 // The ids stay listed in full, used or not.
 #![allow(dead_code)]
 
@@ -127,7 +127,7 @@ pub fn notify_ids(caps: &Caps, offered: Option<&[u8]>) -> Vec<u8> {
     ids
 }
 
-/// realme Link's wind noise switch; asked only for models with the `windNoise` flag.
+/// realme Link's wind noise switch; asked only for models with the `windMode` flag.
 pub const FEATURE_WIND_NOISE: u8 = 0x1A;
 
 /// High-quality audio (Hi-Res) and 3D audio: exclusive `0x0403` switches, §9 Spatial sound and Hi-Res.
@@ -146,7 +146,7 @@ pub const EVT_SPATIAL_TYPE: u16 = 0x0510;
 /// Who renders 3D audio: `00` the buds, `01` the phone. realme Link sends `00` on connect. `[VENDOR]`
 pub const CMD_SPATIAL_SOURCE: u16 = 0x041E;
 
-/// Codec picker (`highAudio` models): current codec `0x0114` -> `00 <codec>`, offered `0x0123` ->
+/// Codec picker (`hiRes` models): current codec `0x0114` -> `00 <codec>`, offered `0x0123` ->
 /// `00 <u16 LE mask>`, write `0x041A` ([codec_payload]); the buds restart after a write. `[VENDOR]`
 pub const CMD_QUERY_CODEC: u16 = 0x0114;
 
@@ -166,7 +166,7 @@ pub fn codec_name(codec: u8) -> String {
 }
 
 /// `0x010D`: count, then the feature ids (`OpoProtocol.queryStatus`): the model's `statusQuery` (HeyMelody's
-/// per-model list, PROTOCOL-LEGACY.md §9), else the full list. The `windNoise` flag adds [FEATURE_WIND_NOISE].
+/// per-model list, PROTOCOL-LEGACY.md §9), else the full list. The `windMode` flag adds [FEATURE_WIND_NOISE].
 pub fn status_query(model: Option<&serde_json::Value>) -> Vec<u8> {
     let mut ids: Vec<u8> = match model.and_then(|m| m["statusQuery"].as_str()) {
         Some(s) => s.split(' ').filter_map(|h| u8::from_str_radix(h, 16).ok()).collect(),
@@ -282,7 +282,7 @@ fn mode_of(v: &Value) -> Option<(&'static str, u8)> {
 }
 
 impl AncModes {
-    /// A model without `noiseReductionMode` (or none detected) gets no modes: a wrong bit sets another mode silently.
+    /// A model without `ancModes` (or none detected) gets no modes: a wrong bit sets another mode silently.
     pub fn of(model: Option<&Value>) -> AncModes {
         model.and_then(|m| m["ancModes"].as_array()).map(|a| Self::parse(a)).unwrap_or_default()
     }
@@ -331,7 +331,7 @@ impl AncModes {
     }
 }
 
-// --- Equalizer (PROTOCOL-LEGACY.md §9 Equalizer, `EqCodec.kt`) ---
+// --- Equalizer (PROTOCOL-LEGACY.md §9 Equalizer, `EqCodec`) ---
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Preset {
@@ -353,7 +353,7 @@ pub const EQ_DELETE: u8 = 0x03;
 
 pub const EQ_GAIN: i32 = 6;
 
-/// HeyMelody's bands where the model gives none (`customEqFrequency`).
+/// HeyMelody's bands where the model gives none (`customEqBands`).
 pub const EQ_DEFAULT_FREQS: [u16; 6] = [62, 250, 1000, 4000, 8000, 16000];
 
 impl Preset {
@@ -382,7 +382,7 @@ pub fn eq_has_custom(model: Option<&Value>, caps: &Caps) -> bool {
     flag(model, "customEq") && caps.supports(CMD_SAVE_CUSTOM_EQ)
 }
 
-/// Any equalizer at all (`EqActivity.hasEq`): custom presets, or built-in ones on a model with `equalizer` 1..4.
+/// Any equalizer at all (`EqActivity.hasEq`): custom presets, or built-in ones on a model with `eqKind` 1..4.
 pub fn eq_has(model: Option<&Value>, caps: &Caps) -> bool {
     eq_has_custom(model, caps)
         || (1..=4).contains(&model.map_or(1, |m| m["eqKind"].as_i64().unwrap_or(0))) && caps.supports(CMD_SET_EQ)
@@ -564,7 +564,7 @@ pub const BUTTON_ON_CALL: u8 = 0x06;
 /// realme both-buds hold (issue #8): `04 01 04 <fn>`, read back as its own `dev 04` entry.
 pub const BUTTON_PRIMARY: u8 = 0x01;
 
-/// The hold's noise cycle: one shared, or per bud on models with `longPressType`.
+/// The hold's noise cycle: one shared, or per bud on models with `holdMask`.
 pub const HOLD_TYPE_SHARED: u8 = 1;
 
 pub const HOLD_TYPE_LEFT: u8 = 3;

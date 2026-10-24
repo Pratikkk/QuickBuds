@@ -1,13 +1,13 @@
 //! The LEGACY wire format (docs/PROTOCOL-LEGACY.md §2): `AA <TotalLen LEB128> 00 00 <cmd lo> <cmd hi> <seq> <len lo> <len hi> <payload>`.
 //! TotalLen counts everything after itself: 7 + payload.
-//! Framing, decoders and answers of the old link. `newproto.rs` is the new link. The old builders also stay as the
+//! Framing, decoders and answers of the old link. `newproto.rs` bridges the new protocol in `buds_core`; the tests use it. The old builders also stay as the
 //! reference of the core tests; the senders use `buds_core::cmd`. Shared ids and types are in `types.rs`.
 #![allow(dead_code)]
 
 use crate::types::*;
 use serde_json::Value;
 
-/// `0x0404 01 01 <bit as LE bitmask>`; the bit is the model's SET `protocolIndex`, never a list position (§5).
+/// `0x0404 01 01 <bit as LE bitmask>`; the bit is the model's SET `slot`, never a list position (§5).
 pub fn anc_payload(bit: u8) -> Vec<u8> {
     let mut p = vec![0; 2 + bit as usize / 8 + 1];
     p[0] = 1;
@@ -597,7 +597,7 @@ mod tests {
 
     #[test]
     fn codecs() {
-        // Buds 4 `0x8123` = `00 46 01`: AAC, LDAC, LHDC (bit 8 is past the table); PROTOCOL-LEGACY.md trusts it only on `highAudio`.
+        // Buds 4 `0x8123` = `00 46 01`: AAC, LDAC, LHDC (bit 8 is past the table); PROTOCOL-LEGACY.md trusts it only on `hiRes`.
         assert_eq!(codecs_of(0x0146), [2, 3, 7]);
         assert_eq!(codecs_of(0b1100_0000), [8]);
         assert_eq!(codecs_of(0b0100_0001), [1, 7]);

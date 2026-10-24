@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-# Generates the two widget page layouts (2x2 widget_pages, 4x2 widget_pages_m) as one
-# family. Edit here, run `python3 scripts/widget-layouts.py` from the repo root, commit the XML with it.
-# Also the level picker grids (widget_grid).
+# Generates the widget layouts: the two page layouts and the seven resizable shapes, plus the level picker grids, in the three styles.
+# Edit here, run `python3 scripts/widget-layouts.py` from the repo root, commit the XML with it.
 # Classic, Nothing and Material share one structure; they differ in fonts, spacing (GEO), text sizes and, at runtime, boxes.
 import os
 RES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app", "src", "main", "res", "layout") + os.sep

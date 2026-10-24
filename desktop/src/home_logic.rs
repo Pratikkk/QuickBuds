@@ -8,8 +8,6 @@ use crate::types::*;
 /// (feature id, `models.json` flag, icon, title, subtitle, confirm text, confirm turning off too), in the
 /// phone's order. A row shows when the buds list its id in `0x810D`, or the model picked by hand has the
 /// flag (`Capabilities.offered`).
-// ponytail: Personalized ANC (0x0C) needs the phone's test flow, game sound and head gestures their type
-// pickers; they come with those.
 pub(crate) const ROWS: &[(u8, Option<&str>, &str, &str, &str, Option<&str>, bool)] = &[
     // Wear detection: the buds' own auto play/pause. The phone's smart auto-pause needs its media session.
     (0x04, None, icons::EARBUD, "wear_firmware_title", "wear_firmware_sub", None, false),
@@ -29,7 +27,7 @@ pub(crate) const ROWS: &[(u8, Option<&str>, &str, &str, &str, Option<&str>, bool
     (FEATURE_POWER_SAVING, None, icons::POWER, "row_power_saving_title", "row_power_saving_sub", Some("power_saving_confirm"), true),
 ];
 
-/// Our `spatialSwitch` key (realme): Hi-Res and 3D audio are written alone, never together (§9).
+/// Our `spatialToggle` key (realme): Hi-Res and 3D audio are written alone, never together (§9).
 pub(crate) fn exclusive(s: &Snapshot) -> bool { !s.model.is_some_and(|m| m["spatialToggle"] == 1) }
 
 /// 3D audio as HeyMelody picks it (§9): buds whose bitmap has `0x012A` (or a hand-picked model with head
@@ -38,12 +36,12 @@ pub(crate) fn spatial_by_type(s: &Snapshot) -> bool {
     exclusive(s) && (s.caps.supports(CMD_QUERY_SPATIAL_TYPE) || s.manual && head_tracking(s))
 }
 
-/// The model's `spatialTypes` has `2`: Off / Fixed / Head tracking instead of a plain switch.
+/// The model's `spatialModes` has `2`: Off / Fixed / Head tracking instead of a plain switch.
 pub(crate) fn head_tracking(s: &Snapshot) -> bool {
     s.model.is_some_and(|m| m["spatialModes"].as_array().is_some_and(|t| t.iter().any(|v| *v == 2)))
 }
 
-/// The codec picker replaces the Hi-Res write on `highAudio` models with the `0x0123` read (§9).
+/// The codec picker replaces the Hi-Res write on `hiRes` models with the `0x0123` read (§9).
 pub(crate) fn codec_picker(s: &Snapshot) -> bool { s.model.is_some_and(|m| m["hiRes"] == 1) && s.caps.supports(CMD_QUERY_CODEC_LIST) }
 
 pub(crate) fn spatial_on(s: &Snapshot) -> bool {

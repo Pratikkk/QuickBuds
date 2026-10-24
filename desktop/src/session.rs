@@ -21,7 +21,7 @@ pub struct Notice {
     pub seq: u32,
 }
 
-/// The feature-sync engine and the wire sequence bytes it used (`local/FEATURE-SYNC.md`).
+/// The feature-sync engine and the wire sequence bytes it used (`docs/FEATURE-SYNC.md`).
 #[derive(Default)]
 struct Sync {
     engine: FeatureSync,
@@ -316,7 +316,7 @@ struct Conn<'a> {
     link: bt::Link,
     /// 0 for the bridge.
     addr: u64,
-    /// The link's protocol (docs/PROTOCOL.md), chosen once per connection.
+    /// The legacy framer: the byte stream into whole packets (docs/PROTOCOL-LEGACY.md §2).
     framer: Framer,
     /// Messages received on this connection: none after the init sequence means the new protocol failed.
     rx: u32,

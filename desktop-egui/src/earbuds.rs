@@ -1,5 +1,4 @@
 //! The Earbud settings page (`EarbudSettingsActivity`): the feature switches the buds list, the sounds and the firmware.
-//! Personalized ANC and the fit test (their flows) are not ported yet.
 
 use crate::glass::{self, Choice, Trailing};
 use crate::home_logic::{self, ROWS};

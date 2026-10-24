@@ -21,7 +21,7 @@ pub(crate) const GESTURES: [(&str, u8, &[i64], bool, &str); 7] = [
 ];
 pub(crate) const TAP_HOLD: usize = 6;
 
-/// (label, short label, `fn`, `support` bit, noise `modeType` or -1). The four noise actions share `fn 08`
+/// (label, short label, `fn`, `support` bit, noise `mode` or -1). The four noise actions share `fn 08`
 /// (the hold "cycles noise control"); which modes it cycles is the separate mask.
 pub(crate) const ACTIONS: [(&str, &str, u8, i64, i64); 17] = [
     ("gesture_action_none", "", 0x00, 512, -1),
@@ -61,14 +61,14 @@ pub(crate) const ON_CALL: [(&str, &str, u8, u8, i64, &str); 4] = [
 pub(crate) struct Model {
     /// (gesture, options), in [GESTURES] order.
     pub(crate) rows: Vec<(usize, Vec<usize>)>,
-    /// Noise action -> its bit in the hold's mask (the mode's `protocolIndex`).
+    /// Noise action -> its bit in the hold's mask (the mode's `slot`).
     pub(crate) hold_bits: Vec<(usize, u8)>,
     pub(crate) on_call: Vec<usize>,
     /// OnePlus Buds / Buds Z number previous / next track 4 / 5.
     pub(crate) old_track: bool,
-    /// `longPressType`: each bud has its own hold, its choices in [Model::hold_choices].
+    /// `holdMask`: each bud has its own hold, its choices in [Model::hold_choices].
     pub(crate) per_bud: bool,
-    /// Our `sharedHoldMask` (realme Link data): a per-bud hold with one noise mask for both buds.
+    /// Our `sharedHold` (realme Link data): a per-bud hold with one noise mask for both buds.
     pub(crate) shared_mask: bool,
     /// Our `oneButton` (realme Link data): a neckband, one button written as the left bud.
     pub(crate) one_button: bool,

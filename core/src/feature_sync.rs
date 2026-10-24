@@ -1,4 +1,4 @@
-//! The sync engine for one setting write (local/FEATURE-SYNC.md). Same names and rules as
+//! The sync engine for one setting write (docs/FEATURE-SYNC.md). Same names and rules as
 //! `FeatureSync.kt`. No clock, no threads, no I/O: the caller passes `now` (ms).
 //! One operation is active. The others wait in a queue, in tap order.
 

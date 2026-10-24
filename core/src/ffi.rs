@@ -1,4 +1,4 @@
-//! C ABI for the Android shell (JNI wrapper in Kotlin/Java, not here): bytes in, bytes out, no state kept between calls.
+//! C ABI for a native shell: bytes in, bytes out, no state kept between calls. Nothing calls it yet; the spike probes prove a round trip.
 use crate::wire::{Message, Reassembler};
 
 /// Feeds `len` bytes to a reassembler and returns how many whole frames it held. Spike probe: proves a call round trip.

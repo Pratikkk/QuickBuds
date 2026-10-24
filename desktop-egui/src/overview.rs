@@ -1,4 +1,4 @@
-//! The window: sidebar, header and the Overview page, on the glass widgets.
+//! The window: header and the Overview page, on the glass widgets.
 
 use crate::glass::{self, white, Trailing};
 use crate::session::{Cmd, Snapshot, Status};
@@ -201,7 +201,7 @@ fn overview(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let listed = |id: u8| s.features.iter().find(|f| f.0 == id).map(|f| f.1);
     let tr = &app.tr;
 
-    // Rows on the right: the switches the buds list. Hi-Res and 3D audio show their state; their writes come with the Earbud settings port.
+    // Rows on the right: the switches the buds list. Hi-Res and 3D audio show their state.
     let mut right: Vec<HomeRow> = vec![];
     if types::has_feature(&s.features, s.caps.game_mode_id()) {
         right.push(HomeRow { id: "game", icon: icons::LOW_LATENCY, title: t(tr, "row_game_title").into(), sub: t(tr, "row_game_sub").into(),
