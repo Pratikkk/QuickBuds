@@ -452,6 +452,9 @@ class BudsConnectionManager(private val context: Context) {
      */
     private val pending = java.util.concurrent.ConcurrentHashMap<Int, Pair<Int, Long>>()
 
+    /** The feature id of each `0x0403` write by sequence byte, so a refusal in the log names its switch. */
+    private val featureWrites = java.util.concurrent.ConcurrentHashMap<Int, Int>()
+
     private fun notePending(id: Int, on: Boolean) { pending[id] = (if (on) 1 else 0) to System.currentTimeMillis() }
 
     /** A status read inside [PENDING_MS] of our own write keeps the written value for that switch (no flicker). */
@@ -1070,6 +1073,10 @@ class BudsConnectionManager(private val context: Context) {
             // could land in the log ABOVE our own TX line and look causally backwards.
             thread.write(data)
             markAncFlush()
+            if (data.size > 9 && OpoProtocol.u16(data, 4) == OpoProtocol.CMD_SET_FEATURE) {
+                if (featureWrites.size > 16) featureWrites.clear()
+                featureWrites[data[6].toInt() and 0xFF] = data[9].toInt() and 0xFF
+            }
             log("TX[$label]: ${OpoProtocol.bytesToHex(data)}")
         } catch (e: Exception) {
             log("sendRaw[$label] error: ${e.message}")
@@ -1378,6 +1385,13 @@ class BudsConnectionManager(private val context: Context) {
                 ?: log("EQ: could not parse custom list RAW=[${OpoProtocol.bytesToHex(payload)}]")
             0x8124 -> if (payload.size >= 4 && payload[0].toInt() == 0) bassWaveLevel = payload[3].toInt()
             OpoProtocol.CMD_EQ_CHANGED -> if (payload.isNotEmpty()) reportedEq(payload[0].toInt() and 0xFF)
+        }
+        // A refused feature write. Status 1 is a switch the buds lack. Status 2 is a switch they have but will not take now
+        // (high-quality audio needs an LDAC or LHDC link on buds that offer a codec list; reports #33, #42, #44).
+        if (cmd == OpoProtocol.CMD_SET_FEATURE or 0x8000) {
+            val id = featureWrites.remove(seq)
+            if (id != null && payload.isNotEmpty() && payload[0].toInt() != 0)
+                log("FEATURE REFUSED: id=0x%02X status=%d codec=%s offered=%s".format(id, payload[0].toInt() and 0xFF, codec, codecs))
         }
         // A refused ANC write (status 14 with no bud in an ear): read the real mode back (§5).
         if (cmd == OpoProtocol.CMD_SET_ANC or 0x8000 && payload.isNotEmpty() && payload[0].toInt() != 0) {

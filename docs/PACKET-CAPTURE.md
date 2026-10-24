@@ -45,6 +45,7 @@ adb logcat -d -s QuickBuds-Packets:D   # instant, but other apps can rotate it o
 | `UNATTR RX:` | A frame the app does not decode, with its payload head. **Usually the point of a capture.** |
 | `BTN EVT:` | A gesture on the buds (the `0xF1` family): side, button, action. |
 | `KEYFN DIFF:` | What changed in the gesture table between two reads. |
+| `FEATURE REFUSED:` | The buds refused a switch write. Status 1: the buds lack the switch. Status 2: they have it and will not take it now, for example high-quality audio without an LDAC or LHDC link. The line shows the feature id, the codec and the codecs the buds offer. |
 
 **No log line does not mean no frame.** Was: a filter hid the ANC push, and "ANC raises no event"
 was believed for weeks. When the app's log is silent, check the HCI log.
