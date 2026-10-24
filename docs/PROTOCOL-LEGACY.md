@@ -598,18 +598,23 @@ speechPerception, `34` meetingAssistant, `35` longPressVolume, `37` swiftPair, `
 |---|---|---|
 | `04` | Auto play/pause (wear detection) | `[CAPTURE]` |
 | `05` | ? | HeyMelody asks it first for every model, ignores the value and never writes it `[VENDOR]` |
-| `06` | Game mode / low latency | `[VENDOR]` all models, **except** `28` where the bitmap has `0x0423` (`gameModeId()`) |
+| `06` | Game mode / low latency | the apps call it Low latency mode; all models, **except** `28` where the bitmap has `0x0423` (`gameModeId()`) `[VENDOR]` |
 | `09` | Vocal enhancement | flag `voiceBoost`; realme Link's "enhance voice" row writes it `[VENDOR]` |
-| `0B` | Golden Sound (hearing profile) | see below `[CAPTURE]` |
-| `0C` | Personalised ANC applied | see below |
+| `0B` | Golden Sound; the apps call it Hearing profile | see below `[CAPTURE]` |
+| `0C` | Personalised ANC applied | the apps call it Personalised noise cancelling; see below |
+| `0F` | Zen mode | asked on 6 models that set the `zenMode` flag; QuickBuds does not build it `[VENDOR]` |
 | `11` | Dual connection | see below `[CAPTURE]` |
+| `13` | Sound record | flag `headSetSoundRecord`; in both default id lists `[VENDOR]` |
+| `16` | Lost reminder | flag `deviceLostRemind`; written as `0x0403 16 <01/00>` `[VENDOR]` |
 | `17` | Power saving | restarts the buds, see below `[CAPTURE]` |
-| `18` | Hi-Res | quality switch, drops the link, see below `[CAPTURE]` |
+| `18` | Hi-Res | the apps call it High-quality audio; quality switch, drops the link, see below `[CAPTURE]` |
 | `1A` | Wind noise reduction | realme Link's "anti wind noise" row writes `0x0403 1A <01/00>` `[VENDOR]`; asked in `0x010D` only for models with flag `windMode` (Air7 Pro, T310: its realme Link item list has the wind noise row, and report #46 says the vendor app shows it); no capture `[GUESS]` that every `windMode` model answers |
-| `1B` | Spatial sound | on models without `0x012A` `[CAPTURE]` |
+| `1B` | Spatial sound | the apps call it 3D audio; on models without `0x012A` `[CAPTURE]` |
 | `1C` | Smart volume | flag `autoVolume` |
-| `1D` | BassWave | `[CAPTURE]`; realme Link's "dynamic sound mode" row (a switch and three bars) writes the same id `[VENDOR]` |
+| `1D` | BassWave | the apps call it Bass boost; `[CAPTURE]`; realme Link's "dynamic sound mode" row (a switch and three bars) writes the same id `[VENDOR]` |
+| `1E` | Log collection | flag `collectLogs`; asked on 16 models `[VENDOR]` |
 | `27` | Game sound effects | flag `gameSoundList` |
+| `28` | Game mode, where the model has game sound | `gameSoundList` or the `0x0423` bitmap; both default id lists ask it next to `06` `[VENDOR]` |
 | `30` | Adaptive volume | |
 | `31` | Adaptive left / right ear | |
 | `32` | Conversation awareness | HeyMelody turns it off against voice commands (`19`) |

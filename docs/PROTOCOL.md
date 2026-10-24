@@ -375,23 +375,29 @@ Write `0x0403 <id> <01|00>`. Read `0x010D <count> <ids>` → `00 <count> <id> <v
 | Id | Switch | Notes |
 |---|---|---|
 | `04` | Wear detection (auto play/pause) | `[CAPTURE]` |
-| `06` | Game mode, low latency | all models except where the bitmap has `0x0423`; there it is `28` |
+| `05` | ? | First id in every query; the vendor app ignores the value and never writes it `[VENDOR]` |
+| `06` | Game mode, low latency | the apps call it Low latency mode; all models except where the bitmap has `0x0423`; there it is `28` |
 | `09` | Vocal enhancement | `[VENDOR]` |
-| `0B` | Golden Sound | section 16 `[CAPTURE]` |
-| `0C` | Personalised ANC applied | the buds set it when a result applies |
+| `0B` | Golden Sound; the apps call it Hearing profile | section 16 `[CAPTURE]` |
+| `0C` | Personalised ANC applied | the apps call it Personalised noise cancelling; the buds set it when a result applies |
+| `0F` | Zen mode | not built; asked on 6 OnePlus and OPPO models, and no code reads the reply `[VENDOR]` |
 | `11` | Dual connection | section 14 `[CAPTURE]` |
+| `13` | Sound record | in both default id lists; asked on 5 models `[VENDOR]` |
+| `16` | Lost reminder | switch `0x0403 16`; asked on 2 models (OPPO Enco Clip2, OnePlus Buds Clip) `[VENDOR]` |
 | `17` | Power saving | Either write restarts the buds; the link returns about 12 s later `[CAPTURE]` |
-| `18` | Hi-Res | A quality switch, not a codec switch; any change drops the link `[CAPTURE]` |
+| `18` | Hi-Res | the apps call it High-quality audio; a quality switch, not a codec switch; any change drops the link `[CAPTURE]` |
 | `1A` | Wind noise reduction | Only models with the `windMode` flag; unverified `[GUESS]` |
-| `1B` | Spatial sound | Models without `0x012A` `[CAPTURE]` |
+| `1B` | Spatial sound | the apps call it 3D audio; models without `0x012A` `[CAPTURE]` |
 | `1C` | Smart volume | `[VENDOR]` |
-| `1D` | BassWave | `[CAPTURE]` |
+| `1D` | BassWave | the apps call it Bass boost `[CAPTURE]` |
+| `1E` | Log collection | asked on 16 models; no constant in the code `[VENDOR]` |
 | `21` | Game equaliser | Section 13 `[VENDOR]` |
 | `27` | Game sound effects | `[VENDOR]` |
+| `28` | Game mode, where the model has game sound | both default id lists ask it next to `06`; 10 models `[VENDOR]` |
 | `30` `31` `32` `35` `37` `38` `3A` `3B` | Adaptive volume, adaptive ear, conversation awareness, hold volume, Swift Pair, adaptive sound, pause when asleep, head gestures | `[VENDOR]`, unverified on buds |
 
-Ids the vendor app also builds: `0D` camera tap, `0F` zen mode, `13` sound record, `14` voice wake, `15` smart call, `16` lost reminder,
-`19` voice command, `1E` log collection, `22`-`24` neck health, `34` meeting assistant, `39` incoming-call control. Decided against: voice wake `14`, voice command `19`,
+Ids the vendor app also builds: `0D` camera tap, `14` voice wake, `15` smart call,
+`19` voice command, `22`-`24` neck health, `34` meeting assistant, `39` incoming-call control. Decided against: voice wake `14`, voice command `19`,
 call control `39`, neck health, meeting assistant `34` `[TESTED]`.
 
 realme Link writes the same ids: dynamic sound `1D`, enhance voice `09`, wind noise `1A`, game mode `06`, wear `04`, dual `11`, Hi-Res `18`,
