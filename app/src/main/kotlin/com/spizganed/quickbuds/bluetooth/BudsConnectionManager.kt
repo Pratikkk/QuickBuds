@@ -49,6 +49,8 @@ class BudsConnectionManager(private val context: Context) {
         private const val VERIFY_DELAY_MS = 2200L
         /** For this long after our own write, a read of that switch shows what we wrote. */
         private const val PENDING_MS = 2000L
+        /** A blocked socket.connect() gets its socket closed after this long, so the try can fail. */
+        private const val CONNECT_TIMEOUT_MS = 12_000L
     }
 
     init {
@@ -251,85 +253,112 @@ class BudsConnectionManager(private val context: Context) {
         }
         isConnecting = true
         lastDevice = device
-        // Only a connect the user asked for (the pill) brings phone audio up. An automatic one —
-        // ACL receiver, retries, reconnect after loss — leaves audio to Android: asking for A2DP
-        // while the system is auto-connecting raced it and left audio stuck.
-        if (withAudio) setPhoneAudio(device, on = true)
-        log("Initiating RFCOMM connection to ${device.name}...")
-        rememberDeviceName(device)
-        context.getSystemService(BluetoothManager::class.java)?.adapter?.cancelDiscovery()
+        // Starts the attempt, or clears the latch if the setup before it throws.
+        val started = try {
+            // Only a connect the user asked for (the pill) brings phone audio up. An automatic one —
+            // ACL receiver, retries, reconnect after loss — leaves audio to Android: asking for A2DP
+            // while the system is auto-connecting raced it and left audio stuck.
+            if (withAudio) setPhoneAudio(device, on = true)
+            log("Initiating RFCOMM connection to ${device.name}...")
+            rememberDeviceName(device)
+            context.getSystemService(BluetoothManager::class.java)?.adapter?.cancelDiscovery()
+            true
+        } catch (e: Exception) {
+            log("Connect error: ${e.javaClass.simpleName}: ${e.message}")
+            isConnecting = false
+            false
+        }
+        if (!started) return
 
         Thread {
-            // 079A first: it is the one that works (HeyMelody connects straight to it), while
-            // 1107 never connects on the Buds 4 and burns ~5 s. 1107 stays for other models.
-            val uuids = listOf(
-                OpoProtocol.SPP_UUID_FALLBACK,
-                OpoProtocol.SPP_UUID_PRIMARY
-            )
-            var socket: BluetoothSocket? = null
-            var lastError: String? = null
+            try {
+                // 079A first: it is the one that works (HeyMelody connects straight to it), while
+                // 1107 never connects on the Buds 4 and burns ~5 s. 1107 stays for other models.
+                val uuids = listOf(
+                    OpoProtocol.SPP_UUID_FALLBACK,
+                    OpoProtocol.SPP_UUID_PRIMARY
+                )
+                // Secure first, then insecure: a stale bond or a firmware that refuses an
+                // authenticated link fails both secure tries, and the desktop app never asks for one.
+                val tries = listOf(false, true).flatMap { insecure -> uuids.map { it to insecure } }
+                var socket: BluetoothSocket? = null
+                var lastError: String? = null
 
-            for (uuidStr in uuids) {
-                try {
-                    log("Trying UUID: $uuidStr")
-                    val uuid = UUID.fromString(uuidStr)
-                    socket = device.createRfcommSocketToServiceRecord(uuid)
-                    socket?.connect()
-                    log("Connected via UUID: $uuidStr")
-                    break
-                } catch (e: IOException) {
-                    lastError = e.message ?: e.javaClass.simpleName
-                    log("Failed UUID $uuidStr: $lastError")
-                    try { socket?.close() } catch (_: Exception) {}
-                    socket = null
+                // socket.connect() has no timeout. A close after 12 s makes a stuck call throw.
+                val watchdog = Runnable { try { socket?.close() } catch (_: Exception) {} }
+
+                for ((uuidStr, insecure) in tries) {
+                    val kind = if (insecure) "insecure" else "secure"
+                    try {
+                        log("Trying UUID: $uuidStr ($kind)")
+                        val uuid = UUID.fromString(uuidStr)
+                        socket = if (insecure) device.createInsecureRfcommSocketToServiceRecord(uuid)
+                            else device.createRfcommSocketToServiceRecord(uuid)
+                        handler.postDelayed(watchdog, CONNECT_TIMEOUT_MS)
+                        socket?.connect()
+                        log("Connected via UUID: $uuidStr ($kind)")
+                        break
+                    } catch (e: Exception) {
+                        lastError = e.message ?: e.javaClass.simpleName
+                        log("Failed UUID $uuidStr ($kind): $lastError")
+                        log("Connect error: ${e.javaClass.simpleName}: ${e.message}")
+                        try { socket?.close() } catch (_: Exception) {}
+                        socket = null
+                    } finally {
+                        handler.removeCallbacks(watchdog)
+                    }
                 }
-            }
 
-            if (socket == null) {
-                try {
-                    log("Trying RFCOMM channel 15...")
-                    val m = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
-                    socket = m.invoke(device, 15) as BluetoothSocket
-                    socket.connect()
-                    log("Connected via raw channel 15")
-                } catch (e: Exception) {
-                    lastError = e.message ?: e.javaClass.simpleName
-                    log("Channel 15 failed: $lastError")
-                    socket = null
+                if (socket == null) {
+                    try {
+                        log("Trying RFCOMM channel 15...")
+                        val m = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
+                        socket = m.invoke(device, 15) as BluetoothSocket
+                        handler.postDelayed(watchdog, CONNECT_TIMEOUT_MS)
+                        socket.connect()
+                        log("Connected via raw channel 15")
+                    } catch (e: Exception) {
+                        lastError = e.message ?: e.javaClass.simpleName
+                        log("Channel 15 failed: $lastError")
+                        socket = null
+                    } finally {
+                        handler.removeCallbacks(watchdog)
+                    }
                 }
-            }
 
-            if (socket != null) {
-                bluetoothSocket = socket
-                connectedThread = ConnectedThread(socket)
-                connectedThread?.start()
-                isReady = true
-                reconnectAttempts = 0
-                connectedAt = System.currentTimeMillis()
-                caseClosing = false
-                if (audioAfterRestart) { audioAfterRestart = false; setPhoneAudio(device, on = true) }
-                handler.post { listeners.forEach { it.onConnected(true) } }
-                syncPrimed = false
-                syncHandler.post { execute(sync.reconnect(SystemClock.elapsedRealtime())) }
-                log("Ready for commands. Running init sequence...")
-                runInitSequence()
-            } else {
-                log("All connection methods failed: $lastError")
-                isConnecting = false
-                disconnect()
-                if (reconnectAttempts < 3) {
-                    reconnectAttempts++
-                    log("Auto-retry $reconnectAttempts/3 in 5s...")
-                    handler.postDelayed({
-                        if (!isConnected() && !isConnecting) connect(device)
-                    }, 5000)
-                } else {
-                    log("Giving up. Tap CONNECT to retry manually.")
+                if (socket != null) {
+                    bluetoothSocket = socket
+                    connectedThread = ConnectedThread(socket)
+                    connectedThread?.start()
+                    isReady = true
                     reconnectAttempts = 0
+                    connectedAt = System.currentTimeMillis()
+                    caseClosing = false
+                    if (audioAfterRestart) { audioAfterRestart = false; setPhoneAudio(device, on = true) }
+                    handler.post { listeners.forEach { it.onConnected(true) } }
+                    syncPrimed = false
+                    syncHandler.post { execute(sync.reconnect(SystemClock.elapsedRealtime())) }
+                    log("Ready for commands. Running init sequence...")
+                    runInitSequence()
+                } else {
+                    log("All connection methods failed: $lastError")
+                    disconnect()
+                    if (reconnectAttempts < 5) {
+                        reconnectAttempts++
+                        log("Auto-retry $reconnectAttempts/5 in 5s...")
+                        handler.postDelayed({
+                            if (!isConnected() && !isConnecting) connect(device)
+                        }, 5000)
+                    } else {
+                        log("Giving up after 5 connect tries. Tap CONNECT to retry manually.")
+                        reconnectAttempts = 0
+                    }
+                    return@Thread
                 }
-                return@Thread
+            } finally {
+                // Every exit clears the latch. An exception outside the socket tries used to keep it set.
+                isConnecting = false
             }
-            isConnecting = false
         }.start()
     }
 
@@ -400,13 +429,13 @@ class BudsConnectionManager(private val context: Context) {
     private fun reconnectAfterLoss() {
         val device = lastDevice ?: return
         if (System.currentTimeMillis() - connectedAt > 30_000) lossRetries = 0
-        if (lossRetries >= 5) {
-            log("Reconnect after loss: giving up after 5 tries.")
+        if (lossRetries >= 8) {
+            log("Reconnect after loss: giving up after 8 tries.")
             return
         }
         lossRetries++
         val wait = 3000L * lossRetries
-        log("Reconnect after loss $lossRetries/5 in ${wait / 1000}s...")
+        log("Reconnect after loss $lossRetries/8 in ${wait / 1000}s...")
         val r = Runnable { if (!isConnected() && !isConnecting) connect(device) }
         pendingReconnect = r
         handler.postDelayed(r, wait)
