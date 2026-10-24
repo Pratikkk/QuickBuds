@@ -1,5 +1,7 @@
 # PROTOCOL.md — the earbud wire format
 
+Matches QuickBuds 5.1.0 (version code 39).
+
 The wire format of the OPPO / OnePlus / realme earbud RFCOMM link, as the owned protocol layer implements it
 (`core/` in Rust, `protocol2/` in Kotlin). The shipping layer is the legacy one, described in
 [PROTOCOL-LEGACY.md](./PROTOCOL-LEGACY.md). It carries many fixes. Verified facts from this file move into it.
@@ -55,10 +57,22 @@ AA  <Len>  <Slice> 00  [<Fsn>]  <Message or slice of it>
 
 ### Seq and replies
 
-- `Seq` `01`-`FE`: the sender picks it; the reply repeats it.
-- `Seq` `FF`: a push from the buds `[CAPTURE]`.
+The sender picks `Seq`. The reply repeats it `[CAPTURE]`. QuickBuds uses these ranges `[CAPTURE]`:
+
+| Seq | Use |
+|---|---|
+| `00` | The status poll `0x010D`, and the connect and plain status reads |
+| `01`-`BF` | The generic counter of the other commands |
+| `C0`-`DF` | The feature-sync engine; wire seq = `C0 + (n mod 0x20)` |
+| `F0` | The battery query `0x0106` |
+| `F2` | The wearing query `0x0109` |
+| `FF` | A push from the buds |
+
+- A status read with a non-zero seq is echoed: the reply `0x810D` carries the same seq `[TESTED 2026-10-24]`.
 - Reply command = request command with bit 15 set (`0x0106` → `0x8106`) `[CAPTURE]`. A write reply carries a
   status byte, `00` = accepted. Accepted does not mean applied: read the state back.
+- A refused `0x0403` write carries a non-zero status: `01` the buds lack the id, `02` or any other value
+  they refuse it now (section 11). A `0x0404` write with no bud in an ear is refused with `0E`.
 - A reply is matched on `(Seq, Cmd & 0x7FFF)` `[VENDOR]`.
 
 ## 3. Command classes
@@ -162,7 +176,7 @@ A known code with too few bytes is malformed and dropped. An unknown code is kep
 | `02` | Wearing | `<count>` then `<part> <state>` pairs (section 8) |
 | `03` | ANC | `01 01 <mode LE, 1-4 bytes>` current mode; `02 <kind> <mask LE>` hold-cycle mask; `04 01 <mask LE>` the level Smart chose |
 | `04` | Fit test | `<dev> <result>` per bud; `dev` `01` left, `02` right. A bud missing from the list has no result |
-| `05` | Game mode | `<state>`; on four product ids (`062410` `062810` `063010` `063410`) `<x> <x> <state>` |
+| `05` | Game mode | `<state>`; on four product ids (`062410` `062810` `063010` `063410`) `<x> <x> <state>`. The push confirms a game-mode write about 1 s after the ack; a read sooner returns the old value `[CAPTURE]` |
 | `06` | Dual connection devices | `<count>` then devices (section 14) |
 | `08` | Hearing test status | `<kind> <status>`; kind `02` hearing test, `04` ear scan |
 | `0A` | Zen-mode switch state | `<state>` `[VENDOR]`. QuickBuds has no zen-mode feature (needs the vendor's tone files) |
@@ -189,12 +203,21 @@ subscribes. Buds without `0x0205` in the bitmap take `0x0201 <code>` once per co
 
 ## 6. Connection
 
+**Connect** `[CAPTURE]` (Android app): try UUID `0000079A` and then `00001107`, both secure first and then both
+insecure. Then try RFCOMM channel 15 by reflection. A 12 s watchdog closes a socket that blocks. Five retries
+follow a failed connect, and eight a lost link. The desktop app tries the two UUIDs in the same order and takes
+the channel from the buds' SDP record.
+
 Init sequence `[CAPTURE]` (Buds 4, both apps): wait 300 ms, then one message every 200 ms.
 
 ```
 0x0100 bitmap → 0x0103 product id → 0x0200 offered codes → 0x0205 subscribe (or 0x0201 per code) →
 reads (section 7 when the bitmap has bit 56, else one by one)
 ```
+
+With bit 56, the reads go out in one `0x012F` frame. The read order is: `0x010D`, `0x010C 01 01`, `0x010C 04 01`
+on Smart models, `0x0130`, `0x0106`, `0x0109`, `0x0108`, the hold-cycle reads, `0x0105`, `0x012A`, `0x0123`,
+`0x0114`, `0x012B`, `0x0134`. A model with `spatialToggle` gets `0x041E 00` after the reads.
 
 Nothing is polled after that. Battery, wearing, ANC and game mode arrive as pushes `[TESTED]`.
 
@@ -366,11 +389,32 @@ next are `04` and `05` `[VENDOR]`. Which functions a row offers is per model (`g
 Write `0x0403 <id> <01|00>`. Read `0x010D <count> <ids>` → `00 <count> <id> <value>...`. Only ids the firmware has come back
 `[CAPTURE]`; a missing id is a switch these buds do not have.
 
-- The id list is per model `[VENDOR]`. Buds 4: `05 04 0B 11 18 06 1B 1D 1C` (matches the capture; the buds answered all but `1C`).
+The reply `0x8403` carries the same seq byte. `payload[0]` is the status `[CAPTURE]`:
+
+| Status | Meaning |
+|---|---|
+| `00` | Accepted |
+| `01` | The buds lack that id (`04 0B 18 27 35` on the realme Buds T310) |
+| `02` | The buds have the id and refuse it now |
+| other | Refused now |
+
+Status `02` is a condition, not a fault. The OnePlus Buds 4 refuses `18 01` 32 times while the phone plays AAC.
+It accepts the same write while the phone plays LHDC V5.
+
+- The id list is the model's `statusQuery` field in the model list `[VENDOR]`. A model without one gets 23 ids:
+  `05 04 0B 11 13 18 06 1B 1C 27 28 1D 09 17 30 31 3A 32 35 37 38 3B 0C`. The `windMode` flag adds `1A`.
+  Buds 4: `05 04 0B 11 18 06 1B 1D 1C` (matches the capture; the buds answered all but `1C`).
   Enco Buds2: `05 06` `[TESTED]`.
+- The plain status read uses `Seq` `00`. The engine's own reads and writes use `C0`-`DF`, and the reply carries
+  that seq (section 2).
 - A longer list drops some links: one fixed 23-id list dropped the Enco Buds2 link (issue #5). `02 05 0D` kept it up `[CAPTURE]`.
 - The id `05` is asked first for every model; the vendor app ignores the value and never writes it.
 - Feature `1F` is for OPPO and OnePlus phones and is never asked.
+- A game-mode write is confirmed by push `05`, not by a read. The buds apply the change about 1 s after the ack
+  `[CAPTURE 2026-10-24]`.
+- An id in the status reply does not prove the switch. The OPPO Enco Buds3 Pro lists `1B` and reports `1B=1`
+  after a write, but its bitmap has no `0x012A` and two owners hear no 3D audio (reports #60 #61). QuickBuds
+  hides the row through its `statusQuery` (`05 11 06`) `[CAPTURE]`.
 
 | Id | Switch | Notes |
 |---|---|---|
@@ -385,7 +429,7 @@ Write `0x0403 <id> <01|00>`. Read `0x010D <count> <ids>` → `00 <count> <id> <v
 | `13` | Sound record | in both default id lists; asked on 5 models `[VENDOR]` |
 | `16` | Lost reminder | switch `0x0403 16`; asked on 2 models (OPPO Enco Clip2, OnePlus Buds Clip) `[VENDOR]` |
 | `17` | Power saving | Either write restarts the buds; the link returns about 12 s later `[CAPTURE]` |
-| `18` | Hi-Res | the apps call it High-quality audio; a quality switch, not a codec switch; any change drops the link `[CAPTURE]` |
+| `18` | Hi-Res | the apps call it High-quality audio; a quality switch, not a codec switch; a model with a codec list refuses it unless the phone plays LDAC or LHDC `[CAPTURE]` |
 | `1A` | Wind noise reduction | Only models with the `windMode` flag; unverified `[GUESS]` |
 | `1B` | Spatial sound | the apps call it 3D audio; models without `0x012A` `[CAPTURE]` |
 | `1C` | Smart volume | `[VENDOR]` |
@@ -436,16 +480,23 @@ push 0x0504 <id>                              the EQ changed
 | Spatial type | `0x012A` → `00 <type>`, push `0x0510 <type>` | `0x0422 <type>` | `0` off, `1` fixed, `2` head tracking (Buds Pro 2, Buds Pro 3, Enco X3). Bitmap bit 47. Wired, unverified `[VENDOR]` |
 | 3D audio source | — | `0x041E <source>` | `00` the buds render 3D audio, `01` the phone does. Bitmap bit 43. HeyMelody sends only `01`; realme Link sends `00` on connect `[VENDOR]` |
 | Current codec | `0x0114` → `00 <codec>` | — | Buds 4 `00 08` = LHDC V5 `[CAPTURE]` |
-| Codecs offered | `0x0123` → `00 <u16 LE mask>` | — | Bit k = codec k + 1. Buds 4 answers `00 46 01`, which the table misreads: trust the mask only on `hiRes` models `[CAPTURE]` |
+| Codecs offered | `0x0123` → `00 <u16 LE mask>` | — | Bit k = codec k + 1. Buds 4 answers `00 46 01`, which decodes to AAC, LDAC and LHDC; the maker lists LHDC 5.0, AAC and SBC only. Trust the mask only on `hiRes` models `[CAPTURE]` |
 | Codec | — | `0x041A <codec> <hiRes> 00` | `hiRes` is set only with codec 3 or 8. The buds restart `[VENDOR]` |
 | Game sound type | `0x012B` → `00 <selected> <count> <types>` | `0x0423 <type> 01` | Type `0` off, `1` a Chinese game, `3` shooting games `[VENDOR]` |
 | Game equaliser | — | `0x0420 01 <state>` | `01` when a game app comes to the foreground, `00` when it leaves. Applies only while feature `21` is on. Bitmap bit 44 `[VENDOR]` |
 | Find my earbuds | — | `0x0400 <01\|00>` | Rings both buds; no side byte; the reply is `8400 00` `[CAPTURE]`. Warn when the buds are in the ears |
 
 - Codecs: `1` SBC, `2` AAC, `3` LDAC, `4` aptX, `5` aptX HD, `6` aptX Adaptive, `7` LHDC, `8` LHDC V5. The app lists 8, 7, 3, 6, 5, 4, 2, 1 and drops 7 when 8 is offered.
-- Spatial sound and Hi-Res exclude each other `[VENDOR]`. Spatial on is `1B 01` then `18 00`; Hi-Res on is `1B 00` then `18 01`. Any `18` change drops the link
-  and the buds return about 4 s later `[CAPTURE]`.
-- `18` and `0x8114` are per link `[CAPTURE]`: with dual connection each host reads its own value. `18` is a quality switch, not a codec switch.
+- Spatial sound and Hi-Res exclude each other `[VENDOR]`. Spatial on is `1B 01` then `18 00`; Hi-Res on is `1B 00` then `18 01`.
+- `18` is a quality switch, not a codec switch `[CAPTURE]`. The phone's Bluetooth settings choose the codec.
+  The switch raises the bitrate and the sampling rate only.
+- On a model with a codec list (`0x0123`), `18 01` is accepted (`00`) while the phone plays LDAC (3) or LHDC
+  (7, 8). It is refused (`02`) while the phone plays AAC or SBC `[TESTED 2026-10-24]`. Read `0x0114` first.
+- Older models accept `18` on AAC `[CAPTURE: realme Buds Air 5 Pro #4, T500 Pro #21, Air7 Pro #27, OnePlus Nord
+  Buds 3 Pro #50]`. The Nord Buds 3 Pro offers only SBC and AAC, so the switch turns on and the sound does not
+  change (report #40).
+- A refused `18` write changes nothing. An accepted write restarts the link; the buds return about 4 s later `[CAPTURE]`.
+- `18` and `0x8114` are per link `[CAPTURE]`: with dual connection each host reads its own value.
 - realme models `[VENDOR]`: 3D sound is feature `1B` alone and Hi-Res is `18` alone, whatever the bitmap says. realme Link never writes one with the other.
 - Smart auto-pause (pause only when both buds leave) is an app feature, not firmware: the app sends a media pause key.
 
@@ -506,6 +557,8 @@ record; the phone keeps the list. A record: a 4-byte id (big endian, chosen by t
 
 - Floats are little endian, left ear first, then right. A count is a multiple of 12. They are biquads `a0 a1 a2 b0 b1 b2`: 60 floats = 5 per ear, 72 = 6. The `0x0116` filter rate is 44100.
 - A refused write (`0x840D` or `0x840E` with a non-zero status) ends the step.
+- The OPPO Enco Air5 Pro refuses an ear-scan start (`0x040D 04 01 <id>`) with status `01` on Windows (6 times,
+  report #44). The cause is unknown; the wear state is a guess `[CAPTURE]`.
 - `0x040F 01` in the capture is an unrelated camera feature.
 - Slider: 25 stops `-120 -88 -55 -52 -49 -45 -41 -38 -35 -30 -25 -22 -19 -15 -11 -8 -5 -1 3 5 7 10 13 15 17`. Each move plays a tone, at most every 300 ms, starting near `-30`.
   The saved value is the stop snapped to the nearest of `-55 -49 -41 -35 -25 -19 -11 -5 3 7 13 17`. A loudness warning shows once at 10 or more.

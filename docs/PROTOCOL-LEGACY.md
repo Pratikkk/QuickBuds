@@ -30,6 +30,10 @@ Classic Bluetooth **RFCOMM / SPP**, not BLE. One long-lived socket; the buds pus
 | `0000079A-D102-11E1-9B23-00025B00A5A5` | Tried first. The one that works on Buds 4 `[CAPTURE]`, as HeyMelody does `[VENDOR]` |
 | `00001107-D102-11E1-9B23-00025B00A5A5` | Tried second. Never connects on Buds 4 (~5 s timeout); kept for other models |
 
+The connect order is both UUIDs secure first, then both insecure: `079A` secure, `1107` secure, `079A`
+insecure, `1107` insecure. Then RFCOMM channel 15 by reflection. A 12 s watchdog closes a connect that
+blocks. Five retries follow a failed connect, and eight a lost link `[CAPTURE]`.
+
 A case lid close kills the socket (§8).
 
 ---
@@ -47,7 +51,7 @@ AA  <TotalLen>  00 00  <Cmd LE>  <Seq>  <PayLen LE>  <Payload...>
 | TotalLen | Length of everything after this field: `7 + PayLen` |
 | `<Slice> 00` | Slice state, `00 00` for a whole message (see Slicing) |
 | Cmd | Command id, little-endian |
-| Seq | `0x01`-`0xFE`; the reply echoes it. **`0xFF` = a push from the buds** `[CAPTURE]` |
+| Seq | Picked by the sender; the reply echoes it. **`0xFF` = a push from the buds** `[CAPTURE]` |
 | PayLen | Payload length, little-endian |
 
 - **TotalLen is standard LEB128** `[CAPTURE]`: one byte below 128, else 7 bits per byte, low first,
@@ -58,6 +62,12 @@ AA  <TotalLen>  00 00  <Cmd LE>  <Seq>  <PayLen LE>  <Payload...>
   index 9** (`BudsConnectionManager.payloadOf()`). A wrong offset gives garbage, not an error.
 - Replies are **`cmd | 0x8000`** `[CAPTURE]`. Write acks (`0x84xx`) carry `00` for success `[CAPTURE]`.
   **An ack of `00` does not prove the write took** (§5 hold mask); read back.
+- **Seq ranges** `[CAPTURE]`: `00` the status poll `0x010D` and the connect reads, `01`-`BF` the generic
+  counter, `C0`-`DF` the feature-sync engine, `F0` the battery query, `F2` the wearing query, `FF` a push.
+  A status read with a non-zero seq is echoed by the reply `0x810D` `[TESTED 2026-10-24]`.
+- A refused `0x0403` write carries `01` (the buds lack the id) or `02` (they refuse it now). Any other
+  non-zero status is a refusal now `[CAPTURE]`. §9 lists the statuses. A `0x0404` write with no bud in an
+  ear is refused with `0E` (§5).
 
 ```
 AA 07 00 00 00 01 01 00 00                  handshake 0x0100, PayLen 0
@@ -198,9 +208,14 @@ wearing `0x0109`.
 
 ```
 0x0100 handshake → 0x0103 product id → 0x0200 broadcast codes → 0x0205 subscribe →
-0x010D features → 0x010C 01 01 ANC → 0x0106 battery → 0x0109 wear →
-0x0108 gesture table → 0x010C 02 01 hold cycle
+0x010D features → 0x010C 01 01 ANC → 0x010C 04 01 Smart level (Smart models) →
+0x0130 alert volume → 0x0106 battery → 0x0109 wear → 0x0108 gesture table →
+0x010C 02 01 hold cycle (02 03 / 02 04 on per-bud holds) → 0x0105 firmware →
+0x012A spatial type → 0x0123 codec list → 0x0114 codec → 0x012B game sound →
+0x0134 head motion → 0x041E 00 3D audio on the buds (spatialToggle models)
 ```
+
+With bit 56, every read after the subscription goes out in one `0x012F` frame.
 
 Nothing is polled after that: battery, wear, ANC and game mode are pushed. Was: a
 keep-alive poll. Is: none; no stale link seen `[TESTED]`.
@@ -260,7 +275,7 @@ one `0x012F`. A later status read goes alone.
 | `02` | Wearing (§8) | always |
 | `03` | ANC: `01 01` mode, `02 01` hold cycle, `04 01` Smart's level (§5) | always |
 | `04` | Fit test result (§9) | when the bitmap has `0x0405` |
-| `05` | Game mode (`GAME EVT`) `[CAPTURE]`: `05 <state>`; `05 xx xx <state>` on `062410` `062810` `063010` `063410` `[VENDOR]` | — |
+| `05` | Game mode (`GAME EVT`) `[CAPTURE]`: `05 <state>`; `05 xx xx <state>` on `062410` `062810` `063010` `063410` `[VENDOR]`. The push confirms a game-mode write about 1 s after the ack; a read sooner returns the old value `[CAPTURE 2026-10-24]` | — |
 | `06` | Dual connection device list (§9) `[CAPTURE]` | — |
 | `08` | Golden Sound test status (§9) | when the bitmap has `0x040D` |
 | `0B` | Personalised ANC result (§9) | when the bitmap has `0x0412` |
@@ -561,9 +576,10 @@ HeyMelody calls "safe remind". Both apps clear bit 3, so only the codes below re
 ### Feature switches — `0x0403 <id> <01/00>`, read with `0x010D`
 
 `0x010D <count> <ids>` → `00 <count> [<id> <value>]...`. Only ids the firmware has come back
-`[CAPTURE]`.
+`[CAPTURE]`. The reply `0x8403` to a write repeats the seq. `00` accepted, `01` the buds lack the id,
+`02` the buds have the id and refuse it now. Any other non-zero status is a refusal now `[CAPTURE]`.
 
-- **The ids are per model** `[VENDOR]`. `models.json` `statusQuery` holds the list (81 HeyMelody
+- **The ids are per model** `[VENDOR]`. `models.json` `statusQuery` holds the list (85 HeyMelody
   models, from HeyMelody 116.9.0's built-in data). Buds 4: `05 04 0B 11 18 06 1B 1D 1C` (matches the
   capture). Enco Buds2: `05 06` `[TESTED]`.
   Checked against the HeyMelody 117.6.6 id rule (`PROTOCOL.md` section 11): all 85 listed models match it, except that our lists leave out the
@@ -573,7 +589,7 @@ HeyMelody calls "safe remind". Both apps clear bit 3, so only the codes below re
   #5). Is: the per-model list. `02 05 0D` kept that link up `[CAPTURE]`.
 - A model without `statusQuery` (hand-added) gets the 23 ids, plus `1A` where it has `windMode`.
 - **realme models** `[VENDOR]` (realme Link 5.8.811): its per-model screen lists name the rows a model shows.
-  Our `statusQuery` for 28 realme models asks only for the ids of those rows: `04` smart play/pause, `06` game
+  Our `statusQuery` for 30 realme models asks only for the ids of those rows: `04` smart play/pause, `06` game
   mode, `0B` hearing profile, `11` dual connection, `18` Hi-Res, `1B` 3D sound. Only the Air8 Pro and Air7 Pro,
   Air 5 Pro and Air6 Pro list a hearing profile; the T500 Pro does not (report #21), and its buds do not answer
   the tones. The Air7 Pro keeps its list: its owner confirmed it.
@@ -607,9 +623,9 @@ speechPerception, `34` meetingAssistant, `35` longPressVolume, `37` swiftPair, `
 | `13` | Sound record | flag `headSetSoundRecord`; in both default id lists `[VENDOR]` |
 | `16` | Lost reminder | flag `deviceLostRemind`; written as `0x0403 16 <01/00>` `[VENDOR]` |
 | `17` | Power saving | restarts the buds, see below `[CAPTURE]` |
-| `18` | Hi-Res | the apps call it High-quality audio; quality switch, drops the link, see below `[CAPTURE]` |
+| `18` | Hi-Res | the apps call it High-quality audio; quality switch, see below `[CAPTURE]` |
 | `1A` | Wind noise reduction | realme Link's "anti wind noise" row writes `0x0403 1A <01/00>` `[VENDOR]`; asked in `0x010D` only for models with flag `windMode` (Air7 Pro, T310: its realme Link item list has the wind noise row, and report #46 says the vendor app shows it); no capture `[GUESS]` that every `windMode` model answers |
-| `1B` | Spatial sound | the apps call it 3D audio; on models without `0x012A` `[CAPTURE]` |
+| `1B` | Spatial sound | the apps call it 3D audio; on models without `0x012A` `[CAPTURE]`. The Enco Buds3 Pro lists `1B` in its status reply, but the bitmap has no `0x012A` and the sound does not change (reports #60 #61) `[CAPTURE]` |
 | `1C` | Smart volume | flag `autoVolume` |
 | `1D` | BassWave | the apps call it Bass boost; `[CAPTURE]`; realme Link's "dynamic sound mode" row (a switch and three bars) writes the same id `[VENDOR]` |
 | `1E` | Log collection | flag `collectLogs`; asked on 16 models `[VENDOR]` |
@@ -688,6 +704,8 @@ the active record; the phone keeps the list. A record: 4-byte id (big-endian, ch
   default), read at 80, 10000, 4800, 2400, 1200, 250 Hz (80 at the top, clockwise). Radius =
   `max(2, -|dB| × 10 / scale + 10)`, scales 7.5, 15, 15, 12.5, 12.5, 7.5; 10 = no change.
 - Ear scan only where `models.json` has `"earScan":1`.
+- The OPPO Enco Air5 Pro refuses an ear-scan start (`0x040D 04 01 <id>`) with status `01` on Windows
+  (6 times, report #44). The cause is unknown; the wear state is a guess `[CAPTURE]`.
 
 ### Fit test — `0x0405` `[VENDOR]`+`[CAPTURE]`
 
@@ -703,7 +721,7 @@ the active record; the phone keeps the list. A record: 4-byte id (big-endian, ch
   wired, unverified.
 - **Spatial and Hi-Res are mutually exclusive.** HeyMelody warns, then: spatial on = `1B 01` then
   `18 00`; Hi-Res on = `1B 00` then `18 01`.
-- **Any `18` change drops the link**; the buds reconnect ~4 s later.
+- **An accepted `18` write restarts the link**; the buds reconnect ~4 s later. A refused write drops nothing.
 - **`18` and `0x8114` are per link** `[CAPTURE]`: with dual connection, each host reads its own value.
   Buds 4: phone `18=1`, LHDC V5; PC `18=0`, AAC, at the same time.
 - **realme models** `[VENDOR]` (realme Link, issue #8): 3D sound is feature `1B` alone and Hi-Res `18`
@@ -723,8 +741,13 @@ the active record; the phone keeps the list. A record: 4-byte id (big-endian, ch
 - **`18` is a quality switch, not a codec switch** `[CAPTURE]`: LHDC V5 either way. On: 44.1-192 kHz,
   400 kbps cap. Off: 44.1 / 48 kHz, 256 kbps. The phone chose 48 kHz / 24-bit both times. No LDAC on
   Buds 4.
-  The buds accept the write and do not drop the link `[CAPTURE]` (report #33, a Samsung S25 FE: 14 writes, no disconnect). The switch changes the
-  LHDC V5 settings only; a phone that negotiates AAC instead (the same log reads codec `2`) gets no effect. Compare `0x0114` (current codec) with `8`.
+- **The codec decides whether the write is taken** `[TESTED 2026-10-24]`: on a model with a codec list
+  (`0x0123`), `18 01` is accepted (`00`) while the phone plays LDAC or LHDC, and refused (`02`) while it
+  plays AAC or SBC. The phone's Bluetooth settings choose the codec; the switch raises the bitrate and
+  the sampling rate only. Read `0x0114` first. Older models accept `18` on AAC (realme Buds Air 5 Pro #4,
+  T500 Pro #21, Air7 Pro #27, OnePlus Nord Buds 3 Pro #50). The Nord Buds 3 Pro offers only SBC and AAC,
+  so the switch turns on and the sound does not change (report #40). Report #33's phone played AAC, so the
+  newer rule refuses those writes; the link stays up.
 
 ### Codec picker (`hiRes` models) `[VENDOR]`, wired
 
@@ -736,8 +759,9 @@ the Hi-Res switch.
 - `0x0123` → `00 <u16 LE mask>`, bit k = codec k+1. `0x0114` → `00 <codec>`.
 - Write `0x041A <codec> <hiRes> 00`, `hiRes` only with codec 3 or 8 (else `0`). The buds restart; the
   app warns and asks for phone audio on the reconnect.
-- Buds 4 `[CAPTURE]`: `0x8114` = `00 08` (LHDC V5, correct). `0x8123` = `00 46 01`, which the table
-  misreads (LDAC, no SBC) — so the mask is trusted only on `hiRes` models.
+- Buds 4 `[CAPTURE]`: `0x8114` = `00 08` (LHDC V5, correct). `0x8123` = `00 46 01`, which decodes to
+  AAC, LDAC and LHDC; the maker lists LHDC 5.0, AAC and SBC only. The mask is trusted only on `hiRes`
+  models.
 
 ### Equalizer `[CAPTURE]`+`[VENDOR]`
 
