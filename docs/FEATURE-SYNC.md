@@ -13,8 +13,8 @@
 - `key` is the setting that the user touched. The control shows "Applying…" and the confirmation checks this key. It need not be the first write.
 - The engine sends the writes one after the other. The next write goes out when the buds ack the previous write with status 0. Hi-Res on is `[(3D audio, 0), (Hi-Res, 1)]`.
 - `confirm` sets how the app confirms the write:
-  - `read`: after the last ack, the engine sends ONE status read with its own sequence byte. The reply to this read decides. This is the default for every on/off feature that the buds list in their status reply, and for sliders.
-  - `push`: after the last ack, the engine waits for the buds' push for that setting. Game mode, ANC mode and spatial type have pushes (`PROTOCOL.md` section 5). Use it where the buds apply late, however late.
+  - `read`: after the last ack, the engine sends ONE status read with its own sequence byte. The reply to this read decides. This is the default for every on/off feature that the buds list in their status reply.
+  - `push`: after the last ack, the engine waits for the buds' push for that setting. Game mode and ANC mode have pushes (`PROTOCOL.md` section 5). Spatial type pushes `0x0510` (section 13). Use it where the buds apply late, however late.
   - `ack`: the ack decides. Use it only for a setting that the buds cannot report. The control moves when the ack arrives.
 - `restarts`: the write restarts the link (Hi-Res, power saving, codec). The wait ends with the first report after the reconnect.
 
@@ -49,7 +49,6 @@ Assumption to check on a real device: the buds answer in order. A late reply to 
 ## What the UI does
 - The UI draws only `value[id]`. It animates only on `changed`.
 - While a key is busy, the control is disabled. The row's subtitle says "Applying…". The thumb has no spinner and does not move.
-- A slider moves with the finger while the user drags it. That is the user's own input. On release it becomes an operation. After the confirmation it shows the buds' value.
 - The app shows one toast for each failed operation. The texts are `feature_refused_missing`, `feature_refused_now`, `feature_not_changed` and `feature_no_answer`. Each text has the setting's name. Hi-Res `refused_now` adds the codec hint (`hires_needs_codec`).
 
 ## What is data and what is code
@@ -59,8 +58,8 @@ Assumption to check on a real device: the buds answer in order. A late reply to 
 - Every failure writes a log line (`FEATURE REFUSED`, `FEATURE NOT CHANGED`, `FEATURE NO ANSWER`). The line has the setting key, the reason and the codec. The reports then show which model needs a data override.
 
 ## Where it lives
-- Android engine: `app/src/main/kotlin/com/spizganed/quickbuds/protocol/FeatureSync.kt`. `BudsConnectionManager` owns it, because the service shares one engine with the app, widget and notification.
-- Android settings table: `app/src/main/kotlin/com/spizganed/quickbuds/protocol/FeatureSyncConfig.kt`.
+- Android engine: `app/src/main/kotlin/com/spizganed/quickbuds/protocol/FeatureSync.kt`. `BudsConnectionManager` owns it, because the service shares one engine with the app and the widget.
+- Android enabled feature ids: `app/src/main/kotlin/com/spizganed/quickbuds/protocol/FeatureSyncConfig.kt`.
 - Desktop engine: `core/src/feature_sync.rs`. Same names, same states.
 - Tests: both engines run `core/tests/feature_sync_scenarios.json`. A change of the rule changes that file first.
 

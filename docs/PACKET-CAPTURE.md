@@ -109,7 +109,7 @@ tshark -r btsnoop_hci.log -Y btl2cap -T fields -e btl2cap.cid | sort | uniq -c
 tshark -r btsnoop_hci.log -d btl2cap.cid==0x3040,btrfcomm -d btl2cap.cid==0x0071,btrfcomm -Y btrfcomm ...
 ```
 
-Frames over 127 bytes have a two-byte length (LEB128, PROTOCOL.md §2) and can be split over several
+A length above 127 uses two length bytes (LEB128, PROTOCOL.md §2) and can be split over several
 RFCOMM frames: join them per direction before cutting at `AA`. Other RFCOMM channels carry HFP's AT
 commands; ignore those.
 

@@ -15,15 +15,17 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
 - **Fixes from the 4.12.0 reports** (the rest wait for a retest or for realme Link data):
   - Crash on startup (RMX3890, Android 15): `KeepAliveReceiver` starts `BudsService` from the background and
     ColorOS refuses `startForeground`. The service stops itself now. Test on a device.
-  - realme Buds T310 game mode (report #16): the buds ack the write but push no `GAME EVT`. The app reads
-    the state back now. Retest on a T310.
+  - realme Buds T310 game mode (report #16): the buds ack the write but push no `GAME EVT`. The
+    game-mode switch waits for the buds' push now. A T310 sends no push, so the switch shows the
+    no-answer toast. Retest on a T310.
   - realme Buds T500 Pro (report #21): the buds do not answer the `0x040E` tones of the hearing test.
     Needs the realme Link command.
-  - realme Buds Air8 (report #20): no known command for announcement and tap sounds. `0x0131` and `0x0132`
-    belong to the device manager, not to these sounds. Needs the realme Link command.
+  - realme Buds Air8 (report #20): no known command for announcement and tap sounds. `0x0132`
+    belongs to the device manager. `0x0131` reads the AI translation setting (`0x0428`). Needs the
+    realme Link command.
 - **Desktop UI rewrite (egui).** The code is in desktop-egui/ on main: layout with a sidebar, the four styles
   including Glass with real blur, a frameless rounded window. Missing there: the Feedback, Model test and Update pages, the
-  custom preset editor, the tray and quick panel, and a bundled UI font. The shipping desktop stays on Slint until then.
+  tray and quick panel, and a bundled UI font. The shipping desktop stays on Slint until then.
 - **Desktop setup guide and Known issues page.** The phone has a ten-page guide. The desktop has the Known issues dialog and
   the reply dialog only.
 - **Captures wanted.** Buds push `0x050E` and answer `0x012C` (realme Air6, Air7 Pro and Air8 owners): the layouts are
@@ -31,7 +33,7 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
 
 ## Parked
 
-- **realme Link `0x0403` extras** (dynamic bass, vocal enhance; PROTOCOL.md §11 and §12): no data
+- **realme Link `0x0403` extras** (vocal enhance, `0x0403 09`; PROTOCOL.md §11): no data
   says which realme models have them. Start when a realme owner can test them (issue #8).
 
 ## Unverified
@@ -40,7 +42,7 @@ These work in code but no owner has confirmed them. They count as working until 
 
 - realme Link data (noise control, gestures, wind noise) on 27 realme models. Only the Air7 Pro is
   confirmed (5 neckbands with `oneButton`, 5 with `bothHold`).
-- The realme built-in EQ presets (Pure Raw, Deep Bass, Pure Voice, Pure Bass) on 27 realme models.
+- The realme built-in EQ presets (Pure Raw, Deep Bass, Pure Voice, Pure Bass) on 28 realme models.
   The Buds Air8 and Buds Air 5 Pro reports asked for them. T110 and T01 still need a capture.
 - Personalized ANC, the dual-connection device manager and the preferred device.
 
