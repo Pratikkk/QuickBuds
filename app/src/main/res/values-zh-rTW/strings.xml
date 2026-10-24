@@ -31,10 +31,10 @@
     <string name="row_game_title">低延遲模式</string>
     <string name="row_game_sub">與影片保持同步</string>
     <string name="row_hires_title">高音質音訊</string>
-    <string name="row_hires_sub">最高 192 kHz，400 kbps</string>
-    <string name="row_hires_sub_off">標準音質（48 kHz）</string>
-    <string name="row_hires_sub_codec">手機正在使用 %1$s，而不是 LHDC。音質不會改變</string>
-    <string name="hires_needs_codec">高品質音訊需要 LDAC 或 LHDC 連線。手機現在播放 %1$s。</string>
+    <string name="row_hires_sub">提高位元率和取樣率，最高 192 kHz</string>
+    <string name="row_hires_sub_off">標準位元率和取樣率（48 kHz）</string>
+    <string name="row_hires_sub_codec">手機正在播放 %1$s。要獲得完整效果，請在手機的藍牙設定中選擇 %2$s</string>
+    <string name="hires_needs_codec">請先在手機的藍牙設定中為這副耳機選擇 %2$s。手機現在播放 %1$s。</string>
     <string name="codec_dialog_title">耳機將重新連線</string>
     <string name="codec_dialog_accept">確定</string>
     <string name="codec_dialog_deny">拒絕</string>

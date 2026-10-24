@@ -31,10 +31,10 @@
     <string name="row_game_title">Low latency mode</string>
     <string name="row_game_sub">Nananatiling sabay sa video</string>
     <string name="row_hires_title">Mataas na kalidad ng audio</string>
-    <string name="row_hires_sub">Hanggang 192 kHz, 400 kbps</string>
-    <string name="row_hires_sub_off">Karaniwang kalidad (48 kHz)</string>
-    <string name="row_hires_sub_codec">%1$s ang gamit ng telepono, hindi LHDC. Walang pagbabago sa kalidad</string>
-    <string name="hires_needs_codec">Ang de-kalidad na audio ay nangangailangan ng LDAC o LHDC na koneksyon. %1$s ang gamit ng telepono ngayon.</string>
+    <string name="row_hires_sub">Pinapataas ang bitrate at sampling rate, hanggang 192 kHz</string>
+    <string name="row_hires_sub_off">Karaniwang bitrate at sampling rate (48 kHz)</string>
+    <string name="row_hires_sub_codec">%1$s ang ginagamit ng telepono. Para sa buong epekto, piliin ang %2$s sa mga setting ng Bluetooth ng telepono</string>
+    <string name="hires_needs_codec">Piliin muna ang %2$s para sa mga earbud na ito sa mga setting ng Bluetooth ng telepono. %1$s ang ginagamit ng telepono ngayon.</string>
     <string name="codec_dialog_title">Muling kokonekta ang earbuds</string>
     <string name="codec_dialog_accept">Tanggapin</string>
     <string name="codec_dialog_deny">Tanggihan</string>

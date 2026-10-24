@@ -264,14 +264,21 @@ pub(crate) fn ping(weak: slint::Weak<MainWindow>) {
 
 const DISCORD: &str = "https://discord.gg/pvsnEf9TrZ";
 
-/// The issues of the current earbuds ([known issues](crate) as on the phone): the model's `knownIssues`, and Hi-Res with 3D audio
-/// when both are offered and are not one switch each.
+/// The high-quality codec tokens, best first (`ModelCatalog.bestHiResCodec`).
+const HIRES_CODECS: [&str; 6] = ["lhdc5", "lhdc", "ldac", "aptx-adaptive", "aptx-hd", "aptx"];
+
+/// The issues of the current earbuds ([known issues](crate) as on the phone): the model's `knownIssues`, Hi-Res with 3D audio
+/// when both are offered and are not one switch each, and Hi-Res on a model whose `codecs` names no high-quality codec.
 fn known_issues(a: &App) -> (bool, bool, bool) {
     let listed = |key: &str| a.snap.model.is_some_and(|m| m["knownIssues"].as_array().is_some_and(|k| k.iter().any(|x| x.as_str() == Some(key))));
     let silent = listed("spatial_silent");
     let offered = |id: u8| a.snap.features.iter().any(|f| f.0 == id);
     let both = offered(FEATURE_HIRES) && offered(FEATURE_SPATIAL) && a.snap.model.map_or(true, |m| m["spatialToggle"] != 1);
-    (silent, both, listed("hires_no_codec"))
+    let hires_row = offered(FEATURE_HIRES) || crate::earbuds::codec_picker(&a.snap);
+    let no_codec = hires_row && a.snap.model.is_some_and(|m| m["codecs"].as_array().is_some_and(|c| {
+        !c.iter().any(|x| x.as_str().is_some_and(|t| HIRES_CODECS.contains(&t)))
+    }));
+    (silent, both, listed("hires_no_codec") || no_codec)
 }
 
 /// Posts [d] to the Worker.

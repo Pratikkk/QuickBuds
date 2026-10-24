@@ -31,10 +31,10 @@
     <string name="row_game_title">Düşük gecikme modu</string>
     <string name="row_game_sub">Görüntüyle senkron kalır</string>
     <string name="row_hires_title">Yüksek kaliteli ses</string>
-    <string name="row_hires_sub">192 kHz, 400 kbps\'ye kadar</string>
-    <string name="row_hires_sub_off">Standart kalite (48 kHz)</string>
-    <string name="row_hires_sub_codec">Telefon LHDC değil, %1$s kullanıyor. Kalite değişmez</string>
-    <string name="hires_needs_codec">Yüksek kaliteli ses için LDAC veya LHDC bağlantısı gerekir. Telefon şu anda %1$s çalıyor.</string>
+    <string name="row_hires_sub">Bit hızını ve örnekleme hızını artırır, 192 kHz\'e kadar</string>
+    <string name="row_hires_sub_off">Standart bit hızı ve örnekleme hızı (48 kHz)</string>
+    <string name="row_hires_sub_codec">Telefon %1$s çalıyor. Tam etki için telefonun Bluetooth ayarlarından %2$s seçin</string>
+    <string name="hires_needs_codec">Önce telefonun Bluetooth ayarlarından bu kulaklık için %2$s seçin. Telefon şu anda %1$s çalıyor.</string>
     <string name="codec_dialog_title">Kulaklıklar yeniden bağlanacak</string>
     <string name="codec_dialog_accept">Kabul et</string>
     <string name="codec_dialog_deny">Reddet</string>

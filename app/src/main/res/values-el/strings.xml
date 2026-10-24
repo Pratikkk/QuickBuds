@@ -31,10 +31,10 @@
     <string name="row_game_title">Λειτουργία χαμηλής καθυστέρησης</string>
     <string name="row_game_sub">Μένει συγχρονισμένο με το βίντεο</string>
     <string name="row_hires_title">Ήχος υψηλής ποιότητας</string>
-    <string name="row_hires_sub">Έως 192 kHz, 400 kbps</string>
-    <string name="row_hires_sub_off">Τυπική ποιότητα (48 kHz)</string>
-    <string name="row_hires_sub_codec">Το τηλέφωνο χρησιμοποιεί %1$s, όχι LHDC. Η ποιότητα δεν αλλάζει</string>
-    <string name="hires_needs_codec">Ο ήχος υψηλής ποιότητας χρειάζεται σύνδεση LDAC ή LHDC. Το τηλέφωνο παίζει τώρα %1$s.</string>
+    <string name="row_hires_sub">Αυξάνει τον ρυθμό bit και τον ρυθμό δειγματοληψίας, έως 192 kHz</string>
+    <string name="row_hires_sub_off">Τυπικός ρυθμός bit και δειγματοληψίας (48 kHz)</string>
+    <string name="row_hires_sub_codec">Το τηλέφωνο παίζει %1$s. Για πλήρες αποτέλεσμα επιλέξτε %2$s στις ρυθμίσεις Bluetooth του τηλεφώνου</string>
+    <string name="hires_needs_codec">Πρώτα επιλέξτε %2$s για αυτά τα ακουστικά στις ρυθμίσεις Bluetooth του τηλεφώνου. Το τηλέφωνο παίζει τώρα %1$s.</string>
     <string name="codec_dialog_title">Τα ακουστικά θα επανασυνδεθούν</string>
     <string name="codec_dialog_accept">Αποδοχή</string>
     <string name="codec_dialog_deny">Απόρριψη</string>

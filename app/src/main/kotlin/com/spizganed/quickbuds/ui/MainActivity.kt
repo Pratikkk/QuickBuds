@@ -956,9 +956,11 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         }
         val apply = fun() {
             // Buds that offer a codec list refuse this switch unless the phone plays LDAC or LHDC (status 2, reports #33 #42 #44).
+            // A model with no high-quality codec in `codecs` gets no guard: the known issue explains why.
             val played = manager.codec
-            if (wantOn && manager.codecs.isNotEmpty() && played != null && played != 3 && played != 7 && played != 8) {
-                Toast.makeText(this, getString(R.string.hires_needs_codec, codecName(played)), Toast.LENGTH_LONG).show()
+            val best = hiresBestCodec()
+            if (wantOn && best != null && manager.codecs.isNotEmpty() && played != null && played != 3 && played != 7 && played != 8) {
+                Toast.makeText(this, getString(R.string.hires_needs_codec, codecName(played), best), Toast.LENGTH_LONG).show()
                 return
             }
             val dropSpatial = wantOn && spatialOn() && !spatialSwitchOnly()
@@ -1181,6 +1183,9 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     private fun codecName(codec: Int) =
         listOf("SBC", "AAC", "LDAC", "aptX", "aptX HD", "aptX Adaptive", "LHDC", "LHDC").getOrNull(codec - 1) ?: "#$codec"
 
+    /** The best codec of the model or of the buds' offered list; null when neither names one. */
+    private fun hiresBestCodec() = ModelCatalog.hiresBestCodec(this, manager.codecs)
+
     private fun codecSheet() {
         val current = manager.codec
         // HeyMelody's order: LHDC V5, LHDC, LDAC, aptX Adaptive, aptX HD, aptX, AAC, SBC.
@@ -1242,10 +1247,12 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         }
         val codec = manager.codec.takeIf { codecPicker() }
         if (codec != null) hiresSubtitle?.text = codecName(codec)
-        // Quality switch on, but the phone plays another codec than LHDC: the buds take the switch and nothing changes (report #17).
+        // Quality switch on, but the phone plays another codec than LHDC: name the model's best codec
+        // (report #17). Without a known best codec the hint stays off.
         val played = manager.codec
-        if (codec == null && played != null && played != 7 && played != 8 && states[Feature.HIRES_CODEC] == 1)
-            hiresSubtitle?.text = getString(R.string.row_hires_sub_codec, codecName(played))
+        val best = hiresBestCodec()
+        if (codec == null && best != null && played != null && played != 7 && played != 8 && states[Feature.HIRES_CODEC] == 1)
+            hiresSubtitle?.text = getString(R.string.row_hires_sub_codec, codecName(played), best)
         hiresSwitch?.isEnabled = codec == null || codec == 3 || codec == 8
         paintSpatial()
         states[Feature.GOLDEN_SOUND]?.let { v ->

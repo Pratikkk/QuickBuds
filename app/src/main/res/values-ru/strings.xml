@@ -31,10 +31,10 @@
     <string name="row_game_title">Режим низкой задержки</string>
     <string name="row_game_sub">Звук синхронен с видео</string>
     <string name="row_hires_title">Звук высокого качества</string>
-    <string name="row_hires_sub">До 192 кГц, 400 кбит/с</string>
-    <string name="row_hires_sub_off">Стандартное качество (48 кГц)</string>
-    <string name="row_hires_sub_codec">Телефон использует %1$s, а не LHDC. Качество не изменится</string>
-    <string name="hires_needs_codec">Для звука высокого качества нужен канал LDAC или LHDC. Телефон сейчас воспроизводит %1$s.</string>
+    <string name="row_hires_sub">Повышает битрейт и частоту дискретизации, до 192 кГц</string>
+    <string name="row_hires_sub_off">Стандартный битрейт и частота дискретизации (48 кГц)</string>
+    <string name="row_hires_sub_codec">Телефон воспроизводит %1$s. Для полного эффекта выберите %2$s в настройках Bluetooth телефона</string>
+    <string name="hires_needs_codec">Сначала выберите %2$s для этих наушников в настройках Bluetooth телефона. Телефон сейчас воспроизводит %1$s.</string>
     <string name="codec_dialog_title">Наушники переподключатся</string>
     <string name="codec_dialog_accept">Принять</string>
     <string name="codec_dialog_deny">Отклонить</string>

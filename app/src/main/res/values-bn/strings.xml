@@ -31,10 +31,10 @@
     <string name="row_game_title">লো লেটেন্সি মোড</string>
     <string name="row_game_sub">ভিডিওর সাথে তাল মিলিয়ে থাকে</string>
     <string name="row_hires_title">উচ্চমানের অডিও</string>
-    <string name="row_hires_sub">192 kHz, 400 kbps পর্যন্ত</string>
-    <string name="row_hires_sub_off">সাধারণ মান (48 kHz)</string>
-    <string name="row_hires_sub_codec">ফোন LHDC নয়, %1$s ব্যবহার করছে। মানে পরিবর্তন নেই</string>
-    <string name="hires_needs_codec">উচ্চ মানের অডিওর জন্য LDAC বা LHDC লিংক দরকার। ফোন এখন %1$s বাজাচ্ছে।</string>
+    <string name="row_hires_sub">বিটরেট ও স্যাম্পলিং রেট বাড়ায়, 192 kHz পর্যন্ত</string>
+    <string name="row_hires_sub_off">সাধারণ বিটরেট ও স্যাম্পলিং রেট (48 kHz)</string>
+    <string name="row_hires_sub_codec">ফোন %1$s বাজাচ্ছে। পুরো প্রভাবের জন্য ফোনের ব্লুটুথ সেটিংসে %2$s বেছে নিন</string>
+    <string name="hires_needs_codec">প্রথমে ফোনের ব্লুটুথ সেটিংসে এই ইয়ারবাডসের জন্য %2$s বেছে নিন। ফোন এখন %1$s বাজাচ্ছে।</string>
     <string name="codec_dialog_title">ইয়ারবাড আবার সংযুক্ত হবে</string>
     <string name="codec_dialog_accept">গ্রহণ করুন</string>
     <string name="codec_dialog_deny">প্রত্যাখ্যান করুন</string>

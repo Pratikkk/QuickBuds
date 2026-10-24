@@ -32,6 +32,38 @@ object ModelCatalog {
         return list
     }
 
+    /** The high-quality codecs, best first, with the names the UI shows. */
+    private val HIRES_CODECS = listOf(
+        "lhdc5" to "LHDC 5.0",
+        "lhdc" to "LHDC",
+        "ldac" to "LDAC",
+        "aptx-adaptive" to "aptX Adaptive",
+        "aptx-hd" to "aptX HD",
+        "aptx" to "aptX",
+    )
+
+    /** The model's own best high-quality codec. Null when the model has no `codecs` key or lists none of them. */
+    fun bestHiResCodec(model: JSONObject?): String? {
+        val list = model?.optJSONArray("codecs") ?: return null
+        val tokens = (0 until list.length()).map { list.optString(it) }
+        return HIRES_CODECS.firstOrNull { it.first in tokens }?.second
+    }
+
+    /**
+     * The best codec to name in the Hi-Res hint. A model with a `codecs` key answers from its own list.
+     * Without the key, the buds' offered list answers, as before the data arrived.
+     */
+    fun hiresBestCodec(context: Context, offered: List<Int>): String? {
+        val json = current(context)?.json
+        if (json != null && json.has("codecs")) return bestHiResCodec(json)
+        return when {
+            8 in offered -> "LHDC 5.0"
+            3 in offered -> "LDAC"
+            7 in offered -> "LHDC"
+            else -> null
+        }
+    }
+
     /**
      * `[VENDOR]` HeyMelody folds four colour ranges into one id (on the BLE scan id;
      * `[OSS]` OppoPodsManager `NormalizeProductId` applies it to `0x8103` too). The low byte is the colour.

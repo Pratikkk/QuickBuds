@@ -813,12 +813,15 @@ class BudsConnectionManager(private val context: Context) {
         val name = settingName(key)
         return when (kind) {
             FeatureSync.ToastKind.REFUSED_MISSING -> context.getString(R.string.feature_refused_missing, name)
-            FeatureSync.ToastKind.REFUSED_NOW ->
-                // Hi-Res refused now: the phone plays no LDAC or LHDC (reports #33 #42 #44). When it
-                // already plays one of them the codec hint is wrong, so the generic text is used.
-                codec?.takeIf { key == Feature.HIRES_CODEC && it != 3 && it != 7 && it != 8 }
-                    ?.let { context.getString(R.string.hires_needs_codec, codecName(it)) }
-                    ?: context.getString(R.string.feature_refused_now, name)
+            FeatureSync.ToastKind.REFUSED_NOW -> {
+                // Hi-Res refused now: the phone plays no LDAC or LHDC (reports #33 #42 #44) and the
+                // model names a better codec. Without that name the generic text is used.
+                val best = if (key == Feature.HIRES_CODEC) ModelCatalog.hiresBestCodec(context, codecs) else null
+                val played = codec?.takeIf { it != 3 && it != 7 && it != 8 }
+                if (best != null && played != null)
+                    context.getString(R.string.hires_needs_codec, codecName(played), best)
+                else context.getString(R.string.feature_refused_now, name)
+            }
             FeatureSync.ToastKind.NOT_CHANGED -> context.getString(R.string.feature_not_changed, name)
             FeatureSync.ToastKind.NO_ANSWER -> context.getString(R.string.feature_no_answer, name)
         }

@@ -31,10 +31,10 @@
     <string name="row_game_title">Tryb niskiego opóźnienia</string>
     <string name="row_game_sub">Dźwięk zsynchronizowany z obrazem</string>
     <string name="row_hires_title">Dźwięk wysokiej jakości</string>
-    <string name="row_hires_sub">Do 192 kHz, 400 kb/s</string>
-    <string name="row_hires_sub_off">Standardowa jakość (48 kHz)</string>
-    <string name="row_hires_sub_codec">Telefon używa %1$s, nie LHDC. Jakość się nie zmieni</string>
-    <string name="hires_needs_codec">Dźwięk wysokiej jakości wymaga połączenia LDAC lub LHDC. Telefon odtwarza teraz %1$s.</string>
+    <string name="row_hires_sub">Zwiększa przepływność i częstotliwość próbkowania, do 192 kHz</string>
+    <string name="row_hires_sub_off">Standardowa przepływność i częstotliwość próbkowania (48 kHz)</string>
+    <string name="row_hires_sub_codec">Telefon odtwarza %1$s. Aby uzyskać pełny efekt, wybierz %2$s w ustawieniach Bluetooth telefonu</string>
+    <string name="hires_needs_codec">Najpierw wybierz %2$s dla tych słuchawek w ustawieniach Bluetooth telefonu. Telefon odtwarza teraz %1$s.</string>
     <string name="codec_dialog_title">Słuchawki połączą się ponownie</string>
     <string name="codec_dialog_accept">Akceptuj</string>
     <string name="codec_dialog_deny">Odrzuć</string>

@@ -31,10 +31,10 @@
     <string name="row_game_title">Alacsony késleltetésű mód</string>
     <string name="row_game_sub">Szinkronban marad a videóval</string>
     <string name="row_hires_title">Kiváló minőségű hang</string>
-    <string name="row_hires_sub">Legfeljebb 192 kHz, 400 kbps</string>
-    <string name="row_hires_sub_off">Normál minőség (48 kHz)</string>
-    <string name="row_hires_sub_codec">A telefon %1$s kodeket használ, nem LHDC-t. A minőség nem változik</string>
-    <string name="hires_needs_codec">A jó minőségű hanghoz LDAC vagy LHDC kapcsolat kell. A telefon most %1$s-t játssza le.</string>
+    <string name="row_hires_sub">Növeli a bitrátát és a mintavételi arányt, akár 192 kHz-ig</string>
+    <string name="row_hires_sub_off">Normál bitráta és mintavételi arány (48 kHz)</string>
+    <string name="row_hires_sub_codec">A telefon %1$s-t játszik. A teljes hatáshoz válassza a %2$s-t a telefon Bluetooth-beállításaiban</string>
+    <string name="hires_needs_codec">Először válassza a %2$s-t ezekhez a fülhallgatókhoz a telefon Bluetooth-beállításaiban. A telefon most %1$s-t játszik.</string>
     <string name="codec_dialog_title">A fülhallgató újracsatlakozik</string>
     <string name="codec_dialog_accept">Elfogadás</string>
     <string name="codec_dialog_deny">Elutasítás</string>

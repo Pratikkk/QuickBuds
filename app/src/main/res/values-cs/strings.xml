@@ -31,10 +31,10 @@
     <string name="row_game_title">Režim nízké latence</string>
     <string name="row_game_sub">Zůstává synchronní s videem</string>
     <string name="row_hires_title">Vysoce kvalitní zvuk</string>
-    <string name="row_hires_sub">Až 192 kHz, 400 kb/s</string>
-    <string name="row_hires_sub_off">Standardní kvalita (48 kHz)</string>
-    <string name="row_hires_sub_codec">Telefon používá %1$s, ne LHDC. Kvalita se nezmění</string>
-    <string name="hires_needs_codec">Kvalitní zvuk potřebuje spojení LDAC nebo LHDC. Telefon teď přehrává %1$s.</string>
+    <string name="row_hires_sub">Zvýší datový tok a vzorkovací frekvenci, až na 192 kHz</string>
+    <string name="row_hires_sub_off">Standardní datový tok a vzorkovací frekvence (48 kHz)</string>
+    <string name="row_hires_sub_codec">Telefon přehrává %1$s. Pro plný efekt vyberte v nastavení Bluetooth telefonu %2$s</string>
+    <string name="hires_needs_codec">Nejprve v nastavení Bluetooth telefonu vyberte pro tato sluchátka %2$s. Telefon teď přehrává %1$s.</string>
     <string name="codec_dialog_title">Sluchátka se znovu připojí</string>
     <string name="codec_dialog_accept">Přijmout</string>
     <string name="codec_dialog_deny">Odmítnout</string>

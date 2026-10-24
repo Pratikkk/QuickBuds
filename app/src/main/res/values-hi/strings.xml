@@ -31,10 +31,10 @@
     <string name="row_game_title">लो लेटेंसी मोड</string>
     <string name="row_game_sub">वीडियो के साथ तालमेल</string>
     <string name="row_hires_title">हाई-क्वालिटी ऑडियो</string>
-    <string name="row_hires_sub">192 kHz, 400 kbps तक</string>
-    <string name="row_hires_sub_off">स्टैंडर्ड क्वालिटी (48 kHz)</string>
-    <string name="row_hires_sub_codec">फ़ोन LHDC नहीं, %1$s इस्तेमाल कर रहा है। गुणवत्ता नहीं बदलेगी</string>
-    <string name="hires_needs_codec">उच्च गुणवत्ता वाले ऑडियो के लिए LDAC या LHDC लिंक चाहिए। फ़ोन अब %1$s चला रहा है।</string>
+    <string name="row_hires_sub">बिटरेट और सैंपलिंग रेट बढ़ाता है, 192 kHz तक</string>
+    <string name="row_hires_sub_off">स्टैंडर्ड बिटरेट और सैंपलिंग रेट (48 kHz)</string>
+    <string name="row_hires_sub_codec">फ़ोन %1$s चला रहा है। पूरा असर पाने के लिए फ़ोन की ब्लूटूथ सेटिंग्स में %2$s चुनें</string>
+    <string name="hires_needs_codec">पहले फ़ोन की ब्लूटूथ सेटिंग्स में इन ईयरबड्स के लिए %2$s चुनें। फ़ोन अब %1$s चला रहा है।</string>
     <string name="codec_dialog_title">ईयरबड्स फिर से कनेक्ट होंगे</string>
     <string name="codec_dialog_accept">ठीक है</string>
     <string name="codec_dialog_deny">अस्वीकार करें</string>

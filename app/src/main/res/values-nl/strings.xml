@@ -31,10 +31,10 @@
     <string name="row_game_title">Modus met lage latentie</string>
     <string name="row_game_sub">Blijft synchroon met video</string>
     <string name="row_hires_title">Audio van hoge kwaliteit</string>
-    <string name="row_hires_sub">Tot 192 kHz, 400 kbps</string>
-    <string name="row_hires_sub_off">Standaardkwaliteit (48 kHz)</string>
-    <string name="row_hires_sub_codec">De telefoon gebruikt %1$s, geen LHDC. De kwaliteit verandert niet</string>
-    <string name="hires_needs_codec">Hoogwaardige audio heeft een LDAC- of LHDC-verbinding nodig. De telefoon speelt nu %1$s.</string>
+    <string name="row_hires_sub">Verhoogt de bitsnelheid en bemonsteringsfrequentie, tot 192 kHz</string>
+    <string name="row_hires_sub_off">Standaard bitsnelheid en bemonsteringsfrequentie (48 kHz)</string>
+    <string name="row_hires_sub_codec">De telefoon speelt %1$s. Kies voor het volledige effect %2$s in de bluetoothinstellingen van de telefoon</string>
+    <string name="hires_needs_codec">Kies eerst %2$s voor deze oordopjes in de bluetoothinstellingen van de telefoon. De telefoon speelt nu %1$s.</string>
     <string name="codec_dialog_title">De oordopjes maken opnieuw verbinding</string>
     <string name="codec_dialog_accept">Accepteren</string>
     <string name="codec_dialog_deny">Weigeren</string>

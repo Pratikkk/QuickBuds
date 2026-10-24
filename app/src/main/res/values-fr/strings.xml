@@ -31,10 +31,10 @@
     <string name="row_game_title">Mode faible latence</string>
     <string name="row_game_sub">Reste synchronisé avec la vidéo</string>
     <string name="row_hires_title">Audio haute qualité</string>
-    <string name="row_hires_sub">Jusqu\'à 192 kHz, 400 kbit/s</string>
-    <string name="row_hires_sub_off">Qualité standard (48 kHz)</string>
-    <string name="row_hires_sub_codec">Le téléphone utilise %1$s, pas LHDC. La qualité ne change pas</string>
-    <string name="hires_needs_codec">L\'audio de haute qualité nécessite une liaison LDAC ou LHDC. Le téléphone lit %1$s maintenant.</string>
+    <string name="row_hires_sub">Augmente le débit binaire et la fréquence d\'échantillonnage, jusqu\'à 192 kHz</string>
+    <string name="row_hires_sub_off">Débit binaire et fréquence d\'échantillonnage standard (48 kHz)</string>
+    <string name="row_hires_sub_codec">Le téléphone lit %1$s. Pour l\'effet complet, choisissez %2$s dans les paramètres Bluetooth du téléphone</string>
+    <string name="hires_needs_codec">Choisissez d\'abord %2$s pour ces écouteurs dans les paramètres Bluetooth du téléphone. Le téléphone lit %1$s maintenant.</string>
     <string name="codec_dialog_title">Les écouteurs vont se reconnecter</string>
     <string name="codec_dialog_accept">Accepter</string>
     <string name="codec_dialog_deny">Refuser</string>

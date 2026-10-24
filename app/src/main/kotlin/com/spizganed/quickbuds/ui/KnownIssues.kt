@@ -28,6 +28,8 @@ object KnownIssues {
         val hires = MainActivity.rowSupported(c, "hires")
         if (hires && Build.MANUFACTURER.equals("samsung", ignoreCase = true)) keys += "samsung_codec"
         if (hires && MainActivity.rowSupported(c, "spatial") && !MainActivity.spatialSwitchOnly(c)) keys += "hires_spatial"
+        // The data says this model has no high-quality codec, so the switch cannot change the sound.
+        if (hires && model.json.has("codecs") && ModelCatalog.bestHiResCodec(model.json) == null) keys += "hires_no_codec"
         return ALL.filter { it.key in keys }
     }
 

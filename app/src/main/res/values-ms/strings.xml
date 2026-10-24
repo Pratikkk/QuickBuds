@@ -31,10 +31,10 @@
     <string name="row_game_title">Mod kependaman rendah</string>
     <string name="row_game_sub">Kekal selari dengan video</string>
     <string name="row_hires_title">Audio berkualiti tinggi</string>
-    <string name="row_hires_sub">Sehingga 192 kHz, 400 kbps</string>
-    <string name="row_hires_sub_off">Kualiti standard (48 kHz)</string>
-    <string name="row_hires_sub_codec">Telefon guna %1$s, bukan LHDC. Kualiti tidak berubah</string>
-    <string name="hires_needs_codec">Audio berkualiti tinggi perlukan pautan LDAC atau LHDC. Telefon kini memainkan %1$s.</string>
+    <string name="row_hires_sub">Meningkatkan kadar bit dan kadar pensampelan, sehingga 192 kHz</string>
+    <string name="row_hires_sub_off">Kadar bit dan kadar pensampelan standard (48 kHz)</string>
+    <string name="row_hires_sub_codec">Telefon memainkan %1$s. Untuk kesan penuh, pilih %2$s dalam tetapan Bluetooth telefon</string>
+    <string name="hires_needs_codec">Pilih dahulu %2$s untuk earbud ini dalam tetapan Bluetooth telefon. Telefon kini memainkan %1$s.</string>
     <string name="codec_dialog_title">Fon telinga akan bersambung semula</string>
     <string name="codec_dialog_accept">Terima</string>
     <string name="codec_dialog_deny">Tolak</string>
