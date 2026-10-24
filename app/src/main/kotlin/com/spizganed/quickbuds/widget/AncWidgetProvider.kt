@@ -841,6 +841,10 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             val box = RectF(stroke / 2, stroke / 2, size - stroke / 2, size - stroke / 2)
             paint.color = track
             c.drawOval(box, paint)
+            if (level in 1..100) {
+                paint.color = p.accent
+                c.drawArc(box, -90f, 360f * level / 100f, false, paint)
+            }
             val isCase = slot == 1
             val glyph = context.getDrawable(
                 when (slot) { 0 -> R.drawable.ic_bud_left; 1 -> R.drawable.ic_case; else -> R.drawable.ic_bud_right }
