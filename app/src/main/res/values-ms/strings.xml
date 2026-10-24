@@ -523,6 +523,8 @@
     <string name="issues_dialog_action">Tunjuk</string>
     <string name="issue_spatial_silent_title">Audio 3D mungkin kedengaran sama</string>
     <string name="issue_spatial_silent_body">Sesetengah pemilik tidak mendengar kesan ruang pada model ini. Kami belum tahu sama ada earbud atau aplikasi puncanya.</string>
+    <string name="issue_hires_no_codec_title">Audio berkualiti tinggi tiada perubahan</string>
+    <string name="issue_hires_no_codec_body">Model ini hanya menyokong SBC dan AAC, jadi earbud tiada kodek berkualiti tinggi. Suis dihidupkan, tetapi bunyi tidak berubah.</string>
     <string name="issue_samsung_codec_title">Tiada pilihan kodek pada telefon Samsung</string>
     <string name="issue_samsung_codec_body">Telefon Samsung tidak menunjukkan pilihan kodek dalam tetapan Bluetooth. Audio berkualiti tinggi mungkin tidak berfungsi.</string>
     <string name="issue_hires_spatial_title">Audio berkualiti tinggi dan audio 3D</string>

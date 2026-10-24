@@ -523,6 +523,8 @@
     <string name="issues_dialog_action">Εμφάνιση</string>
     <string name="issue_spatial_silent_title">Ο ήχος 3D μπορεί να ακούγεται ίδιος</string>
     <string name="issue_spatial_silent_body">Ορισμένοι χρήστες δεν ακούν χωρικό εφέ σε αυτό το μοντέλο. Δεν γνωρίζουμε ακόμη αν φταίνε τα ακουστικά ή η εφαρμογή.</string>
+    <string name="issue_hires_no_codec_title">Ο ήχος υψηλής ποιότητας δεν αλλάζει</string>
+    <string name="issue_hires_no_codec_body">Αυτό το μοντέλο υποστηρίζει μόνο SBC και AAC, οπότε τα ακουστικά δεν έχουν κωδικοποιητή υψηλής ποιότητας. Ο διακόπτης ενεργοποιείται, αλλά ο ήχος δεν αλλάζει.</string>
     <string name="issue_samsung_codec_title">Δεν υπάρχει επιλογή κωδικοποιητή σε τηλέφωνα Samsung</string>
     <string name="issue_samsung_codec_body">Τα τηλέφωνα Samsung δεν δείχνουν την επιλογή κωδικοποιητή στις ρυθμίσεις Bluetooth. Ο ήχος υψηλής ποιότητας μπορεί να μην κάνει τίποτα.</string>
     <string name="issue_hires_spatial_title">Ήχος υψηλής ποιότητας και ήχος 3D</string>

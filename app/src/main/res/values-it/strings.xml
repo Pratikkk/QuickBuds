@@ -523,6 +523,8 @@
     <string name="issues_dialog_action">Mostra</string>
     <string name="issue_spatial_silent_title">L’audio 3D potrebbe suonare uguale</string>
     <string name="issue_spatial_silent_body">Alcuni utenti non sentono alcun effetto spaziale su questo modello. Non sappiamo ancora se la causa sono gli auricolari o l’app.</string>
+    <string name="issue_hires_no_codec_title">L\'audio di alta qualità non cambia nulla</string>
+    <string name="issue_hires_no_codec_body">Questo modello supporta solo SBC e AAC, quindi gli auricolari non hanno un codec di alta qualità. L\'interruttore si attiva, ma il suono non cambia.</string>
     <string name="issue_samsung_codec_title">Nessuna scelta del codec sui telefoni Samsung</string>
     <string name="issue_samsung_codec_body">I telefoni Samsung non mostrano la scelta del codec nelle impostazioni Bluetooth. L’audio di alta qualità potrebbe non fare nulla.</string>
     <string name="issue_hires_spatial_title">Audio di alta qualità e audio 3D</string>

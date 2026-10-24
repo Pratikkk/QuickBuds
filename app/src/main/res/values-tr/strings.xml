@@ -523,6 +523,8 @@
     <string name="issues_dialog_action">Göster</string>
     <string name="issue_spatial_silent_title">3D ses aynı duyulabilir</string>
     <string name="issue_spatial_silent_body">Bazı kullanıcılar bu modelde uzamsal etki duymuyor. Nedenin kulaklık mı uygulama mı olduğunu henüz bilmiyoruz.</string>
+    <string name="issue_hires_no_codec_title">Yüksek kaliteli ses bir şey değiştirmez</string>
+    <string name="issue_hires_no_codec_body">Bu model yalnızca SBC ve AAC destekler, bu yüzden kulaklıkta yüksek kaliteli kodek yok. Anahtar açılır, ama ses değişmez.</string>
     <string name="issue_samsung_codec_title">Samsung telefonlarda codec seçimi yok</string>
     <string name="issue_samsung_codec_body">Samsung telefonlar Bluetooth ayarlarında codec seçimini göstermez. Yüksek kaliteli ses hiçbir şey yapmayabilir.</string>
     <string name="issue_hires_spatial_title">Yüksek kaliteli ses ve 3D ses</string>

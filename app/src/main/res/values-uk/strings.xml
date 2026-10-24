@@ -523,6 +523,8 @@
     <string name="issues_dialog_action">Показати</string>
     <string name="issue_spatial_silent_title">3D-звук може звучати так само</string>
     <string name="issue_spatial_silent_body">Деякі власники не чують просторового ефекту в цій моделі. Ми ще не знаємо, винні навушники чи застосунок.</string>
+    <string name="issue_hires_no_codec_title">Звук високої якості нічого не змінює</string>
+    <string name="issue_hires_no_codec_body">Ця модель підтримує лише SBC і AAC, тому в навушників немає кодека високої якості. Перемикач вмикається, але звук не змінюється.</string>
     <string name="issue_samsung_codec_title">На телефонах Samsung немає вибору кодека</string>
     <string name="issue_samsung_codec_body">Телефони Samsung не показують вибір кодека в налаштуваннях Bluetooth. Звук високої якості може нічого не змінювати.</string>
     <string name="issue_hires_spatial_title">Звук високої якості та 3D-звук</string>

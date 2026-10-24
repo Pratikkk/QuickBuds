@@ -525,6 +525,8 @@
     <string name="issues_dialog_action">查看</string>
     <string name="issue_spatial_silent_title">3D 音频听起来可能没有变化</string>
     <string name="issue_spatial_silent_body">部分用户在这款型号上听不到空间效果。我们还不知道原因在耳机还是应用。</string>
+    <string name="issue_hires_no_codec_title">高音质音频没有任何变化</string>
+    <string name="issue_hires_no_codec_body">此型号仅支持 SBC 和 AAC，因此耳机没有高音质编解码器。开关会打开，但声音不会改变。</string>
     <string name="issue_samsung_codec_title">三星手机没有编码器选项</string>
     <string name="issue_samsung_codec_body">三星手机在蓝牙设置中不显示编码器选项。高音质音频可能不起作用。</string>
     <string name="issue_hires_spatial_title">高音质音频和 3D 音频</string>

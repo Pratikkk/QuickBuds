@@ -266,11 +266,12 @@ const DISCORD: &str = "https://discord.gg/pvsnEf9TrZ";
 
 /// The issues of the current earbuds ([known issues](crate) as on the phone): the model's `knownIssues`, and Hi-Res with 3D audio
 /// when both are offered and are not one switch each.
-fn known_issues(a: &App) -> (bool, bool) {
-    let silent = a.snap.model.is_some_and(|m| m["knownIssues"].as_array().is_some_and(|k| k.iter().any(|x| x.as_str() == Some("spatial_silent"))));
+fn known_issues(a: &App) -> (bool, bool, bool) {
+    let listed = |key: &str| a.snap.model.is_some_and(|m| m["knownIssues"].as_array().is_some_and(|k| k.iter().any(|x| x.as_str() == Some(key))));
+    let silent = listed("spatial_silent");
     let offered = |id: u8| a.snap.features.iter().any(|f| f.0 == id);
     let both = offered(FEATURE_HIRES) && offered(FEATURE_SPATIAL) && a.snap.model.map_or(true, |m| m["spatialToggle"] != 1);
-    (silent, both)
+    (silent, both, listed("hires_no_codec"))
 }
 
 /// Posts [d] to the Worker.
@@ -330,10 +331,11 @@ pub fn setup(main: &MainWindow) {
     r.on_open(|| with_app(open));
     let c = main.global::<Community>();
     c.on_refresh(|| with_app(|a| {
-        let (silent, both) = known_issues(a);
+        let (silent, both, no_codec) = known_issues(a);
         let c = a.main.global::<Community>();
         c.set_spatial_silent(silent);
         c.set_hires_spatial(both);
+        c.set_hires_no_codec(no_codec);
     }));
     c.on_open_discord(|| crate::update::open_url(DISCORD));
     r.on_toggle(|i| with_app(|a| {

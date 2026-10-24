@@ -17,6 +17,7 @@ object KnownIssues {
         Issue("spatial_silent", R.string.issue_spatial_silent_title, R.string.issue_spatial_silent_body),
         Issue("samsung_codec", R.string.issue_samsung_codec_title, R.string.issue_samsung_codec_body),
         Issue("hires_spatial", R.string.issue_hires_spatial_title, R.string.issue_hires_spatial_body),
+        Issue("hires_no_codec", R.string.issue_hires_no_codec_title, R.string.issue_hires_no_codec_body),
     )
 
     /** The issues of the current model and phone, in the order of [ALL]. Empty for an unknown model. */

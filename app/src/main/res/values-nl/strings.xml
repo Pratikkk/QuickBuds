@@ -523,6 +523,8 @@
     <string name="issues_dialog_action">Tonen</string>
     <string name="issue_spatial_silent_title">3D-audio kan hetzelfde klinken</string>
     <string name="issue_spatial_silent_body">Sommige gebruikers horen geen ruimtelijk effect bij dit model. We weten nog niet of de oordopjes of de app de oorzaak zijn.</string>
+    <string name="issue_hires_no_codec_title">Hoogwaardige audio verandert niets</string>
+    <string name="issue_hires_no_codec_body">Dit model ondersteunt alleen SBC en AAC, dus de oordopjes hebben geen hoogwaardige codec. De schakelaar gaat aan, maar het geluid verandert niet.</string>
     <string name="issue_samsung_codec_title">Geen codec-keuze op Samsung-telefoons</string>
     <string name="issue_samsung_codec_body">Samsung-telefoons tonen de codec-keuze niet in de Bluetooth-instellingen. Audio van hoge kwaliteit doet mogelijk niets.</string>
     <string name="issue_hires_spatial_title">Audio van hoge kwaliteit en 3D-audio</string>

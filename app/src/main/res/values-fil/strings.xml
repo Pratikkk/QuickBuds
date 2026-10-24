@@ -523,6 +523,8 @@
     <string name="issues_dialog_action">Ipakita</string>
     <string name="issue_spatial_silent_title">Maaaring pareho ang tunog ng 3D audio</string>
     <string name="issue_spatial_silent_body">May mga may-ari na walang naririnig na spatial effect sa modelong ito. Hindi pa namin alam kung ang earbuds o ang app ang sanhi.</string>
+    <string name="issue_hires_no_codec_title">Walang binabago ang de-kalidad na audio</string>
+    <string name="issue_hires_no_codec_body">SBC at AAC lang ang sinusuportahan ng modelong ito, kaya walang de-kalidad na codec ang earbuds. Naka-on ang switch, pero walang pagbabago sa tunog.</string>
     <string name="issue_samsung_codec_title">Walang pagpili ng codec sa mga teleponong Samsung</string>
     <string name="issue_samsung_codec_body">Hindi ipinapakita ng mga teleponong Samsung ang pagpili ng codec sa mga setting ng Bluetooth. Maaaring walang gawin ang high-quality audio.</string>
     <string name="issue_hires_spatial_title">High-quality audio at 3D audio</string>
