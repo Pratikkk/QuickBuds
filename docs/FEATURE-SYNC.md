@@ -53,13 +53,13 @@ Assumption to check on a real device: the buds answer in order. A late reply to 
 - The app shows one toast for each failed operation. The texts are `feature_refused_missing`, `feature_refused_now`, `feature_not_changed` and `feature_no_answer`. Each text has the setting's name. Hi-Res `refused_now` adds the codec hint (`hires_needs_codec`).
 
 ## What is data and what is code
-- Code: the engine and one table of settings. The table holds how to build the write, the default `confirm`, and how to compare two values. Switches compare equal values, and sliders compare equal values. The buds' value always wins.
-- Data in `models.json` contains only the cases where a report or a capture shows that the default is wrong. The key is `confirm` per setting for a model. Example: `"confirm": {"06": "push"}` for the T310.
+- Code: the engine and the set of keys it handles. Each call site passes the writes and the confirmation kind.
+- Data in `models.json` contains only the cases where a report or a capture shows that the default is wrong.
 - The default for an unknown model is `read` for every on/off feature that the buds list in the status reply. It is `push` for ANC mode, game mode and spatial type. It is `ack` for a setting with no way to read it.
-- Every failure writes a log line (`FEATURE REFUSED`, `FEATURE NOT CHANGED`, `FEATURE NO ANSWER`). The line has the id, the status, the codec and the model. The reports then show which model needs a data override.
+- Every failure writes a log line (`FEATURE REFUSED`, `FEATURE NOT CHANGED`, `FEATURE NO ANSWER`). The line has the setting key, the reason and the codec. The reports then show which model needs a data override.
 
 ## Where it lives
-- Android engine: `app/src/main/kotlin/com/spizganed/quickbuds/protocol/FeatureSync.kt`. `BudsConnectionManager` owns it, because the service shares one engine with the app, widget, tile and notification.
+- Android engine: `app/src/main/kotlin/com/spizganed/quickbuds/protocol/FeatureSync.kt`. `BudsConnectionManager` owns it, because the service shares one engine with the app, widget and notification.
 - Android settings table: `app/src/main/kotlin/com/spizganed/quickbuds/protocol/FeatureSyncConfig.kt`.
 - Desktop engine: `core/src/feature_sync.rs`. Same names, same states.
 - Tests: both engines run `core/tests/feature_sync_scenarios.json`. A change of the rule changes that file first.

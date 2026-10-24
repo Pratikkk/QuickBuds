@@ -53,7 +53,7 @@ If you prefer, download `QuickBuds-linux-x64.AppImage` or the tarball `QuickBuds
 | **Sound** | Equalizer with presets, custom curves and bass boost. High-quality audio, 3D audio, low latency mode. High-quality audio needs an LHDC or LDAC link on models that offer a codec list. The phone's Bluetooth settings choose the codec. The switch changes the bitrate and the sampling rate. |
 | **Hearing** | A hearing test that tunes the sound to your ears, and a fit test of the ear-tip seal. |
 | **Controls** | Gestures per bud, wear detection, dual connection, find my earbuds, prompt volume, tap sensitivity, firmware version. |
-| **Per model** | QuickBuds reads the model and shows only what that model supports. Settings, Known issues lists the limits of your model and phone, and the app tells you once when your model has some. A setting changes on screen only when the earbuds confirm it. A failed change shows a toast with the reason. |
+| **Per model** | QuickBuds reads the model and shows only what that model supports. Settings, Known issues lists the limits of your model and phone, and the app tells you once when your model has some. A switch on the feature-sync engine moves only when the earbuds confirm it. Noise control moves at the tap. A failed change shows a toast with the reason. |
 | **Android** | Home screen widgets from 2×2 up: the battery first, then the noise control and switches after a double tap. A ten-page setup guide. A game equalizer that follows the game in the foreground (needs Usage access). |
 | **PC** | A tray icon with quick controls (Windows) or a battery menu (Linux). |
 | **Looks** | Material, QuickBuds, Pixel art and Glass styles. OLED Black, Classic Dark and White themes, wallpaper colours, your own accent and palettes. Glass has six backgrounds. The phone and its widgets have all four styles; the PC app has the first three. |
@@ -74,73 +74,50 @@ QuickBuds works on **any Android 8+ phone** (Samsung, Google Pixel, Xiaomi, Noth
 not only on OnePlus / OPPO phones. It knows every earbud in HeyMelody's and realme Link's lists, 140 in
 all, and shows only the features each one has. Each model also lists its known issues in Settings.
 
-<details><summary><b>Confirmed</b> (29 models)</summary>
+<details><summary><b>Confirmed</b> (6 models)</summary>
 
-<details><summary><b>OnePlus</b> (9)</summary>
+<details><summary><b>OnePlus</b> (2)</summary>
 
 - **OnePlus Buds 4**: fully working. Every feature is tested on a Nothing Phone (3a), Android 16, and on Windows and Linux.
-- **OnePlus Buds Pro 3**: confirmed by its owner on Android: battery, noise control, high-quality audio, 3D audio, hearing profile, equalizer, dual connection, gestures, wear detection, find my earbuds.
-- **OnePlus Buds 3**: confirmed by its owner on Android and Windows: battery, noise control, 3D audio, hearing profile, equalizer, dual connection, gestures, wear detection, find my earbuds.
-- **OnePlus Nord Buds 3**: confirmed by its owner on Android and Linux: battery, noise control, low latency, 3D audio, hearing profile, equalizer, dual connection, gestures, find my earbuds.
-- **OnePlus Nord Buds 3 Pro**: confirmed by its owner on Android: battery, noise control, low latency, high-quality audio, hearing profile, equalizer, dual connection, gestures, wear detection, find my earbuds.
-- **OnePlus Nord Buds 3r**: confirmed by its owner on Android: battery, low latency, 3D audio, equalizer, dual connection, gestures, find my earbuds.
-- **OnePlus Nord Buds 4 Pro**: confirmed by its owner on Windows: battery, noise control, low latency, 3D audio, equalizer, dual connection, gestures, wear detection, find my earbuds.
-- **OnePlus Buds Ace**: confirmed by its owner on Android: noise control, low latency.
 - **OnePlus Bullets Wireless Z3**: confirmed by its owner on Android: battery, 3D audio, equalizer.
 
 </details>
 
-<details><summary><b>OPPO</b> (6)</summary>
+<details><summary><b>OPPO</b> (2)</summary>
 
-- **OPPO Enco Buds2**: confirmed by its owner on Windows: battery, low latency, equalizer, gestures.
+- **OPPO Enco Buds2**: confirmed by its owner on Windows: battery, equalizer.
 - **OPPO Enco Buds3 Pro**: confirmed by its owner on Windows and Android: battery, equalizer, dual connection, gestures, find my earbuds.
-- **OPPO Enco X**: confirmed by its owner on Android: battery, noise control, high-quality audio, hearing profile, equalizer, gestures, wear detection, find my earbuds.
-- **OPPO Enco Air3 Pro**: confirmed by its owner on Android: battery, noise control, low latency, high-quality audio, 3D audio, hearing profile, equalizer, dual connection, gestures, wear detection, find my earbuds.
-- **OPPO Enco Air5**: confirmed by its owner on Windows and Linux: battery, noise control, low latency, 3D audio, hearing profile, equalizer, dual connection, gestures, wear detection, find my earbuds.
-- **OPPO Enco Air5 Pro**: confirmed by its owner on Windows: battery, noise control, 3D audio, dual connection, gestures, find my earbuds.
 
 </details>
 
-<details><summary><b>realme</b> (14)</summary>
+<details><summary><b>realme</b> (2)</summary>
 
-- **realme Buds Air6 Pro**: confirmed by its owner on Android and Windows: battery, noise control, low latency, 3D audio, hearing profile, equalizer, dual connection, gestures, find my earbuds.
-- **realme Buds Air6**: confirmed by its owner on Android: battery, noise control, low latency, high-quality audio, equalizer, dual connection, wear detection, find my earbuds.
-- **realme Buds Air7**: confirmed by its owner on Android: battery, noise control, low latency, high-quality audio, 3D audio, hearing profile, equalizer, dual connection, gestures, wear detection, find my earbuds.
-- **realme Buds Air7 Pro**: confirmed by its owner on Android and Windows: battery, noise control, wind noise reduction, low latency, high-quality audio, 3D audio, hearing profile, equalizer, gestures, wear detection, find my earbuds.
-- **realme Buds Air8**: confirmed by its owner on Android: battery, noise control, low latency, high-quality audio, 3D audio, hearing profile, equalizer, dual connection, gestures, wear detection, find my earbuds.
-- **realme Buds Air8 Pro**: confirmed by its owner on Android: battery, noise control, low latency, high-quality audio, hearing profile, dual connection, gestures, wear detection.
-- **realme Buds Air 5 Pro**: confirmed by its owner on Android: noise control and the feature switches, read back from the buds.
-- **realme Buds Wireless 3**: confirmed by its owner on Android: battery, noise control, low latency, high-quality audio, 3D audio, hearing profile, equalizer, dual connection, wear detection.
+- **realme Buds Air7 Pro**: confirmed by its owner on Android and Windows: noise control, 3D audio, gestures.
 - **realme Buds T100**: confirmed by its owner on Android: battery, low latency, hearing profile.
-- **realme Buds T200**: confirmed by its owner on Android: battery, noise control, low latency, high-quality audio, 3D audio, hearing profile, equalizer, dual connection, gestures, wear detection, find my earbuds.
-- **realme Buds T200x**: confirmed by its owner on Android: battery, noise control, low latency, equalizer, dual connection, gestures.
-- **realme Buds T310**: confirmed by its owner on Android: battery, noise control, low latency.
-- **realme Buds T500 Pro**: confirmed by its owner on Android: battery, noise control, low latency, high-quality audio, 3D audio, hearing profile, equalizer, dual connection, gestures, wear detection, find my earbuds.
-- **realme Cobble Speaker**: confirmed by its owner on Android: battery, low latency.
 
 </details>
 
 </details>
 
-<details><summary><b>Not confirmed yet</b> (111 models)</summary>
+<details><summary><b>Not confirmed yet</b> (134 models)</summary>
 
 Detected, with features built from HeyMelody's and realme Link's data. Some may not work.
 
-<details><summary><b>OnePlus</b> (23 models)</summary>
+<details><summary><b>OnePlus</b> (30 models)</summary>
 
-OnePlus Bullets Wireless Z2, OnePlus BulletsWireless Z2 ANC, OnePlus Buds, OnePlus Buds Z, OnePlus Buds Pro, OnePlus Buds Z2, OnePlus Nord Buds, OnePlus Buds N, OnePlus Nord Buds CE, OnePlus Buds Pro 2, OnePlus Nord Buds 2, OnePlus Nord Buds 2r, OnePlus Buds Pro 2（轻享版）, OnePlus Buds Pro 2R, OnePlus Buds V, OnePlus Buds Ace 2, OnePlus Open Buds, OnePlus Buds 3V, OnePlus Buds Ace 3, OnePlus Nord Buds 4, OnePlus Flow Buds, OnePlus Buds Pro 4, OnePlus Buds Clip.
-
-</details>
-
-<details><summary><b>OPPO</b> (52 models)</summary>
-
-OPPO Enco Quiet, OPPO Enco M31, OPPO Enco M32, OPPO Enco M33, OPPO Enco Free, OPPO O-Free, OPPO Enco W31, OPPO Enco W51, OPPO Enco W11, OPPO Enco Air, OPPO Enco Play, OPPO Enco Free2, OPPO Enco Buds, OPPO Enco Air Lite, OPPO Enco W31 Lite, OPPO Enco R, OPPO Enco Air2, OPPO Enco Air2 Pro, OPPO Enco X2, OPPO Enco Free2i, OPPO Enco Air2i, OPPO Enco Air3, OPPO Enco R Pro, OPPO Enco R2, OPPO Enco Free3, OPPO Enco X3i, OPPO Enco Air2（新声版）, OPPO Enco Air3i, OPPO Enco X3, OPPO Enco Air3s, OPPO Enco Air4 Pro, OPPO Enco Buds2 Pro, OPPO Enco R3, OPPO Enco Air 3i, OPPO Enco Free4, OPPO Enco Air4, OPPO Enco Air4i, OPPO Enco R3 Pro, OPPO Enco Buds3 Pro+, OPPO Enco Buds3, OPPO Enco R4, OPPO Enco Air4（新声版）, OPPO Enco R5, OPPO Enco Clip, OPPO Enco X3s, OPPO Enco Free4（丹拿版）, OPPO Enco Air5s, OPPO Enco Clip2, OPPO Enco Air5s（星光版）, OPPO Enco X4, OPPO Enco Air4s, OPPO Enco Buds3s.
+OnePlus Bullets Wireless Z2, OnePlus BulletsWireless Z2 ANC, OnePlus Buds, OnePlus Buds Z, OnePlus Buds Pro, OnePlus Buds Z2, OnePlus Nord Buds, OnePlus Buds N, OnePlus Nord Buds CE, OnePlus Buds Pro 2, OnePlus Nord Buds 2, OnePlus Nord Buds 2r, OnePlus Buds Pro 2（轻享版）, OnePlus Buds Pro 2R, OnePlus Buds V, OnePlus Buds Ace 2, OnePlus Open Buds, OnePlus Buds 3V, OnePlus Buds Ace 3, OnePlus Nord Buds 4, OnePlus Flow Buds, OnePlus Buds Pro 4, OnePlus Buds Clip, OnePlus Buds Pro 3, OnePlus Buds 3, OnePlus Nord Buds 3, OnePlus Nord Buds 3 Pro, OnePlus Nord Buds 3r, OnePlus Nord Buds 4 Pro, OnePlus Buds Ace.
 
 </details>
 
-<details><summary><b>realme</b> (33 models)</summary>
+<details><summary><b>OPPO</b> (56 models)</summary>
 
-realme Buds Wireless 2S, realme Buds Wireless 3 Neo, realme Buds Wireless 5 ANC, realme Buds Wireless 6 Neo, realme Buds Wireless 6, realme Buds Wireless 6 ANC, realme Buds Air 3, realme Buds Q2s, realme Buds Air 3S, realme Buds Air 3 Neo, realme Buds Air 5, realme Buds T300, realme Buds T110, realme Buds N1 Pro, realme Buds N1, realme Buds T01, realme Buds T200 Lite, realme Buds Clip, realme TechLife Buds, realme Buds T500, realme Buds T500 Pro Harry Potter Edition, realme TechLife Buds T500 Pro, realme Buds Air 2 Neo, realme Buds Air, realme Buds Q2, realme Buds Air Pro, realme Brick Speaker, realme Buds Air 2, realme Buds Wireless 2, realme Buds Wireless 2 Neo, realme Pocket Speaker, realme Buds Wireless Pro, realme Buds Air Neo.
+OPPO Enco Quiet, OPPO Enco M31, OPPO Enco M32, OPPO Enco M33, OPPO Enco Free, OPPO O-Free, OPPO Enco W31, OPPO Enco W51, OPPO Enco W11, OPPO Enco Air, OPPO Enco Play, OPPO Enco Free2, OPPO Enco Buds, OPPO Enco Air Lite, OPPO Enco W31 Lite, OPPO Enco R, OPPO Enco Air2, OPPO Enco Air2 Pro, OPPO Enco X2, OPPO Enco Free2i, OPPO Enco Air2i, OPPO Enco Air3, OPPO Enco R Pro, OPPO Enco R2, OPPO Enco Free3, OPPO Enco X3i, OPPO Enco Air2（新声版）, OPPO Enco Air3i, OPPO Enco X3, OPPO Enco Air3s, OPPO Enco Air4 Pro, OPPO Enco Buds2 Pro, OPPO Enco R3, OPPO Enco Air 3i, OPPO Enco Free4, OPPO Enco Air4, OPPO Enco Air4i, OPPO Enco R3 Pro, OPPO Enco Buds3 Pro+, OPPO Enco Buds3, OPPO Enco R4, OPPO Enco Air4（新声版）, OPPO Enco R5, OPPO Enco Clip, OPPO Enco X3s, OPPO Enco Free4（丹拿版）, OPPO Enco Air5s, OPPO Enco Clip2, OPPO Enco Air5s（星光版）, OPPO Enco X4, OPPO Enco Air4s, OPPO Enco Buds3s, OPPO Enco X, OPPO Enco Air3 Pro, OPPO Enco Air5, OPPO Enco Air5 Pro.
+
+</details>
+
+<details><summary><b>realme</b> (45 models)</summary>
+
+realme Buds Wireless 2S, realme Buds Wireless 3 Neo, realme Buds Wireless 5 ANC, realme Buds Wireless 6 Neo, realme Buds Wireless 6, realme Buds Wireless 6 ANC, realme Buds Air 3, realme Buds Q2s, realme Buds Air 3S, realme Buds Air 3 Neo, realme Buds Air 5, realme Buds T300, realme Buds T110, realme Buds N1 Pro, realme Buds N1, realme Buds T01, realme Buds T200 Lite, realme Buds Clip, realme TechLife Buds, realme Buds T500, realme Buds T500 Pro Harry Potter Edition, realme TechLife Buds T500 Pro, realme Buds Air 2 Neo, realme Buds Air, realme Buds Q2, realme Buds Air Pro, realme Brick Speaker, realme Buds Air 2, realme Buds Wireless 2, realme Buds Wireless 2 Neo, realme Pocket Speaker, realme Buds Wireless Pro, realme Buds Air Neo, realme Buds Air6 Pro, realme Buds Air6, realme Buds Air7, realme Buds Air8, realme Buds Air8 Pro, realme Buds Air 5 Pro, realme Buds Wireless 3, realme Buds T200, realme Buds T200x, realme Buds T310, realme Buds T500 Pro, realme Cobble Speaker.
 
 </details>
 

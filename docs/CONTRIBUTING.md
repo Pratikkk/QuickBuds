@@ -2,8 +2,8 @@
 
 Thanks for helping. The most useful contribution is **a report from an owner of earbuds other than
 the OnePlus Buds 4**. The writes for every other model come from HeyMelody's and realme Link's data.
-Owners have confirmed only the realme Buds Air7 Pro and the OPPO Enco Buds2. Code contributions are
-welcome too.
+Owners have confirmed six models. models.json lists the confirmed features of each. Code
+contributions are welcome too.
 
 ## Reporting a model
 
@@ -34,8 +34,8 @@ cd desktop && cargo test           # the desktop tests, including core against p
 ./gradlew :app:testDebugUnitTest  # the Android protocol tests (app/src/test)
 ```
 
-`scripts/release-build.sh` runs every check of the Build workflow and builds all release files. It
-needs the release key. Without the key, run the two commands above.
+`scripts/release-build.sh` runs the locale check, the desktop tests and all release builds. It does not
+run lint, the Android unit tests or the core tests. Without the key, run the four commands above.
 
 ## Translations
 

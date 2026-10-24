@@ -21,7 +21,7 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
     Needs the realme Link command.
   - realme Buds Air8 (report #20): no known command for announcement and tap sounds. `0x0131` and `0x0132`
     belong to the device manager, not to these sounds. Needs the realme Link command.
-- **Desktop UI rewrite (egui).** The code is on the branch `desktop-rework-ui`: layout without a sidebar, the four styles
+- **Desktop UI rewrite (egui).** The code is in desktop-egui/ on main: layout with a sidebar, the four styles
   including Glass with real blur, a frameless rounded window. Missing there: the Feedback, Model test and Update pages, the
   custom preset editor, the tray and quick panel, and a bundled UI font. The shipping desktop stays on Slint until then.
 - **Desktop setup guide and Known issues page.** The phone has a ten-page guide. The desktop has the Known issues dialog and
@@ -31,7 +31,7 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
 
 ## Parked
 
-- **realme Link `0x0403` extras** (dynamic bass, vocal enhance; PROTOCOL.md §9): no data
+- **realme Link `0x0403` extras** (dynamic bass, vocal enhance; PROTOCOL.md §11 and §12): no data
   says which realme models have them. Start when a realme owner can test them (issue #8).
 
 ## Unverified
