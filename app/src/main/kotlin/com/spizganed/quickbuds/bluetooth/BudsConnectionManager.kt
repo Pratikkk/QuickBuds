@@ -735,6 +735,11 @@ class BudsConnectionManager(private val context: Context) {
     @Volatile var codecs: List<Int> = emptyList()
         private set
 
+    /** Reads the phone link's codec again: the phone can switch codec after the connect. The reply sets [codec]. */
+    fun refreshCodec() {
+        if (Capabilities.supports(context, OpoProtocol.CMD_QUERY_CODEC)) sendRaw(OpoProtocol.queryCodec(), "query codec")
+    }
+
     /** The buds restart after it and come back without phone audio, as after power saving. */
     fun setCodec(codec: Int, hiRes: Boolean) {
         audioAfterRestart = true
