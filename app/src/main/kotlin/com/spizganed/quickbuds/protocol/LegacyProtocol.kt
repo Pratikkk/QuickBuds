@@ -146,10 +146,11 @@ object OpoProtocol {
 
     private var seqCounter = 0x01
 
+    /** 0xC0..0xDF belongs to the feature-sync engine (see local/FEATURE-SYNC.md): skip it. */
     @Synchronized
     private fun nextSeq(): Int {
         val seq = seqCounter
-        seqCounter = if (seqCounter >= 0xFE) 0x01 else seqCounter + 1
+        seqCounter = if (seqCounter >= 0xBF) 0x01 else seqCounter + 1
         return seq
     }
 
@@ -371,8 +372,8 @@ object OpoProtocol {
         buildPacket(CMD_FIND_BUDS, payload = byteArrayOf(if (on) 0x01 else 0x00))
 
     /** Any `0x0403` feature switch. Spatial (`0x1B`) and Hi-Res (`0x18`) are `[CAPTURE]` — PROTOCOL-LEGACY.md §9. */
-    fun setFeature(featureId: Int, on: Boolean): ByteArray =
-        buildPacket(CMD_SET_FEATURE, payload = featurePayload(featureId, on))
+    fun setFeature(featureId: Int, on: Boolean, seq: Int? = null): ByteArray =
+        buildPacket(CMD_SET_FEATURE, seq = seq, payload = featurePayload(featureId, on))
 
     fun queryFirmware(): ByteArray = buildPacket(CMD_QUERY_FIRMWARE)
 
@@ -608,7 +609,7 @@ object OpoProtocol {
      * [statusQuery]: the model's `statusQuery` (hex ids, HeyMelody's per-model list, PROTOCOL-LEGACY.md §9); a model
      * without one gets the full list below. [windNoise]: the model's `windNoise` flag adds [Feature.WIND_NOISE].
      */
-    fun queryStatus(statusQuery: String? = null, windNoise: Boolean = false): ByteArray {
+    fun queryStatus(statusQuery: String? = null, windNoise: Boolean = false, seq: Int = 0x00): ByteArray {
         val ids = (statusQuery?.split(' ')?.map { it.toInt(16).toByte() }?.toByteArray() ?: byteArrayOf(
             // Feature ids. 0x1D (BassWave): HeyMelody asks for it too.
             // Second line: the Earbud settings Features switches.
@@ -617,7 +618,7 @@ object OpoProtocol {
             0x09, 0x17, 0x30, 0x31, 0x3A,
             0x32, 0x35, 0x37, 0x38, 0x3B, 0x0C
         )) + if (windNoise) byteArrayOf(Feature.WIND_NOISE.toByte()) else byteArrayOf()
-        return buildPacket(CMD_QUERY_STATUS, seq = 0x00, payload = byteArrayOf(ids.size.toByte()) + ids)
+        return buildPacket(CMD_QUERY_STATUS, seq = seq, payload = byteArrayOf(ids.size.toByte()) + ids)
     }
 
     /**

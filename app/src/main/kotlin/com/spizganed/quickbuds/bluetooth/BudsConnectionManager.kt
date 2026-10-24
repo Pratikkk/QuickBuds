@@ -7,7 +7,9 @@ import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.os.Handler
+import android.os.HandlerThread
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.widget.Toast
 import com.spizganed.quickbuds.R
@@ -22,6 +24,7 @@ import com.spizganed.quickbuds.protocol.GameModeParser
 import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.Feature
+import com.spizganed.quickbuds.protocol.FeatureSync
 import com.spizganed.quickbuds.protocol.GoldenSound
 import com.spizganed.quickbuds.protocol.OppoPacketFramer
 import com.spizganed.quickbuds.protocol.UserInteractionParser
@@ -132,6 +135,9 @@ class BudsConnectionManager(private val context: Context) {
         /** A `0x810D` status reply arrived — feature id -> value, see [featureStates]. */
         fun onFeatureStates(states: Map<Int, Int>) {}
 
+        /** A setting the user touched is being applied on the buds: its row shows "Applying…" while `on`. */
+        fun onSettingBusy(key: Int, on: Boolean) {}
+
         /** Any EQ reading changed — see [eqCurrent], [eqCustom], [bassWaveLevel]. */
         fun onEqState() {}
 
@@ -160,6 +166,17 @@ class BudsConnectionManager(private val context: Context) {
     fun removeListener(l: Listener) { listeners.remove(l) }
 
     private val handler = Handler(Looper.getMainLooper())
+
+    // --- Feature sync (local/FEATURE-SYNC.md): one engine, one thread ---
+    /** Every engine call and every output it produces runs on this thread. */
+    private val syncThread = HandlerThread("feature-sync").apply { start() }
+    private val syncHandler = Handler(syncThread.looper)
+    private val sync = FeatureSync()
+    /** Wire sequence byte -> the engine's own number, for the writes and reads the engine sent. */
+    private val wireToEngine = java.util.concurrent.ConcurrentHashMap<Int, Int>()
+
+    /** The only timer of the feature sync: asks the engine to give up on a silent buds. */
+    private val tickRunnable = Runnable { execute(sync.tick(SystemClock.elapsedRealtime())) }
 
     private var bluetoothSocket: BluetoothSocket? = null
     private var connectedThread: ConnectedThread? = null
@@ -286,6 +303,7 @@ class BudsConnectionManager(private val context: Context) {
                 caseClosing = false
                 if (audioAfterRestart) { audioAfterRestart = false; setPhoneAudio(device, on = true) }
                 handler.post { listeners.forEach { it.onConnected(true) } }
+                syncHandler.post { execute(sync.reconnect(SystemClock.elapsedRealtime())) }
                 log("Ready for commands. Running init sequence...")
                 runInitSequence()
             } else {
@@ -398,6 +416,7 @@ class BudsConnectionManager(private val context: Context) {
         bluetoothSocket = null
         bridge?.dropClient()
         handler.post { listeners.forEach { it.onConnected(false) } }
+        syncHandler.post { execute(sync.disconnect(SystemClock.elapsedRealtime())) }
         log("Disconnected")
     }
 
@@ -681,6 +700,97 @@ class BudsConnectionManager(private val context: Context) {
     }
 
     /**
+     * One user action on a setting. The engine sends the writes in order and waits for the confirmation
+     * kind given; [key] is the control that shows "applying". See local/FEATURE-SYNC.md.
+     */
+    fun requestSetting(key: Int, writes: List<Pair<Int, Int>>, confirm: FeatureSync.Confirm, restarts: Boolean = false) {
+        syncHandler.post {
+            if (restarts) audioAfterRestart = true
+            execute(sync.tap(FeatureSync.Operation(key, writes, confirm, restarts), SystemClock.elapsedRealtime()))
+        }
+    }
+
+    /** Engine seqs travel as 0xC0..0xDF; the generic counter in LegacyProtocol never uses that range. */
+    private fun wireSeq(seq: Int) = 0xC0 + (seq % 0x20)
+
+    /** Runs an engine output list on the sync thread. */
+    private fun execute(outs: List<FeatureSync.Out>) {
+        for (out in outs) when (out) {
+            is FeatureSync.Out.Send -> {
+                val wire = wireSeq(out.seq)
+                wireToEngine[wire] = out.seq
+                featureWrites[wire] = out.id
+                sendRawBlocking(
+                    OpoProtocol.setFeature(out.id, out.value == 1, wire),
+                    "Feature 0x%02X -> %s".format(out.id, out.value == 1)
+                )
+            }
+            is FeatureSync.Out.Read -> {
+                val wire = wireSeq(out.seq)
+                wireToEngine[wire] = out.seq
+                sendRawBlocking(statusQuery(wire), "verify features")
+            }
+            is FeatureSync.Out.Changed -> {
+                featureStates = featureStates + (out.id to out.value)
+                handler.post {
+                    listeners.forEach {
+                        it.onFeatureStates(featureStates)
+                        if (out.id == Capabilities.gameModeId(context)) it.onGameModeState(out.value == 1)
+                    }
+                }
+            }
+            is FeatureSync.Out.Busy -> handler.post { listeners.forEach { it.onSettingBusy(out.key, out.on) } }
+            is FeatureSync.Out.Toast -> {
+                log("FEATURE %s: key=0x%02X kind=%s codec=%s".format(
+                    java.util.Locale.ROOT, toastLogName(out.kind), out.key, toastKindName(out.kind), codec
+                ))
+                val text = toastText(out.key, out.kind)
+                handler.post { Toast.makeText(context, text, Toast.LENGTH_LONG).show() }
+            }
+        }
+        // Re-arm only while an operation is running: this is the feature's only timer.
+        syncHandler.removeCallbacks(tickRunnable)
+        if (sync.active()) syncHandler.postDelayed(tickRunnable, 500)
+    }
+
+    private fun toastLogName(kind: FeatureSync.ToastKind) = when (kind) {
+        FeatureSync.ToastKind.REFUSED_MISSING, FeatureSync.ToastKind.REFUSED_NOW -> "REFUSED"
+        FeatureSync.ToastKind.NOT_CHANGED -> "NOT CHANGED"
+        FeatureSync.ToastKind.NO_ANSWER -> "NO ANSWER"
+    }
+
+    private fun toastKindName(kind: FeatureSync.ToastKind) = when (kind) {
+        FeatureSync.ToastKind.REFUSED_MISSING -> "refused_missing"
+        FeatureSync.ToastKind.REFUSED_NOW -> "refused_now"
+        FeatureSync.ToastKind.NOT_CHANGED -> "not_changed"
+        FeatureSync.ToastKind.NO_ANSWER -> "no_answer"
+    }
+
+    private fun toastText(key: Int, kind: FeatureSync.ToastKind): String {
+        val name = settingName(key)
+        return when (kind) {
+            FeatureSync.ToastKind.REFUSED_MISSING -> context.getString(R.string.feature_refused_missing, name)
+            FeatureSync.ToastKind.REFUSED_NOW ->
+                // Hi-Res refused now: the phone plays no LDAC or LHDC (reports #33 #42 #44).
+                codec?.takeIf { key == Feature.HIRES_CODEC }?.let { context.getString(R.string.hires_needs_codec, codecName(it)) }
+                    ?: context.getString(R.string.feature_refused_now, name)
+            FeatureSync.ToastKind.NOT_CHANGED -> context.getString(R.string.feature_not_changed, name)
+            FeatureSync.ToastKind.NO_ANSWER -> context.getString(R.string.feature_no_answer, name)
+        }
+    }
+
+    private fun settingName(key: Int): String = when (key) {
+        Feature.HIRES_CODEC -> context.getString(R.string.row_hires_title)
+        Capabilities.gameModeId(context) -> context.getString(R.string.row_game_title)
+        else -> "0x%02X".format(key)
+    }
+
+    /** Same names as the UI uses for a codec ([MainActivity] keeps its own copy). */
+    private fun codecName(codec: Int) =
+        listOf("SBC", "AAC", "LDAC", "aptX", "aptX HD", "aptX Adaptive", "LHDC", "LHDC")
+            .getOrNull(codec - 1) ?: "#$codec"
+
+    /**
      * Golden Sound test frames, sent in order on one thread (PROTOCOL-LEGACY.md §9): a tone is a stop then
      * the tone, a record is applied in four writes. A `0x0403` among them is followed by a status read.
      */
@@ -869,8 +979,8 @@ class BudsConnectionManager(private val context: Context) {
     }
 
     /** `0x010D` for the model in use (PROTOCOL-LEGACY.md §9): its own id list, wind noise only where the model has the flag. */
-    private fun statusQuery() = ModelCatalog.current(context)?.json.let {
-        OpoProtocol.queryStatus(it?.optString("statusQuery")?.ifEmpty { null }, it?.optInt("windMode") == 1)
+    private fun statusQuery(seq: Int = 0x00) = ModelCatalog.current(context)?.json.let {
+        OpoProtocol.queryStatus(it?.optString("statusQuery")?.ifEmpty { null }, it?.optInt("windMode") == 1, seq)
     }
 
     /** Timestamp of the last ANC command we flushed; see noteUnattributed(). */
@@ -1394,9 +1504,18 @@ class BudsConnectionManager(private val context: Context) {
         // A refused feature write. Status 1 is a switch the buds lack. Status 2 is a switch they have but will not take now
         // (high-quality audio needs an LDAC or LHDC link on buds that offer a codec list; reports #33, #42, #44).
         if (cmd == OpoProtocol.CMD_SET_FEATURE or 0x8000) {
-            val id = featureWrites.remove(seq)
-            if (id != null && payload.isNotEmpty() && payload[0].toInt() != 0)
-                log("FEATURE REFUSED: id=0x%02X status=%d codec=%s offered=%s".format(id, payload[0].toInt() and 0xFF, codec, codecs))
+            val status = payload.firstOrNull()?.toInt()?.and(0xFF) ?: 0
+            val engineSeq = wireToEngine.remove(seq)
+            if (engineSeq != null) {
+                // Sent by the feature-sync engine: it decides what the refusal means and what to toast.
+                featureWrites.remove(seq)
+                syncHandler.post { execute(sync.ack(engineSeq, status, SystemClock.elapsedRealtime())) }
+            } else {
+                // An old path: keep its log line.
+                val id = featureWrites.remove(seq)
+                if (id != null && status != 0)
+                    log("FEATURE REFUSED: id=0x%02X status=%d codec=%s offered=%s".format(id, status, codec, codecs))
+            }
         }
         // A refused ANC write (status 14 with no bud in an ear): read the real mode back (§5).
         if (cmd == OpoProtocol.CMD_SET_ANC or 0x8000 && payload.isNotEmpty() && payload[0].toInt() != 0) {
@@ -1452,11 +1571,13 @@ class BudsConnectionManager(private val context: Context) {
         // --- Status reply: [status][count] then [featureId][value] pairs, [CAPTURE] 2026-09-23 ---
         if (cmd == 0x810D && payload.size >= 2 && payload[0].toInt() == 0) {
             val count = payload[1].toInt() and 0xFF
-            val states = (0 until count).mapNotNull { i ->
+            // The raw values from the buds: the engine compares these, not the pending-faked ones.
+            val raw = (0 until count).mapNotNull { i ->
                 val o = 2 + i * 2
                 if (o + 1 < payload.size) (payload[o].toInt() and 0xFF) to (payload[o + 1].toInt() and 0xFF)
                 else null
-            }.toMap().let { withPending(it) }
+            }.toMap()
+            val states = withPending(raw)
             featureStates = states
             log("FEATURES: " + states.entries.joinToString(" ") { "%02X=%d".format(java.util.Locale.ROOT, it.key, it.value) })
             // Game mode has its own push (0x0204 subType 0x05) but none at connect time; this is
@@ -1468,6 +1589,9 @@ class BudsConnectionManager(private val context: Context) {
                     if (game != null) it.onGameModeState(game == 1)
                 }
             }
+            // A reply to our own read carries the engine's number back to it (null for any other read).
+            val engineSeq = wireToEngine.remove(seq)
+            syncHandler.post { execute(sync.report(raw, engineSeq, SystemClock.elapsedRealtime())) }
             return
         }
 
@@ -1643,6 +1767,11 @@ class BudsConnectionManager(private val context: Context) {
             if (on != null) {
                 log("GAME EVT: ${if (on) "ON" else "OFF"}")
                 handler.post { listeners.forEach { it.onGameModeState(on) } }
+                // Also a push report for the engine: it confirms a game-mode operation.
+                val gameId = Capabilities.gameModeId(context)
+                syncHandler.post {
+                    execute(sync.report(mapOf(gameId to (if (on) 1 else 0)), null, SystemClock.elapsedRealtime()))
+                }
             }
             return
         }

@@ -160,6 +160,9 @@ class FeatureSync {
 
     fun busy(key: Int): Boolean = key in busyKeys
 
+    /** An operation is running or waiting: the caller's failure-detector tick is needed. */
+    fun active(): Boolean = active != null
+
     private fun start(op: Operation, now: Long, out: MutableList<Out>) {
         val a = Active(op)
         active = a

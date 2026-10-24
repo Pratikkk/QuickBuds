@@ -19,6 +19,8 @@ import android.util.Log
 import android.view.KeyEvent
 import com.spizganed.quickbuds.R
 import com.spizganed.quickbuds.protocol.AncModes
+import com.spizganed.quickbuds.protocol.Capabilities
+import com.spizganed.quickbuds.protocol.FeatureSync
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.ui.OnCallGesture
 import com.spizganed.quickbuds.ui.ThemeRes
@@ -244,7 +246,15 @@ class BudsService : Service(), BudsConnectionManager.Listener {
             "ANC_CYCLE" -> ancMode?.let { statusLog("<< sending ANC $it"); manager?.sendAnc(it) }
             "TRANS" -> { statusLog("<< sending Transparency"); manager?.sendAnc(AncModes.TRANSPARENCY) }
             "OFF" -> { statusLog("<< sending ANC Off"); manager?.sendAnc(AncModes.OFF) }
-            "GAME_TOGGLE" -> { statusLog("<< sending Game $gameMode"); manager?.setGameMode(gameMode) }
+            "GAME_TOGGLE" -> {
+                statusLog("<< sending Game $gameMode")
+                val gameId = Capabilities.gameModeId(this)
+                manager?.requestSetting(
+                    gameId,
+                    listOf(gameId to (if (gameMode) 1 else 0)),
+                    FeatureSync.Confirm.PUSH
+                )
+            }
             "FEATURE" -> if (feature >= 0) manager?.setFeatures(feature to featureOn)
             else -> statusLog("<< UNKNOWN widget action: '$widgetAction'")
         }

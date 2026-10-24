@@ -34,6 +34,7 @@ import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.Feature
+import com.spizganed.quickbuds.protocol.FeatureSync
 import com.spizganed.quickbuds.widget.AncWidgetProvider
 import com.spizganed.quickbuds.widget.WidgetSettings
 import com.spizganed.quickbuds.widget.WidgetStateStore
@@ -89,6 +90,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
 
     // Settings rows that hold live state
     private var gameSwitch: Switch? = null
+    private var gameSubtitle: TextView? = null
     private var hiresSwitch: Switch? = null
     private var hiresSubtitle: TextView? = null
     private var spatialSwitch: Switch? = null
@@ -894,9 +896,12 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     }
 
     private fun toggleGameMode(next: Boolean) {
-        manager.setGameMode(next)
-        gameModeOn = next
-        syncWidgetState()
+        val gameId = Capabilities.gameModeId(this)
+        manager.requestSetting(
+            gameId,
+            listOf(gameId to (if (next) 1 else 0)),
+            FeatureSync.Confirm.PUSH
+        )
     }
 
     /**
@@ -935,6 +940,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     private fun buildFeatureRows() {
         featureRows.clear()
         gameSwitch = null
+        gameSubtitle = null
         hiresSwitch = null
         hiresSubtitle = null
         spatialSwitch = null
@@ -968,7 +974,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         addRow("game", 
             SettingRowFactory.build(
                 this, R.drawable.ic_bolt, R.string.row_game_title, R.string.row_game_sub, game
-            ) { game.performClick() }
+            ) { game.performClick() }.also { gameSubtitle = it.findViewWithTag(SettingRowFactory.SUBTITLE_TAG) }
         )
 
         // --- 2. Hi-Res codec + 3. Spatial / 3D audio ---
@@ -1000,15 +1006,26 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
                 confirmReconnect(
                     if (dropSpatial) R.string.codec_msg_hires_drops_spatial else R.string.codec_msg_reconnect
                 ) {
-                    setSwitchQuiet(hires, isChecked)
                     if (dropSpatial && spatialByType()) {
                         manager.setSpatialType(0)
                         paintSpatial()
-                        hires.postDelayed({ manager.setFeatures(Feature.HIRES_CODEC to true) }, 300)
-                    } else if (dropSpatial) manager.setFeatures(
-                        Feature.SPATIAL_SOUND to false, Feature.HIRES_CODEC to true
-                    )
-                    else manager.setFeatures(Feature.HIRES_CODEC to isChecked)
+                        hires.postDelayed({
+                            manager.requestSetting(
+                                Feature.HIRES_CODEC,
+                                listOf(Feature.HIRES_CODEC to 1),
+                                FeatureSync.Confirm.READ,
+                                restarts = true
+                            )
+                        }, 300)
+                    } else {
+                        manager.requestSetting(
+                            Feature.HIRES_CODEC,
+                            if (dropSpatial) listOf(Feature.SPATIAL_SOUND to 0, Feature.HIRES_CODEC to 1)
+                            else listOf(Feature.HIRES_CODEC to (if (isChecked) 1 else 0)),
+                            FeatureSync.Confirm.READ,
+                            restarts = true
+                        )
+                    }
                 }
             }
             // The phone can switch codec after the connect: read it again before the guard looks at it.
@@ -1086,6 +1103,11 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         syncingFeatures = true
         s.setFromBuds(on)
         syncingFeatures = false
+    }
+
+    /** A repaint with an equal value does nothing, so nothing animates. */
+    private fun setSwitchFromBuds(s: Switch, on: Boolean) {
+        if (s.isChecked != on) setSwitchQuiet(s, on)
     }
 
     private fun featureOn(id: Int) = manager.featureStates[id] == 1
@@ -1177,7 +1199,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         // Disconnected, the switches stay neutral (SPEC 3.2); setConnectedUi repaints on connect.
         if (connectedUi == false) return
         states[Feature.HIRES_CODEC]?.let { v ->
-            hiresSwitch?.let { setSwitchQuiet(it, v == 1) }
+            hiresSwitch?.let { setSwitchFromBuds(it, v == 1) }
             hiresSubtitle?.setText(if (v == 1) R.string.row_hires_sub else R.string.row_hires_sub_off)
         }
         val codec = manager.codec.takeIf { codecPicker() }
@@ -1194,6 +1216,33 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         states[Feature.WIND_NOISE]?.let { v ->
             windSwitch?.let { setSwitchQuiet(it, v == 1) }
         }
+    }
+
+    /**
+     * The engine says a tapped setting is being applied: the row shows "Applying…" and its switch
+     * cannot be tapped again. On the way back, [onFeatureStates] repaints from the buds' own values.
+     */
+    override fun onSettingBusy(key: Int, on: Boolean) {
+        val gameId = Capabilities.gameModeId(this)
+        if (key != Feature.HIRES_CODEC && key != gameId) return
+        val isHires = key == Feature.HIRES_CODEC
+        val sw = if (isHires) hiresSwitch else gameSwitch
+        val sub = if (isHires) hiresSubtitle else gameSubtitle
+        if (on) {
+            sw?.isEnabled = false
+            sub?.setText(R.string.feature_applying)
+            return
+        }
+        onFeatureStates(manager.featureStates)
+        if (isHires) {
+            // onFeatureStates returns early while disconnected: take "Applying…" away by hand.
+            if (connectedUi == false) sub?.setText(R.string.row_hires_sub_off)
+            return
+        }
+        sub?.setText(R.string.row_game_sub)
+        // The switch stayed where the tap left it: put back the buds' state from the store.
+        gameSwitch?.let { setSwitchFromBuds(it, gameModeOn) }
+        gameSwitch?.isEnabled = connectedUi != false
     }
 
     override fun onCapabilities() { showModelName(); relayoutIfSupportChanged(); scheduleAskTest() }
