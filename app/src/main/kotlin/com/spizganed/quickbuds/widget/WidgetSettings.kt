@@ -5,6 +5,7 @@ import com.spizganed.quickbuds.R
 import com.spizganed.quickbuds.protocol.AncModes
 import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.Feature
+import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.ui.ThemeRes
 
 /**
@@ -141,11 +142,12 @@ object WidgetSettings {
     /** The connected buds have button [key]. */
     fun available(c: Context, key: String): Boolean {
         val anc = AncModes.of(c)
+        val ancCmd = Capabilities.supports(c, OpoProtocol.CMD_SET_ANC)
         return when (key) {
-            "anc" -> ancPicker(c).isNotEmpty()
-            "trans", "adapt" -> anc.supports(MODES.first { it.key == key }.store)
-            "off" -> !anc.isEmpty
-            "ll" -> true
+            "anc" -> ancCmd && ancPicker(c).isNotEmpty()
+            "trans", "adapt" -> ancCmd && anc.supports(MODES.first { it.key == key }.store)
+            "off" -> ancCmd && !anc.isEmpty
+            "ll" -> Capabilities.hasFeature(c, Capabilities.gameModeId(c))
             "wind" -> Capabilities.offered(c, Feature.WIND_NOISE, "windMode")
             else -> false
         }
