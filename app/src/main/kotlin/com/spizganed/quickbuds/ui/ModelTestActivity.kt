@@ -277,7 +277,7 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
         val s = state ?: return null
         val model = ModelCatalog.current(this) ?: return null
         return ProblemReport.Report(model.name, listOf(ModelTest.CATEGORY),
-            ModelTest.description(s, features, "Android"), ProblemReport.log(this), false)
+            ModelTest.description(s, features, "Android", ModelTest.diff(this, s)), ProblemReport.log(this), false)
     }
 
     private fun preview() {
@@ -291,6 +291,10 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
 
     private fun submit() {
         if (!ready()) return
+        val s = state ?: return
+        if (ModelCatalog.current(this) == null) return
+        // The machine-readable line goes in first, so the log this report sends carries it.
+        PacketLogger.log(ModelTest.jsonLine(this, s, features, PacketLogger.getFileContent()))
         val r = report() ?: return
         sending = true
         send.setText(R.string.problem_sending)

@@ -2,10 +2,13 @@ package com.spizganed.quickbuds.ui
 
 import android.content.Context
 import com.spizganed.quickbuds.R
+import com.spizganed.quickbuds.bluetooth.BudsConnectionManager
 import com.spizganed.quickbuds.protocol.AncModes
 import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.RowRules
+import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -55,6 +58,103 @@ object ModelTest {
         Triple("features", R.string.test_check_features, "feature list"),
         Triple("states", R.string.test_check_states, "feature states"),
     )
+
+    /** The start of the machine-readable line. The Worker and `scripts/import-model-test.py` find the JSON after it. */
+    const val JSON_PREFIX = "MODEL TEST JSON "
+
+    /**
+     * The one machine-readable line of this test, for the packet log. It carries the model, the firmware,
+     * the two replies that decide the rows, the rows the app showed and expected, the marks, and the commands
+     * the app did not decode. A report then needs no heuristics: `scripts/import-model-test.py` reads this line
+     * and makes a row fixture from it.
+     */
+    fun jsonLine(c: Context, s: State, features: List<Feature>, log: String): String = jsonLine(
+        id = prefs(c).getString(Capabilities.KEY_PRODUCT_ID, null).orEmpty(),
+        name = ModelCatalog.current(c)?.name ?: "unknown model",
+        firmware = prefs(c).getString(BudsConnectionManager.KEY_FIRMWARE, null).orEmpty(),
+        caps = Capabilities.commands(c).orEmpty(),
+        status = Capabilities.reply(c).orEmpty(),
+        shown = features.map { it.key },
+        expected = MainActivity.rowsOf(c),
+        marks = features.mapNotNull { f -> s.marks[f.key]?.let { f.key to it } }.toMap(),
+        unknownRx = unknownRx(log)
+    )
+
+    /** [jsonLine] from plain values, so a unit test can call it. `caps` and `status` are sorted; `marks` keeps its order. */
+    fun jsonLine(
+        id: String, name: String, firmware: String, caps: Set<Int>, status: Map<Int, Int>,
+        shown: List<String>, expected: Set<String>, marks: Map<String, String>, unknownRx: Set<Int>
+    ): String = JSON_PREFIX + JSONObject()
+        .put("id", id)
+        .put("name", name)
+        .put("fw", firmware)
+        .put("caps", caps.sorted().joinToString(" ") { "%04X".format(it) })
+        .put("status", JSONObject(status.toSortedMap().mapKeys { "%02X".format(it.key) }))
+        .put("shown", JSONArray(shown))
+        .put("expected", JSONArray(expected.sorted()))
+        .put("marks", JSONObject(marks))
+        .put("unknownRx", JSONArray(unknownRx.sorted().map { "0x%04X".format(it) }))
+
+    /**
+     * The command ids of the `UNATTR RX:` lines in [log]: frames the app does not decode. The line is written by
+     * `BudsConnectionManager.noteUnattributed`; this only reads it back.
+     */
+    fun unknownRx(log: String): Set<Int> = log.lineSequence()
+        .mapNotNull { UNATTR.find(it)?.groupValues?.get(1)?.toInt(16) }
+        .toSet()
+
+    private val UNATTR = Regex("UNATTR RX: cmd=0x([0-9A-Fa-f]{4})")
+
+    /** The row key of a feature key, where the two differ. A feature without a row (battery) is absent. */
+    private val ROW_KEY = mapOf(
+        "wind" to RowRules.WIND, "game" to RowRules.GAME, "hires" to RowRules.HIRES,
+        "spatial" to RowRules.SPATIAL, "golden" to RowRules.GOLDEN, "eq" to RowRules.EQ,
+        "dual" to RowRules.DUAL, "anc" to RowRules.ANC, "gestures" to RowRules.CONTROLS,
+        "wear" to RowRules.WEAR, "find" to RowRules.FIND,
+    )
+
+    /**
+     * What the buds' answers do not match ([diff]):
+     *  - `missing`: a switch the app asked for in `0x010D`, and the reply did not list;
+     *  - `extra`: a switch in the reply that the app did not ask for;
+     *  - `hidden`: a feature the person marked `works`, but the app showed no row for it. The row rule then hides
+     *    something that works.
+     */
+    class Diff(val missing: List<Int>, val extra: List<Int>, val hidden: List<String>) {
+
+        val empty: Boolean get() = missing.isEmpty() && extra.isEmpty() && hidden.isEmpty()
+
+        /** One line for the report's description, in English for the developer. */
+        fun text(): String = listOfNotNull(
+            missing.takeIf { it.isNotEmpty() }?.let { "asked, no answer: " + it.joinToString(" ") { "0x%02X".format(it) } },
+            extra.takeIf { it.isNotEmpty() }?.let { "answered, not asked: " + it.joinToString(" ") { "0x%02X".format(it) } },
+            hidden.takeIf { it.isNotEmpty() }?.let { keys ->
+                "marked works, no row: " + FEATURES.filter { it.key in keys }.joinToString(", ") { it.english }
+            },
+        ).joinToString("; ")
+    }
+
+    /** [diff] from the saved replies and the marks of the test in progress. */
+    fun diff(c: Context, s: State): Diff = diff(
+        ModelCatalog.current(c)?.json, Capabilities.reply(c), Capabilities.commands(c),
+        AncModes.of(c).slots().takeIf { it.isNotEmpty() }, s.marks
+    )
+
+    /** [diff] from plain values, so a unit test can call it. */
+    fun diff(
+        model: JSONObject?, reply: Map<Int, Int>?, bitmap: Set<Int>?, productAnc: Map<String, Int>?,
+        marks: Map<String, String>
+    ): Diff {
+        val asked = RowRules.liveAskIds(model, bitmap)
+        val rows = RowRules.rows(model, reply, bitmap, productAnc)
+        return Diff(
+            missing = reply?.keys?.let { answered -> asked.filter { it !in answered }.sorted() }.orEmpty(),
+            extra = reply?.keys?.filter { it !in asked }?.sorted().orEmpty(),
+            hidden = FEATURES.filter { marks[it.key] == WORKS }
+                .filter { ROW_KEY[it.key]?.let { row -> row !in rows } == true }
+                .map { it.key }
+        )
+    }
 
     /** The test in progress, as JSON: model id, checks, marks and notes. Kept while the person tries features. */
     private const val KEY_STATE = "modelTestState"
@@ -112,8 +212,8 @@ object ModelTest {
         mark != BROKEN || !s.notes[f.key].isNullOrBlank()
     }
 
-    /** The report's description, in English for the developer: the check, then one line per feature. */
-    fun description(s: State, features: List<Feature>, platform: String): String {
+    /** The report's description, in English for the developer: the check, the diagnosis, then one line per feature. */
+    fun description(s: State, features: List<Feature>, platform: String, diff: Diff): String {
         val check = CHECKS.joinToString(", ") { (key, _, name) ->
             "$name ${if (s.checks[key] == true) "answered" else "no answer"}"
         }
@@ -124,7 +224,8 @@ object ModelTest {
                 else -> "${f.english}: skipped"
             }
         }
-        return (listOf("Model test ($platform)", "Automatic check: $check") + lines).joinToString("\n")
+        val diagnosis = listOfNotNull(diff.takeIf { !it.empty }?.let { "Diagnosis: " + it.text() })
+        return (listOf("Model test ($platform)", "Automatic check: $check") + diagnosis + lines).joinToString("\n")
     }
 
     private fun prefs(c: Context) = c.getSharedPreferences(ThemeRes.PREFS_NAME, Context.MODE_PRIVATE)
