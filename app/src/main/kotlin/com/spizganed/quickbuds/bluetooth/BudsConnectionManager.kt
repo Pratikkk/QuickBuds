@@ -587,21 +587,6 @@ class BudsConnectionManager(private val context: Context) {
         sendRaw(OpoProtocol.anc(bit),"ANC $mode")
     }
 
-    /** Writes, then reads the state back: models that do not push `GAME EVT` still show the real state. */
-    fun setGameMode(on: Boolean) {
-        Thread {
-            try {
-                notePending(Capabilities.gameModeId(context), on)
-                sendRawBlocking(OpoProtocol.setFeature(Capabilities.gameModeId(context), on),"GameMode")
-                // The buds apply the switch about a second after the ack (the push `0x0204` 05 confirms it): an earlier read returns the old value and the switch jumps back. [CAPTURE] 2026-10-20, Buds 4.
-                Thread.sleep(VERIFY_DELAY_MS)
-                sendRawBlocking(statusQuery(), "verify features")
-            } catch (e: Exception) {
-                log("GAME MODE write failed: ${e.message}")
-            }
-        }.start()
-    }
-
     private val pending = java.util.concurrent.ConcurrentHashMap<Int, Pair<Int, Long>>()
 
     /** The feature id of each `0x0403` write by sequence byte, so a refusal in the log names its switch. */
@@ -1957,7 +1942,7 @@ class BudsConnectionManager(private val context: Context) {
         }
 
         // --- Game mode changed on the buds: 0x0204 spontaneous event, subType 0x05 ---
-        // Raised for BOTH our own setGameMode() and the user's buds gesture, so this
+        // Raised for BOTH our own game-mode write and the user's buds gesture, so this
         // is what keeps the widget/app buttons honest. Previously this frame fell
         // through to the battery checks below, matched neither, and was discarded —
         // which is why the buttons never updated after a gesture.
@@ -2011,21 +1996,6 @@ class BudsConnectionManager(private val context: Context) {
         GestureConfigStore.syncFromDevice(context, table)
         OnCallConfigStore.syncFromDevice(context, table)
         GestureConfigStore.syncHoldFromDevice(context, table, lastHoldAncMasks)
-    }
-
-    private fun eqChanged() {
-        log("EQ: current=$eqCurrent bassWave=$bassWaveLevel custom=" +
-            eqCustom.joinToString { "${it.id}:${it.name}${if (it.selected) "*" else ""}${it.gains}" })
-        handler.post { listeners.forEach { it.onEqState() } }
-    }
-
-    private fun onWear(left: Int?, right: Int?, case: Int?, fromEvent: Boolean) {
-        if (left != null) lastLeftStatus = left
-        if (right != null) lastRightStatus = right
-        if (case != null) lastCaseStatus = case
-        caseClosing = fromEvent && case == 0 && left == 0 && right == 0
-        log("WEAR ${if (fromEvent) "EVT" else "QRY"}: L=${wearLabel(lastLeftStatus)} R=${wearLabel(lastRightStatus)} case=${wearLabel(lastCaseStatus)}")
-        handler.post { listeners.forEach { it.onWearState(lastLeftStatus, lastRightStatus, lastCaseStatus) } }
     }
 
     private fun emitBattery() {

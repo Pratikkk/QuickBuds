@@ -448,7 +448,7 @@ class BudsService : Service(), BudsConnectionManager.Listener {
     /**
      * Game mode changed ON THE BUDS (0x0204 subType 0x05).
      *
-     * This fires for our own setGameMode() AND for the user's buds gesture, so it is
+     * This fires for our own game-mode write AND for the user's buds gesture, so it is
      * the authoritative state. Persisting it here is all that is needed to refresh
      * BOTH UIs: the widget renders from this store, and MainActivity re-renders via
      * its WidgetStateStore listener — no view code has to know about this event.
