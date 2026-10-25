@@ -8,7 +8,7 @@ use crate::{motion, t, App, Page};
 #[path = "home/mod.rs"]
 pub mod home;
 
-use eframe::egui::{self, Align2, Pos2, Rect, Ui, Vec2};
+use eframe::egui::{self, Align2, FontId, Pos2, Rect, Ui, Vec2};
 
 /// A fixed snapshot of Buds 4 for screenshots and UI tests (`QB_DEMO=1`): no link, no settings written.
 /// It is the state of the Glass capture: Left 90% in ear, Case 80%, Right 90% out of ear.
@@ -77,7 +77,7 @@ pub fn show(app: &mut App, ui: &mut Ui) {
             match app.page { Page::Dual => crate::dual::opened(app), Page::Earbuds => app.send(Cmd::EarbudReads), Page::Gestures => crate::gestures::opened(app), Page::Hearing => crate::hearing::opened(app), _ => {} }
         }
     }
-    if matches!(app.page, Page::Overview | Page::Eq | Page::Dual | Page::Earbuds | Page::Dev | Page::Gestures | Page::Hearing | Page::Settings | Page::Models | Page::Appearance | Page::Issues | Page::About | Page::Language) {
+    if matches!(app.page, Page::Overview | Page::Eq | Page::Dual | Page::Earbuds | Page::Dev | Page::Gestures | Page::Hearing | Page::Settings | Page::Models | Page::Appearance | Page::Issues | Page::About | Page::Language | Page::Setup | Page::Layout | Page::PresetEdit | Page::Test | Page::Feedback | Page::Update) {
         // A page scrolls when it is taller than the window: a child ui clipped to the body.
         // Page motion (DESIGN §5): a child page rises and fades in; Home comes back with a small scale.
         let key = egui::Id::NULL.with(("page", app.page_seq));
@@ -103,6 +103,12 @@ pub fn show(app: &mut App, ui: &mut Ui) {
             Page::Issues => crate::issues::show(app, &mut page, shifted),
             Page::About => crate::about::show(app, &mut page, shifted),
             Page::Language => crate::language::show(app, &mut page, shifted),
+            Page::Setup => crate::setup::show(app, &mut page, shifted),
+            Page::Layout => crate::layout::show(app, &mut page, shifted),
+            Page::PresetEdit => crate::preset_edit::show(app, &mut page, shifted),
+            Page::Test => crate::test::show(app, &mut page, shifted),
+            Page::Feedback => crate::feedback::show(app, &mut page, shifted),
+            Page::Update => crate::update::show(app, &mut page, shifted),
             _ => home::show(app, &mut page, shifted),
         };
         // A page that shrinks (the EQ editor closes) eases the scroll back instead of snapping.
@@ -122,6 +128,25 @@ fn header(app: &mut App, ui: &mut Ui, c: Rect) {
     let strip = Rect::from_min_max(Pos2::new(c.left(), c.top() - 16.0), Pos2::new(c.right(), c.top() + 44.0));
     let drag = ui.interact(strip, ui.scope_id().with("drag-header"), egui::Sense::click_and_drag());
     if drag.drag_started_by(egui::PointerButton::Primary) { ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag); }
+    // The setup guide has its own bar: no back arrow and no title above it.
+    if app.page == Page::Setup { return; }
+    // Home layout keeps the phone's header: Cancel, the title, Apply.
+    if app.page == Page::Layout {
+        let accent = crate::palette::active(crate::palette::is_light_system(ui.ctx()), app.style == glass::style::Style::Material).accent;
+        let cancel = Rect::from_min_size(c.min, Vec2::new(72.0, 44.0));
+        if glass::button_at(ui, "layout-cancel", cancel, 22.0, false).clicked() { crate::layout::cancel(app); return; }
+        glass::text(ui, cancel.center(), Align2::CENTER_CENTER, t(&app.tr, "layout_cancel"), 15.0, 1.0);
+        let w = 108.0;
+        let apply = Rect::from_min_size(Pos2::new(c.right() - w, c.top()), Vec2::new(w, 44.0));
+        if glass::button_at(ui, "layout-apply", apply, 22.0, true).clicked() { crate::layout::apply(app); return; }
+        ui.painter().rect_filled(apply.shrink(0.5), 22.0, accent);
+        ui.painter().text(apply.center(), Align2::CENTER_CENTER, t(&app.tr, "layout_done"), FontId::proportional(15.0), glass::on_accent());
+        let clip = Rect::from_min_max(Pos2::new(cancel.right() + 8.0, c.top()), Pos2::new(apply.left() - 8.0, c.top() + 44.0));
+        let mut size = 19.0;
+        while size > 15.0 && ui.painter().layout_no_wrap(t(&app.tr, "layout_title").to_string(), FontId::proportional(size), white(1.0)).size().x > clip.width() { size -= 1.0; }
+        ui.painter().with_clip_rect(clip).text(clip.center(), Align2::CENTER_CENTER, t(&app.tr, "layout_title"), FontId::proportional(size), white(1.0));
+        return;
+    }
     // Home has the phone's header: model button, connection pill, an empty title, dev tools, settings.
     if app.page == Page::Overview {
         home::header(app, ui, c);

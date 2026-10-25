@@ -46,7 +46,8 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let (h, clicked, _) = ui::row_card(ui, "theme", x0, y, w, Some(icons::PALETTE), t(&tr, "theme_title"), &preset, Trail::Chevron, true);
     if clicked { go = Some(Page::Appearance); }
     y += h + 8.0;
-    let (h, _, _) = ui::row_card(ui, "layout", x0, y, w, Some(icons::LAYOUT), t(&tr, "settings_layout_title"), t(&tr, "settings_layout_sub"), Trail::Chevron, true);
+    let (h, clicked, _) = ui::row_card(ui, "layout", x0, y, w, Some(icons::LAYOUT), t(&tr, "settings_layout_title"), t(&tr, "settings_layout_sub"), Trail::Chevron, true);
+    if clicked { go = Some(Page::Layout); }
     y += h;
 
     // General.
@@ -81,18 +82,22 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     if toggled { save_setting("usage_ping", (!ping).into()); }
     y += h + 8.0;
 
-    let (h, _, _) = ui::row_card(ui, "setup", x0, y, w, Some(icons::INFO), t(&tr, "settings_setup_title"), "", Trail::Chevron, true);
+    let (h, clicked, _) = ui::row_card(ui, "setup", x0, y, w, Some(icons::INFO), t(&tr, "settings_setup_title"), "", Trail::Chevron, true);
+    if clicked { app.setup.page = 0; app.page = Page::Setup; }
     y += h;
 
     // App.
     ui::section(ui, x0, y, t(&tr, "settings_app"), accent);
     y += phone::SECTION;
     let installed = t(&tr, "settings_update_sub").replace("%1$s", env!("CARGO_PKG_VERSION"));
-    let (h, _, _) = ui::row_card(ui, "update", x0, y, w, Some(icons::UPDATE), t(&tr, "row_update_title"), &installed, Trail::Chevron, true);
+    let (h, clicked, _) = ui::row_card(ui, "update", x0, y, w, Some(icons::UPDATE), t(&tr, "row_update_title"), &installed, Trail::Chevron, true);
+    if clicked { go = Some(Page::Update); }
     y += h + 8.0;
-    let (h, _, _) = ui::row_card(ui, "test", x0, y, w, Some(icons::EARBUD), t(&tr, "test_title"), t(&tr, "test_sub"), Trail::Chevron, true);
+    let (h, clicked, _) = ui::row_card(ui, "test", x0, y, w, Some(icons::EARBUD), t(&tr, "test_title"), t(&tr, "test_sub"), Trail::Chevron, true);
+    if clicked { go = Some(Page::Test); }
     y += h + 8.0;
-    let (h, _, _) = ui::row_card(ui, "feedback", x0, y, w, Some(icons::DEV_TOOLS), t(&tr, "problem_title"), t(&tr, "problem_sub"), Trail::Chevron, true);
+    let (h, clicked, _) = ui::row_card(ui, "feedback", x0, y, w, Some(icons::DEV_TOOLS), t(&tr, "problem_title"), t(&tr, "problem_sub"), Trail::Chevron, true);
+    if clicked { go = Some(Page::Feedback); }
     y += h + 8.0;
     let (h, clicked, _) = ui::row_card(ui, "about", x0, y, w, Some(icons::INFO), t(&tr, "settings_about_title"), t(&tr, "settings_about_sub"), Trail::Chevron, true);
     if clicked { go = Some(Page::About); }

@@ -54,7 +54,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let tr = app.tr.clone();
     let w = phone::content(body);
     let x0 = body.left();
-    let mut y = body.top() + 16.0;
+    let mut y = body.top() + 12.0;
 
     let hint_h = phone::wrap_height(ui, t(&tr, "layout_hint"), 13.0, w - 8.0).max(16.0);
     phone::paragraph(ui, Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, hint_h + 4.0)), t(&tr, "layout_hint"), 13.0, white(0.74), false);
