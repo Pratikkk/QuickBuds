@@ -3,9 +3,7 @@
 // It stores only reports the apps would send: a known model, a description and, when a log is on, frames from the buds.
 import catalog from "../../app/src/main/assets/models.json";
 import { latest } from "./update.js";
-
-// The cron fills the digest queue, and the queue consumer posts to Discord.
-export { scheduled, queue } from "./digest.js";
+import { scheduled as digestScheduled, queue as digestQueue } from "./digest.js";
 
 const MODELS = new Set(catalog.whiteList.map((m) => m.name.toLowerCase()));
 // "Test": a model test (Test my earbuds). It always carries the log.
@@ -17,6 +15,10 @@ const PER_HOUR = 5; // reports per sender
 const RX_FRAME = /\bRX(\[batch\])?:?\s+AA\b/i;
 
 export default {
+  // The cron fills the digest queue, and this handler posts each report to Discord.
+  scheduled: digestScheduled,
+  queue: digestQueue,
+
   async fetch(req, env) {
     const url = new URL(req.url);
     if (req.method === "POST" && url.pathname === "/report") return report(req, env);
