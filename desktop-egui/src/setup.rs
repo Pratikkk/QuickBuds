@@ -226,7 +226,10 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         }
     }
 
-    // The fixed bar: Back / Skip, the dots, Next / Done.
+    // The fixed bar: Back / Skip, the dots, Next / Done. It sits at the body bottom edge, outside the page's clip.
+    let mut bar = ui.new_child(egui::UiBuilder::new().max_rect(Rect::from_min_size(Pos2::new(body.left(), bar_y), Vec2::new(body.width(), BAR))));
+    bar.set_clip_rect(ui.clip_rect());
+    let p = &mut bar;
     let left = t(&tr, if page == 0 { "setup_skip" } else { "setup_back" });
     let right = t(&tr, if page == 9 { "welcome_done" } else { "setup_next" });
     let rw = (right.chars().count() as f32 * 8.5 + 36.0).max(72.0);

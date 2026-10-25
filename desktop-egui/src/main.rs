@@ -270,6 +270,11 @@ impl App {
             disconnect_ask: false, style: glass::style::Style::Glass, style_for: false,
         };
         app.reload_style(&cc.egui_ctx);
+        // First start: the guide runs before Home, as on the phone.
+        if !demo && !load_settings()["setup_done"].as_bool().unwrap_or(false) {
+            app.page = Page::Setup;
+            app.shown_page = Page::Setup;
+        }
         // A page at start, for screenshots: QB_PAGE=appearance, issues, about, language or settings.
         if let Some(p) = std::env::var("QB_PAGE").ok().and_then(|k| page_from_key(&k)) {
             app.page = p;
