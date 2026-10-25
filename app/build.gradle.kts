@@ -70,6 +70,15 @@ android {
         generateLocaleConfig = true
     }
 
+    // Every language goes into the base module of the AAB. A language split makes the Play Store install
+    // one language, and the in-app picker then has no other language to show. The APK keeps all languages
+    // already, so this changes the AAB only.
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
