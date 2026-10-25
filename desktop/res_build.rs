@@ -19,6 +19,7 @@ const ICONS: &[&str] = &[
 
 const STRINGS: &[&str] = &[
     "theme_title", "theme_builtin", "theme_auto", "theme_auto_sub", "theme_oled_black", "theme_classic_dark", "theme_white",
+    "glass_bg_midnight", "glass_bg_aurora", "glass_bg_sunset", "glass_bg_ocean", "glass_bg_accent", "glass_bg_none",
     "theme_accent", "theme_custom", "theme_new", "theme_new_sub", "theme_new_sub_one", "theme_new_full", "theme_footer",
     "theme_new_name", "theme_copy_name", "theme_edit", "preset_title", "preset_name", "preset_preview", "preset_colors",
     "preset_duplicate", "preset_delete", "preset_delete_title", "preset_delete_active", "token_background", "token_card",

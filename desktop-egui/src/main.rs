@@ -32,6 +32,8 @@ mod models;
 mod settings;
 mod overview;
 mod palette;
+mod token_sheet;
+mod tokens;
 
 pub use buds_core::{cmd, msg, wire};
 
@@ -246,6 +248,10 @@ impl eframe::App for App {
 }
 
 fn main() -> eframe::Result {
+    // The token sheet: the built-in colours of every style and theme, for comparison with the phone.
+    if std::env::args().skip(1).any(|a| a == "--tokens") {
+        return token_sheet::run();
+    }
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1180.0, 760.0])
