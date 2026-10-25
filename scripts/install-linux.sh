@@ -10,6 +10,7 @@ bin="$HOME/.local/bin"
 menu="$HOME/.local/share/applications"
 icons="$HOME/.local/share/icons/hicolor/scalable/apps"
 url="https://github.com/spizganed/QuickBuds/releases/latest/download/QuickBuds-linux-x64.AppImage"
+sums_url="https://github.com/spizganed/QuickBuds/releases/latest/download/SHA256SUMS"
 
 if [ "${1:-}" = uninstall ]; then
   rm -rf "$app" "$bin/quickbuds" "$menu/quickbuds.desktop" "$icons/quickbuds.svg"
@@ -23,9 +24,16 @@ command -v bluetoothctl >/dev/null 2>&1 || echo "Warning: BlueZ (bluetoothctl) i
 
 mkdir -p "$app" "$bin" "$menu" "$icons"
 tmp=$(mktemp)
-trap 'rm -f "$tmp"' EXIT
+sums=$(mktemp)
+trap 'rm -f "$tmp" "$sums"' EXIT
 echo "Downloading QuickBuds..."
 curl -fL --progress-bar -o "$tmp" "$url"
+curl -fsSL -o "$sums" "$sums_url"
+name=QuickBuds-linux-x64.AppImage
+want=$(awk -v n="$name" '$2 == n { print $1 }' "$sums")
+[ -n "$want" ] || { echo "SHA256SUMS has no line for $name." >&2; exit 1; }
+got=$(sha256sum "$tmp" | awk '{ print $1 }')
+[ "$got" = "$want" ] || { echo "The download does not match SHA256SUMS. Installed nothing." >&2; exit 1; }
 chmod +x "$tmp"
 mv "$tmp" "$app/QuickBuds.AppImage"
 
