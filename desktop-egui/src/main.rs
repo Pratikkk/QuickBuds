@@ -24,12 +24,14 @@ mod about;
 mod appearance;
 mod dev;
 mod dual;
+mod feedback;
 mod earbuds;
 mod eq;
 mod fonts;
 mod gestures;
 mod issues;
 mod language;
+mod layout;
 mod glass;
 mod hearing;
 mod models;
@@ -38,8 +40,13 @@ mod overview;
 mod settings;
 mod palette;
 mod phone;
+mod preset_edit;
+mod setup;
+mod sheets;
+mod test;
 mod token_sheet;
 mod tokens;
+mod update;
 
 pub use buds_core::{cmd, msg, wire};
 
@@ -150,7 +157,10 @@ pub fn t<'a>(tr: &'a [String], key: &str) -> &'a str {
 // ---- app ----
 
 #[derive(Clone, Copy, PartialEq)]
-pub enum Page { Overview, Eq, Gestures, Hearing, Dual, Earbuds, Models, Settings, Appearance, Issues, About, Language, Dev }
+pub enum Page {
+    Overview, Eq, Gestures, Hearing, Dual, Earbuds, Models, Settings, Appearance, Issues, About, Language, Dev,
+    Setup, Layout, PresetEdit, Test, Feedback, Update,
+}
 
 /// The page named by `QB_PAGE`, for screenshots.
 fn page_from_key(key: &str) -> Option<Page> {
@@ -161,6 +171,12 @@ fn page_from_key(key: &str) -> Option<Page> {
         "issues" => Page::Issues,
         "about" => Page::About,
         "language" => Page::Language,
+        "setup" => Page::Setup,
+        "layout" => Page::Layout,
+        "preset" => Page::PresetEdit,
+        "test" => Page::Test,
+        "feedback" => Page::Feedback,
+        "update" => Page::Update,
         _ => return None,
     })
 }
@@ -214,6 +230,15 @@ pub struct App {
     /// What the style was last made for: (system light, saved settings stamp).
     style_for: bool,
     pub hearing: hearing::State,
+    pub setup: setup::State,
+    pub layout: layout::State,
+    pub preset: preset_edit::State,
+    pub test: test::State,
+    pub feedback: feedback::State,
+    pub update: update::State,
+    pub sheets: sheets::State,
+    /// The disconnect pill asked; Cancel keeps the link.
+    pub disconnect_ask: bool,
 }
 
 /// A write that waits for the user's accept: the buds reconnect, or it makes a sound in the ears.
@@ -238,13 +263,19 @@ impl App {
         let glow = load_settings()["glass_gradient"].as_bool().unwrap_or(true);
         let mut app = Self {
             snap: Snapshot::default(), tx, tr: translations(chosen_locale()), inbox, page: Page::Overview, has: Has::ALL,
-            modes: AncModes::default(), last_level: None, levels_open: false, glow, demo, confirm: None, scroll: 0.0, shown_page: Page::Overview, page_seq: 0, page_since: std::time::Instant::now(), eq: Default::default(), dual: Default::default(), earbuds: Default::default(), dev: Default::default(), gestures: Default::default(), settings: Default::default(), appearance: Default::default(), hearing: Default::default(), style: glass::style::Style::Glass, style_for: false,
+            modes: AncModes::default(), last_level: None, levels_open: false, glow, demo, confirm: None, scroll: 0.0, shown_page: Page::Overview, page_seq: 0, page_since: std::time::Instant::now(), eq: Default::default(), dual: Default::default(), earbuds: Default::default(), dev: Default::default(), gestures: Default::default(), settings: Default::default(), appearance: Default::default(), hearing: Default::default(), setup: Default::default(), layout: Default::default(), preset: Default::default(),
+            test: Default::default(), feedback: Default::default(), update: Default::default(), sheets: Default::default(),
+            disconnect_ask: false, style: glass::style::Style::Glass, style_for: false,
         };
         app.reload_style(&cc.egui_ctx);
         // A page at start, for screenshots: QB_PAGE=appearance, issues, about, language or settings.
         if let Some(p) = std::env::var("QB_PAGE").ok().and_then(|k| page_from_key(&k)) {
             app.page = p;
             app.shown_page = p;
+        }
+        if let Ok(n) = std::env::var("QB_SETUP") { if let Ok(i) = n.parse::<usize>() { app.setup.page = i.min(9); } }
+        if let Ok(key) = std::env::var("QB_SHEET") {
+            sheets::debug_open(&mut app, &key);
         }
         app
     }
@@ -288,6 +319,7 @@ impl eframe::App for App {
         if self.style == glass::style::Style::Glass { appearance::window(ui); }
         overview::show(self, ui);
         appearance::sheet(self, ui);
+        sheets::show(self, ui);
     }
 }
 

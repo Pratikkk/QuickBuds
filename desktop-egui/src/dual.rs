@@ -16,6 +16,7 @@ pub struct State {
     /// The device the connect / disconnect question is about (index into the shown rows).
     ask: Option<usize>,
     choosing: bool,
+    pub add: bool,
 }
 
 /// A device-manager function of this model (`multiConnect`), on buds that take `0x0429`.
@@ -66,6 +67,29 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
             if clicked && can { app.dual.ask = Some(i); }
         }
         y += card.height() + 18.0;
+    }
+
+    if manages {
+        let r = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 56.0));
+        glass::flat_at(ui, r, 16.0, 1.0);
+        let hit = ui.interact(r, ui.scope_id().with("dual-add"), egui::Sense::click());
+        glass::text(ui, Pos2::new(r.left() + 53.7, r.center().y), Align2::LEFT_CENTER, t(&tr, "dual_add_title"), 16.0, 1.0);
+        glass::icon_at(ui, crate::icons::PLUS, Rect::from_center_size(Pos2::new(r.left() + 16.0 + 11.0, r.center().y), Vec2::splat(22.0)), white(0.85));
+        glass::icon_at(ui, crate::icons::CHEVRON_RIGHT, Rect::from_center_size(Pos2::new(r.right() - 16.0 - 11.0, r.center().y), Vec2::splat(22.0)), white(0.7));
+        if hit.hovered() { ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand); }
+        if hit.clicked() { app.dual.add = true; }
+        y += 56.0 + 18.0;
+    }
+
+    if app.dual.add {
+        let mut decision = None;
+        let open = crate::settings::sheets::sheet(ui.ctx(), "dual-add", t(&tr, "dual_add_title"), crate::settings::sheets::Title::Centre,
+            Vec2::new(crate::settings::sheets::WIDTH, 224.8), |ui, inner| {
+                let msg = Rect::from_min_max(inner.min + Vec2::new(14.0, 4.0), Pos2::new(inner.right() - 14.0, inner.bottom() - 66.0));
+                crate::phone::paragraph(ui, msg, t(&tr, "dual_add_message"), 14.0, white(0.80), false);
+                decision = crate::settings::sheets::actions(ui, inner, "", t(&tr, "dual_add_ok"));
+            });
+        if decision.is_some() || !open { app.dual.add = false; }
     }
 
     if has(&s, "setPriorityDevice") {

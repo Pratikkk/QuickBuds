@@ -139,7 +139,9 @@ fn header(app: &mut App, ui: &mut Ui, c: Rect) {
     let title = t(&app.tr, match app.page { Page::Eq => "eq_title", Page::Gestures => "gesture_title", Page::Hearing => "row_golden_title", Page::Dual => "dual_title",
         Page::Earbuds | Page::Models => "earbuds_title", Page::Settings => "settings_title", Page::Dev => "action_dev_tools",
         Page::Appearance => "theme_title", Page::Issues => "settings_issues_title", Page::About => "settings_about_title", Page::Language => "settings_language_title",
-        Page::Overview => "earbuds_title" });
+        Page::Test => "test_title", Page::Feedback => "problem_title", Page::Update => "update_title",
+        Page::PresetEdit => "preset_title", Page::Layout => "layout_title",
+        Page::Overview | Page::Setup => "earbuds_title" });
     // The phone has no close button in a page header; the window closes with the desktop's own shortcut.
     let right = c.right() - 12.0;
     // The title stops at the right-hand controls instead of running under them; it shrinks to fit first.

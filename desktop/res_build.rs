@@ -14,7 +14,7 @@ const ICONS: &[&str] = &[
     "ic_layout", "ic_equalizer", "ic_gesture", "ic_hearing", "ic_devices", "ic_settings_cog", "ic_dev_tools",
     "ic_chevron_right", "ic_anc", "ic_plus", "ic_volume", "ic_power", "ic_transparency", "ic_info", "ic_find_buds", "ic_volume_off",
     "ic_tap_single", "ic_tap_double", "ic_tap_triple", "ic_hold", "ic_update", "ic_hires", "ic_spatial", "ic_language", "ic_palette",
-    "ic_pencil", "ic_copy", "ic_delete", "ic_warning", "ic_chevron_down", "ic_battery",
+    "ic_pencil", "ic_copy", "ic_delete", "ic_warning", "ic_chevron_down", "ic_battery", "ic_eye", "ic_eye_off", "ic_check",
     "ic_github", "ic_kofi", "ic_chat", "ic_launcher_foreground",
 ];
 
@@ -95,6 +95,22 @@ const STRINGS: &[&str] = &[
     "eq_natural_inspiration", "eq_reno_sunrise", "eq_punchy", "eq_spacious", "eq_reno_galaxy", "eq_ultimate",
     "eq_hd_clarity", "eq_pure_vocals", "eq_thundering_bass", "eq_pure_raw", "eq_deep_bass", "eq_pure_bass", "eq_dyn_featured", "eq_galactic", "eq_vibrant",
     "eq_dyn_vocal", "eq_clear_crisp",
+    // Setup guide, Home layout, Edit preset, Test, Feedback, App update and the sheets.
+    "welcome_title", "welcome_body", "welcome_done", "setup_look_title", "setup_look_body", "setup_perm_title",
+    "setup_perm_body", "setup_perm_bt", "setup_perm_notif", "setup_allow", "setup_allowed", "setup_earbuds_title",
+    "setup_earbuds_body", "setup_earbuds_none", "setup_earbuds_known", "setup_earbuds_unknown",
+    "setup_earbuds_connected", "setup_earbuds_disconnected", "setup_earbuds_need_bt", "setup_earbuds_pair",
+    "setup_bg_title", "setup_bg_body", "setup_battery_title", "setup_battery_sub", "setup_widgets_title",
+    "setup_widgets_body", "setup_widgets_add", "setup_feedback_title", "setup_feedback_body", "setup_issues_body",
+    "setup_ready_title", "setup_ready_body", "setup_skip", "setup_back", "setup_next",
+    "layout_title", "layout_hint", "theme_wallpaper", "theme_wallpaper_sub", "widget_name", "widget_pages_name", "about_privacy_title", "about_privacy_body", "layout_done", "layout_cancel", "layout_show", "layout_hide",
+    "test_section_diff", "test_diff_missing", "test_diff_extra", "test_diff_hidden", "test_try",
+    "problem_sent", "problem_failed", "problem_log_sub",
+    "update_unknown", "update_download", "update_downloading", "update_downloaded", "update_notes", "update_no_notes",
+    "update_permission_title", "update_permission_body", "update_permission_action",
+    "disconnect_title", "disconnect_body", "codec_dialog_deny",
+    "crash_saved_to", "crash_share", "crash_share_title", "perm_title", "perm_body", "perm_action",
+    "about_privacy_reply", "issues_dialog_body", "issues_dialog_action",
 ];
 
 fn attr<'a>(tag: &'a str, name: &str) -> Option<&'a str> {

@@ -106,7 +106,7 @@ pub fn header(app: &mut App, ui: &mut Ui, content: Rect) {
     let w = (PAD + 12.0 + 8.0 + tw + 18.0).max(129.5);
     let pill = Rect::from_min_size(Pos2::new(x, top), Vec2::new(w, 44.0));
     if glass::button_at(ui, "conn", pill, 22.0, false).clicked() {
-        app.send(if app.snap.status == Status::Off { Cmd::Connect } else { Cmd::Disconnect });
+        if app.snap.status == Status::On { app.disconnect_ask = true; } else { app.send(Cmd::Connect); }
     }
     let dot = match app.snap.status {
         Status::On => Color32::from_rgb(0x5B, 0xE4, 0x9B),
@@ -142,6 +142,7 @@ pub fn header(app: &mut App, ui: &mut Ui, content: Rect) {
 
 /// The Home page under the header. Returns the bottom of the last row.
 pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
+    disconnect_sheet(app, ui);
     let c = column(body);
     let mut y = c.top();
     let battery = Rect::from_min_size(Pos2::new(c.left(), y), Vec2::new(c.width(), BATTERY));
@@ -149,15 +150,36 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     y += BATTERY + GAP;
 
     let noise = Rect::from_min_size(Pos2::new(c.left(), y), Vec2::new(c.width(), NOISE));
-    noise_at(app, ui, noise);
+    noise_at(app, ui, noise, true);
     y += NOISE + GAP;
 
     rows(app, ui, &c, y)
 }
 
+/// The disconnect question of the connection pill (`ConfirmDialog`): Cancel keeps the link.
+fn disconnect_sheet(app: &mut App, ui: &mut Ui) {
+    if !app.disconnect_ask { return; }
+    let tr = app.tr.clone();
+    let name = if app.snap.name.is_empty() { "QuickBuds".to_string() } else { app.snap.name.clone() };
+    let title = t(&tr, "disconnect_title").replace("%1$s", &name);
+    let mut decision = None;
+    let open = crate::settings::sheets::sheet(ui.ctx(), "disconnect", &title, crate::settings::sheets::Title::Centre,
+        Vec2::new(crate::settings::sheets::WIDTH, 263.2), |ui, inner| {
+            let msg = Rect::from_min_max(inner.min + Vec2::new(14.0, 4.0), Pos2::new(inner.right() - 14.0, inner.bottom() - 66.0));
+            crate::phone::paragraph(ui, msg, t(&tr, "disconnect_body"), 14.0, white(0.80), true);
+            decision = crate::settings::sheets::actions(ui, inner, t(&tr, "dialog_cancel"), t(&tr, "conn_action_disconnect"));
+        });
+    match decision {
+        Some(true) => { app.send(Cmd::Disconnect); app.disconnect_ask = false; }
+        Some(false) => app.disconnect_ask = false,
+        None if !open => app.disconnect_ask = false,
+        None => {}
+    }
+}
+
 /// Left, case, right, at the measured heights: rings 90 dp, percentage at 131 dp, wear at 155.4 dp
 /// and the device name 10 dp under the 152 dp status block.
-fn battery_at(app: &App, ui: &Ui, r: Rect) {
+pub(crate) fn battery_at(app: &App, ui: &Ui, r: Rect) {
     glass::flat_at(ui, r, RADIUS_CARD, 1.0);
     let s = &app.snap;
     let on = s.status == Status::On;
@@ -190,9 +212,9 @@ fn battery_at(app: &App, ui: &Ui, r: Rect) {
 }
 
 /// The noise control: one plate, four segments, and a lit pill that waits for the buds' report.
-fn noise_at(app: &mut App, ui: &mut Ui, r: Rect) {
+pub(crate) fn noise_at(app: &mut App, ui: &mut Ui, r: Rect, enabled: bool) {
     glass::flat_at(ui, r, RADIUS_CARD, 1.0);
-    let on = app.snap.status == Status::On;
+    let on = app.snap.status == Status::On && enabled;
     let anc = app.snap.anc.clone().unwrap_or_default();
     let is_level = types::LEVELS.contains(&anc.as_str());
     let levels = app.modes.levels();
@@ -284,20 +306,20 @@ fn level_info(id: &str) -> (&'static str, usize) {
 
 const LEVEL_NAMES: [&str; 4] = ["anc_mode_low", "anc_mode_medium", "anc_mode_high", "anc_mode_smart"];
 
-struct Row {
-    id: &'static str,
-    icon: &'static str,
-    title: String,
-    sub: String,
-    trail: Trailing,
-    enabled: bool,
-    page: Option<Page>,
-    confirm: Option<&'static str>,
+pub(crate) struct Row {
+    pub(crate) id: &'static str,
+    pub(crate) icon: &'static str,
+    pub(crate) title: String,
+    pub(crate) sub: String,
+    pub(crate) trail: Trailing,
+    pub(crate) enabled: bool,
+    pub(crate) page: Option<Page>,
+    pub(crate) confirm: Option<&'static str>,
 }
 
 /// The phone's row rule (DESIGN §7.1): wind noise, low latency, high-quality audio and 3D audio when
 /// the buds list them, then hearing, equalizer, dual connection and earbud settings.
-fn row_list(app: &App) -> Vec<Row> {
+pub(crate) fn row_list(app: &App) -> Vec<Row> {
     let s = &app.snap;
     let on = s.status == Status::On;
     let tr = &app.tr;
@@ -347,8 +369,19 @@ fn row_list(app: &App) -> Vec<Row> {
     rows
 }
 
+/// The saved order (`home_rows`) and hidden set (`home_hidden`) applied to the supported rows.
+pub(crate) fn home_rows(app: &App) -> Vec<Row> {
+    let st = crate::load_settings();
+    let saved: Vec<&str> = st["home_rows"].as_str().unwrap_or("").split(',').filter(|s| !s.is_empty()).collect();
+    let mut rows = row_list(app);
+    rows.sort_by_key(|r| saved.iter().position(|k| *k == r.id).unwrap_or(usize::MAX));
+    let hidden: Vec<String> = st["home_hidden"].as_array().map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect()).unwrap_or_default();
+    rows.retain(|r| !hidden.iter().any(|k| k == r.id));
+    rows
+}
+
 fn rows(app: &mut App, ui: &mut Ui, c: &Rect, mut y: f32) -> f32 {
-    for r in row_list(app) {
+    for r in home_rows(app) {
         let text_w = c.width() - TEXT_X - trail_width(&r.trail);
         let sub_col = white(SECONDARY * if r.enabled { 1.0 } else { 0.5 });
         let galley = ui.painter().layout(r.sub.clone(), FontId::proportional(13.0), sub_col, text_w);

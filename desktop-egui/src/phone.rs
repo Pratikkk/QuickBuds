@@ -114,6 +114,52 @@ pub fn wrap_height(ui: &Ui, text: &str, size: f32, width: f32) -> f32 {
     ui.painter().layout(text.to_string(), FontId::proportional(size), Color32::WHITE, width).size().y
 }
 
+/// A segmented control in one 43.8 dp plate. Returns the index of a click.
+pub fn segments(ui: &mut Ui, id: &str, rect: Rect, labels: &[String], current: Option<usize>, accent: Color32) -> Option<usize> {
+    glass::flat_at(ui, rect, rect.height() / 2.0, 1.0);
+    if labels.is_empty() { return None; }
+    let step = (rect.width() - 4.0) / labels.len() as f32;
+    let mut picked = None;
+    for (i, label) in labels.iter().enumerate() {
+        let r = Rect::from_min_size(Pos2::new(rect.left() + 2.0 + step * i as f32, rect.top() + 2.0), Vec2::new(step, rect.height() - 4.0));
+        let hit = ui.interact(r, ui.scope_id().with((id, i)), Sense::click());
+        if current == Some(i) {
+            if glass::style::style() == glass::style::Style::Pixel {
+                ui.painter().rect_stroke(r, 4.0, egui::Stroke::new(1.5, accent), egui::StrokeKind::Inside);
+            } else {
+                ui.painter().rect_filled(r, r.height() / 2.0, accent);
+            }
+        } else if hit.hovered() {
+            ui.painter().rect_filled(r, r.height() / 2.0, glass::white(0.07));
+        }
+        let colour = if current != Some(i) { glass::white(0.92) } else if glass::style::style() == glass::style::Style::Pixel { accent } else { glass::on_accent() };
+        ui.painter().text(r.center(), Align2::CENTER_CENTER, label, FontId::proportional(14.0), colour);
+        if hit.hovered() { ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand); }
+        if hit.clicked() { picked = Some(i); }
+    }
+    picked
+}
+
+/// A pill button: its label centred on a glass plate, or on the accent when `primary`.
+pub fn pill(ui: &mut Ui, id: &str, rect: Rect, label: &str, primary: bool, accent: Color32) -> bool {
+    let hit = glass::button_at(ui, id, rect, rect.height() / 2.0, false);
+    if primary {
+        ui.painter().rect_filled(rect.shrink(0.5), rect.height() / 2.0, accent);
+        ui.painter().text(rect.center(), Align2::CENTER_CENTER, label, FontId::proportional(15.0), glass::on_accent());
+    } else {
+        ui.painter().text(rect.center(), Align2::CENTER_CENTER, label, FontId::proportional(15.0), glass::white(1.0));
+    }
+    if hit.hovered() { ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand); }
+    hit.clicked()
+}
+
+/// A single-line field on a 16 dp plate. Returns the response; it has `lost_focus()` when editing ends.
+pub fn field_at(ui: &mut Ui, rect: Rect, text: &mut String, max_len: usize) -> egui::Response {
+    glass::flat_at(ui, rect, 16.0, 1.0);
+    let inner = rect.shrink2(Vec2::new(16.0, 6.0));
+    ui.put(inner, egui::TextEdit::singleline(text).frame(egui::Frame::NONE).char_limit(max_len).text_color(glass::white(1.0)).align(Align2::LEFT_CENTER))
+}
+
 /// A wrapped paragraph in `rect`.
 pub fn paragraph(ui: &mut Ui, rect: Rect, text: &str, size: f32, colour: Color32, centred: bool) {
     ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
