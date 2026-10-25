@@ -53,6 +53,8 @@ object OpoProtocol {
     const val CMD_SAVE_CUSTOM_EQ = 0x0418
     const val CMD_SET_BASSWAVE_LEVEL = 0x041B
     const val CMD_EQ_CHANGED = 0x0504     // push: `<id>` after any EQ change
+    /** Feature changed, push `<count> <id> <value>...` after a [CMD_SET_FEATURE] write or a buds gesture. */
+    const val CMD_FEATURE_PUSH = 0x0503
     /** Alert-sound (prompt) volume, `[level]` 1..10. `[CAPTURE]` 2026-09-25, PROTOCOL-LEGACY.md §9. */
     const val CMD_SET_ALERT_VOLUME = 0x0427
     /** -> `0x8130` `00 <level>`. Empty payload, as HeyMelody sends it. */

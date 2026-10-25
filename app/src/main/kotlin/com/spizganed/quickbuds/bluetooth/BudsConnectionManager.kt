@@ -24,6 +24,7 @@ import com.spizganed.quickbuds.protocol.GameModeParser
 import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.Feature
+import com.spizganed.quickbuds.protocol.FeaturePushParser
 import com.spizganed.quickbuds.protocol.FeatureSync
 import com.spizganed.quickbuds.protocol.FeatureSyncConfig
 import com.spizganed.quickbuds.protocol.GoldenSound
@@ -1477,6 +1478,7 @@ class BudsConnectionManager(private val context: Context) {
             cmd == 0x812A || cmd == 0x812B || cmd == OpoProtocol.CMD_SPATIAL_TYPE_PUSH || // spatial / game sound type
             cmd == 0x811A || cmd == 0x8133 || cmd == 0x8132 || // personalized ANC, tap sensitivity, preferred device
             cmd == 0x0500 ||                             // time request from the buds, answered (answer 0500)
+            cmd == OpoProtocol.CMD_FEATURE_PUSH ||        // feature push, decoded by FeaturePushParser
             cmd in 0x8400..0x84FF ||                     // acks for 0x04xx set commands
             cmd in LogDecoder.REPLY_NAMES                // decoded elsewhere, see there
         if (explained) return
@@ -1913,6 +1915,20 @@ class BudsConnectionManager(private val context: Context) {
             }
             log("FIT: left=$left right=$right")
             handler.post { listeners.forEach { it.onFitResult(left, right) } }
+            return
+        }
+
+        // --- Feature changed: 0x0503 `<count> <id> <value>...`, [CAPTURE] reports #2 #4 #63 ---
+        // The buds send this after a 0x0403 write (before or after the ack) and on a buds gesture.
+        // It is the push that confirms a "push" write, game mode included.
+        if (cmd == OpoProtocol.CMD_FEATURE_PUSH) {
+            val pushed = FeaturePushParser.parse(payload)
+            if (pushed != null) {
+                log("FEATURE PUSH: " + pushed.entries.joinToString(" ") { "%02X=%d".format(it.key, it.value) })
+                syncHandler.post {
+                    execute(sync.report(pushed, null, SystemClock.elapsedRealtime(), push = true))
+                }
+            }
             return
         }
 
