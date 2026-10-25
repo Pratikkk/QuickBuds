@@ -63,7 +63,11 @@ impl Reassembler {
                 break;
             };
             if start > 0 { self.discarded.extend(self.buf.drain(..start)); }
-            let Some((len, n)) = read_len(&self.buf[1..]) else { break };
+            let Some((len, n)) = read_len(&self.buf[1..]) else {
+                // Three length bytes with no terminator are noise: drop the AA and resync.
+                if self.buf.len() >= 4 { self.discarded.push(self.buf.remove(0)); continue; }
+                break;
+            };
             if len < 2 || len > MAX_LEN {
                 self.discarded.push(self.buf.remove(0));
                 continue;
@@ -124,6 +128,15 @@ mod tests {
         assert_eq!(encode(&Message { cmd: 0x0404, seq: 6, payload: vec![1, 1, 1] }, BUDGET),
             [vec![0xAA, 0x0A, 0, 0, 4, 4, 6, 3, 0, 1, 1, 1]]);
         assert_eq!(&encode(&msg(0x0418, 3, 124), BUDGET)[0][..3], [0xAA, 0x83, 0x01]);
+    }
+
+    #[test]
+    fn bad_length_does_not_stall() {
+        // `AA 80 80 80` has no length terminator; the reassembler must drop the AA and keep the next frame.
+        let m = msg(0x0106, 3, 2);
+        let mut stream = vec![0xAA, 0x80, 0x80, 0x80];
+        stream.extend(encode(&m, BUDGET).concat());
+        assert_eq!(Reassembler::default().push(&stream), [m]);
     }
 
     #[test]

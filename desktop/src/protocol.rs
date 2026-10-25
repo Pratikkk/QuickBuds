@@ -332,7 +332,11 @@ impl Framer {
                 Some(i) => { self.discarded.extend(self.buf.drain(..i)); }
                 None => { self.discarded.append(&mut self.buf); break; }
             }
-            let Some((total, n)) = leb128(&self.buf[1..]) else { break };
+            let Some((total, n)) = leb128(&self.buf[1..]) else {
+                // Three length bytes with no terminator are noise: drop the AA and resync.
+                if self.buf.len() >= 4 { self.discarded.push(self.buf.remove(0)); continue; }
+                break;
+            };
             if self.buf.len() < 2 + n { break; }
             let slice = self.buf[1 + n];
             let sliced = (1..=3).contains(&slice);
@@ -570,6 +574,15 @@ mod tests {
         assert_eq!(got, vec![a.clone(), a]);
         assert_eq!(f.discarded.len(), 2);
         assert_eq!(battery(payload_of(&got[0])).unwrap(), [(1, 100, false), (2, 100, false), (3, 80, true)]);
+    }
+
+    #[test]
+    fn framer_survives_a_bad_length() {
+        // `AA 80 80 80` has no length terminator; the framer must drop the AA and keep the next frame.
+        let w = build_packet(0x8106, 0xF0, &[1, 2]);
+        let mut stream = vec![0xAA, 0x80, 0x80, 0x80];
+        stream.extend(&w);
+        assert_eq!(Framer::default().push(&stream), vec![w]);
     }
 
     #[test]
