@@ -32,11 +32,13 @@ def page_pad(): return f'android:paddingTop="{g("vert")}dp" android:paddingBotto
 def img(i, src="widget_panel"):
     return f'<ImageView android:id="@+id/{i}" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/{src}" {IMG} />'
 
-def text(i, sp, bold=False, extra=""):
+def text(i, sp, bold=False, extra="", height=None):
     # Dot matrix and Material: an ImageView the renderer fills with the text drawn in Doto or Google Sans Flex (launchers
-    # ignore @font/ in widget XML); its height is 1.2 x the text size, and the bitmap scales to it.
+    # ignore @font/ in widget XML); its height is 1.2 x the text size, and the bitmap scales to it. height="wrap_content":
+    # the renderer sets its own size (the Connect chip picks 14sp or 18sp), so the bitmap's own height decides.
     if N or S == "md":
-        return (f'<ImageView android:id="@+id/{i}" android:layout_width="wrap_content" android:layout_height="{round(sp * 1.2, 2):g}dp" '
+        h = f'"{height}"' if height else f'"{round(sp * 1.2, 2):g}dp"'
+        return (f'<ImageView android:id="@+id/{i}" android:layout_width="wrap_content" android:layout_height={h} '
                 f'android:adjustViewBounds="true" android:scaleType="fitCenter" {extra}/>')
     bold_font = 'android:fontFamily="@font/doto" android:textStyle="bold"' if N else 'android:fontFamily="sans-serif" android:textStyle="bold"'
     font = bold_font if bold or N else 'android:fontFamily="sans-serif-medium"'
@@ -201,7 +203,18 @@ def chip():
 <ImageView android:id="@+id/w_conn_stroke" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/widget_panel_stroke" {IMG} />
 <LinearLayout android:layout_width="wrap_content" android:layout_height="match_parent" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="24dp" android:paddingEnd="24dp">
 <ImageView android:id="@+id/w_conn_dot" android:layout_width="12dp" android:layout_height="12dp" android:src="@drawable/ic_status_dot_empty" android:scaleType="fitCenter" android:importantForAccessibility="no" />
-{text("w_conn_text", 18, extra='android:layout_marginStart="10dp" ')}
+{text("w_conn_text", 18, extra='android:layout_marginStart="10dp" ', height="wrap_content")}
+</LinearLayout>
+</FrameLayout>'''
+
+def glass_chip():
+    # Glass's own Connect chip: a 44dp capsule the renderer draws as a bitmap (QuickBudsWidget.glassChip), with a
+    # 6dp dot, an 8dp gap and 18dp padding each side. The three other styles keep the chip above.
+    return f'''<FrameLayout android:id="@+id/w_gconn" android:layout_width="wrap_content" android:layout_height="44dp" android:layout_gravity="center" android:visibility="gone" {PRESS}>
+<ImageView android:id="@+id/w_gconn_bg" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/widget_panel" {IMG} />
+<LinearLayout android:layout_width="wrap_content" android:layout_height="match_parent" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="18dp" android:paddingEnd="18dp">
+<ImageView android:id="@+id/w_gconn_dot" android:layout_width="6dp" android:layout_height="6dp" android:src="@drawable/ic_status_dot_empty" android:scaleType="fitCenter" android:importantForAccessibility="no" />
+<ImageView android:id="@+id/w_gconn_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:adjustViewBounds="true" android:scaleType="fitCenter" android:layout_marginStart="8dp" />
 </LinearLayout>
 </FrameLayout>'''
 
@@ -308,6 +321,8 @@ def shape_layout(name, sfx):
 <include layout="@layout/widget_grid{SHAPE_GRID.get(name, "")}{sfx}" />
 </FrameLayout>
 </ViewFlipper>
+{chip()}
+{glass_chip()}
 </FrameLayout>
 '''
 
@@ -357,6 +372,7 @@ for S in ("c", "n", "md"):
 </FrameLayout>
 </ViewFlipper>
 {chip()}
+{glass_chip()}
 </FrameLayout>
 '''
         out = "\n".join(l.replace("  />", " />").replace(" >", ">") if l.startswith("<") else l for l in out.split("\n"))

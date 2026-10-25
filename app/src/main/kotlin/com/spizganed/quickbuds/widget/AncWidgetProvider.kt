@@ -119,6 +119,31 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         )
 
         private val CONN = Btn(R.id.w_conn, R.id.w_conn_bg, R.id.w_conn_stroke, R.id.w_conn_dot, R.id.w_conn_text)
+
+        /** The Glass chip's view ids: its capsule bitmap, its dot and its label. It has its own size (44dp), so it needs its own views. */
+        private class GlassBtn(val root: Int, val bg: Int, val dot: Int, val label: Int)
+        private val GCON = GlassBtn(R.id.w_gconn, R.id.w_gconn_bg, R.id.w_gconn_dot, R.id.w_gconn_text)
+
+        /** The Connect chip's look, one per style: Glass the app's pill, Material a tonal fill, QuickBuds a stroked panel, Pixel art a dashed outline. */
+        private enum class ConnStyle { GLASS, MATERIAL, QUICKBUDS, PIXEL }
+
+        /**
+         * The chip's one text size: 14sp when the widget is narrower than 175dp, 18sp above it.
+         * "Connecting…" at 18sp needs about 169dp with the chip's padding, so a 2x2 uses 14sp and never
+         * ellipsizes. An unknown width takes the safe small size.
+         */
+        private fun connTextSp(c: Context, id: Int): Float {
+            val w = AppWidgetManager.getInstance(c).getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
+            return if (w >= 175) 18f else 14f
+        }
+
+        private fun connStyle(c: Context, p: Palette) = when {
+            p.glass -> ConnStyle.GLASS
+            WidgetSettings.materialStyle(c) -> ConnStyle.MATERIAL
+            WidgetSettings.nothingStyle(c) -> ConnStyle.PIXEL
+            else -> ConnStyle.QUICKBUDS
+        }
+
         private val CELLS = listOf(
             Btn(R.id.w_cell0, R.id.w_cell0_bg, R.id.w_cell0_stroke, R.id.w_cell0_icon, R.id.w_cell0_label),
             Btn(R.id.w_cell1, R.id.w_cell1_bg, R.id.w_cell1_stroke, R.id.w_cell1_icon, R.id.w_cell1_label),
@@ -247,24 +272,41 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
 
             // Disconnected: the Connect chip over the dimmed battery page. Both ways, see above.
             val chip = ghost
-            v.setViewVisibility(CONN.root, if (chip) View.VISIBLE else View.GONE)
+            val style = connStyle(context, p)
+            // Glass has its own chip (a 44dp capsule); the other styles share the 56dp frame.
+            val showGlass = chip && style == ConnStyle.GLASS
+            val showPanel = chip && style != ConnStyle.GLASS
+            v.setViewVisibility(CONN.root, if (showPanel) View.VISIBLE else View.GONE)
+            v.setViewVisibility(GCON.root, if (showGlass) View.VISIBLE else View.GONE)
             if (chip) {
-                // Material: the chip is the widget's only control, so it keeps its fill (with or without the box).
-                val filled = WidgetSettings.materialStyle(context)
-                paint(context, v, CONN, p, filled)
-                if (connecting) {
-                    // Loading: the dot pulses and the chip says Connecting until the link is up (or 15 s pass).
-                    content(context, v, CONN, p, filled, if (connectTick % 2 == 0) R.drawable.ic_status_dot_filled else R.drawable.ic_status_dot_empty,
-                        context.getString(R.string.conn_connecting), 12f, 12f / 5)
-                    v.setContentDescription(CONN.root, context.getString(R.string.conn_connecting))
-                    v.setOnClickPendingIntent(CONN.root, null)
-                } else {
-                    content(context, v, CONN, p, filled, R.drawable.ic_status_dot_empty, context.getString(R.string.conn_action_connect), 12f, 12f / 5)
-                    v.setContentDescription(CONN.root, context.getString(R.string.conn_off) + ". " + context.getString(R.string.conn_action_connect))
-                    v.setOnClickPendingIntent(CONN.root, connectPI(context))
+                // Four looks, one per style: each style has its own Connect button.
+                val label = context.getString(if (connecting) R.string.conn_connecting else R.string.conn_action_connect)
+                // Loading: the dot pulses until the link is up (or 15 s pass).
+                val dot = if (connecting && connectTick % 2 == 0) R.drawable.ic_status_dot_filled else R.drawable.ic_status_dot_empty
+                val root = if (showGlass) GCON.root else CONN.root
+                when (style) {
+                    ConnStyle.GLASS -> glassChip(context, v, p, label, dot, connTextSp(context, id))
+                    ConnStyle.MATERIAL -> {
+                        // Material: the chip is the widget's only control, so it keeps its tonal fill (with or without the box).
+                        paint(context, v, CONN, p, true)
+                        content(context, v, CONN, p, true, dot, label, 12f, 12f / 5, connTextSp(context, id))
+                    }
+                    ConnStyle.QUICKBUDS -> {
+                        // QuickBuds: the stroked panel, the same as the other buttons.
+                        paint(context, v, CONN, p, false)
+                        content(context, v, CONN, p, false, dot, label, 12f, 12f / 5, connTextSp(context, id))
+                    }
+                    ConnStyle.PIXEL -> {
+                        // Pixel art: the dashed outline, as the other buttons have it.
+                        paint(context, v, CONN, p, false)
+                        content(context, v, CONN, p, false, dot, label, 12f, 12f / 5, connTextSp(context, id))
+                    }
                 }
+                v.setContentDescription(root, if (connecting) label else context.getString(R.string.conn_off) + ". " + label)
+                v.setOnClickPendingIntent(root, if (connecting) null else connectPI(context))
             } else {
                 v.setOnClickPendingIntent(CONN.root, null)
+                v.setOnClickPendingIntent(GCON.root, null)
             }
 
             // The page behind the chip is blank (the panel's own colour); it fades in with the sweep. Set both ways.
@@ -434,7 +476,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         }
 
         /** Paints [b] with [icon] and [text]: selected on-accent (Classic fill) or accent (Nothing outline), else secondary. */
-        private fun content(context: Context, v: RemoteViews, b: Btn, p: Palette, selected: Boolean, icon: Int, text: CharSequence?, iconDp: Float, pitch: Float = DOT_DP) {
+        private fun content(context: Context, v: RemoteViews, b: Btn, p: Palette, selected: Boolean, icon: Int, text: CharSequence?, iconDp: Float, pitch: Float = DOT_DP, textSp: Float? = null) {
             val fg = if (!selected) p.textSecondary else if (WidgetSettings.nothingStyle(context)) p.accent
                 else if (p.glass) p.onAccent else if (WidgetSettings.materialStyle(context)) p.text else p.onAccent
             if (p.glass) {
@@ -454,8 +496,67 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             if (text == null) v.setViewVisibility(b.label, View.GONE)
             else {
                 v.setViewVisibility(b.label, View.VISIBLE)
-                setText(context, v, b.label, text, fg)
+                setText(context, v, b.label, text, fg, sizeDp = textSp)
             }
+        }
+
+        /**
+         * Glass: the Connect chip as the app's own pill, drawn as a bitmap like the widget's plate: a capsule 44dp tall,
+         * as wide as its content (18dp padding, a 6dp dot, an 8dp gap) and 200dp at most. Disconnected it is the accent
+         * fill of a selected pill; while connecting it is neutral glass. The dot pulses and the label is the app's text.
+         */
+        private fun glassChip(context: Context, v: RemoteViews, p: Palette, text: String, dotRes: Int, textSp: Float) {
+            val d = context.resources.displayMetrics.density
+            // The label as setText draws it, at the chip's one text size ([connTextSp]).
+            val label = Paint(Paint.ANTI_ALIAS_FLAG).apply { typeface = materialFont(context, false); textSize = textSp * d }
+            val textDp = Math.ceil(label.measureText(text).toDouble()).toFloat() / d
+            // 18dp + 6dp dot + 8dp gap + label + 18dp; the capsule never passes 200dp.
+            val widthDp = (50f + textDp).coerceAtMost(200f)
+            // The plate's 0.7 scale: the host scales the bitmap up to the chip's size.
+            val k = d * 0.7f
+            val w = Math.round(widthDp * k).coerceAtLeast(1)
+            val h = Math.round(44f * k).coerceAtLeast(1)
+            v.setImageViewBitmap(GCON.bg, glassCapsule(context, p, w, h, connecting))
+            v.setInt(GCON.bg, "setColorFilter", 0)
+            v.setImageViewResource(GCON.dot, dotRes)
+            v.setInt(GCON.dot, "setColorFilter", if (connecting) 0xFFFFC857.toInt() else p.textSecondary)
+            v.setViewVisibility(GCON.label, View.VISIBLE)
+            setText(context, v, GCON.label, text, if (connecting) p.textSecondary else p.onAccent, sizeDp = textSp)
+        }
+
+        /**
+         * Glass: the chip's capsule. Disconnected, the accent tint of a selected pill (`selected = !connected`),
+         * 0.5 to 0.3 from top to bottom. Connecting, neutral glass over the plate. Both have the plate's diagonal
+         * sheen at 6% white and a 1dp flat rim.
+         */
+        private fun glassCapsule(context: Context, p: Palette, w: Int, h: Int, connecting: Boolean): Bitmap {
+            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val c = Canvas(bmp)
+            // The plate's scale: a 1dp rim and hairline stay crisp when the host scales the bitmap up.
+            val d = context.resources.displayMetrics.density * 0.7f
+            val box = RectF(0.5f * d, 0.5f * d, w - 0.5f * d, h - 0.5f * d)
+            val r = box.height() / 2f
+            val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                shader = if (connecting) android.graphics.LinearGradient(box.left, box.top, box.right, box.bottom,
+                    ThemeRes.glassAlpha(context, if (p.glassLight) 0x99FFFFFF.toInt() else 0x1CFFFFFF),
+                    ThemeRes.glassAlpha(context, if (p.glassLight) 0x66FFFFFF else 0x0FFFFFFF), android.graphics.Shader.TileMode.CLAMP)
+                else android.graphics.LinearGradient(0f, box.top, 0f, box.bottom,
+                    Palette.withAlpha(p.accent, 0.5f), Palette.withAlpha(p.accent, 0.3f), android.graphics.Shader.TileMode.CLAMP)
+            }
+            c.drawRoundRect(box, r, r, fill)
+            // One diagonal white sheen from the top-left third, as on the plate.
+            val capsule = android.graphics.Path().apply { addRoundRect(box, r, r, android.graphics.Path.Direction.CW) }
+            c.save(); c.clipPath(capsule)
+            c.drawRect(0f, 0f, w.toFloat(), h.toFloat(), Paint().apply {
+                shader = android.graphics.LinearGradient(0f, 0f, w / 3f, h / 3f, 0x0FFFFFFF, 0, android.graphics.Shader.TileMode.CLAMP)
+            })
+            c.restore()
+            val rim = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE; strokeWidth = d
+                color = if (p.glassLight) 0x1A14152B else 0x2EFFFFFF
+            }
+            c.drawRoundRect(box, r, r, rim)
+            return bmp
         }
 
         private fun battery(context: Context, v: RemoteViews, p: Palette, state: WidgetStateStore.State, fit: Fit, id: Int, k: Float) {
