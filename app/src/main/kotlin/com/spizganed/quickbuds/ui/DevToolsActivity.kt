@@ -16,10 +16,13 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.graphics.Typeface
+import android.text.Editable
 import android.text.SpannableString
 import android.text.Spanned
+import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
 import android.view.Gravity
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -31,6 +34,7 @@ import com.spizganed.quickbuds.R
 import com.spizganed.quickbuds.bluetooth.BudsService
 import com.spizganed.quickbuds.bluetooth.PacketLogger
 import com.spizganed.quickbuds.bluetooth.RfcommBridge
+import com.spizganed.quickbuds.bluetooth.VirtualBuds
 import com.spizganed.quickbuds.protocol.LogDecoder
 import com.spizganed.quickbuds.protocol.SimpleLog
 import java.io.File
@@ -146,6 +150,28 @@ class DevToolsActivity : Activity() {
         })
         root.addView(actions, spaced(dp(12f)))
 
+        // Dev tools › Virtual buds: the app connects to tools/fake-buds over TCP instead of Bluetooth,
+        // so the emulator shows every row with no phone and no real earbuds. Off by default.
+        val virtualPrefs = getSharedPreferences(ThemeRes.PREFS_NAME, MODE_PRIVATE)
+        val virtualCard = SettingRowFactory.card(this)
+        val virtualSwitch = SettingRowFactory.buildSwitch(this, virtualPrefs.getBoolean(VirtualBuds.KEY_ON, false))
+        virtualSwitch.setOnCheckedChangeListener { _, on ->
+            virtualPrefs.edit().putBoolean(VirtualBuds.KEY_ON, on).apply()
+            showInLog("virtual buds ${if (on) "on" else "off"}")
+        }
+        SettingRowFactory.addRow(virtualCard, SettingRowFactory.build(
+            this, R.drawable.ic_earbud, R.string.virtual_buds, R.string.virtual_buds_sub, virtualSwitch
+        ) { virtualSwitch.performClick() })
+        SettingRowFactory.addRow(virtualCard, SettingRowFactory.build(
+            this, 0, R.string.virtual_buds_address, 0, null,
+            textField(VirtualBuds.KEY_ADDRESS, VirtualBuds.DEFAULT_ADDRESS)
+        ))
+        SettingRowFactory.addRow(virtualCard, SettingRowFactory.build(
+            this, 0, R.string.virtual_buds_name, 0, null,
+            textField(VirtualBuds.KEY_NAME, VirtualBuds.DEFAULT_NAME)
+        ))
+        root.addView(virtualCard, spaced(dp(12f)))
+
         logText = TextView(this).apply {
             setTextIsSelectable(true)
             textSize = 12f
@@ -208,6 +234,33 @@ class DevToolsActivity : Activity() {
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
                 setTextColor(ThemeRes.color(this@DevToolsActivity, R.attr.appColorTextPrimary))
                 setPadding(dp(2f), dp(5f), dp(2f), 0)
+            })
+        }
+    }
+
+    /**
+     * One text field of the Virtual buds card. It saves on every edit, so the next launch and the
+     * next connect read it without a Save button.
+     */
+    private fun textField(key: String, default: String): EditText {
+        val prefs = getSharedPreferences(ThemeRes.PREFS_NAME, MODE_PRIVATE)
+        val dp = { v: Float -> ThemeRes.dp(this, v) }
+        return EditText(this).apply {
+            setText(prefs.getString(key, default).orEmpty())
+            hint = default
+            textSize = 14f
+            setSingleLine()
+            setTextColor(ThemeRes.color(this@DevToolsActivity, R.attr.appColorTextPrimary))
+            setHintTextColor(ThemeRes.color(this@DevToolsActivity, R.attr.appColorTextSecondary))
+            background = null
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                .apply { marginStart = dp(8f) }
+            addTextChangedListener(object : TextWatcher {
+                override fun afterTextChanged(s: Editable) {
+                    prefs.edit().putString(key, s.toString().trim()).apply()
+                }
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             })
         }
     }

@@ -29,6 +29,7 @@ import com.spizganed.quickbuds.bluetooth.BudsConnectionManager
 import com.spizganed.quickbuds.bluetooth.BudsDevice
 import com.spizganed.quickbuds.bluetooth.BudsService
 import com.spizganed.quickbuds.bluetooth.PacketLogger
+import com.spizganed.quickbuds.bluetooth.VirtualBuds
 import com.spizganed.quickbuds.protocol.AncModes
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.Capabilities
@@ -479,10 +480,14 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
      * that cannot connect.
      */
     private fun startAndBindServiceIfPermitted() {
-        if (!hasBluetoothPermissions()) return
+        if (!hasBluetoothPermissions() && !VirtualBuds.on(this)) return
         if (isBound) return
         val serviceIntent = Intent(this, BudsService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        // Virtual buds needs no Bluetooth permission, so the connectedDevice foreground type (which
+        // needs BLUETOOTH_CONNECT) is not asked for: a plain start keeps the service alive while bound.
+        if (VirtualBuds.on(this)) {
+            startService(serviceIntent)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(serviceIntent)
         } else {
             startService(serviceIntent)
@@ -1314,6 +1319,11 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
      * deliberately excluded from hasBluetoothPermissions().
      */
     private fun checkPermissions() {
+        // Dev tools › Virtual buds: a socket needs no Bluetooth permission, so nothing is asked.
+        if (VirtualBuds.on(this)) {
+            startAndBindServiceIfPermitted()
+            return
+        }
         val needed = mutableListOf<String>()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) needed.add(Manifest.permission.BLUETOOTH_CONNECT)
@@ -1369,6 +1379,16 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     private fun connectDirectly() {
         if (!isBound) {
             toast("Service not bound yet.")
+            return
+        }
+        // Dev tools › Virtual buds: skip the adapter and the paired-device list. The emulator has no adapter.
+        if (VirtualBuds.on(this)) {
+            val target = VirtualBuds.parseAddress(VirtualBuds.address(this))
+            if (target == null) {
+                toast("Virtual buds: set a host and port.")
+                return
+            }
+            manager.connectVirtual(target.first, target.second, VirtualBuds.name(this))
             return
         }
         val adapter = getSystemService(BluetoothManager::class.java)?.adapter

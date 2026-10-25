@@ -218,6 +218,17 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         }
         statusLog("[SVC] FORCE_CONNECT: connecting...")
         AncWidgetProvider.setConnecting(this, true)
+        // Dev tools › Virtual buds: no paired device and no Bluetooth adapter is needed.
+        if (VirtualBuds.on(this)) {
+            val target = VirtualBuds.parseAddress(VirtualBuds.address(this))
+            if (target == null) {
+                statusLog("[SVC] Virtual buds: bad host:port '${VirtualBuds.address(this)}'")
+                AncWidgetProvider.setConnecting(this, false)
+                return
+            }
+            manager?.connectVirtual(target.first, target.second, VirtualBuds.name(this))
+            return
+        }
         try {
             val device = BudsDevice.find(this)
             if (device != null) manager?.connect(device, withAudio)
@@ -301,6 +312,11 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         } catch (e: IllegalStateException) {
             statusLog("[SVC] startForeground refused: ${e.javaClass.simpleName}")
             stopSelf()
+        } catch (e: SecurityException) {
+            // Virtual buds: a connectedDevice service needs BLUETOOTH_CONNECT, which the emulator
+            // does not need at all. The screen keeps this service bound, so it keeps running.
+            if (!VirtualBuds.on(this)) throw e
+            statusLog("[SVC] startForeground refused: ${e.javaClass.simpleName} (virtual buds)")
         }
     }
 
