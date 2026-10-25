@@ -1,15 +1,20 @@
-//! The Earbud settings page (`EarbudSettingsActivity`): the feature switches the buds list, the sounds and the firmware.
+//! Earbud settings (`EarbudSettingsActivity`, DESIGN §7.12): the gestures, wear, find and fit card, the alert volume,
+//! the tap sensitivity, the feature switches and the firmware. One 379.4 dp column, in the phone's order.
 
-use crate::glass::{self, Choice, Trailing};
+use crate::glass::{self, Choice};
 use crate::home_logic::{self, ROWS};
-use crate::session::{Cmd, Status};
+use crate::phone;
+use crate::session::{Cmd, Snapshot, Status};
+use crate::settings::sheets::{self, Title};
+use crate::settings::ui;
+use crate::settings::ui::Trail;
 use crate::types::*;
-use crate::{icons, t, App, Confirm};
+use crate::{icons, load_settings, save_setting, t, App, Confirm};
 use eframe::egui::{self, Align2, Pos2, Rect, Ui, Vec2};
 use std::time::{Duration, Instant};
 
-const ROW: f32 = 72.0;
-const MAX_W: f32 = 760.0;
+/// Feature `0x04`: the buds' own auto play/pause, shown in the Wear sheet, not in the Features card.
+const FEATURE_AUTO_PLAY_PAUSE: u8 = 0x04;
 
 #[derive(Default)]
 pub struct State {
@@ -17,6 +22,7 @@ pub struct State {
     picking: Option<u8>,
     alert: Option<f32>,
     tap: Option<f32>,
+    wear_open: bool,
     // Find my earbuds: the warning before a loud tone, and the tone playing.
     find_open: bool,
     find_warn: bool,
@@ -28,6 +34,7 @@ pub struct State {
     fit_shown: bool,
     fit_deadline: Option<Instant>,
     fit_seq: u32,
+    firmware_open: bool,
     // Personalized ANC: 0 asking, 1 stored result offered, 2 test intro, 3 testing, 4 failed, 5 wear both buds, 6 done.
     pnc_open: bool,
     pnc_state: u8,
@@ -45,61 +52,105 @@ fn head_label(tr: &[String], v: u8) -> Option<String> {
     Some(t(tr, match v { 0 => "head_motion_nod", 1 => "head_motion_shake", _ => return None }).into())
 }
 
-fn label(ui: &Ui, x: f32, y: f32, s: &str) {
-    glass::text(ui, Pos2::new(x + 6.0, y + 14.0), Align2::LEFT_CENTER, s, 14.0, 0.72);
+/// The Wear row and sheet show when the buds list auto play/pause. The model's `confirmed` list is the fallback
+/// before a feature read, so the row is there on the first frame as it is on the phone.
+fn wear_offered(s: &Snapshot) -> bool {
+    s.features.iter().any(|f| f.0 == FEATURE_AUTO_PLAY_PAUSE)
+        || s.model.is_some_and(|m| m["confirmed"].as_array().is_some_and(|c| c.iter().any(|x| x.as_str() == Some("wear"))))
 }
 
 pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let s = app.snap.clone();
     let tr = app.tr.clone();
-    // Wide window: the model, the switches and the firmware on the left; sounds, fit test and find on the right.
-    let two = body.width() >= 900.0;
-    let w = if two { ((body.width() - 14.0) / 2.0).floor() } else { body.width().min(MAX_W) };
+    let w = phone::content(body);
     let x0 = body.left();
-    let xr = if two { x0 + w + 14.0 } else { x0 };
-    let mut y = body.top();
-    let mut yr = body.top();
     let on = s.status == Status::On;
+    let accent = crate::palette::active(crate::palette::is_light_system(ui.ctx()), app.style == glass::style::Style::Material).accent;
     let flagged = |flag: Option<&str>| s.manual && flag.is_some_and(|f| s.model.is_some_and(|m| m[f] == 1));
+    let mut y = body.top();
 
-    // Sounds: the alert volume, the tap sensitivity.
+    // The card of links: gestures, wear, find, fit. Each is its own 16 dp row card, 8 dp apart.
+    let gestures = crate::gestures::available(&s);
+    let wear = wear_offered(&s);
+    let find = s.caps.supports(CMD_FIND_BUDS);
+    let fit = s.caps.supports(CMD_FIT_TEST);
+    let mut any = false;
+    if gestures {
+        let (h, clicked, _) = ui::row_card(ui, "gestures", x0, y, w, Some(icons::GESTURE), t(&tr, "row_gesture_title"), t(&tr, "row_gesture_sub"), Trail::Chevron, on);
+        if clicked { app.page = crate::Page::Gestures; }
+        y += h + 8.0;
+        any = true;
+    }
+    if wear {
+        let (h, clicked, _) = ui::row_card(ui, "wear", x0, y, w, Some(icons::EARBUD), t(&tr, "row_wear_title"), t(&tr, "row_wear_sub"), Trail::Chevron, on);
+        if clicked { app.earbuds.wear_open = true; }
+        y += h + 8.0;
+        any = true;
+    }
+    if find {
+        let (h, clicked, _) = ui::row_card(ui, "find", x0, y, w, Some(icons::FIND_BUDS), t(&tr, "row_find_title"), t(&tr, "row_find_sub"), Trail::Chevron, on);
+        if clicked { app.earbuds.find_open = true; app.earbuds.find_warn = false; }
+        y += h + 8.0;
+        any = true;
+    }
+    if fit {
+        let (h, clicked, _) = ui::row_card(ui, "fit", x0, y, w, Some(icons::EARBUD), t(&tr, "fit_title"), t(&tr, "fit_sub"), Trail::Chevron, on);
+        if clicked { app.earbuds.fit_open = true; app.earbuds.fit_state = 0; app.earbuds.fit_shown = false; app.earbuds.fit_seq = s.fit.2; }
+        y += h + 8.0;
+        any = true;
+    }
+    if any { y -= 8.0; }
+
+    // Sounds: the alert volume. The value is not shown; the speaker is muted at level 1.
     let has_alert = s.caps.supports(CMD_SET_ALERT_VOLUME) && s.alert_volume.is_some();
-    let has_tap = s.model.is_some_and(|m| m["tapLevel"] == 1) && (s.manual || s.caps.supports(CMD_SET_TAP_LEVEL) && s.tap_level.is_some());
-    if has_alert || has_tap {
-        if !two { label(ui, x0, y, t(&tr, "earbuds_section_sounds")); y += 34.0; }
-        let n = has_alert as usize + has_tap as usize;
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 106.0 * n as f32 - 10.0));
-        let mut cy = y;
-        if has_alert {
-            glass::flat_at(ui, Rect::from_min_size(Pos2::new(x0, cy), Vec2::new(w, 96.0)), 28.0, 1.0);
-            let mut v = app.earbuds.alert.unwrap_or(s.alert_volume.unwrap_or(5) as f32);
-            glass::text(ui, Pos2::new(x0 + 24.0, cy + 26.0), Align2::LEFT_CENTER, t(&tr, "row_alert_title"), 15.0, 1.0);
-            glass::icon_at(ui, if v <= 1.0 { icons::VOLUME_OFF } else { icons::VOLUME }, Rect::from_center_size(Pos2::new(x0 + 36.0, cy + 66.0), Vec2::splat(22.0)), glass::white(1.0));
-            let sr = Rect::from_min_size(Pos2::new(x0 + 60.0, cy + 46.0), Vec2::new(w - 90.0, 40.0));
-            let sl = glass::slider_at(ui, "alert", sr, &mut v, 1.0, 10.0, true);
-            if sl.changed { app.earbuds.alert = Some(v); }
-            if sl.released { app.send(Cmd::AlertVolume(v as u8)); app.earbuds.alert = None; }
-            cy += 106.0;
-        }
-        if has_tap {
-            glass::flat_at(ui, Rect::from_min_size(Pos2::new(x0, cy), Vec2::new(w, 96.0)), 28.0, 1.0);
-            let mut v = app.earbuds.tap.unwrap_or(s.tap_level.map_or(3, |t| t.0) as f32);
-            glass::text(ui, Pos2::new(x0 + 24.0, cy + 26.0), Align2::LEFT_CENTER, t(&tr, "tap_level_title"), 15.0, 1.0);
-            let sr = Rect::from_min_size(Pos2::new(x0 + 24.0, cy + 46.0), Vec2::new(w - 90.0, 40.0));
-            let sl = glass::slider_at(ui, "tap", sr, &mut v, 1.0, 5.0, true);
-            glass::text(ui, Pos2::new(sr.right() + 16.0, sr.center().y), Align2::LEFT_CENTER, &format!("{}", v as i32), 15.0, 1.0);
-            if sl.changed { app.earbuds.tap = Some(v); }
-            if sl.released { app.send(Cmd::TapLevel(v as u8)); app.earbuds.tap = None; }
-        }
-        y += card.height() + 18.0;
+    if has_alert {
+        ui::section(ui, x0, y, t(&tr, "earbuds_section_sounds"), accent);
+        y += phone::SECTION;
+        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 85.0));
+        glass::flat_at(ui, card, phone::RADIUS, 1.0);
+        glass::text(ui, Pos2::new(x0 + 18.0, y + 25.0), Align2::LEFT_CENTER, t(&tr, "row_alert_title"), 15.0, 1.0);
+        let mut v = app.earbuds.alert.unwrap_or(s.alert_volume.unwrap_or(5) as f32);
+        glass::icon_at(ui, if v <= 1.0 { icons::VOLUME_OFF } else { icons::VOLUME }, Rect::from_center_size(Pos2::new(x0 + 29.0, y + 57.0), Vec2::splat(22.0)), glass::white(1.0));
+        let sr = Rect::from_min_size(Pos2::new(x0 + 40.0, y + 35.0), Vec2::new(w - 50.0, 44.0));
+        let sl = glass::slider_at(ui, "alert", sr, &mut v, 1.0, 10.0, true);
+        if sl.changed { app.earbuds.alert = Some(v); }
+        if sl.released { app.send(Cmd::AlertVolume(v as u8)); app.earbuds.alert = None; }
+        y += 85.0;
     }
 
-    // Feature switches, in the phone's order.
+    // Tap sensitivity: a section label, a hint, the slider and the warning below the buds' default.
+    let has_tap = s.model.is_some_and(|m| m["tapLevel"] == 1) && (s.manual || s.caps.supports(CMD_SET_TAP_LEVEL) && s.tap_level.is_some());
+    if has_tap {
+        ui::section(ui, x0, y, t(&tr, "tap_level_title"), accent);
+        y += phone::SECTION;
+        let hint = t(&tr, "tap_level_hint");
+        let hint_h = phone::wrap_height(ui, hint, 13.0, w - 36.0);
+        let mut v = app.earbuds.tap.unwrap_or(s.tap_level.map_or(3, |v| v.0) as f32);
+        let default = s.tap_level.map_or(0, |v| v.1) as f32;
+        let warn = default > 0.0 && v < default;
+        let warn_text = t(&tr, "tap_level_warning");
+        let warn_h = if warn { phone::wrap_height(ui, warn_text, 13.0, w - 36.0) } else { 0.0 };
+        let h = 14.0 + hint_h + 58.0 + warn_h + if warn { 6.0 } else { 4.0 };
+        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, h));
+        glass::flat_at(ui, card, phone::RADIUS, 1.0);
+        phone::paragraph(ui, Rect::from_min_size(Pos2::new(x0 + 18.0, y + 14.0), Vec2::new(w - 36.0, hint_h)), hint, 13.0, glass::white(0.74), false);
+        let sr = Rect::from_min_size(Pos2::new(x0 + 18.0, y + 14.0 + hint_h), Vec2::new(w - 60.0, 58.0));
+        let sl = glass::slider_at(ui, "tap", sr, &mut v, 1.0, 5.0, true);
+        ui.painter().text(Pos2::new(x0 + w - 18.0, sr.center().y), Align2::RIGHT_CENTER, format!("{}", v as i32), egui::FontId::proportional(14.0), accent);
+        if sl.changed { app.earbuds.tap = Some(v); }
+        if sl.released { app.send(Cmd::TapLevel(v as u8)); app.earbuds.tap = None; }
+        if warn {
+            phone::paragraph(ui, Rect::from_min_size(Pos2::new(x0 + 18.0, y + 14.0 + hint_h + 58.0), Vec2::new(w - 36.0, warn_h)), warn_text, 13.0, glass::white(0.74), false);
+        }
+        y += h;
+    }
+
+    // Feature switches, in the phone's order. Auto play/pause is in the Wear sheet, not here.
     struct Item { id: u8, icon: &'static str, title: &'static str, sub: &'static str, on: bool, confirm: Option<&'static str>, confirm_off: bool, kind: u8, choice: Option<String> }
     let mut items: Vec<Item> = vec![];
     for &(id, flag, icon, title, sub, confirm, confirm_off) in ROWS {
+        if id == FEATURE_AUTO_PLAY_PAUSE { continue; }
         let v = match s.features.iter().find(|f| f.0 == id) { Some(f) => f.1, None if flagged(flag) => 0, None => continue };
-        // The picker under its switch: which game sound effect, or which head gesture answers.
         let (kind, choice) = match id {
             0x27 if s.manual || s.caps.supports(CMD_GAME_SOUND) => (1, s.game_sound.as_ref().and_then(|g| game_label(&tr, g.0))),
             0x3B if s.caps.supports(CMD_SET_HEAD_MOTION) => (2, s.head_motion.and_then(|v| head_label(&tr, v))),
@@ -107,91 +158,49 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         };
         items.push(Item { id, icon, title, sub, on: v == 1, confirm, confirm_off, kind, choice });
     }
-    // Personalized ANC first, as on the phone: the model's flag too. Turning it on runs the test flow, not a write.
     let pnc_listed = s.features.iter().find(|f| f.0 == FEATURE_PERSONAL_NOISE).map(|f| f.1);
     let pnc = s.model.map_or(true, |m| m["personalAnc"] == 1)
         && (pnc_listed.is_some() || flagged(Some("personalAnc")))
         && (s.caps.supports(CMD_PERSONAL_NOISE) || s.manual);
     if pnc || !items.is_empty() {
-        if !two { label(ui, x0, y, t(&tr, "earbuds_section_features")); y += 34.0; }
-        let g = 10.0;
-        let rows_h: f32 = (if pnc { ROW + g } else { 0.0 }) + items.iter().map(|i| ROW + g + if i.kind > 0 && i.on { 56.0 + g } else { 0.0 }).sum::<f32>() - g;
-        let mut cy = y;
+        ui::section(ui, x0, y, t(&tr, "earbuds_section_features"), accent);
+        y += phone::SECTION;
         if pnc {
-            let r = Rect::from_min_size(Pos2::new(x0, cy), Vec2::new(w, ROW));
-            glass::flat_at(ui, r, 28.0, 1.0);
             let pon = pnc_listed == Some(1);
-            let (_, toggled) = glass::row_at(ui, "pnc", r, icons::MODE_ANC_MEDIUM, t(&tr, "pnc_title"), t(&tr, "pnc_sub"), Trailing::Switch(pon), on);
+            let (h, _, toggled) = ui::row_card(ui, "pnc", x0, y, w, Some(icons::ANC), t(&tr, "pnc_title"), t(&tr, "pnc_sub"), Trail::Switch(pon), on);
             if toggled {
                 if pon { app.send(Cmd::Features(vec![(FEATURE_PERSONAL_NOISE, false)])); } else { pnc_start(app); }
             }
-            cy += ROW + g;
+            y += h + 8.0;
         }
         for i in items.iter() {
-            let r = Rect::from_min_size(Pos2::new(x0, cy), Vec2::new(w, ROW));
-            glass::flat_at(ui, r, 28.0, 1.0);
-            let (_, toggled) = glass::row_at(ui, ("feat", i.id), r, i.icon, t(&tr, i.title), t(&tr, i.sub), Trailing::Switch(i.on), on);
+            let (h, _, toggled) = ui::row_card(ui, ("feat", i.id), x0, y, w, Some(i.icon), t(&tr, i.title), t(&tr, i.sub), Trail::Switch(i.on), on);
             if toggled {
                 let cmds = home_logic::feature_cmds(&s, i.id, !i.on);
-                // Asks when turning on; turning off too where the row says so.
                 match i.confirm.filter(|_| !i.on || i.confirm_off) {
                     Some(msg) => app.confirm = Some(Confirm { cmds, title: i.title, msg, accept: "codec_dialog_accept" }),
                     None => for c in cmds { app.send(c); },
                 }
             }
-            cy += ROW + g;
+            y += h + 8.0;
             if i.kind > 0 && i.on {
-                let pr = Rect::from_min_size(Pos2::new(x0, cy), Vec2::new(w, 56.0));
-                glass::flat_at(ui, pr, 28.0, 1.0);
                 let title = t(&tr, if i.kind == 1 { "game_sound_type_title" } else { "head_motion_type_title" });
-                let (clicked, _) = glass::row_at(ui, ("pick", i.id), pr, icons::CHEVRON_DOWN, title, "", Trailing::Value(i.choice.clone().unwrap_or("—".into())), on);
+                let value = i.choice.clone().unwrap_or_else(|| "—".into());
+                let (h, clicked, _) = ui::row_card(ui, ("pick", i.id), x0, y, w, None, title, &value, Trail::Chevron, on);
                 if clicked { app.earbuds.picking = Some(i.kind); }
-                cy += 56.0 + g;
+                y += h + 8.0;
             }
         }
-        y += rows_h + 18.0;
+        y -= 8.0;
     }
 
-    {
-    let x0 = xr;
-    if two { std::mem::swap(&mut y, &mut yr); }
-    // Fit test and Find my earbuds: each opens its dialog.
-    let mut has_rows = vec![];
-    if s.caps.supports(CMD_FIT_TEST) { has_rows.push(0); }
-    if s.caps.supports(CMD_FIND_BUDS) { has_rows.push(1); }
-    if !has_rows.is_empty() {
-        for (n, kind) in has_rows.iter().enumerate() {
-            let r = Rect::from_min_size(Pos2::new(x0, y + (ROW + 12.0) * n as f32), Vec2::new(w, ROW));
-            glass::flat_at(ui, r, 28.0, 1.0);
-            let (clicked, _) = if *kind == 0 {
-                glass::row_at(ui, "fit", r, icons::EARBUD, t(&tr, "fit_title"), t(&tr, "fit_sub"), Trailing::Chevron, on)
-            } else {
-                glass::row_at(ui, "find", r, icons::FIND_BUDS, t(&tr, "row_find_title"), t(&tr, "row_find_sub"), Trailing::Chevron, on)
-            };
-            if clicked { if *kind == 0 { app.earbuds.fit_open = true; app.earbuds.fit_state = 0; app.earbuds.fit_shown = false; app.earbuds.fit_seq = s.fit.2; } else { app.earbuds.find_open = true; app.earbuds.find_warn = false; } }
-        }
-        y += (ROW + 12.0) * has_rows.len() as f32 + 6.0;
-    }
-
-    // The model row: Automatic with what was detected, or the pick.
-    {
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW));
-        glass::flat_at(ui, card, 28.0, 1.0);
-        let (clicked, _) = glass::row_at(ui, "model", card, icons::EARBUD, t(&tr, "model_title"), &crate::models::summary(app), Trailing::Chevron, true);
-        if clicked { app.page = crate::Page::Models; }
-        y += ROW + 18.0;
-    }
-
-    // About: the firmware. No updates here: a failed flash can brick the buds, so it points to HeyMelody.
+    // About earbuds: the firmware. No updates here: a failed flash can brick the buds, so it points to HeyMelody.
     if s.caps.supports(CMD_QUERY_FIRMWARE) {
-        if !two { label(ui, x0, y, t(&tr, "earbuds_section_about")); y += 34.0; }
-        let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, ROW));
-        glass::flat_at(ui, card, 28.0, 1.0);
-        glass::row_at(ui, "fw", card, icons::INFO, t(&tr, "row_firmware_title"), s.firmware.as_deref().unwrap_or("—"), Trailing::None, true);
-        y += ROW + 18.0;
-    }
-
-    if two { std::mem::swap(&mut y, &mut yr); }
+        ui::section(ui, x0, y, t(&tr, "earbuds_section_about"), accent);
+        y += phone::SECTION;
+        let (h, clicked, _) = ui::row_card(ui, "fw", x0, y, w, Some(icons::INFO), t(&tr, "row_firmware_title"), s.firmware.as_deref().unwrap_or("—"), Trail::None, true);
+        if clicked { app.earbuds.firmware_open = true; }
+        y += h;
     }
 
     // The picker dialog.
@@ -218,7 +227,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
         }
     }
     dialogs(app, ui);
-    y.max(yr)
+    y + phone::GAP
 }
 
 /// (left, right) in an ear. Without an "in ear" seen, "out" may only mean the model has no sensor: counted as in.
@@ -290,7 +299,6 @@ fn tick(app: &mut App) {
             let (kind, value) = (s.pnc.0, s.pnc.1);
             let st = app.earbuds.pnc_state;
             if kind == 1 && st == 0 { app.earbuds.pnc_state = if value != 0 { 1 } else { 2 }; app.earbuds.pnc_deadline = None; }
-            // A rejected write fails the test as well (status 15: another device busy).
             if kind == 2 && st == 3 && value != 0 { app.earbuds.pnc_reason = 0; app.earbuds.pnc_state = 4; }
             if kind == 3 && st == 3 {
                 if value == 0 { app.earbuds.pnc_state = 6; app.send(Cmd::StatusRead); } else { app.earbuds.pnc_reason = value; app.earbuds.pnc_state = 4; }
@@ -303,69 +311,117 @@ fn tick(app: &mut App) {
     }
 }
 
-/// A dialog with a title, a body and the buttons: (left label, primary label or "" for none).
-fn flow_dialog(ui: &mut Ui, id: &str, title: &str, body: &str, extra: Option<&str>, left: &str, primary: &str) -> Option<bool> {
-    let mut out = None;
-    // No auto-close: only the buttons end a flow (a click outside would otherwise start a test).
-    glass::dialog(ui.ctx(), id, title, Vec2::new(440.0, 280.0), |ui| {
-        ui.add(egui::Label::new(egui::RichText::new(body).size(14.0).color(glass::white(0.8))).wrap());
-        if let Some(x) = extra {
-            let r = ui.max_rect();
-            glass::text(ui, Pos2::new(r.center().x, r.top() + 110.0), Align2::CENTER_CENTER, x, 15.0, 1.0);
-        }
-        out = glass::dialog_buttons(ui, left, primary);
-    });
-    out
-}
-
 fn dialogs(app: &mut App, ui: &mut Ui) {
     tick(app);
     if app.earbuds.fit_open || app.earbuds.pnc_open { ui.ctx().request_repaint_after(Duration::from_millis(250)); }
     let tr = app.tr.clone();
     let s = app.snap.clone();
 
-    // Find my earbuds
+    // Wear detection: auto play/pause (the buds) and smart auto-pause (local). One on turns the other off.
+    if app.earbuds.wear_open {
+        let auto = s.features.iter().find(|f| f.0 == FEATURE_AUTO_PLAY_PAUSE).is_some_and(|f| f.1 == 1);
+        let smart = load_settings()["smart_auto_pause"].as_bool() == Some(true);
+        let (mut flip_auto, mut flip_smart) = (false, false);
+        let open = sheets::sheet(ui.ctx(), "wear", t(&tr, "wear_title"), Title::Centre, Vec2::new(sheets::WIDTH, 308.2), |ui, inner| {
+            let sub = t(&tr, "wear_firmware_sub");
+            let title = t(&tr, "wear_firmware_title");
+            let h = sheets::row_height(ui, title, sub, inner.width());
+            let r = Rect::from_min_size(inner.min, Vec2::new(inner.width(), h));
+            flip_auto = sheets::row_at(ui, "wear-auto", r, title, sub, auto);
+            let sub = t(&tr, "wear_smart_sub");
+            let title = t(&tr, "wear_smart_title");
+            let h = sheets::row_height(ui, title, sub, inner.width());
+            let r = Rect::from_min_size(Pos2::new(inner.left(), r.bottom() + 8.0), Vec2::new(inner.width(), h));
+            flip_smart = sheets::row_at(ui, "wear-smart", r, title, sub, smart);
+        });
+        if flip_auto {
+            app.send(Cmd::Features(vec![(FEATURE_AUTO_PLAY_PAUSE, !auto)]));
+            if !auto { save_setting("smart_auto_pause", false.into()); }
+        }
+        if flip_smart {
+            save_setting("smart_auto_pause", (!smart).into());
+            if !smart { app.send(Cmd::Features(vec![(FEATURE_AUTO_PLAY_PAUSE, false)])); }
+        }
+        if !open { app.earbuds.wear_open = false; }
+    }
+
+    // Find my earbuds: the warning before the loud tone.
     if app.earbuds.find_open {
         let warn = app.earbuds.find_warn;
         let playing = app.earbuds.find_playing;
+        let title = t(&tr, if warn { "find_warn_title" } else { "find_title" });
+        let body = t(&tr, if warn { "find_warn_msg" } else { "find_hint" });
         let primary = t(&tr, if playing { "find_stop" } else if warn { "find_warn_play" } else { "find_play" });
-        let out = flow_dialog(ui, "find", t(&tr, if warn { "find_warn_title" } else { "find_title" }), t(&tr, if warn { "find_warn_msg" } else { "find_hint" }), None, t(&tr, "dialog_close"), primary);
-        match out {
-            Some(false) => { app.earbuds.find_warn = false; app.earbuds.find_open = false; if playing { app.send(Cmd::Find(false)); app.earbuds.find_playing = false; } }
+        let mut act = None;
+        let open = sheets::sheet(ui.ctx(), "find", title, Title::Centre, Vec2::new(sheets::WIDTH, 211.8), |ui, inner| {
+            let body_rect = Rect::from_min_max(inner.min + Vec2::new(0.0, 4.0), Pos2::new(inner.right(), inner.bottom() - 66.0));
+            phone::paragraph(ui, body_rect, body, 14.0, glass::white(0.80), true);
+            act = sheets::actions(ui, inner, "", primary);
+        });
+        match act {
             Some(true) => {
                 if playing { app.send(Cmd::Find(false)); app.earbuds.find_playing = false; }
                 else if !warn && { let (l, r) = worn(app); l || r } { app.earbuds.find_warn = true; }
                 else { app.earbuds.find_warn = false; app.earbuds.find_playing = true; app.send(Cmd::Find(true)); }
             }
-            None => {}
+            _ => {}
         }
+        if !open { app.earbuds.find_open = false; if playing { app.send(Cmd::Find(false)); app.earbuds.find_playing = false; } }
     }
 
-    // Fit test
+    // Fit test: the title follows the state; two 120 dp result columns show a result per bud.
     if app.earbuds.fit_open {
         let state = app.earbuds.fit_state as usize;
-        let title = ["fit_title", "fit_insert", "fit_keep", "fit_failed", "fit_perfect", "fit_adjust"][state.min(5)];
+        let title = t(&tr, ["fit_title", "fit_insert", "fit_keep", "fit_failed", "fit_perfect", "fit_adjust"][state.min(5)]);
         let body = if state == 2 || state == 4 { String::new() } else if state == 5 {
             let who = if s.fit.0 != 1 && s.fit.1 != 1 { "fit_both" } else if s.fit.0 != 1 { "fit_left" } else { "fit_right" };
             t(&tr, "fit_adjust_tips").replace("%1$s", t(&tr, who))
         } else { t(&tr, "fit_hint").to_string() };
-        let word = |v: u8| match v { 1 => t(&tr, "fit_good"), 0 => t(&tr, "fit_average"), 6 => t(&tr, "fit_poor"), _ => "" };
-        let extra = app.earbuds.fit_shown.then(|| format!("{} · {}     {} · {}", t(&tr, "status_left"), word(s.fit.0), t(&tr, "status_right"), word(s.fit.1)));
         let primary = t(&tr, match state { 2 => "fit_playing", 4 => "gesture_done", 5 => "fit_again", _ => "fit_play" });
-        match flow_dialog(ui, "fit", t(&tr, title), &body, extra.as_deref(), t(&tr, "dialog_close"), primary) {
-            Some(false) => { fit_stop(app); app.earbuds.fit_state = 0; app.earbuds.fit_shown = false; app.earbuds.fit_open = false; }
+        let shown = app.earbuds.fit_shown;
+        let word = |v: u8| match v { 1 => t(&tr, "fit_good"), 0 => t(&tr, "fit_average"), 6 => t(&tr, "fit_poor"), _ => "" };
+        let height = if shown { 300.0 } else { 246.1 };
+        let mut act = None;
+        let open = sheets::sheet(ui.ctx(), "fit", title, Title::Centre, Vec2::new(sheets::WIDTH, height), |ui, inner| {
+            if !body.is_empty() {
+                let body_rect = Rect::from_min_max(inner.min + Vec2::new(0.0, 4.0), Pos2::new(inner.right(), inner.min.y + 76.0));
+                phone::paragraph(ui, body_rect, &body, 14.0, glass::white(0.80), true);
+            }
+            if shown {
+                let y = inner.bottom() - 104.0;
+                for (i, label) in [t(&tr, "status_left"), t(&tr, "status_right")].iter().enumerate() {
+                    let x = inner.center().x + (i as f32 - 0.5) * 130.0;
+                    let value = word(if i == 0 { s.fit.0 } else { s.fit.1 });
+                    ui.painter().text(Pos2::new(x, y), Align2::CENTER_CENTER, format!("{label} · {value}"), egui::FontId::proportional(14.0), glass::white(0.86));
+                }
+            }
+            act = sheets::actions(ui, inner, "", primary);
+        });
+        match act {
             Some(true) => {
                 if state == 4 { fit_stop(app); app.earbuds.fit_state = 0; app.earbuds.fit_shown = false; app.earbuds.fit_open = false; }
                 else if state != 2 { fit_play(app); }
             }
-            None => {}
+            _ => {}
         }
+        if !open { fit_stop(app); app.earbuds.fit_state = 0; app.earbuds.fit_shown = false; app.earbuds.fit_open = false; }
     }
 
-    // Personalized ANC
+    // Firmware: HeyMelody updates it; a failed flash can leave the buds unusable.
+    if app.earbuds.firmware_open {
+        let mut act = None;
+        let open = sheets::sheet(ui.ctx(), "firmware", t(&tr, "firmware_dialog_title"), Title::Centre, Vec2::new(sheets::WIDTH, 246.1), |ui, inner| {
+            let body_rect = Rect::from_min_max(inner.min + Vec2::new(0.0, 4.0), Pos2::new(inner.right(), inner.bottom() - 66.0));
+            phone::paragraph(ui, body_rect, t(&tr, "firmware_dialog_body"), 14.0, glass::white(0.80), true);
+            act = sheets::actions(ui, inner, "", t(&tr, "dialog_close"));
+        });
+        if act.is_some() || !open { app.earbuds.firmware_open = false; }
+    }
+
+    // Personalized ANC: the flow keeps its own state; only its drawing changed.
     if app.earbuds.pnc_open {
         let st = app.earbuds.pnc_state as usize;
-        let title = ["pnc_title", "pnc_stored_title", "pnc_test_title", "pnc_title", "pnc_failed", "pnc_title", "pnc_title"][st.min(6)];
+        let title = t(&tr, ["pnc_title", "pnc_stored_title", "pnc_test_title", "pnc_title", "pnc_failed", "pnc_title", "pnc_title"][st.min(6)]);
         let ri = if app.earbuds.pnc_reason <= 5 { app.earbuds.pnc_reason as usize } else { 0 };
         let reason = ["", "pnc_fail_quiet", "pnc_fail_fit", "pnc_fail_wind", "pnc_fail_still", "pnc_fail_audio"][ri];
         let body = match st {
@@ -379,7 +435,13 @@ fn dialogs(app: &mut App, ui: &mut Ui) {
         };
         let left = t(&tr, if st == 1 { "pnc_test_again" } else if st == 6 { "dialog_close" } else { "dialog_cancel" });
         let primary = if matches!(st, 1 | 2 | 4 | 5) { t(&tr, match st { 1 => "pnc_use", 2 => "pnc_start", _ => "pnc_retry" }) } else { "" };
-        match flow_dialog(ui, "pnc", t(&tr, title), body, None, left, primary) {
+        let mut act = None;
+        let open = sheets::sheet(ui.ctx(), "pnc", title, Title::Centre, Vec2::new(sheets::WIDTH, 300.0), |ui, inner| {
+            let body_rect = Rect::from_min_max(inner.min + Vec2::new(0.0, 4.0), Pos2::new(inner.right(), inner.bottom() - 66.0));
+            phone::paragraph(ui, body_rect, body, 14.0, glass::white(0.80), true);
+            act = sheets::actions(ui, inner, left, primary);
+        });
+        match act {
             Some(false) => if st == 1 { pnc_test(app); } else { pnc_finish(app); },
             Some(true) => match st {
                 1 => { app.send(Cmd::Pnc(2)); app.earbuds.pnc_state = 0; app.earbuds.pnc_open = false; }
@@ -388,5 +450,20 @@ fn dialogs(app: &mut App, ui: &mut Ui) {
             },
             None => {}
         }
+        if !open { pnc_finish(app); }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The model's confirmed list shows the Wear row before the buds' feature read; an unknown model shows none.
+    #[test]
+    fn wear_row_follows_the_model_before_a_read() {
+        let buds = crate::types::models().iter().find(|m| m["name"].as_str() == Some("OnePlus Buds 4"));
+        let s = Snapshot { model: buds, ..Default::default() };
+        assert!(wear_offered(&s));
+        assert!(!wear_offered(&Snapshot::default()));
     }
 }

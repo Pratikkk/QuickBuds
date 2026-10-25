@@ -20,18 +20,24 @@ mod session;
 #[path = "../../desktop/src/types.rs"]
 mod types;
 
+mod about;
+mod appearance;
 mod dev;
 mod dual;
 mod earbuds;
 mod eq;
 mod fonts;
 mod gestures;
+mod issues;
+mod language;
 mod glass;
 mod hearing;
 mod models;
-mod settings;
+mod motion;
 mod overview;
+mod settings;
 mod palette;
+mod phone;
 mod token_sheet;
 mod tokens;
 
@@ -70,6 +76,18 @@ fn local_now() -> [u32; 7] {
         st
     };
     [st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds].map(u32::from)
+}
+
+/// The desktop's reduced-motion setting. egui has no input for it; GNOME holds the choice on Linux.
+fn os_reduced_motion() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        let out = std::process::Command::new("gsettings")
+            .args(["get", "org.gnome.desktop.interface", "enable-animations"]).output();
+        return out.is_ok_and(|o| String::from_utf8_lossy(&o.stdout).trim() == "false");
+    }
+    #[allow(unreachable_code)]
+    false
 }
 
 /// `settings.json` in the user's config folder, shared with the Slint app.
@@ -132,7 +150,20 @@ pub fn t<'a>(tr: &'a [String], key: &str) -> &'a str {
 // ---- app ----
 
 #[derive(Clone, Copy, PartialEq)]
-pub enum Page { Overview, Eq, Gestures, Hearing, Dual, Earbuds, Models, Settings, Dev }
+pub enum Page { Overview, Eq, Gestures, Hearing, Dual, Earbuds, Models, Settings, Appearance, Issues, About, Language, Dev }
+
+/// The page named by `QB_PAGE`, for screenshots.
+fn page_from_key(key: &str) -> Option<Page> {
+    Some(match key {
+        "overview" => Page::Overview,
+        "settings" => Page::Settings,
+        "appearance" => Page::Appearance,
+        "issues" => Page::Issues,
+        "about" => Page::About,
+        "language" => Page::Language,
+        _ => return None,
+    })
+}
 
 /// What the connected buds offer; decides which Overview rows show.
 #[derive(Clone, Copy, PartialEq)]
@@ -169,6 +200,8 @@ pub struct App {
     /// The Overview's scroll offset in points.
     pub scroll: f32,
     pub shown_page: Page,
+    /// Counts page changes: each one gets a fresh motion key.
+    pub page_seq: u64,
     pub page_since: std::time::Instant,
     pub eq: eq::State,
     pub dual: dual::State,
@@ -176,6 +209,7 @@ pub struct App {
     pub dev: dev::State,
     pub gestures: gestures::State,
     pub settings: settings::State,
+    pub appearance: appearance::State,
     pub style: glass::style::Style,
     /// What the style was last made for: (system light, saved settings stamp).
     style_for: bool,
@@ -187,6 +221,8 @@ pub struct Confirm { pub cmds: Vec<Cmd>, pub title: &'static str, pub msg: &'sta
 
 impl App {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        // egui 0.37 has no reduced-motion input: the settings key, else the desktop's own setting.
+        motion::set_reduced_motion(load_settings()["reduced_motion"].as_bool().unwrap_or(false) || os_reduced_motion());
         glass::install(cc);
         egui_extras::install_image_loaders(&cc.egui_ctx);
         let inbox = Arc::new(Mutex::new(None));
@@ -202,9 +238,14 @@ impl App {
         let glow = load_settings()["glass_gradient"].as_bool().unwrap_or(true);
         let mut app = Self {
             snap: Snapshot::default(), tx, tr: translations(chosen_locale()), inbox, page: Page::Overview, has: Has::ALL,
-            modes: AncModes::default(), last_level: None, levels_open: false, glow, demo, confirm: None, scroll: 0.0, shown_page: Page::Overview, page_since: std::time::Instant::now(), eq: Default::default(), dual: Default::default(), earbuds: Default::default(), dev: Default::default(), gestures: Default::default(), settings: Default::default(), hearing: Default::default(), style: glass::style::Style::Glass, style_for: false,
+            modes: AncModes::default(), last_level: None, levels_open: false, glow, demo, confirm: None, scroll: 0.0, shown_page: Page::Overview, page_seq: 0, page_since: std::time::Instant::now(), eq: Default::default(), dual: Default::default(), earbuds: Default::default(), dev: Default::default(), gestures: Default::default(), settings: Default::default(), appearance: Default::default(), hearing: Default::default(), style: glass::style::Style::Glass, style_for: false,
         };
         app.reload_style(&cc.egui_ctx);
+        // A page at start, for screenshots: QB_PAGE=appearance, issues, about, language or settings.
+        if let Some(p) = std::env::var("QB_PAGE").ok().and_then(|k| page_from_key(&k)) {
+            app.page = p;
+            app.shown_page = p;
+        }
         app
     }
 
@@ -243,7 +284,10 @@ impl eframe::App for App {
         if palette::is_light_system(ui.ctx()) != self.style_for && palette::auto() { let ctx = ui.ctx().clone(); self.reload_style(&ctx); }
         glass::set_glow(ui.ctx(), if self.glow { 1.0 } else { 0.0 });
         glass::backdrop(ui);
+        // Glass draws its own window: the base colour and four blobs of the chosen background.
+        if self.style == glass::style::Style::Glass { appearance::window(ui); }
         overview::show(self, ui);
+        appearance::sheet(self, ui);
     }
 }
 
@@ -254,7 +298,7 @@ fn main() -> eframe::Result {
     }
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([1180.0, 760.0])
+            .with_inner_size([412.0, 911.0])
             .with_resizable(false)
             .with_maximize_button(false)
             .with_decorations(false)

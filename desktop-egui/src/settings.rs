@@ -1,12 +1,16 @@
-//! App settings: the language, the glass background, the battery readout.
+//! Settings (`SettingsActivity`, DESIGN §7.4): Appearance, General and App, with the phone's 14 rows in its order.
+//! The rows, the section labels and the 379.4 dp column are the captures'. Each row is its own 16 dp card.
 
-use crate::glass::{self, style::Style, Choice, Trailing};
-use crate::palette;
-use crate::{icons, load_settings, save_setting, t, translations, chosen_locale, App};
-use eframe::egui::{self, Align2, Color32, Pos2, Rect, Sense, Ui, Vec2};
+pub(crate) mod sheets;
+pub(crate) mod ui;
 
-const ROW: f32 = 72.0;
-const MAX_W: f32 = 760.0;
+use crate::appearance;
+use crate::glass;
+use crate::phone;
+use crate::settings::sheets::Title;
+use crate::settings::ui::Trail;
+use crate::{icons, load_settings, save_setting, t, App, Page};
+use eframe::egui::{Pos2, Rect, Ui, Vec2};
 
 /// Settings › Language: (locale tag or "en" for the English default table, native name); "" is the system default.
 pub const LANGUAGES: &[(&str, &str)] = &[
@@ -19,138 +23,97 @@ pub const LANGUAGES: &[(&str, &str)] = &[
 ];
 
 #[derive(Default)]
-pub struct State { choosing: bool, style_dlg: bool, theme_dlg: bool, accent_dlg: bool }
-
-const ACCENTS: [&str; 12] = ["#D71920", "#E8590C", "#F59F00", "#40C057", "#12B886", "#15AABF", "#339AF0", "#5C7CFA", "#845EF7", "#CC5DE8", "#F06595", "#C2C6D6"];
-
-fn theme_name(tr: &[String], id: &str) -> String {
-    t(tr, match id { palette::OLED => "theme_oled_black", palette::DARK => "theme_classic_dark", palette::WHITE => "theme_white", _ => "theme_custom" }).to_string()
+pub struct State {
+    /// The background-service warning sheet is open.
+    bg_warn: bool,
 }
 
 pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let tr = app.tr.clone();
-    let w = body.width().min(MAX_W);
+    let light = crate::palette::is_light_system(ui.ctx());
+    let accent = crate::palette::active(light, app.style == glass::style::Style::Material).accent;
+    let w = phone::content(body);
     let x0 = body.left();
+    let st = load_settings();
+    let flag = |key: &str, default: bool| st[key].as_bool().unwrap_or(default);
     let mut y = body.top();
-    let saved = load_settings()["language"].as_str().unwrap_or("").to_string();
-    let current = LANGUAGES.iter().position(|l| l.0 == saved).unwrap_or(0);
-    let name = |i: usize| if i == 0 { t(&tr, "language_system").to_string() } else { LANGUAGES[i].1.to_string() };
+    let mut go: Option<Page> = None;
 
-    let clear = load_settings()["clear_battery"].as_bool() == Some(true);
-    let is_glass = app.style == Style::Glass;
-    // Rows: the style first; the theme and accent for the styles that use the palette; the glow for Glass.
-    let rows = 3 + if is_glass { 1 } else { 2 };
-    let card = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, (ROW + 10.0) * rows as f32 - 10.0));
-    let r = |i: usize| Rect::from_min_size(Pos2::new(x0, y + (ROW + 10.0) * i as f32), Vec2::new(w, ROW));
-    let mut i = 0;
-    glass::flat_at(ui, r(0), 28.0, 1.0);
-    let (clicked, _) = glass::row_at(ui, "style", r(i), icons::PALETTE, t(&tr, "widget_style_title"), "", Trailing::Value(t(&tr, app.style.name_key()).into()), true);
-    if clicked { app.settings.style_dlg = true; }
-    i += 1;
-    if is_glass {
-        glass::flat_at(ui, r(i), 28.0, 1.0);
-        let (_, toggled) = glass::row_at(ui, "glow", r(i), icons::PALETTE, t(&tr, "theme_glass_gradient"), t(&tr, "theme_glass_gradient_sub"), Trailing::Switch(app.glow), true);
-        if toggled { app.glow = !app.glow; save_setting("glass_gradient", app.glow.into()); }
-        i += 1;
-    } else {
-        let light = palette::is_light_system(ui.ctx());
-        let id = palette::active_id(light);
-        let name = if palette::auto() { t(&tr, "theme_auto").to_string() } else { theme_name(&tr, &id) };
-        glass::flat_at(ui, r(i), 28.0, 1.0);
-        let (clicked, _) = glass::row_at(ui, "theme", r(i), icons::PALETTE, t(&tr, "theme_title"), "", Trailing::Value(name), true);
-        if clicked { app.settings.theme_dlg = true; }
-        i += 1;
-        glass::flat_at(ui, r(i), 28.0, 1.0);
-        let (clicked, _) = glass::row_at(ui, "accent", r(i), icons::PALETTE, t(&tr, "theme_accent"), "", Trailing::Value(palette::hex(crate::glass::style::pal().accent)), true);
-        if clicked { app.settings.accent_dlg = true; }
-        i += 1;
-    }
-    glass::flat_at(ui, r(i), 28.0, 1.0);
-    let (clicked, _) = glass::row_at(ui, "lang", r(i), icons::LANGUAGE, t(&tr, "settings_language_title"), t(&tr, "settings_language_sub"), glass::Trailing::Value(name(current)), true);
-    if clicked { app.settings.choosing = true; }
-    i += 1;
-    glass::flat_at(ui, r(i), 28.0, 1.0);
-    let (_, toggled) = glass::row_at(ui, "clearbat", r(i), icons::BATTERY, t(&tr, "settings_clear_battery_title"), t(&tr, "settings_clear_battery_sub"), Trailing::Switch(clear), true);
+    // Appearance.
+    ui::section(ui, x0, y, t(&tr, "settings_appearance"), accent);
+    y += phone::SECTION;
+    let preset = appearance::preset_name(&tr, &crate::palette::active_id(light));
+    let (h, clicked, _) = ui::row_card(ui, "theme", x0, y, w, Some(icons::PALETTE), t(&tr, "theme_title"), &preset, Trail::Chevron, true);
+    if clicked { go = Some(Page::Appearance); }
+    y += h + 8.0;
+    let (h, _, _) = ui::row_card(ui, "layout", x0, y, w, Some(icons::LAYOUT), t(&tr, "settings_layout_title"), t(&tr, "settings_layout_sub"), Trail::Chevron, true);
+    y += h;
+
+    // General.
+    ui::section(ui, x0, y, t(&tr, "settings_general"), accent);
+    y += phone::SECTION;
+    let (h, clicked, _) = ui::row_card(ui, "language", x0, y, w, Some(icons::LANGUAGE), t(&tr, "settings_language_title"), t(&tr, "settings_language_sub"), Trail::Chevron, true);
+    if clicked { go = Some(Page::Language); }
+    y += h + 8.0;
+
+    let haptics = flag("haptics", true);
+    let (h, _, toggled) = ui::row_card(ui, "haptics", x0, y, w, Some(ui::HAPTIC), t(&tr, "settings_haptics_title"), t(&tr, "settings_haptics_sub"), Trail::Switch(haptics), true);
+    if toggled { save_setting("haptics", (!haptics).into()); }
+    y += h + 8.0;
+
+    let background = flag("background_service", true);
+    let (h, _, toggled) = ui::row_card(ui, "background", x0, y, w, Some(icons::POWER), t(&tr, "settings_background_title"), t(&tr, "settings_background_sub"), Trail::Switch(background), true);
+    if toggled { if background { app.settings.bg_warn = true; } else { save_setting("background_service", true.into()); } }
+    y += h + 8.0;
+
+    let clear = flag("clear_battery", false);
+    let (h, _, toggled) = ui::row_card(ui, "clear-battery", x0, y, w, Some(icons::BATTERY), t(&tr, "settings_clear_battery_title"), t(&tr, "settings_clear_battery_sub"), Trail::Switch(clear), true);
     if toggled { save_setting("clear_battery", (!clear).into()); }
-    y += card.height() + 24.0;
-    glass::text(ui, Pos2::new(x0 + 6.0, y + 8.0), Align2::LEFT_CENTER, &format!("QuickBuds {}", env!("CARGO_PKG_VERSION")), 13.0, 0.74);
-    y += 24.0;
+    y += h + 8.0;
 
-    // Style
-    if app.settings.style_dlg {
-        let options: Vec<String> = Style::ALL.iter().map(|s| t(&tr, s.name_key()).to_string()).collect();
-        let cur = Style::ALL.iter().position(|s| *s == app.style).unwrap_or(0);
-        match glass::choice_dialog(ui.ctx(), "style-dialog", t(&tr, "widget_style_title"), &options, cur) {
-            Choice::Pick(i) => {
-                save_setting("egui_style", Style::ALL[i].key().into());
-                let ctx = ui.ctx().clone();
-                app.reload_style(&ctx);
-                app.settings.style_dlg = false;
-            }
-            Choice::Close => app.settings.style_dlg = false,
-            Choice::Open => {}
-        }
-    }
-    // Theme: Match system, the three built-in presets, the custom ones.
-    if app.settings.theme_dlg {
-        let light = palette::is_light_system(ui.ctx());
-        let custom = palette::custom();
-        let mut ids: Vec<String> = vec!["auto".into(), palette::OLED.into(), palette::DARK.into(), palette::WHITE.into()];
-        ids.extend(custom.iter().map(|c| c.0.clone()));
-        let mut options: Vec<String> = vec![t(&tr, "theme_auto").into(), theme_name(&tr, palette::OLED), theme_name(&tr, palette::DARK), theme_name(&tr, palette::WHITE)];
-        options.extend(custom.iter().map(|c| c.1.clone()));
-        let cur = if palette::auto() { 0 } else { ids.iter().position(|i| *i == palette::active_id(light)).unwrap_or(1) };
-        match glass::choice_dialog(ui.ctx(), "theme-dialog", t(&tr, "theme_title"), &options, cur) {
-            Choice::Pick(i) => {
-                if i == 0 { palette::set_auto(true); } else { palette::set_active(&ids[i]); }
-                let ctx = ui.ctx().clone();
-                app.reload_style(&ctx);
-                app.settings.theme_dlg = false;
-            }
-            Choice::Close => app.settings.theme_dlg = false,
-            Choice::Open => {}
-        }
-    }
-    // Accent: swatches for the active built-in preset.
-    if app.settings.accent_dlg {
-        let light = palette::is_light_system(ui.ctx());
-        let id = palette::active_id(light);
-        let mut pick: Option<Option<Color32>> = None;
-        let open = glass::dialog(ui.ctx(), "accent-dialog", t(&tr, "theme_accent"), Vec2::new(420.0, 250.0), |ui| {
-            let r = ui.max_rect();
-            for (n, hex) in ACCENTS.iter().enumerate() {
-                let c = palette::parse_hex(hex).unwrap();
-                let (col, row) = (n % 6, n / 6);
-                let center = Pos2::new(r.left() + 28.0 + col as f32 * 58.0, r.top() + 28.0 + row as f32 * 58.0);
-                let hit = ui.interact(Rect::from_center_size(center, Vec2::splat(46.0)), ui.scope_id().with(("swatch", n)), Sense::click());
-                ui.painter().circle_filled(center, 20.0 + if hit.hovered() { 2.0 } else { 0.0 }, c);
-                if crate::glass::style::pal().accent == c { ui.painter().circle_stroke(center, 24.0, egui::Stroke::new(2.0, glass::white(1.0))); }
-                if hit.clicked() { pick = Some(Some(c)); }
-            }
+    let devtools = flag("dev_tools_button", true);
+    let (h, _, toggled) = ui::row_card(ui, "devtools", x0, y, w, Some(icons::DEV_TOOLS), t(&tr, "settings_devtools_title"), t(&tr, "settings_devtools_sub"), Trail::Switch(devtools), true);
+    if toggled { save_setting("dev_tools_button", (!devtools).into()); }
+    y += h + 8.0;
+
+    let ping = flag("usage_ping", true);
+    let (h, _, toggled) = ui::row_card(ui, "ping", x0, y, w, Some(icons::INFO), t(&tr, "settings_ping_title"), t(&tr, "settings_ping_sub"), Trail::Switch(ping), true);
+    if toggled { save_setting("usage_ping", (!ping).into()); }
+    y += h + 8.0;
+
+    let (h, _, _) = ui::row_card(ui, "setup", x0, y, w, Some(icons::INFO), t(&tr, "settings_setup_title"), "", Trail::Chevron, true);
+    y += h;
+
+    // App.
+    ui::section(ui, x0, y, t(&tr, "settings_app"), accent);
+    y += phone::SECTION;
+    let installed = t(&tr, "settings_update_sub").replace("%1$s", env!("CARGO_PKG_VERSION"));
+    let (h, _, _) = ui::row_card(ui, "update", x0, y, w, Some(icons::UPDATE), t(&tr, "row_update_title"), &installed, Trail::Chevron, true);
+    y += h + 8.0;
+    let (h, _, _) = ui::row_card(ui, "test", x0, y, w, Some(icons::EARBUD), t(&tr, "test_title"), t(&tr, "test_sub"), Trail::Chevron, true);
+    y += h + 8.0;
+    let (h, _, _) = ui::row_card(ui, "feedback", x0, y, w, Some(icons::DEV_TOOLS), t(&tr, "problem_title"), t(&tr, "problem_sub"), Trail::Chevron, true);
+    y += h + 8.0;
+    let (h, clicked, _) = ui::row_card(ui, "about", x0, y, w, Some(icons::INFO), t(&tr, "settings_about_title"), t(&tr, "settings_about_sub"), Trail::Chevron, true);
+    if clicked { go = Some(Page::About); }
+    y += h + 8.0;
+    let (h, clicked, _) = ui::row_card(ui, "issues", x0, y, w, Some(icons::INFO), t(&tr, "settings_issues_title"), t(&tr, "settings_issues_sub"), Trail::Chevron, true);
+    if clicked { go = Some(Page::Issues); }
+    y += h;
+
+    if let Some(p) = go { app.page = p; }
+
+    // The background-service warning: Cancel keeps it on, "Turn off" writes the setting.
+    if app.settings.bg_warn {
+        let mut decision = None;
+        let open = sheets::sheet(ui.ctx(), "background-warn", t(&tr, "settings_background_warn_title"), Title::Start, Vec2::new(sheets::WIDTH, 263.2), |ui, inner| {
+            let body_rect = Rect::from_min_max(inner.min + Vec2::new(17.0, 4.0), Pos2::new(inner.right(), inner.bottom() - 66.0));
+            phone::paragraph(ui, body_rect, t(&tr, "settings_background_warn_body"), 14.0, glass::white(0.80), true);
+            decision = sheets::actions(ui, inner, t(&tr, "dialog_cancel"), t(&tr, "settings_background_warn_action"));
         });
-        match pick {
-            Some(c) if palette::BUILT_IN.contains(&id.as_str()) => {
-                palette::set_accent(&id, c);
-                let ctx = ui.ctx().clone();
-                app.reload_style(&ctx);
-                app.settings.accent_dlg = false;
-            }
-            Some(_) => app.settings.accent_dlg = false,
-            None => if !open { app.settings.accent_dlg = false },
-        }
+        if decision == Some(true) { save_setting("background_service", false.into()); }
+        if decision.is_some() || !open { app.settings.bg_warn = false; }
     }
 
-    if app.settings.choosing {
-        let options: Vec<String> = (0..LANGUAGES.len()).map(name).collect();
-        match glass::choice_dialog(ui.ctx(), "lang-dialog", t(&tr, "settings_language_title"), &options, current) {
-            Choice::Pick(i) => {
-                save_setting("language", LANGUAGES[i].0.into());
-                app.tr = translations(chosen_locale());
-                app.settings.choosing = false;
-            }
-            Choice::Close => app.settings.choosing = false,
-            Choice::Open => {}
-        }
-    }
-    y
+    y + phone::GAP
 }

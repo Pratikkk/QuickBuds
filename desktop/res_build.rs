@@ -15,6 +15,7 @@ const ICONS: &[&str] = &[
     "ic_chevron_right", "ic_anc", "ic_plus", "ic_volume", "ic_power", "ic_transparency", "ic_info", "ic_find_buds", "ic_volume_off",
     "ic_tap_single", "ic_tap_double", "ic_tap_triple", "ic_hold", "ic_update", "ic_hires", "ic_spatial", "ic_language", "ic_palette",
     "ic_pencil", "ic_copy", "ic_delete", "ic_warning", "ic_chevron_down", "ic_battery",
+    "ic_github", "ic_kofi", "ic_chat", "ic_launcher_foreground",
 ];
 
 const STRINGS: &[&str] = &[
@@ -30,6 +31,8 @@ const STRINGS: &[&str] = &[
     "codec_msg_reconnect", "codec_msg_hires_drops_spatial", "codec_msg_spatial_drops_hires",
     "settings_issues_title", "settings_issues_sub", "issues_none", "issue_spatial_silent_title", "issue_spatial_silent_body",
     "issue_hires_spatial_title", "issue_hires_spatial_body", "issue_hires_no_codec_title", "issue_hires_no_codec_body", "about_discord_desc", "reply_title",
+    "app_name", "about_version", "about_tagline", "about_github", "about_kofi", "about_discord", "about_license_title", "about_license_body",
+    "settings_about_title", "settings_about_sub", "settings_appearance", "settings_general", "settings_app", "theme_accent_sub",
     "problem_title", "problem_sub", "problem_intro", "problem_model", "problem_category", "problem_description", "problem_description_hint", "problem_log_title", "problem_preview", "problem_send", "problem_sending", "problem_unsupported", "problem_supported_list", "problem_log_empty", "problem_cat_ui", "problem_cat_lag", "problem_cat_connection", "problem_cat_feature", "problem_cat_battery", "problem_cat_other", "crash_title",
     "report_title", "test_title", "test_sub", "test_ask_body", "test_ask_later", "test_intro", "test_start", "test_restart",
     "test_reconnecting", "test_failed", "test_section_check", "test_check_battery", "test_check_features", "test_check_states",
@@ -38,6 +41,11 @@ const STRINGS: &[&str] = &[
     "update_title", "update_installed", "update_latest", "update_check", "update_checking", "update_up_to_date",
     "update_available", "update_install", "update_failed", "update_auto_title", "update_auto_sub", "settings_clear_battery_title",
     "settings_clear_battery_sub", "update_found_title",
+    "settings_layout_title", "settings_layout_sub", "settings_haptics_title", "settings_haptics_sub",
+    "settings_background_title", "settings_background_sub", "settings_background_warn_title", "settings_background_warn_body",
+    "settings_background_warn_action", "settings_devtools_title", "settings_devtools_sub", "settings_update_sub", "row_update_title",
+    "settings_ping_title", "settings_ping_sub", "settings_setup_title", "row_gesture_title", "row_wear_title", "row_wear_sub",
+    "wear_title", "wear_smart_title", "wear_smart_sub",
     "conn_on", "conn_action_connect", "conn_action_disconnect", "conn_connecting", "dual_not_connected",
     "status_left", "status_right", "status_case", "anc_section", "anc_seg_off", "anc_seg_anc", "anc_need_ear",
     "anc_seg_adapt", "anc_seg_trans", "anc_mode_low", "anc_mode_medium", "anc_mode_high",

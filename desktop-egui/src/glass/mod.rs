@@ -1,9 +1,7 @@
 //! The Glass style as egui widgets: a shader for the surface (blur, lens, fill, rim, highlight) and the controls on it.
 
-// The motion table lives at `src/motion.rs` (the crate root owns `main.rs`). It is compiled here
-// until `main.rs` declares `mod motion;`.
-#[path = "../motion.rs"]
-pub mod motion;
+/// The motion table lives at the crate root (`main.rs` reads it); the widgets here use it.
+pub(crate) use crate::motion;
 mod shader;
 pub mod style;
 mod widgets;
