@@ -388,7 +388,7 @@ class BudsConnectionManager(private val context: Context) {
     private var virtualTarget: Pair<String, Int>? = null
 
     /**
-     * Dev tools › Virtual buds: a TCP socket to `tools/fake-buds` instead of RFCOMM.
+     * Dev tools › Virtual buds: a TCP socket to a local fake earbuds server instead of RFCOMM.
      * No BluetoothAdapter, no paired device and no Bluetooth permission is touched here.
      * Everything after the socket is the normal path ([onLinkUp]).
      */

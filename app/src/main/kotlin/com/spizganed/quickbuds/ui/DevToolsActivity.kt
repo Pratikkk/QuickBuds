@@ -150,7 +150,7 @@ class DevToolsActivity : Activity() {
         })
         root.addView(actions, spaced(dp(12f)))
 
-        // Dev tools › Virtual buds: the app connects to tools/fake-buds over TCP instead of Bluetooth,
+        // Dev tools › Virtual buds: the app connects to a local fake earbuds server over TCP instead of Bluetooth,
         // so the emulator shows every row with no phone and no real earbuds. Off by default.
         val virtualPrefs = getSharedPreferences(ThemeRes.PREFS_NAME, MODE_PRIVATE)
         val virtualCard = SettingRowFactory.card(this)

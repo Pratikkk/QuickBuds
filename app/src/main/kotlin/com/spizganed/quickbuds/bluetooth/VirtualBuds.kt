@@ -4,7 +4,7 @@ import android.content.Context
 import com.spizganed.quickbuds.ui.ThemeRes
 
 /**
- * Dev tools › Virtual buds: connect to `tools/fake-buds` instead of Bluetooth.
+ * Dev tools › Virtual buds: connect to a local fake earbuds server instead of Bluetooth.
  *
  * Off by default. Nothing changes for a user who never opens Dev tools.
  * The server answers as OnePlus Buds 4, so every feature row can be reached without a phone

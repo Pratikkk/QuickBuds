@@ -38,3 +38,9 @@ firmware/
 
 # Vendor-app oracle: local tooling only. Names a vendor package; never published.
 /tools/heymelody-oracle/
+
+# Local test tooling: fake earbuds server, emulator automation, vendor research.
+/tools/fake-buds/
+/scripts/emulator-run.sh
+/scripts/uiauto.py
+/research/
