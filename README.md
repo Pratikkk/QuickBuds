@@ -184,3 +184,13 @@ QuickBuds is an independent project. It is not affiliated with OnePlus, OPPO, re
 affiliates. Those companies do not endorse or sponsor it. OnePlus, OPPO, realme, HeyMelody and the earbud
 model names are trademarks of their owners. This text uses them only to say which devices the app works
 with. The project studied the protocol only to make these earbuds work with this app.
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=spizganed%2Fquickbuds&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=spizganed/quickbuds&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=spizganed/quickbuds&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=spizganed/quickbuds&type=date&legend=top-left" />
+ </picture>
+</a>
