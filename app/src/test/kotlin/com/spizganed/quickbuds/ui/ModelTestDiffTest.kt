@@ -18,20 +18,28 @@ class ModelTestDiffTest {
 
     @Test fun aSwitchTheAppAskedForAndTheBudsDidNotAnswer() {
         // The ask list also names both game-mode ids (RowRules.askQuery), and the reply lists neither.
-        assertEquals(listOf(0x04, 0x06, 0x28), diff().missing)
+        assertEquals(listOf(0x04), diff().missing)
         assertTrue(diff().extra.isEmpty())
+    }
+
+    @Test fun anIdOnlyAModelFlagAsksIsNoMissingAnswer() {
+        // `autoVolume` adds 0x1C to the ask list; a model that does not declare it in statusQuery is not at fault.
+        val m = """{"id":"X","name":"X","statusQuery":"05 04","autoVolume":1}"""
+        assertEquals(listOf(0x04), diff(model = m, reply = mapOf(0x05 to 1)).missing)
     }
 
     @Test fun theSecondGameIdIsNoMissingAnswerWhenTheFirstIsAnswered() {
         // The app asks 0x06 and 0x28 on purpose; a model answers one of them (OnePlus Buds 4 answers 06).
-        assertEquals(listOf(0x04), diff(reply = mapOf(0x05 to 1, 0x06 to 1)).missing)
-        assertEquals(listOf(0x04), diff(reply = mapOf(0x05 to 1, 0x28 to 0)).missing)
+        val m = """{"id":"X","name":"X","statusQuery":"05 06 28"}"""
+        assertTrue(diff(model = m, reply = mapOf(0x05 to 1, 0x06 to 1)).missing.isEmpty())
+        assertTrue(diff(model = m, reply = mapOf(0x05 to 1, 0x28 to 0)).missing.isEmpty())
+        assertEquals(listOf(0x06, 0x28), diff(model = m, reply = mapOf(0x05 to 1)).missing)
     }
 
     @Test fun aSwitchTheBudsAnsweredThatTheAppDidNotAskFor() {
         val d = diff(reply = mapOf(0x05 to 1, 0x99 to 0))
         assertEquals(listOf(0x99), d.extra)
-        assertEquals(listOf(0x04, 0x06, 0x28), d.missing)
+        assertEquals(listOf(0x04), d.missing)
     }
 
     @Test fun nothingReadGivesNoMissingAndNoExtra() {
@@ -65,7 +73,7 @@ class ModelTestDiffTest {
         val with = ModelTest.description(state, features, "Android", diff(marks = mapOf("eq" to ModelTest.WORKS)))
         assertEquals(
             listOf("Model test (Android)", "Automatic check: battery level answered, feature list no answer, " +
-                "feature states no answer", "Diagnosis: asked, no answer: 0x04 0x06 0x28; marked works, no row: Equalizer",
+                "feature states no answer", "Diagnosis: asked, no answer: 0x04; marked works, no row: Equalizer",
                 "Battery: works", "Equalizer: works"),
             with.lines()
         )

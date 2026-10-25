@@ -218,14 +218,24 @@ object ModelTest {
         val asked = RowRules.liveAskIds(model, bitmap)
         val rows = RowRules.rows(model, reply, bitmap, productAnc)
         return Diff(
-            missing = reply?.keys?.let { answered -> asked.filter { it !in answered && !otherGameId(answered, it) }.sorted() }
-                .orEmpty(),
+            missing = reply?.keys?.let { answered ->
+                val declared = declaredIds(model)
+                asked.filter { it !in answered && !otherGameId(answered, it) && (declared == null || it in declared) }.sorted()
+            }.orEmpty(),
             extra = reply?.keys?.filter { it !in asked }?.sorted().orEmpty(),
             hidden = FEATURES.filter { marks[it.key] == WORKS }
                 .filter { ROW_KEY[it.key]?.let { row -> row !in rows } == true }
                 .map { it.key }
         )
     }
+
+    /**
+     * The ids the model's own `statusQuery` promises. A flag such as `autoVolume` adds `0x1C` to the ask list, but a
+     * model that does not answer it is no missing answer: the diagnosis reports only what the model declares. Null when
+     * the model has no list, so the whole ask list counts.
+     */
+    private fun declaredIds(model: JSONObject?): Set<Int>? = model?.optString("statusQuery")
+        ?.takeIf { it.isNotBlank() }?.split(' ')?.mapNotNull { it.toIntOrNull(16) }?.toSet()
 
     /**
      * The two game-mode ids are alternatives: a model answers one of them. When the reply holds one, the other is
