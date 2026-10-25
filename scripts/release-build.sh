@@ -28,4 +28,6 @@ tail -3 "$log/test.txt"
 cp app/build/outputs/apk/release/app-release.apk "$out/QuickBuds$ver.apk"
 cp app/build/outputs/bundle/release/app-release.aab "$out/QuickBuds$ver.aab"
 cp desktop/dist/* "$out/"
+# The updater and the Linux installer verify the download against this file.
+( cd "$out" && sha256sum QuickBuds*.apk QuickBuds*.aab QuickBuds*.zip QuickBuds*.tar.gz QuickBuds*.AppImage > SHA256SUMS )
 ls -la "$out"
