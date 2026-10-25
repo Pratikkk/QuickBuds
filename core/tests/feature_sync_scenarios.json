@@ -1,5 +1,5 @@
 {
- "about": "One rule for every setting that writes to and reads from the buds. Events: tap{key,writes[[id,value]],confirm,restarts}, ack{seq,status}, report{values,seq,push} (seq set = a reply to OUR read; push true = an event the buds sent on their own; neither = any other read reply, which only updates values), tick, disconnect, reconnect. Output tokens, in order: busy:<key>:on|off, send:<id>:<value>:s<seq>, read:s<seq>, changed:<id>:<value>, toast:<key>:refused_missing|refused_now|not_changed|no_answer. The engine numbers every send and every read from s1 within a scenario. confirm: read (our read reply decides), push (the first real push for the key decides; a read reply never does), ack (the ack decides). Timeouts: 3000 ms per wait step (ack, then reply or push); 15000 ms after the last ack of a write with restarts. One operation at a time; the others wait in a queue. docs/FEATURE-SYNC.md has the rules.",
+ "about": "One rule for every setting that writes to and reads from the buds. Events: tap{key,writes[[id,value]],confirm,restarts}, ack{seq,status}, report{values,seq,push} (seq set = a reply to OUR read; push true = an event the buds sent on their own; neither = any other read reply, which only updates values), tick, disconnect, reconnect. Output tokens, in order: busy:<key>:on|off, send:<id>:<value>:s<seq>, read:s<seq>, changed:<id>:<value>, toast:<key>:refused_missing|refused_now|not_changed|no_answer. The engine numbers every send and every read from s1 within a scenario. confirm: read (our read reply decides), push (the first real push for the key decides; a read reply never does; a push of the wanted value before the ack confirms at the ack), ack (the ack decides). Timeouts: 3000 ms per wait step (ack, then reply or push); 15000 ms after the last ack of a write with restarts. One operation at a time; the others wait in a queue. docs/FEATURE-SYNC.md has the rules.",
  "scenarios": [
   {
    "name": "read-confirmed: the value moves once, at our own read reply",
@@ -135,6 +135,57 @@
       "busy:6:off"
      ],
      "push": true
+    }
+   ]
+  },
+  {
+   "name": "push-confirmed (game mode): a push before the ack confirms at the ack",
+   "init": {
+    "6": 0
+   },
+   "events": [
+    {
+     "ev": "tap",
+     "key": 6,
+     "writes": [
+      [
+       6,
+       1
+      ]
+     ],
+     "confirm": "push",
+     "restarts": false,
+     "now": 0,
+     "expect": [
+      "busy:6:on",
+      "send:6:1:s1"
+     ]
+    },
+    {
+     "ev": "report",
+     "values": {
+      "6": 1
+     },
+     "seq": null,
+     "now": 151,
+     "expect": [
+      "changed:6:1"
+     ],
+     "push": true
+    },
+    {
+     "ev": "ack",
+     "seq": 1,
+     "status": 0,
+     "now": 186,
+     "expect": [
+      "busy:6:off"
+     ]
+    },
+    {
+     "ev": "tick",
+     "now": 3200,
+     "expect": []
     }
    ]
   },

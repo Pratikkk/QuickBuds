@@ -183,9 +183,17 @@ impl FeatureSync {
                 self.active = Some(a);
             }
             Confirm::Push => {
-                a.phase = Phase::Push;
-                a.deadline = now + WAIT_MS;
-                self.active = Some(a);
+                // The buds can report the new value BEFORE the ack (a fast push: 151 ms in report #68). That report
+                // already confirms the write, and a second push never comes. Wait only for the old value.
+                let written = a.op.writes.iter().rev().find(|(id, _)| *id == a.op.key).map(|(_, v)| *v);
+                if written.is_some() && self.values.get(&a.op.key).copied() == written {
+                    self.stop(&a, &mut out);
+                    self.start_next(now, &mut out);
+                } else {
+                    a.phase = Phase::Push;
+                    a.deadline = now + WAIT_MS;
+                    self.active = Some(a);
+                }
             }
             Confirm::Ack => {
                 self.apply_writes(&a, &mut out);

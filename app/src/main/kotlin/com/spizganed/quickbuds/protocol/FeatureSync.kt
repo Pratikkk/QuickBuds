@@ -86,8 +86,17 @@ class FeatureSync {
                 out += Out.Read(a.readSeq)
             }
             a.op.confirm == Confirm.PUSH -> {
-                a.phase = Phase.PUSH
-                a.deadline = now + WAIT_MS
+                // The buds can report the new value BEFORE the ack (a fast push: 151 ms in report #68, realme Clip).
+                // That report already confirms the write, and a second push never comes. Wait only when the value
+                // is still the old one.
+                val written = a.op.writes.lastOrNull { it.first == a.op.key }?.second
+                if (written != null && values[a.op.key] == written) {
+                    stop(a, out)
+                    startNext(now, out)
+                } else {
+                    a.phase = Phase.PUSH
+                    a.deadline = now + WAIT_MS
+                }
             }
             else -> {          // ACK: the ack decides
                 applyWrites(a, out)
