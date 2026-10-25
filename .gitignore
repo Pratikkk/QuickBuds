@@ -44,3 +44,6 @@ firmware/
 /scripts/emulator-run.sh
 /scripts/uiauto.py
 /research/
+
+# Local experiment folder. Its own README says: never push it.
+/EXPERIMENT.md
