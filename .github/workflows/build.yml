@@ -98,3 +98,24 @@ jobs:
           name: desktop
           path: desktop/dist/*
           retention-days: 14
+
+  checksums:
+    # One SHA256SUMS for the whole release: the updater and the Linux installer verify against it.
+    needs: [android, desktop]
+    if: ${{ always() && needs.desktop.result == 'success' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          path: files
+          merge-multiple: true
+      - name: SHA256SUMS
+        run: |
+          cd files
+          sha256sum * > SHA256SUMS
+          cat SHA256SUMS
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: checksums
+          path: files/SHA256SUMS
+          retention-days: 14
