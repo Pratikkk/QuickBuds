@@ -206,6 +206,12 @@ class BudsConnectionManager(private val context: Context) {
     private var lossRetries = 0
     private var connectedAt = 0L
     private var pendingReconnect: Runnable? = null
+
+    /** The 5 s auto-retry of a failed connect, so a deliberate disconnect cancels it. */
+    private var pendingRetry: Runnable? = null
+
+    /** Bumped on every connect and on every disconnect: a late connect thread must not install a socket. */
+    private var connectGeneration = 0
     /** Set by the all-zero wear push the buds send just before a lid close drops the link (PROTOCOL-LEGACY.md §8). */
     @Volatile private var caseClosing = false
     /**
@@ -267,6 +273,7 @@ class BudsConnectionManager(private val context: Context) {
         isConnecting = true
         lastDevice = device
         virtualTarget = null
+        val generation = ++connectGeneration
         // Starts the attempt, or clears the latch if the setup before it throws.
         val started = try {
             // Only a connect the user asked for (the pill) brings phone audio up. An automatic one —
@@ -340,6 +347,11 @@ class BudsConnectionManager(private val context: Context) {
                     }
                 }
 
+                if (socket != null && generation != connectGeneration) {
+                    log("Connect attempt cancelled: the link was dropped meanwhile.")
+                    try { socket.close() } catch (_: Exception) {}
+                    return@Thread
+                }
                 if (socket != null) {
                     bluetoothSocket = socket
                     connectedThread = ConnectedThread(socket.inputStream, socket.outputStream) { socket.close() }
@@ -348,12 +360,15 @@ class BudsConnectionManager(private val context: Context) {
                 } else {
                     log("All connection methods failed: $lastError")
                     disconnect()
-                    if (reconnectAttempts < 5) {
+                    if (generation == connectGeneration && reconnectAttempts < 5) {
                         reconnectAttempts++
                         log("Auto-retry $reconnectAttempts/5 in 5s...")
-                        handler.postDelayed({
-                            if (!isConnected() && !isConnecting) connect(device)
-                        }, 5000)
+                        val retry = Runnable {
+                            pendingRetry = null
+                            if (generation == connectGeneration && !isConnected() && !isConnecting) connect(device)
+                        }
+                        pendingRetry = retry
+                        handler.postDelayed(retry, 5000)
                     } else {
                         log("Giving up after 5 connect tries. Tap CONNECT to retry manually.")
                         reconnectAttempts = 0
@@ -400,6 +415,7 @@ class BudsConnectionManager(private val context: Context) {
         }
         isConnecting = true
         virtualTarget = host to port
+        val generation = ++connectGeneration
         Thread {
             try {
                 log("Connecting to the fake buds at $host:$port...")
@@ -411,6 +427,11 @@ class BudsConnectionManager(private val context: Context) {
                     log("Virtual connect failed: ${e.message}")
                     try { socket.close() } catch (_: Exception) {}
                     disconnect()
+                    return@Thread
+                }
+                if (generation != connectGeneration) {
+                    log("Virtual connect cancelled: the link was dropped meanwhile.")
+                    try { socket.close() } catch (_: Exception) {}
                     return@Thread
                 }
                 socket.tcpNoDelay = true
@@ -522,6 +543,9 @@ class BudsConnectionManager(private val context: Context) {
         // A deliberate disconnect must not be undone by a queued reconnect.
         pendingReconnect?.let { handler.removeCallbacks(it) }
         pendingReconnect = null
+        pendingRetry?.let { handler.removeCallbacks(it) }
+        pendingRetry = null
+        connectGeneration++
         isReady = false
         isConnecting = false
         connectedThread?.cancel()

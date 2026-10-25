@@ -38,6 +38,9 @@ class BudsService : Service(), BudsConnectionManager.Listener {
 
     private val handler = Handler(Looper.getMainLooper())
 
+    /** The delayed ACL connect (KeepAliveReceiver), so a deliberate disconnect cancels it. */
+    private var aclConnect: Runnable? = null
+
     private fun statusLog(msg: String) {
         Log.d("BudsConn", msg)
     }
@@ -126,11 +129,20 @@ class BudsService : Service(), BudsConnectionManager.Listener {
                 val delayMs = intent.getLongExtra(EXTRA_DELAY_MS, 0L)
                 // A delayed connect is the ACL fallback (KeepAliveReceiver): the audio-profile
                 // broadcast normally connects first, and then this finds us connected and does nothing.
-                if (delayMs > 0) handler.postDelayed({ forceConnect(withAudio) }, delayMs)
-                else forceConnect(withAudio)
+                if (delayMs > 0) {
+                    aclConnect?.let { handler.removeCallbacks(it) }
+                    val run = Runnable { aclConnect = null; forceConnect(withAudio) }
+                    aclConnect = run
+                    handler.postDelayed(run, delayMs)
+                } else {
+                    forceConnect(withAudio)
+                }
             }
             ACTION_FORCE_DISCONNECT -> {
                 statusLog("[SVC] FORCE_DISCONNECT")
+                // A queued ACL connect must not undo the tap.
+                aclConnect?.let { handler.removeCallbacks(it) }
+                aclConnect = null
                 manager?.disconnect()
                 // Only the deliberate disconnect drops phone audio — the manager's own
                 // disconnect() also runs after a failed connect attempt.
