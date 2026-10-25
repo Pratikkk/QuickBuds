@@ -687,7 +687,17 @@ class OppoPacketFramer {
                 onDiscard?.invoke(pending.copyOfRange(0, start))
                 pending = pending.copyOfRange(start, pending.size)
             }
-            val (totalLen, lenBytes) = readLength(pending) ?: break
+            val length = readLength(pending)
+            if (length == null) {
+                // Three length bytes with no terminator cannot be a header: drop the AA and keep scanning.
+                if (pending.size > 3) {
+                    onDiscard?.invoke(pending.copyOfRange(0, 1))
+                    pending = pending.copyOfRange(1, pending.size)
+                    continue
+                }
+                break
+            }
+            val (totalLen, lenBytes) = length
 
             if (pending.size < 2 + lenBytes) break
             // Slice byte (PROTOCOL.md §2): 0 a whole message, 1 first, 2 middle, 3 last slice. A slice has 3 header bytes, a message 7.

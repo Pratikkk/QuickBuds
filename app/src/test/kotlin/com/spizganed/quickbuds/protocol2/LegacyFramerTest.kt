@@ -32,4 +32,10 @@ class LegacyFramerTest {
         val w = OpoProtocol.buildPacket(0x8106, seq = 0xF0, payload = bytes(1, 2))
         assertArrayEquals(w, feed(OppoPacketFramer(), w).single())
     }
+
+    @Test fun badLengthByteDoesNotStallTheFrameAfterIt() {
+        val w = OpoProtocol.buildPacket(0x8106, seq = 0xF0, payload = bytes(1, 2))
+        val got = feed(OppoPacketFramer(), bytes(0xAA, 0x80, 0x80, 0x80) + w)
+        assertArrayEquals(w, got.single())
+    }
 }
