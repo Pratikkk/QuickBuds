@@ -22,14 +22,21 @@ npx wrangler deploy
 
 ## Read the reports
 
-Send the key in the `Authorization: Bearer <READ_KEY>` header. The Worker does not read the key from the URL, so a
-browser link no longer works.
+Open `https://quickbuds-report.<subdomain>.workers.dev/` in a browser. Type the key and click Load. The page keeps
+the key in memory only. The page stores nothing.
 
-- The text page: `curl -H "Authorization: Bearer $READ_KEY" https://quickbuds-report.<subdomain>.workers.dev/`
+A wrong key shows a message. The page shows the id, the time, the model, the status and the category of each report.
+Open a report to read the description and the log. The filter box hides log lines that do not match. The Copy button
+copies the full log.
+
+The page reads `/reports?format=json` with the `Authorization: Bearer <READ_KEY>` header. The Worker does not read the
+key from the URL, so a URL never holds the key.
+
+- The text list: `curl -H "Authorization: Bearer $READ_KEY" https://quickbuds-report.<subdomain>.workers.dev/reports`
 - For a script: add `?format=json`, and keep the header.
 - Only newer reports: add `?after=<id>`. More reports: add `?limit=100`.
 - The apps send a daily count to `/ping`.
-- Counts: add `?stats=1`, and `?days=<n>`.
+- Counts: use `/reports?stats=1`, and `?days=<n>`.
 
 The key is the only access control. Keep the key private.
 

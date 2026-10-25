@@ -1,5 +1,5 @@
-// The problem-report Worker. The apps POST /report as JSON; the developer reads GET / with the key in the
-// Authorization header.
+// The problem-report Worker. The apps POST /report as JSON; the developer reads GET /reports with the key in the
+// Authorization header, or types the key on the page at GET /.
 // It stores only reports the apps would send: a known model, a description and, when a log is on, frames from the buds.
 import catalog from "../../app/src/main/assets/models.json";
 
@@ -17,7 +17,8 @@ export default {
     const url = new URL(req.url);
     if (req.method === "POST" && url.pathname === "/report") return report(req, env);
     if (req.method === "POST" && url.pathname === "/ping") return ping(req, env);
-    if (req.method === "GET" && url.pathname === "/") return list(req, url, env);
+    if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/index.html")) return page();
+    if (req.method === "GET" && url.pathname === "/reports") return list(req, url, env);
     return new Response("Not found", { status: 404 });
   },
 };
@@ -56,6 +57,19 @@ async function report(req, env) {
     "INSERT INTO reports (at, sender, app, model, categories, description, crash, log, app_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
   ).bind(new Date().toISOString(), sender, app, model, categories.join(", "), description, crash ? 1 : 0, log, appId).run();
   return answer(200, "Sent. Thank you.");
+}
+
+/** The page holds no report data. The browser sends the key that the developer types. */
+function page() {
+  return new Response(PAGE, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+      "Referrer-Policy": "no-referrer",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
 }
 
 /**
@@ -178,3 +192,182 @@ async function stats(url, env) {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
 }
+
+/**
+ * The reader page. It calls /reports?format=json with the key in the Authorization header.
+ * The key stays in the input and in memory. The page stores nothing.
+ */
+const PAGE = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>QuickBuds reports</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #121214; color: #fff; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1000px; margin: 0 auto; padding: 24px 20px 64px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
+  .hint { color: #a0a0a5; font-size: 13px; margin: 0 0 20px; }
+  form { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin: 0 0 16px; }
+  .field { flex: 1 1 240px; }
+  label { display: block; margin: 0 0 4px; color: #a0a0a5; font-size: 13px; }
+  input { width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid #34343a; border-radius: 8px; background: #1b1b1f; color: #fff; font: inherit; }
+  input:hover { border-color: #4a4a52; }
+  button { min-height: 40px; padding: 8px 18px; border: 0; border-radius: 8px; background: #d71920; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+  button:hover { background: #b3141a; }
+  button:active { background: #971015; }
+  button:disabled { background: #3a3a40; color: #a0a0a5; cursor: default; }
+  :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  #state { min-height: 22px; margin: 0 0 16px; color: #a0a0a5; font-size: 14px; }
+  #list { display: grid; gap: 12px; list-style: none; margin: 0; padding: 0; }
+  .report { padding: 14px 16px; border: 1px solid #34343a; border-radius: 10px; background: #232327; }
+  .meta { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; }
+  .id { color: #a0a0a5; font-variant-numeric: tabular-nums; }
+  .time { color: #a0a0a5; font-size: 13px; }
+  .model { font-weight: 600; }
+  .pill { padding: 1px 8px; border: 1px solid #34343a; border-radius: 999px; color: #a0a0a5; font-size: 12px; }
+  .cat { color: #a0a0a5; font-size: 13px; }
+  details { margin-top: 10px; }
+  summary { padding: 4px 0; color: #a0a0a5; font-size: 13px; cursor: pointer; }
+  summary:hover { color: #fff; }
+  h3 { margin: 14px 0 6px; color: #a0a0a5; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+  .desc { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .logbar { display: flex; gap: 8px; margin: 6px 0; }
+  .logbar input { min-height: 32px; padding: 4px 10px; font-size: 13px; }
+  .copy { min-height: 32px; padding: 4px 12px; background: #2e2e33; font-size: 13px; font-weight: 500; }
+  .copy:hover { background: #3a3a41; }
+  .copy:active { background: #44444c; }
+  .log { max-height: 340px; margin: 0; padding: 12px; overflow: auto; border: 1px solid #2a2a2f; border-radius: 8px; background: #0c0c0e; white-space: pre-wrap; overflow-wrap: anywhere; font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  @media (max-width: 520px) { form button { width: 100%; } }
+  @media (prefers-reduced-motion: no-preference) { input, button, summary { transition: background-color 120ms ease-out, border-color 120ms ease-out, color 120ms ease-out; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>QuickBuds reports</h1>
+  <p class="hint">The key stays in this tab. The page stores nothing.</p>
+  <form id="load" autocomplete="off">
+    <div class="field">
+      <label for="key">Key</label>
+      <input id="key" type="password" autocomplete="current-password" spellcheck="false" required autofocus>
+    </div>
+    <button id="go" type="submit">Load</button>
+  </form>
+  <p id="state" role="status" aria-live="polite"></p>
+  <ul id="list"></ul>
+</main>
+<script>
+  var form = document.getElementById('load');
+  var keyInput = document.getElementById('key');
+  var button = document.getElementById('go');
+  var state = document.getElementById('state');
+  var list = document.getElementById('list');
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    var key = keyInput.value.trim();
+    if (!key) { state.textContent = 'Type the key first.'; return; }
+    load(key);
+  });
+
+  async function load(key) {
+    button.disabled = true;
+    state.textContent = 'Loading reports…';
+    list.replaceChildren();
+    try {
+      var res = await fetch('/reports?format=json', {
+        headers: { Authorization: 'Bearer ' + key },
+        cache: 'no-store'
+      });
+      if (res.status === 404) { state.textContent = 'The key is wrong or missing. Check the key and try again.'; return; }
+      if (!res.ok) { state.textContent = 'The Worker answered ' + res.status + '. Try again later.'; return; }
+      var reports = await res.json();
+      if (!Array.isArray(reports)) { state.textContent = 'The answer is not a report list. Check the Worker.'; return; }
+      if (reports.length === 0) { state.textContent = 'No reports.'; return; }
+      state.textContent = 'Reports: ' + reports.length + '.';
+      reports.forEach(function (report) { list.append(row(report)); });
+    } catch (error) {
+      state.textContent = 'The page cannot reach the Worker. Check the connection and try again.';
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function row(report) {
+    var item = document.createElement('li');
+    item.className = 'report';
+
+    var meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.append(
+      tag('span', 'id', '#' + report.id),
+      tag('span', 'time', when(report.at)),
+      tag('span', 'model', report.model || '-'),
+      tag('span', 'pill', report.status || '-'),
+      tag('span', 'cat', report.categories || '-')
+    );
+
+    var details = document.createElement('details');
+    var summary = document.createElement('summary');
+    summary.textContent = 'Show description and log';
+    details.append(
+      summary,
+      tag('h3', '', 'Description'),
+      tag('p', 'desc', report.description || '-'),
+      tag('h3', '', 'Log')
+    );
+
+    var logText = report.log == null ? '(not sent)' : String(report.log);
+    var bar = document.createElement('div');
+    bar.className = 'logbar';
+    var filter = document.createElement('input');
+    filter.type = 'search';
+    filter.placeholder = 'Filter lines';
+    filter.setAttribute('aria-label', 'Filter log lines');
+    var copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'copy';
+    copy.textContent = 'Copy';
+    var pre = document.createElement('pre');
+    pre.className = 'log';
+    pre.textContent = logText;
+
+    filter.addEventListener('input', function () {
+      var q = filter.value.toLowerCase();
+      if (!q) { pre.textContent = logText; return; }
+      var lines = logText.split('\\n').filter(function (line) { return line.toLowerCase().indexOf(q) >= 0; });
+      pre.textContent = lines.length ? lines.join('\\n') : '(No line matches.)';
+    });
+    copy.addEventListener('click', async function () {
+      try {
+        await navigator.clipboard.writeText(logText);
+        copy.textContent = 'Copied';
+      } catch (error) {
+        copy.textContent = 'Select and copy';
+      }
+      setTimeout(function () { copy.textContent = 'Copy'; }, 1500);
+    });
+
+    bar.append(filter, copy);
+    details.append(bar, pre);
+    item.append(meta, details);
+    return item;
+  }
+
+  function tag(name, className, text) {
+    var el = document.createElement(name);
+    if (className) el.className = className;
+    el.textContent = text;
+    return el;
+  }
+
+  function when(value) {
+    var date = new Date(value);
+    return isNaN(date.getTime()) ? String(value || '') : date.toLocaleString();
+  }
+</script>
+</body>
+</html>`;
+
