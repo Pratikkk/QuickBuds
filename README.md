@@ -74,12 +74,13 @@ QuickBuds works on **any Android 8+ phone** (Samsung, Google Pixel, Xiaomi, Noth
 not only on OnePlus / OPPO phones. It knows every model in HeyMelody's and realme Link's lists, 140 in
 all. It shows only the features each model has. Each model also lists its known issues in Settings.
 
-<details><summary><b>Confirmed</b> (6 models)</summary>
+<details><summary><b>Confirmed</b> (9 models)</summary>
 
-<details><summary><b>OnePlus</b> (2)</summary>
+<details><summary><b>OnePlus</b> (3)</summary>
 
 - **OnePlus Buds 4**: fully working. The owner tested every feature on a Nothing Phone (3a) with Android 16, and on Windows and Linux.
 - **OnePlus Bullets Wireless Z3**: confirmed by its owner on Android: battery, 3D audio, equalizer.
+- **OnePlus Nord Buds 4**: confirmed by its owner on Windows: battery, noise control, low latency, 3D audio, hearing profile, equalizer, dual connection, gestures, wear detection, find my earbuds.
 
 </details>
 
@@ -90,10 +91,12 @@ all. It shows only the features each model has. Each model also lists its known 
 
 </details>
 
-<details><summary><b>realme</b> (2)</summary>
+<details><summary><b>realme</b> (4)</summary>
 
 - **realme Buds Air7 Pro**: confirmed by its owner on Android and Windows: noise control, 3D audio, gestures.
 - **realme Buds T100**: confirmed by its owner on Android: battery, low latency, hearing profile.
+- **realme Buds T110**: confirmed by its owner on Android: battery, gestures.
+- **realme Buds T300**: confirmed by its owner on Android: battery, noise control, low latency, 3D audio, gestures, find my earbuds.
 
 </details>
 
