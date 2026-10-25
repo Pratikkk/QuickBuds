@@ -5,6 +5,7 @@ import com.spizganed.quickbuds.R
 import com.spizganed.quickbuds.bluetooth.BudsConnectionManager
 import com.spizganed.quickbuds.protocol.AncModes
 import com.spizganed.quickbuds.protocol.Capabilities
+import com.spizganed.quickbuds.protocol.Feature as ProtoFeature
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.RowRules
@@ -217,12 +218,23 @@ object ModelTest {
         val asked = RowRules.liveAskIds(model, bitmap)
         val rows = RowRules.rows(model, reply, bitmap, productAnc)
         return Diff(
-            missing = reply?.keys?.let { answered -> asked.filter { it !in answered }.sorted() }.orEmpty(),
+            missing = reply?.keys?.let { answered -> asked.filter { it !in answered && !otherGameId(answered, it) }.sorted() }
+                .orEmpty(),
             extra = reply?.keys?.filter { it !in asked }?.sorted().orEmpty(),
             hidden = FEATURES.filter { marks[it.key] == WORKS }
                 .filter { ROW_KEY[it.key]?.let { row -> row !in rows } == true }
                 .map { it.key }
         )
+    }
+
+    /**
+     * The two game-mode ids are alternatives: a model answers one of them. When the reply holds one, the other is
+     * not a missing answer, so the diagnosis does not report it (OnePlus Buds 4 answers `06`, not `28`).
+     */
+    private fun otherGameId(answered: Set<Int>, id: Int): Boolean = when (id) {
+        ProtoFeature.GAME_MODE -> ProtoFeature.GAME_MODE_MAIN in answered
+        ProtoFeature.GAME_MODE_MAIN -> ProtoFeature.GAME_MODE in answered
+        else -> false
     }
 
     /** The test in progress, as JSON: model id, checks, marks and notes. Kept while the person tries features. */

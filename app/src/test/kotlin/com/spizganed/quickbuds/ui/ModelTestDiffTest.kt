@@ -22,6 +22,12 @@ class ModelTestDiffTest {
         assertTrue(diff().extra.isEmpty())
     }
 
+    @Test fun theSecondGameIdIsNoMissingAnswerWhenTheFirstIsAnswered() {
+        // The app asks 0x06 and 0x28 on purpose; a model answers one of them (OnePlus Buds 4 answers 06).
+        assertEquals(listOf(0x04), diff(reply = mapOf(0x05 to 1, 0x06 to 1)).missing)
+        assertEquals(listOf(0x04), diff(reply = mapOf(0x05 to 1, 0x28 to 0)).missing)
+    }
+
     @Test fun aSwitchTheBudsAnsweredThatTheAppDidNotAskFor() {
         val d = diff(reply = mapOf(0x05 to 1, 0x99 to 0))
         assertEquals(listOf(0x99), d.extra)
