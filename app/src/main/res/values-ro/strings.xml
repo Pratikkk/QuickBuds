@@ -498,7 +498,7 @@
     <string name="test_broken_hint">Ce s-a întâmplat? Un rând este suficient.</string>
     <string name="test_mark_all">Marchează fiecare funcție ca să trimiți rezultatul.</string>
     <string name="about_privacy_title">Confidențialitate</string>
-    <string name="about_privacy_body">O dată pe zi QuickBuds trimite platforma, numărul versiunii (de exemplu „Android 5.0.0”) și un ID de instalare aleatoriu pentru a număra utilizatorii activi. ID-ul nu este legat de niciun dispozitiv, cont sau adresă, iar aplicația nu trimite date despre căști. Rapoartele poartă același ID și se trimit doar când le trimiți tu.</string>
+    <string name="about_privacy_body">O dată pe zi QuickBuds trimite platforma, numărul versiunii (de exemplu „Android 5.2.1”) și un ID de instalare aleatoriu pentru a număra utilizatorii activi. ID-ul nu este legat de niciun dispozitiv, cont sau adresă, iar aplicația nu trimite date despre căști. Rapoartele poartă același ID și se trimit doar când le trimiți tu.</string>
     <string name="about_privacy_reset">Resetează ID-ul de instalare</string>
     <string name="welcome_title">Bun venit în QuickBuds</string>
     <string name="welcome_body">Câțiva pași configurează QuickBuds. Poți schimba fiecare alegere mai târziu în Setări.</string>

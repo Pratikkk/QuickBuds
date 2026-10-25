@@ -498,7 +498,7 @@
     <string name="test_broken_hint">Ano ang nangyari? Sapat na ang isang linya.</string>
     <string name="test_mark_all">Markahan ang bawat feature para maipadala ang resulta.</string>
     <string name="about_privacy_title">Privacy</string>
-    <string name="about_privacy_body">Isang beses sa isang araw, ipinapadala ng QuickBuds ang platform nito, numero ng bersyon (halimbawa \"Android 5.0.0\") at isang random na install ID para mabilang ang mga aktibong user. Hindi nakakabit ang ID sa anumang device, account o address, at hindi nagpapadala ang app ng data ng earbuds. Dala ng mga ulat ang parehong ID at ipinapadala lang kapag ikaw ang nagpadala.</string>
+    <string name="about_privacy_body">Isang beses sa isang araw, ipinapadala ng QuickBuds ang platform nito, numero ng bersyon (halimbawa \"Android 5.2.1\") at isang random na install ID para mabilang ang mga aktibong user. Hindi nakakabit ang ID sa anumang device, account o address, at hindi nagpapadala ang app ng data ng earbuds. Dala ng mga ulat ang parehong ID at ipinapadala lang kapag ikaw ang nagpadala.</string>
     <string name="about_privacy_reset">I-reset ang install ID</string>
     <string name="welcome_title">Maligayang pagdating sa QuickBuds</string>
     <string name="welcome_body">Ilang hakbang lang para i-set up ang QuickBuds. Mababago mo ang bawat pagpili sa Settings.</string>

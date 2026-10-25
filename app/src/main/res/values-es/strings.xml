@@ -498,7 +498,7 @@
     <string name="test_broken_hint">¿Qué pasó? Basta con una línea.</string>
     <string name="test_mark_all">Marca cada función para enviar el resultado.</string>
     <string name="about_privacy_title">Privacidad</string>
-    <string name="about_privacy_body">Una vez al día QuickBuds envía su plataforma, su número de versión (por ejemplo «Android 5.0.0») y un ID de instalación aleatorio para contar los usuarios activos. El ID no se vincula a ningún dispositivo, cuenta ni dirección, y la app no envía datos de los auriculares. Los informes llevan el mismo ID y solo se envían cuando tú los envías.</string>
+    <string name="about_privacy_body">Una vez al día QuickBuds envía su plataforma, su número de versión (por ejemplo «Android 5.2.1») y un ID de instalación aleatorio para contar los usuarios activos. El ID no se vincula a ningún dispositivo, cuenta ni dirección, y la app no envía datos de los auriculares. Los informes llevan el mismo ID y solo se envían cuando tú los envías.</string>
     <string name="about_privacy_reset">Restablecer el ID de instalación</string>
     <string name="welcome_title">Te damos la bienvenida a QuickBuds</string>
     <string name="welcome_body">Unos pasos configuran QuickBuds. Puedes cambiar cada opción después en Ajustes.</string>

@@ -498,7 +498,7 @@
     <string name="test_broken_hint">Mi történt? Egy sor elég.</string>
     <string name="test_mark_all">Jelölj meg minden funkciót az eredmény elküldéséhez.</string>
     <string name="about_privacy_title">Adatvédelem</string>
-    <string name="about_privacy_body">A QuickBuds naponta egyszer elküldi a platformját, a verziószámát (például „Android 5.0.0”) és egy véletlenszerű telepítési azonosítót az aktív felhasználók megszámlálásához. Az azonosító nem kötődik eszközhöz, fiókhoz vagy címhez, és az alkalmazás nem küld fülhallgatóadatot. A jelentések ugyanazt az azonosítót viszik, és csak akkor mennek el, ha te elküldöd őket.</string>
+    <string name="about_privacy_body">A QuickBuds naponta egyszer elküldi a platformját, a verziószámát (például „Android 5.2.1”) és egy véletlenszerű telepítési azonosítót az aktív felhasználók megszámlálásához. Az azonosító nem kötődik eszközhöz, fiókhoz vagy címhez, és az alkalmazás nem küld fülhallgatóadatot. A jelentések ugyanazt az azonosítót viszik, és csak akkor mennek el, ha te elküldöd őket.</string>
     <string name="about_privacy_reset">Telepítési azonosító visszaállítása</string>
     <string name="welcome_title">Üdvözöl a QuickBuds</string>
     <string name="welcome_body">Néhány lépésben beállítható a QuickBuds. Minden döntést később módosíthatsz a Beállításokban.</string>

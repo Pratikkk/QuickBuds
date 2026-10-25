@@ -587,7 +587,7 @@
     <string name="test_broken_hint">What happened? One line is enough.</string>
     <string name="test_mark_all">Mark every feature to send the result.</string>
     <string name="about_privacy_title">Privacy</string>
-    <string name="about_privacy_body">Once a day QuickBuds sends its platform, its version number (for example \"Android 5.0.0\") and a random install ID to count active users. The ID ties to no device, account or address, and the app sends no earbud data. Reports carry the same ID and are sent only when you send them.</string>
+    <string name="about_privacy_body">Once a day QuickBuds sends its platform, its version number (for example \"Android 5.2.1\") and a random install ID to count active users. The ID ties to no device, account or address, and the app sends no earbud data. Reports carry the same ID and are sent only when you send them.</string>
     <string name="about_privacy_reset">Reset install ID</string>
     <string name="welcome_title">Welcome to QuickBuds</string>
     <string name="welcome_body">A few steps set QuickBuds up. You can change every choice later in Settings.</string>

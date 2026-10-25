@@ -137,15 +137,11 @@ fn header(app: &mut App, ui: &mut Ui, c: Rect) {
     ui.painter().line_segment([m + Vec2::new(-11.0, 0.0), m + Vec2::new(-3.0, 8.0)], st);
     ui.painter().line_segment([m + Vec2::new(-11.0, 0.0), m + Vec2::new(8.0, 0.0)], st);
     let title = t(&app.tr, match app.page { Page::Eq => "eq_title", Page::Gestures => "gesture_title", Page::Hearing => "row_golden_title", Page::Dual => "dual_title",
-        Page::Earbuds | Page::Models => "earbuds_title", Page::Settings => "desktop_nav_app_settings", Page::Dev => "action_dev_tools",
+        Page::Earbuds | Page::Models => "earbuds_title", Page::Settings => "settings_title", Page::Dev => "action_dev_tools",
         Page::Appearance => "theme_title", Page::Issues => "settings_issues_title", Page::About => "settings_about_title", Page::Language => "settings_language_title",
         Page::Overview => "earbuds_title" });
-    let right = c.right() - 44.0;
-    let close = Rect::from_min_size(Pos2::new(right, c.top()), Vec2::splat(44.0));
-    if glass::button_at(ui, "close", close, 22.0, false).clicked() { ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close); }
-    let k = 8.0;
-    ui.painter().line_segment([close.center() + Vec2::new(-k, -k), close.center() + Vec2::new(k, k)], egui::Stroke::new(2.2, white(1.0)));
-    ui.painter().line_segment([close.center() + Vec2::new(-k, k), close.center() + Vec2::new(k, -k)], egui::Stroke::new(2.2, white(1.0)));
+    // The phone has no close button in a page header; the window closes with the desktop's own shortcut.
+    let right = c.right() - 12.0;
     // The title stops at the right-hand controls instead of running under them; it shrinks to fit first.
     let clip = Rect::from_min_max(Pos2::new(left, c.top()), Pos2::new(right - 8.0, c.top() + 44.0));
     while size > 18.0 && ui.painter().layout_no_wrap(title.to_string(), egui::FontId::proportional(size), white(1.0)).size().x > clip.width() { size -= 1.0; }

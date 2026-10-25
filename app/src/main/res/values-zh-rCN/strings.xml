@@ -500,7 +500,7 @@
     <string name="test_broken_hint">发生了什么？一行就够了。</string>
     <string name="test_mark_all">标记所有功能后即可发送结果。</string>
     <string name="about_privacy_title">隐私</string>
-    <string name="about_privacy_body">QuickBuds 每天发送一次平台、版本号（例如 “Android 5.0.0”）和一个随机安装 ID，用于统计活跃用户。该 ID 不与任何设备、账号或地址关联，应用也不会发送耳机数据。报告带有相同的 ID，仅在你发送时才会发出。</string>
+    <string name="about_privacy_body">QuickBuds 每天发送一次平台、版本号（例如 “Android 5.2.1”）和一个随机安装 ID，用于统计活跃用户。该 ID 不与任何设备、账号或地址关联，应用也不会发送耳机数据。报告带有相同的 ID，仅在你发送时才会发出。</string>
     <string name="about_privacy_reset">重置安装 ID</string>
     <string name="welcome_title">欢迎使用 QuickBuds</string>
     <string name="welcome_body">几步就能设置好 QuickBuds。每个选择之后都可以在设置中更改。</string>

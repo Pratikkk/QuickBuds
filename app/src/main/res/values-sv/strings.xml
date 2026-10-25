@@ -498,7 +498,7 @@
     <string name="test_broken_hint">Vad hände? En rad räcker.</string>
     <string name="test_mark_all">Markera varje funktion för att skicka resultatet.</string>
     <string name="about_privacy_title">Integritet</string>
-    <string name="about_privacy_body">En gång om dagen skickar QuickBuds sin plattform, versionsnummer (till exempel ”Android 5.0.0”) och ett slumpmässigt installations-ID för att räkna aktiva användare. ID:t är inte kopplat till någon enhet, något konto eller någon adress, och appen skickar inga hörlursdata. Rapporter bär samma ID och skickas bara när du skickar dem.</string>
+    <string name="about_privacy_body">En gång om dagen skickar QuickBuds sin plattform, versionsnummer (till exempel ”Android 5.2.1”) och ett slumpmässigt installations-ID för att räkna aktiva användare. ID:t är inte kopplat till någon enhet, något konto eller någon adress, och appen skickar inga hörlursdata. Rapporter bär samma ID och skickas bara när du skickar dem.</string>
     <string name="about_privacy_reset">Återställ installations-ID</string>
     <string name="welcome_title">Välkommen till QuickBuds</string>
     <string name="welcome_body">Några steg ställer in QuickBuds. Du kan ändra varje val senare i Inställningar.</string>
