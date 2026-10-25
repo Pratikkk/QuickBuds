@@ -178,12 +178,42 @@ fn load_settings() -> serde_json::Value {
         .and_then(|s| serde_json::from_str(&s).ok()).unwrap_or_else(|| serde_json::json!({}))
 }
 
+/// Replaces `path` with `text` in one step: a reader sees the old file or the new one, never half.
+fn write_atomic(path: &std::path::Path, text: &str) -> std::io::Result<()> {
+    let tmp = path.with_extension("json.tmp");
+    std::fs::write(&tmp, text)?;
+    std::fs::rename(&tmp, path).inspect_err(|_| { let _ = std::fs::remove_file(&tmp); })
+}
+
 fn save_setting(key: &str, value: serde_json::Value) {
     let Some(path) = settings_path() else { return };
+    if let Some(dir) = path.parent() { let _ = std::fs::create_dir_all(dir); }
+    // The lock guards the read-modify-write: two windows or two builds can save at the same time.
+    // A lock file next to the settings works for both processes; `File::lock` is standard library.
+    let _lock = std::fs::OpenOptions::new().create(true).write(true).open(path.with_extension("json.lock"))
+        .ok().and_then(|f| f.lock().ok().map(|()| f));
     let mut all = load_settings();
     all[key] = value;
-    if let Some(dir) = path.parent() { let _ = std::fs::create_dir_all(dir); }
-    let _ = std::fs::write(path, serde_json::to_string_pretty(&all).unwrap_or_default());
+    // A serialise error keeps the old file: an empty file loses all settings.
+    let Ok(text) = serde_json::to_string_pretty(&all) else { return };
+    let _ = write_atomic(&path, &text);
+}
+
+#[cfg(test)]
+mod settings_tests {
+    use super::write_atomic;
+
+    #[test]
+    fn an_atomic_write_leaves_one_file() {
+        let dir = std::env::temp_dir().join(format!("quickbuds-settings-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("settings.json");
+        std::fs::write(&path, "old").unwrap();
+        write_atomic(&path, "new").unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "new");
+        assert!(!path.with_extension("json.tmp").exists());
+        let _ = std::fs::remove_dir_all(dir);
+    }
 }
 
 /// The Dot matrix renderers for one window's `Dots` global.
