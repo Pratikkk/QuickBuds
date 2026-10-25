@@ -1,5 +1,5 @@
 //! Feedback (`ReportActivity`, DESIGN §7.16): the model, six categories, the description, the log switch,
-//! the JSON preview and Send. The Worker post is not wired on the desktop yet; Send keeps the report.
+//! the preview and Send. Send posts to the report Worker through `report`, with the phone's scrub.
 
 use crate::glass::{self, white};
 use crate::phone;
@@ -19,20 +19,42 @@ pub struct State {
     desc: String,
     attach: bool,
     pub preview: bool,
-    sent: bool,
+    sending: bool,
+    note: String,
+    job: Option<crate::report::Job>,
 }
 
-fn payload(app: &App) -> String {
-    let tr = &app.tr;
-    let cats: Vec<&str> = CATS.iter().enumerate().filter(|(i, _)| app.feedback.cats[*i]).map(|(_, k)| t(tr, k)).collect();
-    serde_json::to_string_pretty(&serde_json::json!({
-        "kind": "feedback", "model": app.feedback.model, "category": cats, "description": app.feedback.desc,
-        "log": if app.feedback.attach { "attached" } else { "none" }, "app": env!("CARGO_PKG_VERSION"),
-    })).unwrap_or_default()
+fn cats(app: &App) -> Vec<&'static str> {
+    CATS.iter().enumerate().filter(|(i, _)| app.feedback.cats[*i]).map(|(_, k)| *k).collect()
+}
+
+fn has_frames() -> bool { crate::session::LOG.lock().unwrap().iter().any(|l| l.dir == "RX") }
+
+fn draft(app: &App) -> crate::report::Draft {
+    crate::report::Draft {
+        model: app.feedback.model.trim().to_string(),
+        categories: cats(app),
+        description: app.feedback.desc.trim().to_string(),
+        log: app.feedback.attach.then(|| crate::report::log_text(app)),
+        crash: false,
+    }
 }
 
 pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     if !app.feedback.ready { app.feedback.ready = true; app.feedback.model = app.snap.name.clone(); app.feedback.attach = true; }
+    // The answer of a Send, on a later frame after the network thread posts it.
+    if let Some((ok, refused)) = app.feedback.job.as_ref().and_then(|j| j.poll()) {
+        app.feedback.job = None;
+        app.feedback.sending = false;
+        if ok {
+            app.feedback.desc.clear();
+            app.feedback.cats = [false; 6];
+            app.feedback.note = t(&app.tr, "problem_sent").to_string();
+        } else {
+            app.feedback.note = refused.unwrap_or_else(|| t(&app.tr, "problem_failed").to_string());
+        }
+    }
+    if app.feedback.sending { ui.ctx().request_repaint(); }
     let tr = app.tr.clone();
     let w = phone::content(body);
     let x0 = body.left();
@@ -74,28 +96,38 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
     let log = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(w, 75.4));
     glass::flat_at(ui, log, 16.0, 1.0);
     glass::text(ui, Pos2::new(log.left() + 53.7, log.top() + 27.0), Align2::LEFT_CENTER, t(&tr, "problem_log_title"), 16.0, 1.0);
-    glass::text(ui, Pos2::new(log.left() + 53.7, log.top() + 49.0), Align2::LEFT_CENTER, t(&tr, "problem_log_sub"), 13.0, 0.74);
+    glass::text(ui, Pos2::new(log.left() + 53.7, log.top() + 49.0), Align2::LEFT_CENTER, &crate::settings::ui::fit(ui, t(&tr, "problem_log_sub"), 13.0, w - 53.7 - 16.0 - 60.0), 13.0, 0.74);
     glass::icon_at(ui, crate::icons::DEV_TOOLS, Rect::from_center_size(Pos2::new(log.left() + 16.0 + 12.0, log.center().y), Vec2::splat(24.0)), white(0.8));
     if glass::switch_at(ui, "log-sw", Pos2::new(log.right() - 16.0 - 52.0, log.center().y - 16.0), app.feedback.attach, true) {
         app.feedback.attach = !app.feedback.attach;
     }
     y += 75.4 + 20.0;
 
-    let known = !app.feedback.model.trim().is_empty();
-    let ready = known && !app.feedback.desc.trim().is_empty() && app.feedback.attach;
+    let known = crate::report::known(&app.feedback.model);
+    let frames = has_frames();
+    let blocked = app.feedback.attach && !frames;
+    let ready = known && !app.feedback.desc.trim().is_empty() && !blocked && !app.feedback.sending;
+    let note = |ui: &mut Ui, y: &mut f32, text: &str, tone: f32| {
+        let h = phone::wrap_height(ui, text, 13.0, w - 8.0);
+        phone::paragraph(ui, Rect::from_min_size(Pos2::new(x0 + 4.0, *y), Vec2::new(w - 8.0, h)), text, 13.0, white(tone), false);
+        *y += h + 4.0;
+    };
+    if !known { note(ui, &mut y, t(&tr, "problem_unsupported"), 0.74); }
+    if blocked { note(ui, &mut y, t(&tr, "problem_log_empty"), 0.74); }
+    if !app.feedback.note.is_empty() { let text = app.feedback.note.clone(); note(ui, &mut y, &text, 0.9); }
     let bw = (w - 12.0) / 2.0;
     let see = Rect::from_min_size(Pos2::new(x0, y), Vec2::new(bw, 52.0));
     let send = Rect::from_min_size(Pos2::new(x0 + bw + 12.0, y), Vec2::new(bw, 52.0));
     if phone::pill(ui, "fb-preview", see, t(&tr, "problem_preview"), false, accent) { app.feedback.preview = true; }
-    if phone::pill(ui, "fb-send", send, t(&tr, "problem_send"), ready, accent) && ready { app.feedback.sent = true; }
-    if app.feedback.sent {
-        y += 52.0 + 8.0;
-        glass::text(ui, Pos2::new(x0 + 4.0, y), Align2::LEFT_CENTER, t(&tr, "problem_sent"), 13.0, 0.9);
-        y += 20.0;
+    let label = if app.feedback.sending { t(&tr, "problem_sending") } else { t(&tr, "problem_send") };
+    if phone::pill(ui, "fb-send", send, label, ready, accent) && ready {
+        app.feedback.job = Some(crate::report::send_async(draft(app), ui.ctx()));
+        app.feedback.sending = true;
+        app.feedback.note.clear();
     }
 
     if app.feedback.preview {
-        let body = payload(app);
+        let body = crate::report::preview(&draft(app));
         let mut decision = None;
         let open = sheets::sheet(ui.ctx(), "fb-preview", t(&tr, "problem_preview"), Title::Centre, Vec2::new(WIDTH, 420.0), |ui, inner| {
             let log = Rect::from_min_max(inner.min + Vec2::new(14.0, 0.0), Pos2::new(inner.right() - 14.0, inner.bottom() - 66.0));
@@ -107,8 +139,11 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
             });
             decision = sheets::actions(ui, inner, t(&tr, "dialog_close"), if ready { t(&tr, "problem_send") } else { "" });
         });
-        if decision == Some(true) && ready { app.feedback.sent = true; app.feedback.preview = false; }
-        else if decision.is_some() || !open { app.feedback.preview = false; }
+        if decision == Some(true) && ready {
+            app.feedback.job = Some(crate::report::send_async(draft(app), ui.ctx()));
+            app.feedback.sending = true;
+            app.feedback.preview = false;
+        } else if decision.is_some() || !open { app.feedback.preview = false; }
     }
     y + 24.0
 }

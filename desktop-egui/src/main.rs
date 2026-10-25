@@ -41,12 +41,14 @@ mod settings;
 mod palette;
 mod phone;
 mod preset_edit;
+mod report;
 mod setup;
 mod sheets;
 mod test;
 mod token_sheet;
 mod tokens;
 mod update;
+mod update_core;
 
 pub use buds_core::{cmd, msg, wire};
 
