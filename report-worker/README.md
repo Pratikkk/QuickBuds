@@ -12,7 +12,7 @@ From this folder, with a free Cloudflare account:
 npx wrangler login
 npx wrangler d1 create quickbuds-reports        # copy the database_id into wrangler.toml
 npx wrangler d1 execute quickbuds-reports --remote --file schema.sql
-npx wrangler secret put READ_KEY                # a long random string: the key to the page
+npx wrangler secret put READ_KEY                # a long random string: the key to read the reports
 npx wrangler secret put SALT                    # another random string
 npx wrangler deploy
 ```
@@ -22,13 +22,16 @@ npx wrangler deploy
 
 ## Read the reports
 
-- In a browser: `https://quickbuds-report.<subdomain>.workers.dev/?key=<READ_KEY>`
-- For a script: add `&format=json`, and send the key as `Authorization: Bearer <READ_KEY>` instead of in the URL.
-- Only newer reports: `&after=<id>`. More reports: `&limit=100`.
-- The apps send a daily count to `/ping`.
-- Counts: add `&stats=1`, and `&days=<n>`.
+Send the key in the `Authorization: Bearer <READ_KEY>` header. The Worker does not read the key from the URL, so a
+browser link no longer works.
 
-The key is the only access control. Keep the link private.
+- The text page: `curl -H "Authorization: Bearer $READ_KEY" https://quickbuds-report.<subdomain>.workers.dev/`
+- For a script: add `?format=json`, and keep the header.
+- Only newer reports: add `?after=<id>`. More reports: add `?limit=100`.
+- The apps send a daily count to `/ping`.
+- Counts: add `?stats=1`, and `?days=<n>`.
+
+The key is the only access control. Keep the key private.
 
 ## Mark a report
 

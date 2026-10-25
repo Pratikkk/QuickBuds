@@ -1,4 +1,5 @@
-// The problem-report Worker. The apps POST /report as JSON; the developer reads GET /?key=<READ_KEY>.
+// The problem-report Worker. The apps POST /report as JSON; the developer reads GET / with the key in the
+// Authorization header.
 // It stores only reports the apps would send: a known model, a description and, when a log is on, frames from the buds.
 import catalog from "../../app/src/main/assets/models.json";
 
@@ -62,8 +63,8 @@ async function report(req, env) {
  * Only "new" and "working" reports show. after=<id> shows only newer reports; limit=<n> (default 20, at most 100).
  */
 async function list(req, url, env) {
-  // The key comes in the Authorization header (Bearer) or, for a browser, in the URL. The header keeps it out of logs.
-  const given = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ?? url.searchParams.get("key");
+  // The key comes only in the Authorization header (Bearer), so no URL holds it and no log keeps it.
+  const given = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
   if (!env.READ_KEY || given !== env.READ_KEY) return new Response("Not found", { status: 404 });
   if (url.searchParams.has("stats")) return stats(url, env);
   const after = Number(url.searchParams.get("after") ?? 0) || 0;
@@ -153,8 +154,9 @@ async function takeReply(env, id) {
 }
 
 /**
- * The developer's counts: GET /?key=<READ_KEY>&stats=1[&days=30]. Per day and platform: the active installs (distinct IDs),
- * the new installs, and the ping count (which includes apps without an ID). Totals: installs, seen in the last 7 and 30 days.
+ * The developer's counts: GET /?stats=1[&days=30] with the key in the Authorization header. Per day and platform: the
+ * active installs (distinct IDs), the new installs, and the ping count (which includes apps without an ID). Totals:
+ * installs, seen in the last 7 and 30 days.
  */
 async function stats(url, env) {
   const days = Math.min(Number(url.searchParams.get("days") ?? 30) || 30, 365);
