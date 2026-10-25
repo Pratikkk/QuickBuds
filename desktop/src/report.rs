@@ -77,6 +77,12 @@ pub(crate) fn log_text(a: &App) -> String {
     scrub(header(a) + "\n" + &lines(&LOG.lock().unwrap()) + &stderr_tail() + CRASH.lock().unwrap().as_str())
 }
 
+/// The log as Dev tools › Export saves it: header and packet lines, scrubbed like a sent report. The in-memory
+/// log stays raw.
+pub(crate) fn export_text(a: &App) -> String {
+    scrub(header(a) + "\n" + &lines(&LOG.lock().unwrap()))
+}
+
 /// `stderr.log` next to `settings.json`.
 fn stderr_path() -> Option<std::path::PathBuf> {
     crate::settings_path().map(|p| p.with_file_name("stderr.log"))
@@ -392,6 +398,18 @@ mod tests {
     fn macs() {
         assert_eq!(scrub_macs("to AA:bb:01:02:03:04 ok"), "to XX:XX:XX:XX:XX:XX ok");
         assert_eq!(scrub_macs("12:34:56.789 RX AA 07"), "12:34:56.789 RX AA 07");
+    }
+
+    #[test]
+    fn export_hides_device_frames() {
+        let l = Line {
+            at: "12:00:00.000".into(), dir: "RX",
+            bytes: vec![0xAA, 0x0B, 0, 0, 0x12, 0x81, 0, 0, 0x11, 0x22, 0x33, 0x44],
+            human: None,
+        };
+        let out = lines(&[l]);
+        assert!(out.contains("[device data removed]"), "{out}");
+        assert!(!out.contains("11 22 33 44"), "{out}");
     }
 
     #[test]

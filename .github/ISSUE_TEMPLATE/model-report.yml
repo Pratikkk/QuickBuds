@@ -40,5 +40,6 @@ body:
     attributes:
       label: Log
       description: >-
-        Dev tools › Clear, try the features, then Dev tools › Export. The file lands in
-        Download/QuickBuds/ (PC: Downloads/QuickBuds). Attach it here.
+        Prefer Settings › Feedback › Report a problem. It sends the log to the developer privately,
+        with the Bluetooth addresses and the device names removed. If you attach a log here, everyone
+        can read it: remove the addresses and the names of your other devices first.

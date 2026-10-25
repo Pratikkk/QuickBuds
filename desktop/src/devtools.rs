@@ -1,8 +1,8 @@
 //! Dev tools: the packet log (Simple / Detailed), Clear, Export, Reconnect, Disconnect. Like the phone's: Simple
 //! says in words what happened and leaves protocol steps out; Detailed shows every line with its bytes. One colour
-//! per kind (`LogRow.kind`). Export always saves the raw lines.
+//! per kind (`LogRow.kind`). Export saves the same lines as a sent report: no addresses or device names.
 
-use crate::devlog::{format, raw};
+use crate::devlog::format;
 use crate::session::{Cmd, LOG};
 use crate::{with_app, App, DevLog, LogRow, MainWindow};
 use slint::{ComponentHandle, Model, VecModel};
@@ -16,7 +16,7 @@ pub fn setup(main: &MainWindow) {
     d.on_clear(|| with_app(|a| { LOG.lock().unwrap().clear(); a.log_shown = 0; refresh(a); }));
     d.on_reconnect(|| with_app(|a| { let _ = a.tx.send(Cmd::Disconnect); let _ = a.tx.send(Cmd::Connect); }));
     d.on_export(|| with_app(|a| {
-        let text: String = crate::report::header(a) + "\n" + &LOG.lock().unwrap().iter().map(|l| raw(l) + "\n").collect::<String>();
+        let text = crate::report::export_text(a);
         let dir = crate::report::folder();
         let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs());
         let path = dir.join(format!("quickbuds-log-{secs}.txt"));

@@ -42,10 +42,18 @@ object ProblemReport {
      * The log as sent: header, the packet log, this app's logcat warnings and errors, then [crash] (a crash report,
      * or ""). Logcat shows misbehaviour the packet log misses, crash or not.
      */
-    fun log(c: Context, crash: String = ""): String = scrub(c,
+    fun log(c: Context, crash: String = ""): String = scrub(c, packetLog(c) + appLog() + crash)
+
+    /**
+     * The log as Dev tools › Export saves it: the header and the packet log, with the same scrubbing as a sent
+     * report. The file in the app's private folder stays raw.
+     */
+    fun export(c: Context): String = scrub(c, packetLog(c))
+
+    /** The header and the packet log, without addresses, this phone's name or device data. */
+    private fun packetLog(c: Context): String =
         header(c) + "\n" + PacketLogger.getFileContent().lines()
-            .joinToString("\n") { dropDeviceBytes(dropDeviceNames(it)) } +
-            appLog() + crash)
+            .joinToString("\n") { dropDeviceBytes(dropDeviceNames(it)) }
 
     /** [text] without Bluetooth addresses or this phone's name. */
     fun scrub(c: Context, text: String): String {

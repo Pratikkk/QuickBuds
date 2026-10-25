@@ -46,7 +46,7 @@ import java.util.concurrent.Executors
 /**
  * Dev Tools screen.
  *
- * Shows two views of the PacketLogger log (Export saves the raw file either way):
+ * Shows two views of the PacketLogger log (Export saves it without addresses or device names):
  *   - Simple: what happened, in plain words ([SimpleLog]); protocol steps are left out
  *   - Detailed: every line decoded ([LogDecoder]), with the bytes under each packet
  * Both use one colour per kind: sent by the app, from the buds, connection, problem.
@@ -387,13 +387,13 @@ class DevToolsActivity : Activity() {
 
     private fun exportLog() {
         try {
-            val content = PacketLogger.getFileContent()
-            if (content.isEmpty()) {
+            if (PacketLogger.getFileContent().isEmpty()) {
                 Toast.makeText(this, "Nothing to export yet (log is empty).", Toast.LENGTH_LONG).show()
                 return
             }
+            val content = ProblemReport.export(this)
             val name = "packets_export_${stamp()}.log"
-            val where = writeToDownloads(name, ProblemReport.header(this) + "\n" + content)
+            val where = writeToDownloads(name, content)
             Toast.makeText(this, "Exported to\n$where", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             PacketLogger.error("log export", e)
