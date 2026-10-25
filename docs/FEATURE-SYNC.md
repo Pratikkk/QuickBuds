@@ -108,3 +108,4 @@ The file `core/tests/feature_sync_scenarios.json` is the contract. It holds 28 s
 25. A push while idle moves the value at once. The same value does nothing.
 26. A push before the ack only updates the value. The ack then asks for the read.
 27. After a disconnect the idle value is kept.
+28. Push confirmation: a push of the wanted value before the ack confirms at the ack. A second push does not come.
