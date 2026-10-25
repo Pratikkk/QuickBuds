@@ -30,5 +30,11 @@ desktop/dist/
 scripts/readme-screenshots.sh
 docs/screenshots/
 
+# Vendor firmware dumps / unpacking work
+firmware/
+
 # Wrangler cache (holds the Cloudflare account)
 .wrangler/
+
+# Vendor-app oracle: local tooling only. Names a vendor package; never published.
+/tools/heymelody-oracle/
