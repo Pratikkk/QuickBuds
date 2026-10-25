@@ -189,7 +189,7 @@ class DevToolsActivity : Activity() {
 
         // Long press copies the visible tab; selection stays on for partial copies.
         logText.setOnLongClickListener {
-            val body = logText.text?.toString().orEmpty()
+            val body = ProblemReport.filtered(this, logText.text?.toString().orEmpty())
             if (body.isBlank()) {
                 Toast.makeText(this, "Nothing to copy", Toast.LENGTH_SHORT).show()
                 return@setOnLongClickListener true

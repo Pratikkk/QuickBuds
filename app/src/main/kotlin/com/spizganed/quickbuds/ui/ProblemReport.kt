@@ -42,18 +42,21 @@ object ProblemReport {
      * The log as sent: header, the packet log, this app's logcat warnings and errors, then [crash] (a crash report,
      * or ""). Logcat shows misbehaviour the packet log misses, crash or not.
      */
-    fun log(c: Context, crash: String = ""): String = scrub(c, packetLog(c) + appLog() + crash)
+    fun log(c: Context, crash: String = ""): String =
+        filtered(c, header(c) + "\n" + PacketLogger.getFileContent()) + scrub(c, appLog() + crash)
 
     /**
      * The log as Dev tools › Export saves it: the header and the packet log, with the same scrubbing as a sent
      * report. The file in the app's private folder stays raw.
      */
-    fun export(c: Context): String = scrub(c, packetLog(c))
+    fun export(c: Context): String = filtered(c, header(c) + "\n" + PacketLogger.getFileContent())
 
-    /** The header and the packet log, without addresses, this phone's name or device data. */
-    private fun packetLog(c: Context): String =
-        header(c) + "\n" + PacketLogger.getFileContent().lines()
-            .joinToString("\n") { dropDeviceBytes(dropDeviceNames(it)) }
+    /**
+     * [text] as it may leave the phone: no Bluetooth addresses, no name of this phone, no names of the other paired
+     * devices. The Dev tools export and the long-press copy both use it.
+     */
+    fun filtered(c: Context, text: String): String =
+        scrub(c, text.lines().joinToString("\n") { dropDeviceBytes(dropDeviceNames(it)) })
 
     /** [text] without Bluetooth addresses or this phone's name. */
     fun scrub(c: Context, text: String): String {
