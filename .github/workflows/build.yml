@@ -6,6 +6,10 @@
 # release app. The run's Artifacts hold every release file.
 name: Build
 
+# The run reads the repository only. The signing key arrives as a secret, so no write scope is needed.
+permissions:
+  contents: read
+
 on:
   # Manual only: the developer starts a build from the Actions tab or with `gh workflow run`.
   workflow_dispatch:
@@ -24,12 +28,12 @@ jobs:
     if: ${{ !inputs.appimage_only }}
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
       - name: Release key
         env:
           KEYSTORE: ${{ secrets.RELEASE_KEYSTORE_B64 }}
@@ -50,7 +54,7 @@ jobs:
           mkdir out
           cp app/build/outputs/apk/release/app-release.apk "out/QuickBuds$ver.apk"
           cp app/build/outputs/bundle/release/app-release.aab "out/QuickBuds$ver.aab"
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: android
           path: out/*
@@ -68,12 +72,12 @@ jobs:
           apt-get update -qq
           apt-get install -y -qq curl git zip python3 build-essential pkg-config gcc-mingw-w64-x86-64 \
             libdbus-1-dev libgtk-3-dev libayatana-appindicator3-dev libfontconfig1-dev libxkbcommon-dev libxkbcommon-x11-0 dpkg-dev file
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - name: Rust
         run: |
           curl -sSf https://sh.rustup.rs | sh -s -- -y -q --profile minimal --target x86_64-pc-windows-gnu
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           workspaces: |
             desktop -> target
@@ -89,7 +93,7 @@ jobs:
         run: |
           ver=$(sed -n 's/^version = "\(.*\)"/\1/p' desktop/Cargo.toml | head -1)
           QB_NATIVE=1 scripts/desktop-dist.sh "$ver"
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: desktop
           path: desktop/dist/*
