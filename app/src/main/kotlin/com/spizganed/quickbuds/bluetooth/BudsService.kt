@@ -354,8 +354,8 @@ class BudsService : Service(), BudsConnectionManager.Listener {
     override fun onConnected(connected: Boolean) {
         // Our own sleep, not a lost link: the widget keeps showing the connected state and the last levels until the unlock reconnects.
         if (!connected && asleep) { statusLog("[SVC] Sleep: widget state kept"); return }
-        val before = WidgetStateStore.read(this)
         val st = WidgetStateStore.read(this)
+        val before = st.copy()
         st.connected = connected
         if (connected) AncWidgetProvider.setConnecting(this, false)
         if (connected) {
