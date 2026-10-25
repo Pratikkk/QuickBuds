@@ -53,6 +53,23 @@ class KeepAliveReceiver : BroadcastReceiver() {
         val serviceIntent = Intent(context, BudsService::class.java)
         serviceIntent.action = BudsService.ACTION_FORCE_CONNECT
         serviceIntent.putExtra(BudsService.EXTRA_DELAY_MS, delayMs)
-        context.startService(serviceIntent)
+        // Android 8+ refuses a background startService. Android 12+ can also refuse
+        // startForegroundService. A lost connect is better than a crash in the receiver.
+        startNoThrow({ context.startForegroundService(serviceIntent) }) {
+            PacketLogger.error("KeepAlive start", it)
+        }
+    }
+}
+
+/**
+ * Runs [start] and gives Android's refusal to [refused]. Android throws [IllegalStateException]
+ * for a refused background start; ForegroundServiceStartNotAllowedException is one of them.
+ * The receiver must never throw, so a refusal only takes the log line.
+ */
+internal fun startNoThrow(start: () -> Unit, refused: (IllegalStateException) -> Unit) {
+    try {
+        start()
+    } catch (e: IllegalStateException) {
+        refused(e)
     }
 }
