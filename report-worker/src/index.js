@@ -2,6 +2,10 @@
 // Authorization header, or types the key on the page at GET /.
 // It stores only reports the apps would send: a known model, a description and, when a log is on, frames from the buds.
 import catalog from "../../app/src/main/assets/models.json";
+import { latest } from "./update.js";
+
+// The cron fills the digest queue, and the queue consumer posts to Discord.
+export { scheduled, queue } from "./digest.js";
 
 const MODELS = new Set(catalog.whiteList.map((m) => m.name.toLowerCase()));
 // "Test": a model test (Test my earbuds). It always carries the log.
@@ -19,6 +23,7 @@ export default {
     if (req.method === "POST" && url.pathname === "/ping") return ping(req, env);
     if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/index.html")) return page();
     if (req.method === "GET" && url.pathname === "/reports") return list(req, url, env);
+    if (req.method === "GET" && url.pathname === "/latest") return latest(req, env);
     return new Response("Not found", { status: 404 });
   },
 };
