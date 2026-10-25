@@ -3,6 +3,7 @@ package com.spizganed.quickbuds.ui
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.ActivityOptions
 import android.bluetooth.BluetoothA2dp
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
@@ -20,6 +21,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.Display
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -34,6 +36,13 @@ import com.spizganed.quickbuds.bluetooth.BudsService
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.widget.AncWidgetProvider
 import com.spizganed.quickbuds.widget.BatteryWidgetProvider
+
+/**
+ * Runs one activity start. Returns the refusal, or null when Android accepted the start.
+ * Android 17 refuses a start on a secondary display (report 67: launchDisplayId=6).
+ */
+internal inline fun attemptStart(start: () -> Unit): SecurityException? =
+    try { start(); null } catch (e: SecurityException) { e }
 
 /**
  * First-run setup, once: welcome, look, permissions, the earbuds, the background service, widgets, feedback, known issues, privacy, done.
@@ -491,5 +500,20 @@ class SetupActivity : Activity() {
         private const val ISSUES = 7
         private const val PRIVACY = 8
         fun done(a: Activity) = a.getSharedPreferences(ThemeRes.PREFS_NAME, MODE_PRIVATE).getBoolean(KEY_DONE, false)
+
+        /**
+         * Opens the guide on the default display. Android 17 refuses a start on a secondary
+         * display (report 67). A refused start returns false, so the caller keeps its screen.
+         */
+        fun start(a: Activity): Boolean {
+            val refused = attemptStart {
+                a.startActivity(
+                    Intent(a, SetupActivity::class.java),
+                    ActivityOptions.makeBasic().setLaunchDisplayId(Display.DEFAULT_DISPLAY).toBundle()
+                )
+            }
+            if (refused != null) android.util.Log.w("QuickBuds", "Setup start refused: ${refused.javaClass.simpleName}")
+            return refused == null
+        }
     }
 }

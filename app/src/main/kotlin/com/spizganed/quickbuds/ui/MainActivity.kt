@@ -311,8 +311,8 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         super.onCreate(savedInstanceState)
 
         // First start: the setup runs first and opens this screen when it ends.
-        if (!SetupActivity.done(this)) {
-            startActivity(Intent(this, SetupActivity::class.java))
+        // A refused start (report 67: display 6) keeps this screen instead of crashing.
+        if (!SetupActivity.done(this) && SetupActivity.start(this)) {
             finish()
             return
         }
