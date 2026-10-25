@@ -1,5 +1,5 @@
 {
-  "note": "Real logs from local/audit/features/reports-dump.json. `features` is the FEATURES line (or the 0x810D frame on Windows, where the line is not logged). `capabilities` is the CAPABILITIES line (or the 0x8100 handshake reply decoded with Capabilities.parse on Windows). The test keeps only the ids that today's ask list asks (RowRules.askQuery), because an old log can list an id the model no longer asks for.",
+  "note": "Real logs from developer captures. `features` is the FEATURES line (or the 0x810D frame on Windows, where the line is not logged). `capabilities` is the CAPABILITIES line (or the 0x8100 handshake reply decoded with Capabilities.parse on Windows). The test keeps only the ids that today's ask list asks (RowRules.askQuery), because an old log can list an id the model no longer asks for.",
   "fixtures": [
     {
       "model": "OnePlus Buds 4",

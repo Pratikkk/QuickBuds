@@ -1,8 +1,8 @@
 //! Motion: the timing table, the easing curves and the animation primitives of DESIGN section 5.
 //!
-//! Every duration and curve in this file comes from `local/design/DESIGN.md` section 5.1 or from a
-//! capture in `local/design/anim/`. A call site must use a name from this table. Do not put a
-//! duration at a call site. A value that DESIGN marks `unknown` stays `unknown` here; the report
+//! Every duration and curve in this file comes from the design notes section 5.1 or from a
+//! developer capture of the animations. A call site must use a name from this table. Do not put a
+//! duration at a call site. A value that the design notes mark `unknown` stays `unknown` here; the report
 //! names the file and the symbol to measure.
 //!
 //! # API

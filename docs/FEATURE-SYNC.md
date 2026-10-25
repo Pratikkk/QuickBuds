@@ -84,28 +84,28 @@ The file `core/tests/feature_sync_scenarios.json` is the contract. It holds 28 s
 1. Read confirmation: the value moves once, at our own read reply.
 2. Read confirmation: the buds accept the write but report the old value. Nothing moves and the app shows one toast.
 3. Push confirmation (game mode): the value moves at the push, however late.
-4. Push confirmation: a push with the old value is a refusal.
-5. Push confirmation: no push in 3 s after the ack gives one toast.
-6. Push confirmation: a status-read reply that is not a push does not confirm. It only updates values.
-7. Ack confirmation (the buds can report nothing): the value moves at the ack.
-8. Refused, status 1 (the buds lack the switch): the value never moves.
-9. Refused, status 2 (a condition fails).
-10. Refused, any other non-zero status counts as refused now.
-11. Link restart: busy stays across the drop, and the first report after the reconnect confirms.
-12. Link restart: no report within 15 s of the ack gives one toast.
-13. Link restart: the buds come back with the old value.
-14. A report that is not our read reply updates values but does not confirm.
-15. The engine ignores a stale ack that is not the current seq.
-16. The engine ignores a second tap on a busy setting.
-17. Two settings: the second waits in the queue and starts when the first ends.
-18. One action with two writes (Hi-Res on drops 3D audio): one confirmation at the end.
-19. Two writes: the buds refuse the second, so one read re-syncs what the first changed.
-20. Slider: the buds clamp the value, the slider follows the buds, and one toast says so.
-21. No ack in 3 s: one toast, and the next queued setting starts.
-22. Ack but no read reply in 3 s: one toast.
-23. The engine ignores a late ack after the timeout.
-24. Disconnect: the sent write gets a toast, and the queued one is dropped silently.
-25. A push while idle moves the value at once. The same value does nothing.
-26. A push before the ack only updates the value. The ack then asks for the read.
-27. After a disconnect the idle value is kept.
-28. Push confirmation: a push of the wanted value before the ack confirms at the ack. A second push does not come.
+4. Push confirmation: a push of the wanted value before the ack confirms at the ack. A second push does not come.
+5. Push confirmation: a push with the old value is a refusal.
+6. Push confirmation: no push in 3 s after the ack gives one toast.
+7. Push confirmation: a status-read reply that is not a push does not confirm. It only updates values.
+8. Ack confirmation (the buds can report nothing): the value moves at the ack.
+9. Refused, status 1 (the buds lack the switch): the value never moves.
+10. Refused, status 2 (a condition fails).
+11. Refused, any other non-zero status counts as refused now.
+12. Link restart: busy stays across the drop, and the first report after the reconnect confirms.
+13. Link restart: no report within 15 s of the ack gives one toast.
+14. Link restart: the buds come back with the old value.
+15. A report that is not our read reply updates values but does not confirm.
+16. The engine ignores a stale ack that is not the current seq.
+17. The engine ignores a second tap on a busy setting.
+18. Two settings: the second waits in the queue and starts when the first ends.
+19. One action with two writes (Hi-Res on drops 3D audio): one confirmation at the end.
+20. Two writes: the buds refuse the second, so one read re-syncs what the first changed.
+21. Slider: the buds clamp the value, the slider follows the buds, and one toast says so.
+22. No ack in 3 s: one toast, and the next queued setting starts.
+23. Ack but no read reply in 3 s: one toast.
+24. The engine ignores a late ack after the timeout.
+25. Disconnect: the sent write gets a toast, and the queued one is dropped silently.
+26. A push while idle moves the value at once. The same value does nothing.
+27. A push before the ack only updates the value. The ack then asks for the read.
+28. After a disconnect the idle value is kept.

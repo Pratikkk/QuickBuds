@@ -8,8 +8,8 @@ import org.junit.Test
 import java.io.File
 
 /**
- * The row rule against the real logs in `local/audit/features/reports-dump.json` and the model
- * data in `assets/models.json`. Each fixture keeps only the ids today's ask list asks.
+ * The row rule against real logs from developer captures and the model data in
+ * `assets/models.json`. Each fixture keeps only the ids today's ask list asks.
  */
 class RowRulesTest {
 

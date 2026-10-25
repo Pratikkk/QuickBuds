@@ -193,6 +193,7 @@ meaning, not the bytes. All are gated by the handshake bitmap (§4) except `0x04
 |---|---|
 | `0x0500` | Time request (§9, answered) |
 | `0x0501` / `0x0502` | Camera state request / shutter request (tap to take a photo) `[VENDOR]`. Not answered |
+| `0x0503` | Feature push: `<count> <id> <value>...`. Reports a changed switch after a `0x0403` write or a buds gesture (§9) |
 | `0x0504` | EQ mode changed: `<id>` (§9) |
 | `0x0510` | Spatial type changed: `<type>` (§9) |
 

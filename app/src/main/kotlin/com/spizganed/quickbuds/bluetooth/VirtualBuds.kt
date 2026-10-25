@@ -8,7 +8,7 @@ import com.spizganed.quickbuds.ui.ThemeRes
  *
  * Off by default. Nothing changes for a user who never opens Dev tools.
  * The server answers as OnePlus Buds 4, so every feature row can be reached without a phone
- * and without real earbuds (see `local/pipeline/j16/BRIEF.md`).
+ * and without real earbuds (see the developer brief for the fake server).
  */
 object VirtualBuds {
 

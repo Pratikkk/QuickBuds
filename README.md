@@ -71,12 +71,13 @@ If you prefer, download `QuickBuds-linux-x64.AppImage` or the tarball `QuickBuds
 ## Supported earbuds
 
 QuickBuds works on **any Android 8+ phone** (Samsung, Google Pixel, Xiaomi, Nothing, Motorola, OnePlus…),
-not only on OnePlus / OPPO phones. It knows every model in HeyMelody's and realme Link's lists, 140 in
-all. It shows only the features each model has. Each model also lists its known issues in Settings.
+not only on OnePlus / OPPO phones. It knows every model in HeyMelody's and realme Link's lists: 143
+entries and 140 names. Three names have two ids. It shows only the features each model has. Each
+model also lists its known issues in Settings.
 
-<details><summary><b>Confirmed</b> (32 models)</summary>
+<details><summary><b>Confirmed</b> (32 names)</summary>
 
-<details><summary><b>OnePlus</b> (10)</summary>
+<details><summary><b>OnePlus</b> (10 names)</summary>
 
 - **OnePlus Buds 3**: confirmed by its owner on Android and Windows: battery, noise control, 3D audio, hearing profile, equalizer, dual connection, gestures, wear detection, find my earbuds.
 - **OnePlus Buds 4**: fully working. Every feature is tested on a Nothing Phone (3a), Android 16, and on Windows and Linux.
@@ -91,7 +92,7 @@ all. It shows only the features each model has. Each model also lists its known 
 
 </details>
 
-<details><summary><b>OPPO</b> (6)</summary>
+<details><summary><b>OPPO</b> (6 names)</summary>
 
 - **OPPO Enco Air3 Pro**: confirmed by its owner on Android: battery, noise control, low latency, high-quality audio, 3D audio, hearing profile, equalizer, dual connection, gestures, wear detection, find my earbuds.
 - **OPPO Enco Air5**: confirmed by its owner on Windows and Linux: battery, noise control, low latency, 3D audio, hearing profile, equalizer, dual connection, gestures, wear detection, find my earbuds.
@@ -102,7 +103,7 @@ all. It shows only the features each model has. Each model also lists its known 
 
 </details>
 
-<details><summary><b>realme</b> (16)</summary>
+<details><summary><b>realme</b> (16 names)</summary>
 
 - **realme Buds Air 5 Pro**: confirmed by its owner on Android: noise control and the feature switches, read back from the buds.
 - **realme Buds Air6**: confirmed by its owner on Android: battery, noise control, low latency, high-quality audio, equalizer, dual connection, wear detection, find my earbuds.
@@ -125,38 +126,32 @@ all. It shows only the features each model has. Each model also lists its known 
 
 </details>
 
-<details><summary><b>Not confirmed yet</b> (111 models)</summary>
+<details><summary><b>Not confirmed yet</b> (108 names)</summary>
 
 The app detects these models. Their features come from HeyMelody's and realme Link's data. Some may not work.
 
-<details><summary><b>OnePlus</b> (30 models)</summary>
+<details><summary><b>OnePlus</b> (22 names)</summary>
 
-OnePlus Bullets Wireless Z2, OnePlus BulletsWireless Z2 ANC, OnePlus Buds, OnePlus Buds Z, OnePlus Buds Pro, OnePlus Buds Z2, OnePlus Nord Buds, OnePlus Buds N, OnePlus Nord Buds CE, OnePlus Buds Pro 2, OnePlus Nord Buds 2, OnePlus Nord Buds 2r, OnePlus Buds Pro 2（轻享版）, OnePlus Buds Pro 2R, OnePlus Buds V, OnePlus Buds Ace 2, OnePlus Open Buds, OnePlus Buds 3V, OnePlus Buds Ace 3, OnePlus Nord Buds 4, OnePlus Flow Buds, OnePlus Buds Pro 4, OnePlus Buds Clip, OnePlus Buds Pro 3, OnePlus Buds 3, OnePlus Nord Buds 3, OnePlus Nord Buds 3 Pro, OnePlus Nord Buds 3r, OnePlus Nord Buds 4 Pro, OnePlus Buds Ace.
-
-</details>
-
-<details><summary><b>OPPO</b> (56 models)</summary>
-
-OPPO Enco Quiet, OPPO Enco M31, OPPO Enco M32, OPPO Enco M33, OPPO Enco Free, OPPO O-Free, OPPO Enco W31, OPPO Enco W51, OPPO Enco W11, OPPO Enco Air, OPPO Enco Play, OPPO Enco Free2, OPPO Enco Buds, OPPO Enco Air Lite, OPPO Enco W31 Lite, OPPO Enco R, OPPO Enco Air2, OPPO Enco Air2 Pro, OPPO Enco X2, OPPO Enco Free2i, OPPO Enco Air2i, OPPO Enco Air3, OPPO Enco R Pro, OPPO Enco R2, OPPO Enco Free3, OPPO Enco X3i, OPPO Enco Air2（新声版）, OPPO Enco Air3i, OPPO Enco X3, OPPO Enco Air3s, OPPO Enco Air4 Pro, OPPO Enco Buds2 Pro, OPPO Enco R3, OPPO Enco Air 3i, OPPO Enco Free4, OPPO Enco Air4, OPPO Enco Air4i, OPPO Enco R3 Pro, OPPO Enco Buds3 Pro+, OPPO Enco Buds3, OPPO Enco R4, OPPO Enco Air4（新声版）, OPPO Enco R5, OPPO Enco Clip, OPPO Enco X3s, OPPO Enco Free4（丹拿版）, OPPO Enco Air5s, OPPO Enco Clip2, OPPO Enco Air5s（星光版）, OPPO Enco X4, OPPO Enco Air4s, OPPO Enco Buds3s, OPPO Enco X, OPPO Enco Air3 Pro, OPPO Enco Air5, OPPO Enco Air5 Pro.
+OnePlus Bullets Wireless Z2, OnePlus BulletsWireless Z2 ANC, OnePlus Buds, OnePlus Buds Z, OnePlus Buds Pro, OnePlus Buds Z2, OnePlus Nord Buds, OnePlus Buds N, OnePlus Nord Buds CE, OnePlus Buds Pro 2, OnePlus Nord Buds 2, OnePlus Nord Buds 2r, OnePlus Buds Pro 2（轻享版）, OnePlus Buds Pro 2R, OnePlus Buds V, OnePlus Buds Ace 2, OnePlus Open Buds, OnePlus Buds 3V, OnePlus Buds Ace 3, OnePlus Flow Buds, OnePlus Buds Pro 4, OnePlus Buds Clip.
 
 </details>
 
-<details><summary><b>realme</b> (45 models)</summary>
+<details><summary><b>OPPO</b> (52 names)</summary>
 
-realme Buds Wireless 2S, realme Buds Wireless 3 Neo, realme Buds Wireless 5 ANC, realme Buds Wireless 6 Neo, realme Buds Wireless 6, realme Buds Wireless 6 ANC, realme Buds Air 3, realme Buds Q2s, realme Buds Air 3S, realme Buds Air 3 Neo, realme Buds Air 5, realme Buds T300, realme Buds T110, realme Buds N1 Pro, realme Buds N1, realme Buds T01, realme Buds T200 Lite, realme Buds Clip, realme TechLife Buds, realme Buds T500, realme Buds T500 Pro Harry Potter Edition, realme TechLife Buds T500 Pro, realme Buds Air 2 Neo, realme Buds Air, realme Buds Q2, realme Buds Air Pro, realme Brick Speaker, realme Buds Air 2, realme Buds Wireless 2, realme Buds Wireless 2 Neo, realme Pocket Speaker, realme Buds Wireless Pro, realme Buds Air Neo, realme Buds Air6 Pro, realme Buds Air6, realme Buds Air7, realme Buds Air8, realme Buds Air8 Pro, realme Buds Air 5 Pro, realme Buds Wireless 3, realme Buds T200, realme Buds T200x, realme Buds T310, realme Buds T500 Pro, realme Cobble Speaker.
+OPPO Enco Quiet, OPPO Enco M31, OPPO Enco M32, OPPO Enco M33, OPPO Enco Free, OPPO O-Free, OPPO Enco W31, OPPO Enco W51, OPPO Enco W11, OPPO Enco Air, OPPO Enco Play, OPPO Enco Free2, OPPO Enco Buds, OPPO Enco Air Lite, OPPO Enco W31 Lite, OPPO Enco R, OPPO Enco Air2, OPPO Enco Air2 Pro, OPPO Enco X2, OPPO Enco Free2i, OPPO Enco Air2i, OPPO Enco Air3, OPPO Enco R Pro, OPPO Enco R2, OPPO Enco Free3, OPPO Enco X3i, OPPO Enco Air2（新声版）, OPPO Enco Air3i, OPPO Enco X3, OPPO Enco Air3s, OPPO Enco Air4 Pro, OPPO Enco Buds2 Pro, OPPO Enco R3, OPPO Enco Air 3i, OPPO Enco Free4, OPPO Enco Air4, OPPO Enco Air4i, OPPO Enco R3 Pro, OPPO Enco Buds3 Pro+, OPPO Enco Buds3, OPPO Enco R4, OPPO Enco Air4（新声版）, OPPO Enco R5, OPPO Enco Clip, OPPO Enco X3s, OPPO Enco Free4（丹拿版）, OPPO Enco Air5s, OPPO Enco Clip2, OPPO Enco Air5s（星光版）, OPPO Enco X4, OPPO Enco Air4s, OPPO Enco Buds3s.
 
 </details>
 
-<details><summary><b>DIZO</b> (3 models)</summary>
+<details><summary><b>realme</b> (34 names)</summary>
 
-DIZO Wireless, DIZO GoPods D, DIZO GoPods.
+realme Buds Wireless 2S, realme Buds Wireless 3 Neo, realme Buds Wireless 5 ANC, realme Buds Wireless 6 Neo, realme Buds Wireless 6, realme Buds Wireless 6 ANC, realme Buds Air 3, realme Buds Q2s, realme Buds Air 3S, realme Buds Air 3 Neo, realme Buds Air 5, realme Buds N1 Pro, realme Buds N1, realme Buds T01, realme Buds T200 Lite, realme Buds Clip, realme TechLife Buds, realme Buds T500, realme Buds T500 Pro Harry Potter Edition, realme TechLife Buds T500 Pro, realme Buds Air 2 Neo, realme Buds Air, realme Buds Q2, realme Buds Air Pro, realme Brick Speaker, realme Buds Air 2, realme Buds Wireless 2, realme Buds Wireless 2 Neo, realme Pocket Speaker, realme Buds Wireless Pro, realme Buds Air Neo, DIZO Wireless, DIZO GoPods D, DIZO GoPods.
 
 </details>
 
 </details>
 
 **Own other buds? Please tell us what works.** In the app, Settings › Test my earbuds reconnects the buds.
-It lets you mark each feature and sends the result with the log. The desktop uses App settings.
+It runs a tour of each feature, shows a diagnosis and adds one JSON line to the report. The desktop uses App settings.
 
 The app offers this test once, after the first connect to a model that is not confirmed. Settings › Feedback
 sends a description and the log, without a GitHub account. Or open an

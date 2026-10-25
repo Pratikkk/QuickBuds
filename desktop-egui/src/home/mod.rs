@@ -1,4 +1,4 @@
-//! Home (DESIGN §7.1) at the phone's sizes, measured from `local/design/screens/Glass/home.xml`:
+//! Home (DESIGN §7.1) at the phone's sizes, measured from a developer capture of the Glass home screen:
 //! px / 2.625 = dp. One 379.4 dp column, a 213.7 dp battery card, a 72 dp noise control and 59.8 dp
 //! feature rows 8 dp apart.
 
