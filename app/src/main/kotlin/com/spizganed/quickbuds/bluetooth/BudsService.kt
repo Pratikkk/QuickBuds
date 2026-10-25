@@ -21,6 +21,7 @@ import com.spizganed.quickbuds.R
 import com.spizganed.quickbuds.protocol.AncModes
 import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.FeatureSync
+import com.spizganed.quickbuds.protocol.FeatureSyncConfig
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.ui.OnCallGesture
 import com.spizganed.quickbuds.ui.ThemeRes
@@ -263,7 +264,7 @@ class BudsService : Service(), BudsConnectionManager.Listener {
                 manager?.requestSetting(
                     gameId,
                     listOf(gameId to (if (gameMode) 1 else 0)),
-                    FeatureSync.Confirm.PUSH
+                    FeatureSyncConfig.gameConfirm(ModelCatalog.current(this)?.json)
                 )
             }
             "FEATURE" -> if (feature >= 0) manager?.setFeatures(feature to featureOn)

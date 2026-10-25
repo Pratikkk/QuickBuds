@@ -36,6 +36,7 @@ import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.RowRules
 import com.spizganed.quickbuds.protocol.Feature
 import com.spizganed.quickbuds.protocol.FeatureSync
+import com.spizganed.quickbuds.protocol.FeatureSyncConfig
 import com.spizganed.quickbuds.widget.AncWidgetProvider
 import com.spizganed.quickbuds.widget.WidgetSettings
 import com.spizganed.quickbuds.widget.WidgetStateStore
@@ -852,7 +853,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         manager.requestSetting(
             gameId,
             listOf(gameId to (if (next) 1 else 0)),
-            FeatureSync.Confirm.PUSH
+            FeatureSyncConfig.gameConfirm(ModelCatalog.current(this)?.json)
         )
     }
 
