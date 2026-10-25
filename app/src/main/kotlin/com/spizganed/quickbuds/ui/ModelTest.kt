@@ -145,8 +145,8 @@ object ModelTest {
         "anc" to "ANC EVT:",
         "wear" to "WEAR ",
         "game" to "GAME EVT:",
-        "golden" to "GOLDEN",
-        "eq" to "EQ:",
+        "golden" to "GOLDEN STATUS:",
+        "eq" to "EQ: current=",
     )
 
     /** The features a step can mark `works` for ([autoMark]). */

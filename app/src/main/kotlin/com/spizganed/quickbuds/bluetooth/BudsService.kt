@@ -314,10 +314,9 @@ class BudsService : Service(), BudsConnectionManager.Listener {
             statusLog("[SVC] startForeground refused: ${e.javaClass.simpleName}")
             stopSelf()
         } catch (e: SecurityException) {
-            // Virtual buds: a connectedDevice service needs BLUETOOTH_CONNECT, which the emulator
-            // does not need at all. The screen keeps this service bound, so it keeps running.
-            if (!VirtualBuds.on(this)) throw e
-            statusLog("[SVC] startForeground refused: ${e.javaClass.simpleName} (virtual buds)")
+            // A real phone without the permission stops here. Virtual buds only need the bound service.
+            statusLog("[SVC] startForeground refused: ${e.javaClass.simpleName}")
+            if (!VirtualBuds.on(this)) stopSelf()
         }
     }
 

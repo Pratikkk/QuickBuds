@@ -15,9 +15,8 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
 - **Fixes from the 4.12.0 reports** (the rest wait for a retest or for realme Link data):
   - Crash on startup (RMX3890, Android 15): `KeepAliveReceiver` starts `BudsService` from the background and
     ColorOS refuses `startForeground`. The service stops itself now. Test on a device.
-  - realme Buds T310 game mode (report #16): the buds ack the write but push no `GAME EVT`. The
-    game-mode switch waits for the buds' push now. A T310 sends no push, so the switch shows the
-    no-answer toast. Retest on a T310.
+  - realme Buds T310 game mode (report #16): the buds ack the write but push no `GAME EVT`. The model
+    entry now sets `gameConfirm: read`, so the status reply confirms the write. Retest on a T310.
   - realme Buds T500 Pro (report #21): the buds do not answer the `0x040E` tones of the hearing test.
     Needs the realme Link command.
   - realme Buds Air8 (report #20): no known command for announcement and tap sounds. `0x0132`

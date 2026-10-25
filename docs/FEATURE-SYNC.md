@@ -80,7 +80,7 @@ Assumption to check on a real device: the buds answer in order. A late reply to 
 - `audioAfterRestart` as a flag (it becomes `restarts`)
 
 ## Scenarios
-The file `core/tests/feature_sync_scenarios.json` is the contract. It holds 27 scenarios, and both engines must pass all of them.
+The file `core/tests/feature_sync_scenarios.json` is the contract. It holds 28 scenarios, and both engines must pass all of them.
 1. Read confirmation: the value moves once, at our own read reply.
 2. Read confirmation: the buds accept the write but report the old value. Nothing moves and the app shows one toast.
 3. Push confirmation (game mode): the value moves at the push, however late.

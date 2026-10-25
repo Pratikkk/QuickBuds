@@ -1,6 +1,6 @@
 # PROTOCOL.md — the earbud wire format
 
-Matches QuickBuds 5.1.0 (version code 39).
+Matches QuickBuds 5.2.0 (version code 40).
 
 This is the wire format of the OPPO / OnePlus / realme earbud RFCOMM link. The owned protocol layer
 implements it: `core/` in Rust and `protocol2/` in Kotlin. The shipping layer is the legacy one, described in
@@ -205,6 +205,13 @@ Codes `07` and `0C` have no handler. Code `09` is the hearing-enhancement freque
 `<uid u32 BE> <ear 01 L / 02 R> <total u16 LE> <index> <type> <floats, f32 LE>`. The vendor app joins the
 packets until both ears are complete. `F3` is offered by the buds and falls through the vendor event switch
 like an unknown code `[VENDOR]`.
+
+### Feature push `0x0503`
+
+`0x0503 <count> <id> <value>...` reports a changed switch after a `0x0403` write or a buds gesture.
+95 frames in ten reports prove the layout, including a 17-pair frame and one extra byte after the last pair
+on OPPO Enco Buds3 Pro. QuickBuds feeds the pairs to the sync engine as a push, so a model that reports the
+new game-mode state only here confirms the write (reports #63 and #73).
 
 Registration: `0x0200` reads which codes the buds offer (`00 <count> <codes>`). `0x0205 <count> <codes...>`
 subscribes. Buds without `0x0205` in the bitmap take `0x0201 <code>` once per code `[VENDOR]`.

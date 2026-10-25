@@ -43,7 +43,8 @@ object ProblemReport {
      * or ""). Logcat shows misbehaviour the packet log misses, crash or not.
      */
     fun log(c: Context, crash: String = ""): String = scrub(c,
-        header(c) + "\n" + PacketLogger.getFileContent().lines().joinToString("\n", transform = ::dropDeviceBytes) +
+        header(c) + "\n" + PacketLogger.getFileContent().lines()
+            .joinToString("\n") { dropDeviceBytes(dropDeviceNames(it)) } +
             appLog() + crash)
 
     /** [text] without Bluetooth addresses or this phone's name. */
@@ -70,6 +71,11 @@ object ProblemReport {
      * A packet line whose bytes hold device addresses and names (PROTOCOL-LEGACY.md §9 device list and device manager:
      * `0x8112`, `0x0429`, `0x8132`, push `0x0204` sub `06`) keeps only its 9-byte header.
      */
+    private fun dropDeviceNames(line: String): String {
+        val at = line.indexOf("DEVICES:")
+        return if (at < 0) line else line.substring(0, at) + "DEVICES: [device names removed]"
+    }
+
     private fun dropDeviceBytes(line: String): String {
         val at = line.indexOf(": AA ")
         if (at < 0) return line

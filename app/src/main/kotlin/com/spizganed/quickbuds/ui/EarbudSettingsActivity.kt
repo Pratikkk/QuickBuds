@@ -269,7 +269,9 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
 
     /** One tap on a feature switch: the buds' own report moves the switch. */
     private fun requestFeature(id: Int, on: Boolean) = manager?.requestSetting(
-        id, listOf(id to (if (on) 1 else 0)), FeatureSync.Confirm.READ
+        id, listOf(id to (if (on) 1 else 0)), FeatureSync.Confirm.READ,
+        // Power saving restarts the link; without this the switch reports a false "no answer".
+        restarts = id == Feature.POWER_SAVING
     )
 
     /** The engine applies a tap: the row says "Applying…" and its switch stays still. */
