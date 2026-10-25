@@ -7,6 +7,7 @@ use serde_json::Value;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+const WORKER: &str = "https://quickbuds-report.spizganed.workers.dev/latest";
 const API: &str = "https://api.github.com/repos/spizganed/QuickBuds/releases?per_page=30";
 pub const PAGE: &str = "https://github.com/spizganed/QuickBuds/releases/latest";
 
@@ -44,23 +45,31 @@ fn parts(v: &str) -> Vec<u32> { v.split(['.', '-']).map_while(|p| p.parse().ok()
 
 pub fn newer(remote: &str, local: &str) -> bool { parts(remote) > parts(local) }
 
-/// The newest release that carries this platform's archive.
+/// The newest release that carries this platform's archive. The Worker answers one release; when it fails
+/// or that release has no archive for this platform, GitHub answers once.
 pub fn latest() -> Result<Release, String> {
+    let one = curl(&[WORKER]).and_then(|b| serde_json::from_slice::<Value>(&b).map_err(|e| e.to_string()));
+    if let Ok(r) = one {
+        if let Some(r) = pick_one(&r, asset()) { return Ok(r); }
+    }
     let list: Value = serde_json::from_slice(&curl(&["-H", "Accept: application/vnd.github+json", API])?)
         .map_err(|e| e.to_string())?;
     pick(&list, asset()).ok_or_else(|| "no release found".into())
 }
 
+/// One release, when it is public and carries this platform's archive.
+fn pick_one(r: &Value, asset: &str) -> Option<Release> {
+    if r["draft"] == true || r["prerelease"] == true { return None; }
+    let version = version_of(r["tag_name"].as_str()?)?.to_string();
+    let urls: Vec<&str> = r["assets"].as_array()?.iter().filter_map(|a| a["browser_download_url"].as_str()).collect();
+    let url = urls.iter().find(|u| u.ends_with(asset))?.to_string();
+    let sums = urls.iter().find(|u| u.ends_with("SHA256SUMS")).map(|u| u.to_string());
+    Some(Release { version, url, sums })
+}
+
 fn pick(list: &Value, asset: &str) -> Option<Release> {
     list.as_array()?.iter()
-        .filter(|r| r["draft"] != true && r["prerelease"] != true)
-        .filter_map(|r| {
-            let version = version_of(r["tag_name"].as_str()?)?.to_string();
-            let urls: Vec<&str> = r["assets"].as_array()?.iter().filter_map(|a| a["browser_download_url"].as_str()).collect();
-            let url = urls.iter().find(|u| u.ends_with(asset))?.to_string();
-            let sums = urls.iter().find(|u| u.ends_with("SHA256SUMS")).map(|u| u.to_string());
-            Some(Release { version, url, sums })
-        })
+        .filter_map(|r| pick_one(r, asset))
         .max_by(|a, b| parts(&a.version).cmp(&parts(&b.version)))
 }
 
@@ -286,6 +295,26 @@ fn check(a: &mut App) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn maps_the_worker_payload() {
+        const ASSET: &str = "-linux-x64.tar.gz";
+        let one = serde_json::json!({
+            "tag_name": "v5.3.0",
+            "html_url": "https://github.com/spizganed/QuickBuds/releases/tag/v5.3.0",
+            "body": "Notes",
+            "published_at": "2026-10-20T10:00:00Z",
+            "assets": [
+                { "name": "QuickBuds-5.3.0.apk", "browser_download_url": "https://x/QuickBuds-5.3.0.apk" },
+                { "name": "QuickBuds-linux-x64.tar.gz", "browser_download_url": "https://x/QuickBuds-linux-x64.tar.gz" },
+                { "name": "SHA256SUMS", "browser_download_url": "https://x/SHA256SUMS" }
+            ]
+        });
+        let r = pick_one(&one, ASSET).unwrap();
+        assert_eq!(r.version, "5.3.0");
+        assert_eq!(r.url, "https://x/QuickBuds-linux-x64.tar.gz");
+        assert_eq!(r.sums.as_deref(), Some("https://x/SHA256SUMS"));
+    }
 
     #[test]
     fn picks_newest_with_our_archive() {

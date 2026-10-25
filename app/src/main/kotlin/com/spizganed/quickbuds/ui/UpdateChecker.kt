@@ -6,16 +6,18 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import com.spizganed.quickbuds.R
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
 /**
- * GitHub release lookup for the in-app updater, shared by [UpdateActivity] and the check on start.
+ * Release lookup for the in-app updater, shared by [UpdateActivity] and the check on start.
  * The updater needs the release's `.apk` asset; the `.aab` alone is invisible to it.
  */
 object UpdateChecker {
 
-    private const val API = "https://api.github.com/repos/spizganed/QuickBuds/releases?per_page=30"
+    private const val API = "https://quickbuds-report.spizganed.workers.dev/latest"
+    private const val GITHUB = "https://api.github.com/repos/spizganed/QuickBuds/releases?per_page=30"
 
     /** Settings › App › Check on start (default on). */
     const val KEY_AUTO = "updateAutoCheck"
@@ -32,11 +34,11 @@ object UpdateChecker {
         "0"
     }
 
-    /** Blocking; call off the main thread. */
-    fun fetch(): Release {
-        val conn = java.net.URL(API).openConnection() as java.net.HttpURLConnection
-        val body = try {
-            conn.setRequestProperty("Accept", "application/vnd.github+json")
+    /** The body of [url] with [accept]. It throws on a network failure or a status other than 2xx. Blocking. */
+    private fun get(url: String, accept: String): String {
+        val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+        return try {
+            conn.setRequestProperty("Accept", accept)
             conn.connectTimeout = 15_000
             conn.readTimeout = 20_000
             val code = conn.responseCode
@@ -45,20 +47,32 @@ object UpdateChecker {
         } finally {
             conn.disconnect()
         }
+    }
+
+    /**
+     * Blocking; call off the main thread. It asks the Worker first. When the Worker fails or its newest
+     * release is not for Android, it asks GitHub once, the old path.
+     */
+    fun fetch(): Release {
+        runCatching { release(JSONObject(get(API, "application/json"))) }.getOrNull()?.let { return it }
         // Newest first. Desktop releases (`desktop-v*`) and pre-releases share the repo; skip them.
-        val list = org.json.JSONArray(body)
+        val list = JSONArray(get(GITHUB, "application/vnd.github+json"))
         for (i in 0 until list.length()) {
-            val json = list.getJSONObject(i)
-            val tag = json.getString("tag_name")
-            if (!tag.startsWith("v") || json.optBoolean("prerelease")) continue
-            val assets = json.optJSONArray("assets")
-            val apk = (0 until (assets?.length() ?: 0))
-                .map { assets!!.getJSONObject(it).optString("browser_download_url") }
-                .firstOrNull { it.endsWith(".apk", ignoreCase = true) }
-                ?: continue
-            return Release(tag, apk, json.optString("body").takeIf { it != "null" }.orEmpty())
+            runCatching { release(list.getJSONObject(i)) }.getOrNull()?.let { return it }
         }
         throw IllegalStateException("No Android release")
+    }
+
+    /** The Android release in [json], or null when the tag is not an app build or has no `.apk`. */
+    private fun release(json: JSONObject): Release? {
+        val tag = json.optString("tag_name")
+        if (!tag.startsWith("v") || json.optBoolean("prerelease")) return null
+        val assets = json.optJSONArray("assets") ?: return null
+        val apk = (0 until assets.length())
+            .map { assets.getJSONObject(it).optString("browser_download_url") }
+            .firstOrNull { it.endsWith(".apk", ignoreCase = true) }
+            ?: return null
+        return Release(tag, apk, json.optString("body").takeIf { it != "null" }.orEmpty())
     }
 
     /** Numeric compare of "v2.1.0" against "2.1.0-debug"; suffixes are ignored. */
