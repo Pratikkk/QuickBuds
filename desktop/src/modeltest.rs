@@ -293,11 +293,20 @@ impl Diff {
 
 /// The diagnosis from plain values, so a unit test can call it ([diff_state] passes the live state). `reply` is
 /// None when nothing was read yet.
+/// The two game-mode ids are alternatives (the phone's `ModelTest.otherGameId`): when the app asked both and the
+/// reply holds one, the other is no missing answer. Both ids must be in the ask list for this to apply.
+fn other_game_id(answered: &HashSet<u8>, asked: &[u8], id: u8) -> bool {
+    let alt = match id { 0x06 => 0x28, 0x28 => 0x06, _ => return false };
+    answered.contains(&alt) && asked.contains(&alt)
+}
+
 fn diff(asked: &[u8], reply: Option<&[(u8, u8)]>, rows: &BTreeSet<&'static str>,
         marks: &HashMap<&'static str, i32>) -> Diff {
     let missing = reply.map(|r| {
         let answered: HashSet<u8> = r.iter().map(|f| f.0).collect();
-        let mut v: Vec<u8> = asked.iter().copied().filter(|id| !answered.contains(id)).collect();
+        let mut v: Vec<u8> = asked.iter().copied()
+            .filter(|id| !answered.contains(id) && !other_game_id(&answered, asked, *id))
+            .collect();
         v.sort_unstable();
         v.dedup();
         v
@@ -543,5 +552,13 @@ mod tests {
         let rows = BTreeSet::from(["earbuds", "hires", "eq"]);
         let clean = diff(&[0x28], Some(&[(0x28, 1)]), &rows, &HashMap::from([("eq", WORKS), ("anc", BROKEN)]));
         assert!(clean.empty());
+    }
+
+    #[test]
+    fn one_game_id_is_no_missing_answer() {
+        // The app asks both 0x06 and 0x28; a model answers one of them (phone: report 84).
+        let rows = BTreeSet::from(["earbuds"]);
+        let d = diff(&[0x06, 0x28], Some(&[(0x06, 1)]), &rows, &HashMap::new());
+        assert!(d.missing.is_empty(), "missing {:?}", d.missing);
     }
 }
