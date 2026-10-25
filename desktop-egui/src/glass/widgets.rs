@@ -1,6 +1,6 @@
 //! The glass controls. Each `*_at` function draws at a rectangle and returns its `Response`; the page lays them out.
 
-use super::shader;
+use super::{motion, shader};
 use super::style::{self, Style};
 use crate::palette::blend;
 use eframe::egui::{self, load::Bytes, Align2, Color32, Context, FontId, Id, ImageSource, Pos2, Rect, Response, Sense, Shape, Stroke, StrokeKind, Ui, Vec2};
@@ -107,18 +107,6 @@ pub fn icon_at(ui: &Ui, svg: &'static str, rect: Rect, tint: Color32) {
     egui::Image::new(ImageSource::Bytes { uri: uri.into(), bytes: Bytes::Static(svg.as_bytes()) }).tint(tint).paint_at(ui, fitted);
 }
 
-/// 0..1 eased since the first frame this key was drawn (it restarts when the key was not drawn the frame before): a dialog opening.
-pub fn enter(ctx: &Context, key: Id, secs: f32) -> f32 {
-    let frame = ctx.cumulative_frame_nr();
-    let (last, start): (u64, f64) = ctx.data(|d| d.get_temp(key)).unwrap_or((0, 0.0));
-    let now = ctx.input(|i| i.time);
-    let start = if last + 2 < frame || last == 0 { now } else { start };
-    ctx.data_mut(|d| d.insert_temp(key, (frame, start)));
-    let t = (((now - start) as f32) / secs).clamp(0.0, 1.0);
-    if t < 1.0 { ctx.request_repaint(); }
-    1.0 - (1.0 - t).powi(3)
-}
-
 fn wid(ui: &Ui, id: impl std::hash::Hash + std::fmt::Debug) -> Id { ui.scope_id().with(egui::IdSalt::new(id)) }
 
 fn square(c: Pos2, s: f32) -> Rect { Rect::from_center_size(c, Vec2::splat(s)) }
@@ -177,18 +165,25 @@ pub fn disc_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, center: 
 
 /// The switch. Glass: a dark track (light when on) and a white thumb that grows and turns glass while pressed. Material: the
 /// M3 switch. QuickBuds and Pixel art: an accent track. Returns true when toggled.
+///
+/// The track fades in 160 ms (DESIGN row 13). The thumb slides in 155 ms (row 14). The first value
+/// from the buds snaps (row 15). A later real change slides. A tap returns true and does not move the
+/// switch, because the caller sends the request and the buds' report moves the control.
 pub fn switch_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, pos: Pos2, on: bool, enabled: bool) -> bool {
     let (w, h) = match style::style() { Style::Material => (52.0, 32.0), _ => (52.0, 30.0) };
     let rect = Rect::from_min_size(pos, Vec2::new(w, h));
     let r = ui.interact(rect, wid(ui, id), Sense::click());
-    let t = ui.ctx().animate_bool_with_time(r.id.with("on"), on, 0.14);
+    let key = r.id;
+    let track = motion::fade(ui.ctx(), key.with("track"), on, motion::SWITCH_TRACK);
+    let target = if on { 1.0 } else { 0.0 };
+    let t = motion::tween(ui.ctx(), key.with("slide"), target, motion::SWITCH_SLIDE, motion::SWITCH_SLIDE);
     let (_, p) = feel(ui, &r);
     let pal = style::pal();
     match style::style() {
         Style::Glass => {
-            let lerp = |a: u8, b: u8| (a as f32 + (b as f32 - a as f32) * t) as u8;
-            let track = Color32::from_rgba_unmultiplied(lerp(10, 236), lerp(10, 240), lerp(40, 255), lerp(77, 204));
-            ui.painter().rect_filled(rect, 15.0, track);
+            let lerp = |a: u8, b: u8| (a as f32 + (b as f32 - a as f32) * track) as u8;
+            let track_col = Color32::from_rgba_unmultiplied(lerp(10, 236), lerp(10, 240), lerp(40, 255), lerp(77, 204));
+            ui.painter().rect_filled(rect, 15.0, track_col);
             let x = rect.left() + 15.0 + (rect.width() - 30.0) * t;
             let c = Pos2::new(x, rect.center().y);
             let big = 13.0 + 3.0 * p;
@@ -197,15 +192,15 @@ pub fn switch_at(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, pos: P
             ui.painter().circle_stroke(c, big - 0.5, Stroke::new(1.0, Color32::from_white_alpha((230.0 * p) as u8)));
         }
         Style::Material => {
-            ui.painter().rect_filled(rect, 16.0, blend(pal.container(), pal.accent, t));
-            if t < 1.0 { ui.painter().rect_stroke(rect, 16.0, Stroke::new(2.0 * (1.0 - t), pal.text2), StrokeKind::Inside); }
+            ui.painter().rect_filled(rect, 16.0, blend(pal.container(), pal.accent, track));
+            if track < 1.0 { ui.painter().rect_stroke(rect, 16.0, Stroke::new(2.0 * (1.0 - track), pal.text2), StrokeKind::Inside); }
             let c = Pos2::new(rect.left() + 16.0 + (rect.width() - 32.0) * t, rect.center().y);
             let rad = (8.0 + 4.0 * t + 2.0 * p) as f32;
-            ui.painter().circle_filled(c, rad, blend(pal.text2, pal.on_accent(), t));
+            ui.painter().circle_filled(c, rad, blend(pal.text2, pal.on_accent(), track));
         }
         s => {
             let round = if s == Style::Pixel { 6.0 } else { 15.0 };
-            ui.painter().rect_filled(rect, round, blend(pal.track(), pal.accent, t));
+            ui.painter().rect_filled(rect, round, blend(pal.track(), pal.accent, track));
             let c = Pos2::new(rect.left() + 15.0 + (rect.width() - 30.0) * t, rect.center().y);
             let thumb = if pal.light() { pal.card } else { blend(pal.text, pal.card, 0.1) };
             if s == Style::Pixel { ui.painter().rect_filled(Rect::from_center_size(c, Vec2::splat(22.0 + 2.0 * p)), 4.0, thumb); }
@@ -340,13 +335,12 @@ fn arc(ui: &Ui, center: Pos2, radius: f32, width: f32, frac: f32, c0: Color32, c
 }
 
 /// A battery ring in the glass style: a lit glass disc, the track, a soft light along the gradient arc and a glyph.
-/// The arc sweeps from empty on its first frame and eases to each new level.
-pub fn ring_at(ui: &Ui, id: impl std::hash::Hash + std::fmt::Debug, center: Pos2, radius: f32, frac: Option<f32>, glyph: Option<&'static str>, dim: bool) {
+/// The arc sweeps to each new level (350 ms up, 500 ms down, decelerate) and snaps on the first paint.
+/// A connection change cross-fades the ring in 175 ms. Returns the shown fraction, so a percentage can follow the arc.
+pub fn ring_at(ui: &Ui, id: impl std::hash::Hash + std::fmt::Debug, center: Pos2, radius: f32, frac: Option<f32>, glyph: Option<&'static str>, dim: bool) -> f32 {
     let key = wid(ui, id);
-    let seen: bool = ui.ctx().data(|d| d.get_temp(key.with("seen"))).unwrap_or(false);
-    let v = ui.ctx().animate_value_with_time(key.with("v"), if seen { frac.unwrap_or(0.0) } else { 0.0 }, 0.7);
-    ui.ctx().data_mut(|d| d.insert_temp(key.with("seen"), true));
-    let a = if dim { 0.4 } else { 1.0 };
+    let v = motion::tween(ui.ctx(), key.with("v"), frac.unwrap_or(0.0), motion::RING_FILL, motion::RING_EMPTY);
+    let a = 1.0 - 0.6 * motion::fade(ui.ctx(), key.with("fade"), dim, motion::RING_FADE);
     let width = 6.0;
     if !style::glass() {
         // The other styles: a plain track and an accent arc; the glyph in the accent.
@@ -358,7 +352,7 @@ pub fn ring_at(ui: &Ui, id: impl std::hash::Hash + std::fmt::Debug, center: Pos2
             let h = radius * 1.05;
             icon_at(ui, g, Rect::from_center_size(center, Vec2::new(h * aspect(g), h)), fade(pal.accent));
         }
-        return;
+        return v;
     }
     // Flat like the rest of the screen: a faint disc, a thin track and a white arc, no light effects.
     let inner = radius - width / 2.0 - 1.0;
@@ -373,6 +367,7 @@ pub fn ring_at(ui: &Ui, id: impl std::hash::Hash + std::fmt::Debug, center: Pos2
         let h = radius * 1.05;
         icon_at(ui, g, Rect::from_center_size(center, Vec2::new(h * aspect(g), h)), white(a));
     }
+    v
 }
 
 /// What a slider did this frame.
@@ -466,16 +461,18 @@ pub fn dialog_buttons(ui: &mut Ui, cancel: &str, accept: &str) -> Option<bool> {
 }
 
 /// A dialog: a dimmed window and a centred glass card. `content` gets the card's inner ui. Returns false when closed.
+/// The card and the scrim grow from 92% and fade in over 260 ms with a 1.6 overshoot (DESIGN row 17).
 pub fn dialog(ctx: &Context, id: &str, title: &str, size: Vec2, content: impl FnOnce(&mut Ui)) -> bool {
     let screen = ctx.content_rect();
     let mut open = true;
-    let t = enter(ctx, Id::NULL.with(id).with("enter"), 0.22);
+    let sheet = motion::sheet_enter(ctx, Id::NULL.with(id).with("enter"));
+    let t = sheet.alpha;
     egui::Area::new(Id::NULL.with(id).with("scrim")).order(egui::Order::Foreground).fixed_pos(screen.min).show(ctx, |ui| {
         let r = ui.allocate_rect(screen, Sense::click());
         ui.painter().rect_filled(screen, 0.0, Color32::from_black_alpha((140.0 * t) as u8));
         if r.clicked() { open = false; }
     });
-    let rect = Rect::from_center_size(screen.center() + Vec2::new(0.0, 14.0 * (1.0 - t)), size);
+    let rect = Rect::from_center_size(screen.center(), size * sheet.scale);
     egui::Area::new(Id::NULL.with(id)).order(egui::Order::Tooltip).fixed_pos(rect.min).show(ctx, |ui| {
         ui.set_opacity(t);
         ui.set_clip_rect(screen);
