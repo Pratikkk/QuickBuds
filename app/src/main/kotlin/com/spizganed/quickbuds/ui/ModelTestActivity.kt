@@ -39,11 +39,17 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
     private lateinit var results: LinearLayout
     private lateinit var checkCard: LinearLayout
     private lateinit var featureCard: LinearLayout
+    private lateinit var diffSection: View
+    private lateinit var diffCard: LinearLayout
     private lateinit var sendNote: TextView
     private lateinit var send: TextView
     private var features = emptyList<ModelTest.Feature>()
     private var state: ModelTest.State? = null
     private var sending = false
+
+    /** The feature of the tour step in progress, and whether the app saw its effect meanwhile. */
+    private var step: String? = null
+    private var stepObserved = false
 
     /** Set while Start runs: the reads the buds answered since the reconnect. */
     private var running = false
@@ -89,6 +95,10 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
         results.addView(SettingRowFactory.sectionLabel(this, R.string.test_section_check))
         checkCard = SettingRowFactory.card(this)
         results.addView(checkCard)
+        diffSection = SettingRowFactory.sectionLabel(this, R.string.test_section_diff)
+        results.addView(diffSection)
+        diffCard = SettingRowFactory.card(this)
+        results.addView(diffCard)
         results.addView(SettingRowFactory.sectionLabel(this, R.string.test_section_features))
         featureCard = SettingRowFactory.card(this)
         results.addView(featureCard)
@@ -114,7 +124,36 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
     override fun onResume() {
         super.onResume()
         // The features shown can change while the person tries them (a model picked by hand, a new read).
-        if (!running) render()
+        val key = step
+        if (key != null) finishStep(key) else if (!running) render()
+    }
+
+    /** Logs the step's end and marks `works` when the app saw the effect; the person's mark always wins. */
+    private fun finishStep(key: String) {
+        step = null
+        PacketLogger.log(ModelTest.stepLine(key, end = true, observed = stepObserved))
+        val s = state
+        val mark = ModelTest.autoMark(key, stepObserved)
+        if (s != null && mark != null && s.marks[key] == null) {
+            s.marks[key] = mark
+            ModelTest.save(this, s)
+        }
+        stepObserved = false
+        render()
+    }
+
+    /** Opens the screen where [f] is tried; the return ends the step ([finishStep]). */
+    private fun openStep(f: ModelTest.Feature) {
+        val st = ModelTest.step(f.key) ?: return
+        PacketLogger.log(ModelTest.stepLine(f.key, end = false, observed = false))
+        step = f.key
+        stepObserved = false
+        startActivity(Intent(this, st.screen))
+    }
+
+    /** A callback for [key]'s effect while its step runs: the step can mark itself. */
+    private fun sawEffect(key: String) {
+        if (step == key) stepObserved = true
     }
 
     override fun onDestroy() {
@@ -156,7 +195,20 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
 
     override fun onBattery(left: Int?, case: Int?, right: Int?, chargingLeft: Boolean, chargingCase: Boolean, chargingRight: Boolean) {
         if (running && (left != null || right != null || case != null)) answered += "battery"
+        if (left != null || right != null || case != null) sawEffect("battery")
     }
+
+    override fun onWearState(left: Int, right: Int, caseSt: Int) {
+        if (left >= 0 || right >= 0) sawEffect("wear")
+    }
+
+    override fun onGameModeState(on: Boolean) = sawEffect("game")
+
+    override fun onAncModeState(mode: String) = sawEffect("anc")
+
+    override fun onEqState() = sawEffect("eq")
+
+    override fun onGoldenStatus(kind: Int, status: Int) = sawEffect("golden")
 
     override fun onCapabilities() {
         if (running) answered += "features"
@@ -218,7 +270,34 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
             }
             SettingRowFactory.addRow(featureCard, row)
         }
+        renderDiff(s)
         paintSend()
+    }
+
+    /** The diagnosis: the three mismatches of [ModelTest.diff]; the section is hidden when there are none. */
+    private fun renderDiff(s: ModelTest.State) {
+        val d = ModelTest.diff(this, s)
+        val lines = listOfNotNull(
+            d.missing.takeIf { it.isNotEmpty() }?.let {
+                getString(R.string.test_diff_missing, it.joinToString(" ") { id -> "0x%02X".format(id) })
+            },
+            d.extra.takeIf { it.isNotEmpty() }?.let {
+                getString(R.string.test_diff_extra, it.joinToString(" ") { id -> "0x%02X".format(id) })
+            },
+            d.hidden.takeIf { it.isNotEmpty() }?.let { keys ->
+                getString(R.string.test_diff_hidden,
+                    ModelTest.FEATURES.filter { it.key in keys }.joinToString(", ") { getString(it.label) })
+            },
+        )
+        diffSection.visibility = if (lines.isEmpty()) View.GONE else View.VISIBLE
+        diffCard.visibility = diffSection.visibility
+        diffCard.removeAllViews()
+        for (line in lines) diffCard.addView(TextView(this).apply {
+            setText(line)
+            setTextColor(p.textSecondary)
+            textSize = 13f
+            setPadding(ThemeRes.dp(context, 16f), ThemeRes.dp(context, 8f), ThemeRes.dp(context, 16f), ThemeRes.dp(context, 8f))
+        })
     }
 
     /** Works / Does not work / Skip; Does not work asks what happened. */
@@ -230,9 +309,12 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
             ModelTest.save(this, s)
             render()
         }
-        BottomSheetDialog(this)
-            .title(getString(f.label))
+        val st = ModelTest.step(f.key)
+        val sheet = BottomSheetDialog(this).title(getString(f.label))
+        st?.let { sheet.message(getString(it.hint)) }
+        sheet
             .items(listOf(
+                BottomSheetDialog.Item(getString(R.string.test_try), false) { sheet.close(); openStep(f) },
                 BottomSheetDialog.Item(getString(R.string.test_works), current == ModelTest.WORKS) { set(ModelTest.WORKS) },
                 BottomSheetDialog.Item(getString(R.string.test_broken), current == ModelTest.BROKEN) { askNote(f) },
                 BottomSheetDialog.Item(getString(R.string.test_skip), current == ModelTest.SKIP) { set(ModelTest.SKIP) },

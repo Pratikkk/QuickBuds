@@ -140,6 +140,38 @@ object ModelTest {
         AncModes.of(c).slots().takeIf { it.isNotEmpty() }, s.marks
     )
 
+    /** The features whose effect the app sees by itself, so a step can mark itself `works` ([autoMark]). */
+    val OBSERVABLE = setOf("battery", "anc", "wear", "game", "golden", "eq")
+
+    /** A tour step: the screen where the feature is tried, and the instruction. */
+    class Step(val screen: Class<*>, val hint: Int)
+
+    /** The step for [key], or null for a key with no step. Every feature in [FEATURES] has one. */
+    fun step(key: String): Step? = STEPS[key]
+
+    private val STEPS = mapOf(
+        "battery" to Step(MainActivity::class.java, R.string.test_step_battery),
+        "anc" to Step(MainActivity::class.java, R.string.test_step_anc),
+        "wind" to Step(MainActivity::class.java, R.string.test_step_wind),
+        "game" to Step(MainActivity::class.java, R.string.test_step_game),
+        "hires" to Step(MainActivity::class.java, R.string.test_step_hires),
+        "spatial" to Step(MainActivity::class.java, R.string.test_step_spatial),
+        "golden" to Step(GoldenSoundActivity::class.java, R.string.test_step_golden),
+        "eq" to Step(EqActivity::class.java, R.string.test_step_eq),
+        "dual" to Step(MainActivity::class.java, R.string.test_step_dual),
+        "gestures" to Step(GestureActivity::class.java, R.string.test_step_gestures),
+        "wear" to Step(EarbudSettingsActivity::class.java, R.string.test_step_wear),
+        "find" to Step(EarbudSettingsActivity::class.java, R.string.test_step_find),
+    )
+
+    /** The log line for a step: `MODEL TEST: step <key> start`, or `end observed=<bool>` on the return. */
+    fun stepLine(key: String, end: Boolean, observed: Boolean): String =
+        "MODEL TEST: step $key " + if (end) "end observed=$observed" else "start"
+
+    /** The mark a returning step writes: `works` when the app saw the effect, null when it saw nothing. */
+    fun autoMark(key: String, observed: Boolean): String? =
+        if (observed && key in OBSERVABLE) WORKS else null
+
     /** [diff] from plain values, so a unit test can call it. */
     fun diff(
         model: JSONObject?, reply: Map<Int, Int>?, bitmap: Set<Int>?, productAnc: Map<String, Int>?,
