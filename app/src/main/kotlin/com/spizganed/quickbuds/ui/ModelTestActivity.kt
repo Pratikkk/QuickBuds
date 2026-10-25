@@ -20,6 +20,7 @@ import com.spizganed.quickbuds.bluetooth.BudsConnectionManager
 import com.spizganed.quickbuds.bluetooth.BudsDevice
 import com.spizganed.quickbuds.bluetooth.BudsService
 import com.spizganed.quickbuds.bluetooth.PacketLogger
+import com.spizganed.quickbuds.bluetooth.VirtualBuds
 import com.spizganed.quickbuds.protocol.ModelCatalog
 
 /**
@@ -46,10 +47,6 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
     private var features = emptyList<ModelTest.Feature>()
     private var state: ModelTest.State? = null
     private var sending = false
-
-    /** The feature of the tour step in progress, and whether the app saw its effect meanwhile. */
-    private var step: String? = null
-    private var stepObserved = false
 
     /** Set while Start runs: the reads the buds answered since the reconnect. */
     private var running = false
@@ -124,21 +121,25 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
     override fun onResume() {
         super.onResume()
         // The features shown can change while the person tries them (a model picked by hand, a new read).
-        val key = step
+        val key = ModelTest.pendingStep(this)
         if (key != null) finishStep(key) else if (!running) render()
     }
 
-    /** Logs the step's end and marks `works` when the app saw the effect; the person's mark always wins. */
+    /**
+     * Logs the step's end and marks `works` when the log shows the effect. The evidence is in the log because the home
+     * screen is `singleTask`: opening it destroys this activity, so no callback here runs while the person tries the
+     * feature. The person's own mark always wins.
+     */
     private fun finishStep(key: String) {
-        step = null
-        PacketLogger.log(ModelTest.stepLine(key, end = true, observed = stepObserved))
-        val s = state
-        val mark = ModelTest.autoMark(key, stepObserved)
+        ModelTest.clearStep(this)
+        val observed = ModelTest.stepObserved(PacketLogger.getFileContent(), key)
+        PacketLogger.log(ModelTest.stepLine(key, end = true, observed = observed))
+        val s = state ?: ModelTest.load(this)
+        val mark = ModelTest.autoMark(key, observed)
         if (s != null && mark != null && s.marks[key] == null) {
             s.marks[key] = mark
             ModelTest.save(this, s)
         }
-        stepObserved = false
         render()
     }
 
@@ -146,14 +147,8 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
     private fun openStep(f: ModelTest.Feature) {
         val st = ModelTest.step(f.key) ?: return
         PacketLogger.log(ModelTest.stepLine(f.key, end = false, observed = false))
-        step = f.key
-        stepObserved = false
+        ModelTest.saveStep(this, f.key)
         startActivity(Intent(this, st.screen))
-    }
-
-    /** A callback for [key]'s effect while its step runs: the step can mark itself. */
-    private fun sawEffect(key: String) {
-        if (step == key) stepObserved = true
     }
 
     override fun onDestroy() {
@@ -173,7 +168,10 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
     /** Clears the log, drops the link and connects again; [finishCheck] runs once the buds have answered. */
     private fun begin() {
         val m = manager ?: return
-        val device = BudsDevice.find(this) ?: return showStatus(R.string.no_buds_paired)
+        // Dev tools › Virtual buds: there is no paired Bluetooth device. Connect to the fake server instead.
+        val virtual = if (VirtualBuds.on(this)) VirtualBuds.parseAddress(VirtualBuds.address(this)) else null
+        val device = if (virtual != null) null else BudsDevice.find(this)
+        if (device == null && virtual == null) return showStatus(R.string.no_buds_paired)
         running = true
         answered.clear()
         start.isEnabled = false
@@ -183,7 +181,10 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
         PacketLogger.clear()
         PacketLogger.log("MODEL TEST: start, ${ModelCatalog.current(this)?.name ?: "unknown model"}")
         m.disconnect()
-        main.postDelayed({ m.connect(device) }, RECONNECT_GAP_MS)
+        main.postDelayed({
+            if (virtual != null) m.connectVirtual(virtual.first, virtual.second, VirtualBuds.name(this))
+            else device?.let { m.connect(it) }
+        }, RECONNECT_GAP_MS)
         main.postDelayed({ if (running && "connected" !in answered) fail() }, CONNECT_TIMEOUT_MS)
     }
 
@@ -195,20 +196,7 @@ class ModelTestActivity : Activity(), BudsConnectionManager.Listener {
 
     override fun onBattery(left: Int?, case: Int?, right: Int?, chargingLeft: Boolean, chargingCase: Boolean, chargingRight: Boolean) {
         if (running && (left != null || right != null || case != null)) answered += "battery"
-        if (left != null || right != null || case != null) sawEffect("battery")
     }
-
-    override fun onWearState(left: Int, right: Int, caseSt: Int) {
-        if (left >= 0 || right >= 0) sawEffect("wear")
-    }
-
-    override fun onGameModeState(on: Boolean) = sawEffect("game")
-
-    override fun onAncModeState(mode: String) = sawEffect("anc")
-
-    override fun onEqState() = sawEffect("eq")
-
-    override fun onGoldenStatus(kind: Int, status: Int) = sawEffect("golden")
 
     override fun onCapabilities() {
         if (running) answered += "features"

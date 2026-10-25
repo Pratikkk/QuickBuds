@@ -140,8 +140,17 @@ object ModelTest {
         AncModes.of(c).slots().takeIf { it.isNotEmpty() }, s.marks
     )
 
-    /** The features whose effect the app sees by itself, so a step can mark itself `works` ([autoMark]). */
-    val OBSERVABLE = setOf("battery", "anc", "wear", "game", "golden", "eq")
+    /** The features whose effect the log shows by itself, with the line that proves it ([stepObserved]). */
+    private val EVIDENCE = mapOf(
+        "anc" to "ANC EVT:",
+        "wear" to "WEAR ",
+        "game" to "GAME EVT:",
+        "golden" to "GOLDEN",
+        "eq" to "EQ:",
+    )
+
+    /** The features a step can mark `works` for ([autoMark]). */
+    val OBSERVABLE: Set<String> get() = EVIDENCE.keys
 
     /** A tour step: the screen where the feature is tried, and the instruction. */
     class Step(val screen: Class<*>, val hint: Int)
@@ -168,9 +177,37 @@ object ModelTest {
     fun stepLine(key: String, end: Boolean, observed: Boolean): String =
         "MODEL TEST: step $key " + if (end) "end observed=$observed" else "start"
 
-    /** The mark a returning step writes: `works` when the app saw the effect, null when it saw nothing. */
+    /**
+     * True when the log shows [key]'s effect between its last `start` line and its `end` line. The log is the only
+     * evidence that survives: the home screen is `singleTask`, so opening it destroys this activity and no callback
+     * of this screen runs while the person tries the feature.
+     */
+    fun stepObserved(log: String, key: String): Boolean {
+        val marker = EVIDENCE[key] ?: return false
+        val lines = log.lines()
+        val start = lines.indexOfLast { "MODEL TEST: step $key start" in it }
+        if (start < 0) return false
+        for (i in start + 1 until lines.size) {
+            if ("MODEL TEST: step $key end" in lines[i]) return false
+            if (marker in lines[i]) return true
+        }
+        return false
+    }
+
+    /** The mark a returning step writes: `works` when the log shows the effect, null when it shows nothing. */
     fun autoMark(key: String, observed: Boolean): String? =
-        if (observed && key in OBSERVABLE) WORKS else null
+        if (observed && key in EVIDENCE) WORKS else null
+
+    /** The step the person has not returned from yet; it survives the home screen's `singleTask` clear. */
+    fun pendingStep(c: Context): String? = prefs(c).getString(KEY_STEP, null)
+
+    fun saveStep(c: Context, key: String) {
+        prefs(c).edit().putString(KEY_STEP, key).apply()
+    }
+
+    fun clearStep(c: Context) {
+        prefs(c).edit().remove(KEY_STEP).apply()
+    }
 
     /** [diff] from plain values, so a unit test can call it. */
     fun diff(
@@ -190,6 +227,8 @@ object ModelTest {
 
     /** The test in progress, as JSON: model id, checks, marks and notes. Kept while the person tries features. */
     private const val KEY_STATE = "modelTestState"
+    /** The tour step in progress, by feature key. It outlives this activity when the home screen clears the task. */
+    private const val KEY_STEP = "modelTestStep"
     /** Model ids the launch prompt has asked about, comma-separated. It asks once per model. */
     private const val KEY_ASKED = "modelTestAsked"
 
