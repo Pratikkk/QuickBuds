@@ -26,6 +26,16 @@ export default {
     if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/index.html")) return page();
     if (req.method === "GET" && url.pathname === "/reports") return list(req, url, env);
     if (req.method === "GET" && url.pathname === "/latest") return latest(req, env);
+    // Diagnostic for the digest, behind the read key: what the cron would see right now.
+    if (req.method === "GET" && url.pathname === "/__digest") {
+      if ((req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ?? "") !== env.READ_KEY)
+        return new Response("Not found", { status: 404 });
+      const last = await env.QUICKBUDS_KV.get("digest:last_id");
+      const { results } = await env.DB.prepare(
+        "SELECT id, status FROM reports WHERE id > ? AND status IN ('new','working') ORDER BY id LIMIT 20",
+      ).bind(Number(last) || 0).all();
+      return Response.json({ last, pending: results });
+    }
     return new Response("Not found", { status: 404 });
   },
 };
@@ -60,9 +70,14 @@ async function report(req, env) {
     .bind(sender, since).first();
   if (n >= PER_HOUR) return answer(429, "Too many reports. Try again in an hour.");
 
-  await env.DB.prepare(
+  const inserted = await env.DB.prepare(
     "INSERT INTO reports (at, sender, app, model, categories, description, crash, log, app_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
   ).bind(new Date().toISOString(), sender, app, model, categories.join(", "), description, crash ? 1 : 0, log, appId).run();
+  // The Dev Tools crash check throws on purpose. Mark it so it never sits in the inbox as a real crash.
+  if (crash && log && log.includes("Crash test from Dev Tools")) {
+    await env.DB.prepare("UPDATE reports SET status = 'done', note = 'Crash logger test from Dev tools; not a defect.' WHERE id = ?")
+      .bind(inserted.meta.last_row_id).run();
+  }
   return answer(200, "Sent. Thank you.");
 }
 
