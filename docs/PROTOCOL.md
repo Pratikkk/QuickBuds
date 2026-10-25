@@ -17,7 +17,8 @@ interoperability only). This file is the source of the code, not the vendor apps
 
 Never promote a claim without evidence.
 
-**Status:** complete for every feature the apps build. The code is `core/src/{wire,msg,cmd}.rs` and the `protocol2` package.
+**Status:** complete for every feature the apps build. Section 17 lists every unused command and its layout;
+some ids there remain unread. The code is `core/src/{wire,msg,cmd}.rs` and the `protocol2` package.
 
 ---
 
@@ -195,13 +196,15 @@ The app drops a known code with too few bytes. It keeps an unknown code as raw b
 | `F2` | Connected-devices info (answered) | `<count>` then `<MAC 6, reversed> <times u16 LE> <nameLen> <name>` |
 | `F4` | Diagnostic JSON (answered) | UTF-8 JSON |
 | `F5` | Head gesture type | `<type>` |
-| `F6` | Head-motion try result | `<v>` |
+| `F6` | Head-motion try result | `<result>`; one byte `[VENDOR]` |
 | `F7` | Voice-assist control type | `<bits>`: bit 0 type 0, bit 1 type 1, bit 2 type 2 (highest set bit wins), bit 7 a support flag `[VENDOR]` |
 | `F8` | LE / BR link switch state | `<bits>`: bit 0 state, bit 1 owner, bit 2 reset flag `[VENDOR]` |
 | `F9` | AI translation audio focus | `<v>`; online feature, not built |
 
-Codes `07` and `0C` have no handler. Code `09` goes to a separate parser for a list of records. The app
-does not read it and does not use it. `F3` is offered by the buds and ignored `[VENDOR]`.
+Codes `07` and `0C` have no handler. Code `09` is the hearing-enhancement frequency stream:
+`<uid u32 BE> <ear 01 L / 02 R> <total u16 LE> <index> <type> <floats, f32 LE>`. The vendor app joins the
+packets until both ears are complete. `F3` is offered by the buds and falls through the vendor event switch
+like an unknown code `[VENDOR]`.
 
 Registration: `0x0200` reads which codes the buds offer (`00 <count> <codes>`). `0x0205 <count> <codes...>`
 subscribes. Buds without `0x0205` in the bitmap take `0x0201 <code>` once per code `[VENDOR]`.
@@ -435,15 +438,17 @@ It accepts the same write while the phone plays LHDC V5.
 | `16` | Lost reminder | switch `0x0403 16`; asked on 2 models (OPPO Enco Clip2, OnePlus Buds Clip) `[VENDOR]` |
 | `17` | Power saving | Either write restarts the buds; the link returns about 12 s later `[CAPTURE]` |
 | `18` | Hi-Res | the apps call it High-quality audio; a quality switch, not a codec switch; a model with a codec list refuses it unless the phone plays LDAC or LHDC `[CAPTURE]` |
-| `1A` | Wind noise reduction | Only models with the `windMode` flag; unverified `[GUESS]` |
+| `1A` | Wind noise reduction | Only models with the `windMode` flag; realme Link writes `0x0403 1A`; unverified on our buds `[VENDOR]` |
 | `1B` | Spatial sound | the apps call it 3D audio; models without `0x012A` `[CAPTURE]` |
 | `1C` | Smart volume | `[VENDOR]` |
 | `1D` | BassWave | the apps call it Bass boost `[CAPTURE]` |
 | `1E` | Log collection | asked on 16 models; no constant in the code `[VENDOR]` |
 | `21` | Game equalizer | Section 13 `[VENDOR]` |
-| `27` | Game sound effects | `[VENDOR]` |
-| `28` | Game mode, where the model has game sound | both default id lists ask it next to `06`; 10 models `[VENDOR]` |
-| `30` `31` `32` `35` `37` `38` `3A` `3B` | Adaptive volume, adaptive ear, conversation awareness, hold volume, Swift Pair, adaptive sound, pause when asleep, head gestures | `[VENDOR]`, unverified on buds |
+| `26` | Find phone | realme Link writes `0x0403 26`; the earbuds ring the phone `[VENDOR]` |
+| `27` | Game sound; the apps call it game sound effects | the vendor app writes `0x0403 27` when the game-sound switch moves `[VENDOR]` |
+| `28` | Game mode main switch | both default id lists ask it next to `06`; 10 models `[VENDOR]` |
+| `30` `31` `32` `35` `37` `3A` `3B` | Adaptive volume, adaptive ear, conversation awareness, hold volume, Swift Pair, pause when asleep, head gestures | `[VENDOR]`, unverified on buds |
+| `38` | Hearing optimisation | the vendor UI writes `0x0403 38`; the `adaptive sound` label is unverified `[VENDOR]` |
 
 Ids the vendor app also builds: `0D` camera tap, `14` voice wakeup, `15` smart call,
 `19` voice command, `22`-`24` neck health, `34` meeting assistant, `39` incoming-call control. Decided against: voice wakeup `14`, voice command `19`,
@@ -606,6 +611,46 @@ or account, or that QuickBuds decided against. The app has no UI for them.
 | `0x0424` | LE Audio action |
 | push `10`, features `14` `19` `39` | Voice wakeup, voice commands, incoming-call voice control |
 
-Some commands share a bitmap bit with the features above, and no QuickBuds feature reads them. They are unread. The queries are `0x0117`, `0x0125`, `0x0126`, `0x0127`,
-`0x0129`, `0x012E`, `0x0135`, `0x0136`. The writes are `0x0408`, `0x0414`, `0x0419`, `0x041D`, `0x041F`, `0x042B`, `0x042C`, `0x0430`, `0x0432`-`0x0435`. Their
-layouts and meanings are `[GUESS]`. The app never sends them.
+Some commands share a bitmap bit with the features above; others are always enabled. No QuickBuds feature
+reads them. The table below gives their wire layouts. All rows are `[VENDOR]`; a request that the Buds 4
+batch carries is also `[CAPTURE]`. u16 and u32 are little endian unless marked. QuickBuds sends none of them.
+
+| Command | Payload | Reply | Meaning |
+|---|---|---|---|
+| `0x0014` | — | — | Bitmap bit 60. No sender or reader in the vendor app. The feature is voice wakeup. |
+| `0x001C` | — | — | Bitmap bit 45. Capability bit in both apps; no sender or parser. Unknown. |
+| `0x0022`-`0x0024` | — | — | Bitmap bit 40, the spine-health group. Capability bit in both apps; no sender or parser. Unknown. |
+| `0x0101` | `00 02` (u16 512) | `00 <mtu u16>` | Remote MTU. In the Buds 4 batch. |
+| `0x0102` | `FF FF` (65535), or `9A 07` (1946) from another app | `00 <vendor id u16>` | Remote vendor id. In the Buds 4 batch. |
+| `0x0104` | — (the buds send it) | `00 <UTF-8 version>` | Remote protocol version. Always enabled. The vendor app reads the string and discards it. |
+| `0x010B` | — | `00 <colour id>` | Buds colour id. In the Buds 4 batch. |
+| `0x0117` | `<count> <types>`; the vendor asks `03 02 03 04` | `00 <count>` then `<type> <len u16> <value>` | Earphone identity. Type `01` brand, `02` left SN, `03` right SN, `04` box SN, `05` model, `06` product date. |
+| `0x0118` | `<count> <ids>` | `00 <count>` then `<type> <len u16> <data>` | Ear-restore data. In the Buds 4 batch as `01 01`. |
+| `0x011C` | — | `00 <flags u16>` then the push `0D` fields in order | Related-device info. The query side of push `0D`. In the Buds 4 batch. |
+| `0x0121` | — | `00 <count>` then `<id u32> <valid> <crc u32> <selected> <nameLen> <name>` | Tone list. In the Buds 4 batch. |
+| `0x0125` | — | `00 <kind> <count>`, then `<count>` × 3 bytes | Hearing-enhancement data. Each 3-byte entry is one hearing value. |
+| `0x0126` | `<start u32> <end u32>` | `00` then the push `09` stream | Hearing-enhancement frequency data for a time range. |
+| `0x0127` | — | `00 <delay>` | Screen-off broadcast delay. |
+| `0x0129` | — | `00 <file id u32> <file well u32> <name>` | Zen-mode file information. |
+| `0x012E` | — | `00 <AI summary type>` | AI summary type. |
+| `0x0131` | — | `00 <status>` | AI translation app status. |
+| `0x0135` | — | `00 <bits>`: bit 0 type 0, bit 1 type 1, bit 2 type 2 (highest set bit wins), bit 7 the in-ear music mute flag | Voice-assistant config. |
+| `0x0136` | — | `00 <bits>`: bit 0 state, bit 1 owner, bit 2 reset | LE/BR link switch state. |
+| `0x0402` | — (the buds send it) | `00` from the phone | Free-music request. The phone answers `0x8402 00`; the request has no payload field. |
+| `0x0407` | — | — | No sender and no reply handler in the vendor app. |
+| `0x0408` | `<hostType> <host MAC 6> <count>`, then `<type> <MAC 6> <state>` per device; at most 6 devices | — (unhandled) | Related-device list. |
+| `0x0409` | — | — | No sender and no reply handler. |
+| `0x040B` | — | — | No sender and no reply handler. |
+| `0x0414` | `<time>` | `00` | Free-dialog recovery time. |
+| `0x0416` | — | — | No sender and no reply handler. |
+| `0x0419` | `<bits>` | `00` | Host capabilities. |
+| `0x041D` | `<delay>` | `00` | Screen-off broadcast delay write. |
+| `0x041F` | `<len> <UTF-8 model>` | `00` (not parsed) | Device build model. |
+| `0x042B` | `<type> <data>` | `00 <type>`; when type is `03`, `<flags> <rate type> <format> <channels-1> <encode> <frame size u16> <session> <VAD>` | One-shot voice operation. |
+| `0x042C` | `<on> 00` | `00` | Start or stop the sound record. |
+| `0x0430` | `<status>` | — | Speech-assist dialog status. The vendor app drops the reply. |
+| `0x0432` | `<type>`: `01`, `02` or `04` | `00` | Voice-assistant control type. The caller maps 0, 1, 2 to those bits. |
+| `0x0433` | `<on>` | `00` | LE/BR link switch. |
+| `0x0434` | `<value>`: `01` is off | `00` | Earbud control sound channel. The vendor app inverts the caller's flag. |
+| `0x0435` | `00` | `00` | Start voice-assistant config. |
+| `0xEF01`-`0xEF09` | — | — | Capability-only bits (41-43, 48, 52, 63-65). `EF08` gates the game-mode main switch and `EF09` gates voice commands. No sender or reader. |
