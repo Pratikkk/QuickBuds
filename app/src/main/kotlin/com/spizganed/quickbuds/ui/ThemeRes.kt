@@ -764,6 +764,9 @@ object ThemeRes {
     fun screenPadding(view: View, sideDp: Float = 16f, vertDp: Float = 16f) {
         val side = dp(view.context, sideDp)
         val vert = dp(view.context, vertDp)
+        // Set now, so the screen keeps its 16dp margin when the window applies the bars to the
+        // decor and never dispatches them to the content (seen on API 34 with a nested ScrollView).
+        view.setPadding(side, vert, side, vert)
         ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(side + bars.left, vert + bars.top, side + bars.right, vert + bars.bottom)

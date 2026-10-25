@@ -43,12 +43,15 @@ class HearingRadarView(context: Context) : View(context) {
 
     private fun dp(v: Float) = ThemeRes.dp(context, v).toFloat()
     private val nothing = ThemeRes.nothing(context)
+    private val glass = ThemeRes.palette(context).glass && !nothing
+    private val ink = ThemeRes.palette(context).text
     private val accent = ThemeRes.color(context, R.attr.appColorAccent)
     private val secondary = ThemeRes.color(context, R.attr.appColorTextSecondary)
     private val gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = if (nothing) 0f else dp(1f)
-        color = ThemeRes.color(context, R.attr.appColorOutline)
+        // Glass: a light grid on the glass surface, as the design.
+        color = if (glass) Palette.withAlpha(ink, 0.5f) else ThemeRes.color(context, R.attr.appColorOutline)
     }
     /**
      * Dots draw without antialiasing, so a diagonal stroke thinner than a cell skips cells. A hairline (0)
@@ -102,28 +105,44 @@ class HearingRadarView(context: Context) : View(context) {
 
     private fun shapes(canvas: Canvas) {
         val boost = polygon(FloatArray(GoldenSound.AXES.size) { 10f })
+        val profile = (shown ?: values)?.let { polygon(it) }
         shapePaint.style = Paint.Style.FILL
-        shapePaint.color = secondary and 0x00FFFFFF or 0x1A000000
+        // Glass: a faint white plate; other styles: the secondary colour at 10%.
+        shapePaint.color = if (glass) Palette.withAlpha(ink, 0.10f) else secondary and 0x00FFFFFF or 0x1A000000
         canvas.drawPath(boost, shapePaint)
-        canvas.drawLine(legendX, legendY, legendX + swatchW, legendY, shapePaint)
+        // Glass: the profile under the grid, so the design's lines read through the shape.
+        if (glass && profile != null) {
+            shapePaint.color = accent and 0x00FFFFFF or 0x40000000
+            canvas.drawPath(profile, shapePaint)
+        }
         shapePaint.style = Paint.Style.STROKE
         shapePaint.strokeWidth = stroke
-        shapePaint.color = secondary
-        canvas.drawPath(boost, shapePaint)
-        canvas.drawLine(legendX, legendY, legendX + swatchW, legendY, shapePaint)
+        if (!glass) {
+            shapePaint.color = secondary
+            canvas.drawPath(boost, shapePaint)
+            canvas.drawLine(legendX, legendY, legendX + swatchW, legendY, shapePaint)
+        }
         for (ring in listOf(2.5f, 5f, 7.5f)) canvas.drawPath(polygon(FloatArray(GoldenSound.AXES.size) { ring }), gridPaint)
         GoldenSound.AXES.indices.forEach { i ->
             val (x, y) = point(i, 10f)
             canvas.drawLine(cx, cy, x, y, gridPaint)
         }
-        val path = polygon(shown ?: values ?: return)
-        shapePaint.style = Paint.Style.FILL
-        shapePaint.color = accent and 0x00FFFFFF or 0x40000000
-        canvas.drawPath(path, shapePaint)
-        shapePaint.style = Paint.Style.STROKE
-        shapePaint.strokeWidth = stroke
+        if (glass) {
+            // Glass: a bright rim round the boost area, and the legend line in the same light.
+            shapePaint.color = Palette.withAlpha(ink, 0.75f)
+            canvas.drawPath(boost, shapePaint)
+            canvas.drawLine(legendX, legendY, legendX + swatchW, legendY, shapePaint)
+        }
+        if (profile == null) return
+        if (!glass) {
+            shapePaint.style = Paint.Style.FILL
+            shapePaint.color = accent and 0x00FFFFFF or 0x40000000
+            canvas.drawPath(profile, shapePaint)
+            shapePaint.style = Paint.Style.STROKE
+            shapePaint.strokeWidth = stroke
+        }
         shapePaint.color = accent
-        canvas.drawPath(path, shapePaint)
+        canvas.drawPath(profile, shapePaint)
     }
 
     private companion object { const val LEGEND_DP = 24f }
