@@ -322,10 +322,9 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
 
         /**
          * The shape and sizes for widget [id] at its size (portrait: min width, max height). Mirrors the widget mockup:
-         * one row high is a STRIP, one cell wide a COLUMN; the two-page widgets show both pages at once (TALL, TALL_M1,
-         * TALL_M2) when the tiles fit under the battery, else the 2x2 or 4x2 pages; battery only takes LIST or STACK
-         * at 3 rows. Tiles fill the space the battery leaves, in setup order. Falls back to the provider's own size
-         * when the host gives none.
+         * one row high is a STRIP, one cell wide a COLUMN, and a wide battery-only widget at 3 rows is a STACK;
+         * every other size keeps the 2x2 or 4x2 pages. Tiles fill the space the battery leaves, in setup order.
+         * Falls back to the provider's own size when the host gives none.
          */
         fun fit(c: Context, kind: Kind, id: Int): Fit {
             val o = AppWidgetManager.getInstance(c).getAppWidgetOptions(id)
@@ -339,7 +338,44 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 return Fit(if (wide) Shape.PAGES_M else Shape.PAGES_S, tileW = tw)
             }
             if (w <= 0 || h <= 0) return pages(kind == Kind.COMBINED)
-            // Every size has two screens: battery, then the modes on a double tap. 4x2 and wider lay the pages out wide.
+            val battery = kind != Kind.CONTROLS
+            val controls = kind != Kind.BATTERY_ONLY
+            val keys = if (controls) WidgetSettings.buttons(c, id).size.coerceAtLeast(1) else 0
+            // Mirrors scripts/widget-layouts.py: PP the panel padding, GAP between panels and tiles.
+            val pp = if (WidgetSettings.materialStyle(c)) 2f else if (WidgetSettings.nothingStyle(c)) 4f else 6f
+            val gap = 5f
+            val iw = w - 2 * g.side
+            val ih = h - 2 * g.vert
+            fun num(d: Float) = (d * 0.3f).coerceIn(13f, 36f)
+            // A battery panel's height: ring, number line, paddings.
+            fun unitH(d: Float) = d + 2f + num(d) * 1.3f + 2 * pp
+            // The largest ring whose panel fits [avail] high.
+            fun byH(avail: Float): Float { var d = avail; while (d > 16f && unitH(d) > avail) d -= 1f; return d }
+            // The shaped sizes start below the 2x2's own minimum (110dp), so the pages keep their size.
+            if (h < 110f) {
+                if (!battery) return Fit(Shape.STRIP, tiles = keys, units = 0, tileW = (iw - gap * (keys - 1)) / keys, tileH = ih)
+                // Units and tiles share the row equally. Up to 4 tiles, while each is 44dp or wider and the
+                // rings shrink by 8dp at most.
+                fun slot(n: Int) = (iw - gap * (2 + n)) / (3 + n)
+                fun ring(n: Int) = minOf(slot(n) - 2 * pp, byH(ih), 60f)
+                val n = (keys downTo 0).first { it == 0 || (slot(it) >= 44f && ring(it) >= ring(0) - 8f) }
+                return Fit(Shape.STRIP, ring(n), num(ring(n)), n, 3, slot(n), ih)
+            }
+            if (w < 110f) {
+                if (!battery) return Fit(Shape.COLUMN, tiles = keys, units = 0, tileW = iw, tileH = (ih - gap * (keys - 1)) / keys)
+                // The case needs about 3 rows.
+                val k = if (h >= 250f) 3 else 2
+                fun slot(n: Int) = (ih - gap * (k + n - 1)) / (k + n)
+                fun ring(n: Int) = minOf(iw - 2 * pp, byH(slot(n)), 56f)
+                val n = (keys downTo 0).first { it == 0 || (slot(it) >= 44f && ring(it) >= ring(0) - 8f) }
+                return Fit(Shape.COLUMN, ring(n), num(ring(n)), n, k, iw, slot(n))
+            }
+            // Battery only, 3 rows and wide: both buds on top, the case below.
+            if (!controls && w >= 250f && h >= 250f) {
+                val d = minOf((iw - gap) / 2 - 2 * pp, byH((ih - gap) / 2), 120f)
+                return Fit(Shape.STACK, d, num(d), 0)
+            }
+            // Every other size keeps the pages: battery, then the modes on a double tap. 4x2 and wider lay them out wide.
             return pages(w >= 250f)
         }
 
