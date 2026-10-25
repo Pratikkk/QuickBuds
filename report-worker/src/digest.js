@@ -8,6 +8,12 @@ const MAX_CONTENT = 1900; // a Discord message holds 2000 characters
 /** Reads the reports newer than the marker and puts one message on the queue for each. */
 export async function scheduled(event, env, ctx) {
   const lastId = Number(await env.QUICKBUDS_KV.get(LAST_ID)) || 0;
+  // First run with no marker: start from the newest report. Never replay the history into the channel.
+  if (!lastId) {
+    const newest = await env.DB.prepare("SELECT MAX(id) AS m FROM reports").first("m");
+    await env.QUICKBUDS_KV.put(LAST_ID, String(newest ?? 0));
+    return;
+  }
   const { results } = await env.DB.prepare(
     "SELECT id, app, model, categories, description, status FROM reports " +
       "WHERE id > ? AND status IN ('new', 'working') ORDER BY id LIMIT ?",
@@ -15,7 +21,8 @@ export async function scheduled(event, env, ctx) {
   if (results.length === 0) return;
 
   for (const report of results) {
-    await env.DIGEST.send({ body: { id: report.id, text: format(report) } });
+    // The queue wraps this object as message.body. Do not nest it under another "body" key.
+    await env.DIGEST.send({ id: report.id, text: format(report) });
   }
   await env.QUICKBUDS_KV.put(LAST_ID, String(results[results.length - 1].id));
 }
