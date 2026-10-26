@@ -559,4 +559,6 @@
     <string name="reply_title">Odpowiedź dewelopera</string>
     <string name="about_discord_desc">Czat z deweloperem na Discordzie</string>
     <string name="about_privacy_reply">Identyfikator pozwala też deweloperowi odpowiedzieć na wysłane zgłoszenie. Odpowiedź przychodzi z dziennym zliczeniem.</string>
+    <string name="issue_oneplus_title">System może blokować połączenie</string>
+    <string name="oneplus_hint">Na telefonach OnePlus funkcje słuchawek systemu mogą blokować QuickBuds. Jeśli QuickBuds nie połączy się, użyj Ustawienia › Bluetooth › Twoje słuchawki › Funkcje słuchawek.</string>
 </resources>

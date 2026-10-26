@@ -559,4 +559,6 @@
     <string name="reply_title">Svar från utvecklaren</string>
     <string name="about_discord_desc">Chatta med utvecklaren på Discord</string>
     <string name="about_privacy_reply">ID:t låter också utvecklaren svara på en rapport du skickat. Svaret kommer med den dagliga räkningen.</string>
+    <string name="issue_oneplus_title">Systemet kan blockera anslutningen</string>
+    <string name="oneplus_hint">På OnePlus-telefoner kan systemets öronsnäckefunktioner blockera QuickBuds. Om QuickBuds inte ansluter, använd Inställningar › Bluetooth › dina öronsnäckor › Öronsnäckefunktioner.</string>
 </resources>

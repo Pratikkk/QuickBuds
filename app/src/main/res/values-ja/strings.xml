@@ -559,4 +559,6 @@
     <string name="reply_title">開発者からの返信</string>
     <string name="about_discord_desc">Discordで開発者とチャット</string>
     <string name="about_privacy_reply">このIDにより、開発者は送信されたレポートに返信できます。返信は1日1回の集計と一緒に届きます。</string>
+    <string name="issue_oneplus_title">システムが接続をブロックすることがあります</string>
+    <string name="oneplus_hint">OnePlus のスマートフォンでは、システムのイヤホン機能が QuickBuds をブロックすることがあります。QuickBuds が接続しない場合は、設定 › Bluetooth › イヤホン › イヤホン機能を使用してください。</string>
 </resources>

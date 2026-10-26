@@ -561,4 +561,6 @@
     <string name="reply_title">開發者的回覆</string>
     <string name="about_discord_desc">在 Discord 上與開發者聊天</string>
     <string name="about_privacy_reply">該 ID 還能讓開發者回覆你傳送的報告。回覆隨每日計數一起送達。</string>
+    <string name="issue_oneplus_title">系統可能會阻擋連線</string>
+    <string name="oneplus_hint">在 OnePlus 手機上，系統的耳機功能可能會阻擋 QuickBuds。如果 QuickBuds 無法連線，請使用設定 › 藍牙 › 您的耳機 › 耳機功能。</string>
 </resources>
