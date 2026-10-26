@@ -451,8 +451,9 @@ class BudsConnectionManager(private val context: Context) {
         }
         return try {
             val filter = IntentFilter(BluetoothDevice.ACTION_UUID)
+            // The Bluetooth stack sends ACTION_UUID from its own process, so a not-exported receiver never gets it. The action is protected.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+                context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
             } else {
                 context.registerReceiver(receiver, filter)
             }
