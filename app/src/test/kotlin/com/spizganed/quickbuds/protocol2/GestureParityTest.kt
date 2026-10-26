@@ -22,17 +22,22 @@ class GestureParityTest {
         assertEquals("trailing ${m.payload.toList()}", old.trailing.map { it.toInt() and 0xFF }, new.trailing)
     }
 
-    @Test fun parseKeepsStatusTrailingBytesAndShortPayloads() {
-        for (p in listOf(
-            intArrayOf(0, 1, 1, 1, 1, 1),
-            intArrayOf(1, 1, 1, 1, 1, 1),
-            intArrayOf(0, 2, 1, 1, 1),
-            intArrayOf(0, 1, 1, 1, 1, 1, 9),
-            intArrayOf(0, 0),
-            intArrayOf(),
-            intArrayOf(0, 1, 1, 1, 1, 1, 0, 9, 9, 9, 9),
-        )) {
-            assertSame(reply(*p))
-        }
+    @Test fun nonZeroStatusKeepsTheTable() {
+        assertSame(reply(1, 1, 1, 1, 1, 1))
+    }
+
+    @Test fun trailingBytesKeepTheTable() {
+        assertSame(reply(0, 2, 1, 1, 1))
+        assertSame(reply(0, 1, 1, 1, 1, 1, 9))
+    }
+
+    @Test fun anEmptyTableIsNotRejected() {
+        assertSame(reply(0, 0))
+        assertSame(reply())
+    }
+
+    @Test fun shortAndMismatchedPayloadsKeepTheLegacyTable() {
+        assertSame(reply(0, 1, 1, 1, 1, 1))
+        assertSame(reply(0, 1, 1, 1, 1, 1, 0, 9, 9, 9, 9))
     }
 }
