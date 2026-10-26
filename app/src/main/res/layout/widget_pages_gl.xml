@@ -37,6 +37,7 @@
 <ImageView android:id="@+id/w_bar_bg" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/widget_panel" android:scaleType="fitXY" android:importantForAccessibility="no" />
 <ImageView android:id="@+id/w_bar_stroke" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/widget_panel_stroke" android:scaleType="fitXY" android:importantForAccessibility="no" />
 <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="4dp" android:paddingEnd="4dp">
+<!-- The icon bitmap is the 14 dp glyph plus a 6 px shadow border on each side. wrap_content keeps it at that real size. -->
 <ImageView android:id="@+id/w_case_icon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_vertical" android:adjustViewBounds="true" android:src="@drawable/ic_case" android:scaleType="fitCenter" android:importantForAccessibility="no" />
 <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginStart="6dp">
 <ImageView android:id="@+id/w_case_bar" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:adjustViewBounds="true" android:scaleType="fitCenter" android:importantForAccessibility="no" />

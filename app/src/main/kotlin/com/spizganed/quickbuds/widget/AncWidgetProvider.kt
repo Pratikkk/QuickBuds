@@ -648,6 +648,8 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                     val gb = Bitmap.createBitmap(wpx + 12, hpx + 12, Bitmap.Config.ARGB_8888)
                     GlassArt.Glyph(context.getDrawable(R.drawable.ic_case)!!.mutate())
                         .draw(Canvas(gb), gb.width / 2f, gb.height / 2f - 2f, wpx.toFloat(), hpx.toFloat(), glyphTint(context, p, 1, -1, k), hpx / 42f, p.glassLight)
+                    // Pin the bitmap to the display density, so its intrinsic size is the px size the layout and barDp use.
+                    gb.density = context.resources.displayMetrics.densityDpi
                     v.setImageViewBitmap(R.id.w_case_icon, gb)
                     v.setInt(R.id.w_case_icon, "setColorFilter", 0)
                 } else {
@@ -1312,6 +1314,8 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             c.clipRect(0f, 0f, fillW, h.toFloat())
             c.drawText(label, w / 2f, y, text)
             c.restore()
+            // Pin the bitmap to the display density, so its intrinsic size is the px size barDp uses.
+            bmp.density = context.resources.displayMetrics.densityDpi
             return bmp
         }
 
