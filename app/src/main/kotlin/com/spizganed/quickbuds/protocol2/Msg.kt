@@ -2,6 +2,7 @@ package com.spizganed.quickbuds.protocol2
 
 import com.spizganed.quickbuds.protocol.AncEventParser
 import com.spizganed.quickbuds.protocol.BatteryParser
+import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.GameModeParser
 import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
@@ -230,7 +231,7 @@ object Decode {
             }
             0x810D -> ok(p)?.let { pairs(it, 0) }?.let { Msg.Features(it) }
             0x810F -> ok(p)?.takeIf { it.isNotEmpty() }?.let { Msg.EqCurrent(u(it, 0)) }
-            0x8122 -> ok(p)?.let { presets(it) }?.let { Msg.EqCustom(it) }
+            0x8122 -> EqCodec.parseList(p)?.let { list -> Msg.EqCustom(list.map { preset(it) }) }
             0x8124 -> ok(p)?.takeIf { it.size >= 3 }?.let { Msg.BassLevel(it[2].toInt()) }
             0x0503 -> featurePush(p)?.let { Msg.FeaturePush(it) }
             0x0504 -> if (p.isNotEmpty()) Msg.EqCurrent(u(p, 0)) else null
@@ -352,26 +353,10 @@ object Decode {
         }
     }
 
-    /** `<count>` then per preset `<flag> <min> <max> <id> <nameLen> <name> <bands> [<freq u16 LE> <gain s8>]...`. */
-    private fun presets(p: ByteArray): List<EqPreset>? {
-        if (p.isEmpty()) return null
-        var i = 1
-        val out = ArrayList<EqPreset>()
-        repeat(u(p, 0)) {
-            if (i + 5 > p.size) return null
-            val k = u(p, i + 4)
-            if (i + 6 + k > p.size) return null
-            val bands = u(p, i + 5 + k)
-            if (i + 6 + k + bands * 3 > p.size) return null
-            val at = i + 6 + k
-            out += EqPreset(
-                u(p, i + 3), String(p, i + 5, k, Charsets.UTF_8), u(p, i) == 1, p[i + 1].toInt() to p[i + 2].toInt(),
-                (0 until bands).map { (u(p, at + it * 3) or (u(p, at + it * 3 + 1) shl 8)) to p[at + it * 3 + 2].toInt() },
-            )
-            i = at + bands * 3
-        }
-        return out
-    }
+    /** The legacy preset keeps the tag bytes; the typed range comes from them. */
+    private fun preset(p: EqCodec.Preset) = EqPreset(
+        p.id, p.name, p.selected, p.tag[0].toInt() to p.tag[1].toInt(), p.freqs.zip(p.gains),
+    )
 
     /** `00 <count>` then UTF-8 `device,type,version` triples joined by commas. */
     private fun firmware(p: ByteArray): List<Triple<Int, Int, String>>? {
