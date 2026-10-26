@@ -1,10 +1,15 @@
 //! Typed messages of docs/PROTOCOL.md: decodes what the buds send. Written from the spec, not from
 //! `protocol.rs`. Input is a [`Message`] from the link layer; output is [`Inbound`].
 
+use std::collections::BTreeMap;
+
 use crate::wire::Message;
 
 pub const PUSH: u16 = 0x0204;
 const REPLY: u16 = 0x8000;
+
+/// These models put the game-mode state in byte 3, not byte 1 `[VENDOR]`, unverified.
+pub const STATE_AT_3: [&str; 4] = ["062410", "062810", "063010", "063410"];
 
 fn le16(p: &[u8], i: usize) -> Option<u16> { Some(u16::from_le_bytes(p.get(i..i + 2)?.try_into().ok()?)) }
 fn be32(p: &[u8], i: usize) -> Option<u32> { Some(u32::from_be_bytes(p.get(i..i + 4)?.try_into().ok()?)) }
@@ -190,8 +195,10 @@ pub enum Inbound {
     Wear(Vec<(u8, u8)>),
     Anc(Anc),
     FitTest { left: Option<u8>, right: Option<u8> },
-    /// Both candidates; the model decides which one is the state (§5, code `05`).
+    /// Both candidates; `game_mode_state` picks one by product id (§5, code `05`).
     GameMode { at1: Option<u8>, at3: Option<u8> },
+    /// `0x0503`: feature id -> value; bytes after the last pair are ignored.
+    FeaturePush(BTreeMap<u8, u8>),
     Devices(Vec<Device>),
     Hearing { kind: u8, status: u8 },
     ZenState(u8),
@@ -209,6 +216,19 @@ pub enum Inbound {
     LinkSwitch { state: u8, owner: u8, reset: u8 },
     /// A push the spec names but no feature uses (`10`, `11`, `F3`, `F9`, ...): code and bytes after it.
     Unused(u8, Vec<u8>),
+}
+
+impl Inbound {
+    /// The game-mode state for `product_id`: byte 3 for `STATE_AT_3`, byte 1 otherwise.
+    /// `None` for another message, or when the chosen byte is absent.
+    pub fn game_mode_state(&self, product_id: Option<&str>) -> Option<bool> {
+        let Inbound::GameMode { at1, at3 } = self else { return None };
+        let at = match product_id.map(str::to_uppercase) {
+            Some(id) if STATE_AT_3.contains(&id.as_str()) => at3,
+            _ => at1,
+        };
+        (*at).map(|v| v != 0)
+    }
 }
 
 /// Decodes one message. `None`: not a message this layer knows, or a malformed one.
@@ -241,6 +261,7 @@ pub fn decode(m: &Message) -> Option<Inbound> {
         0x810F => Inbound::EqCurrent(*ok(p)?.first()?),
         0x8122 => Inbound::EqCustom(presets(ok(p)?)?),
         0x8124 => match ok(p)? { [_, _, level, ..] => Inbound::BassLevel(*level as i8), _ => return None },
+        0x0503 => Inbound::FeaturePush(feature_push(p)?),
         0x0504 => Inbound::EqCurrent(*p.first()?),
         0x8130 => Inbound::AlertVolume(*ok(p)?.first()?),
         0x8133 => match ok(p)? { [level, default, ..] => Inbound::TapLevel { level: *level, default: Some(*default) }, _ => return None },
@@ -355,6 +376,13 @@ fn firmware(p: &[u8]) -> Option<Vec<(u8, u8, String)>> {
     let parts: Vec<&str> = text.split(',').map(str::trim).collect();
     let v: Vec<_> = parts.chunks_exact(3).filter_map(|c| Some((c[0].parse().ok()?, c[1].parse().ok()?, c[2].to_string()))).collect();
     (!v.is_empty()).then_some(v)
+}
+
+/// `0x0503`: `<count> <id> <value>...`; bytes after the last pair are ignored.
+fn feature_push(p: &[u8]) -> Option<BTreeMap<u8, u8>> {
+    let (&count, rest) = p.split_first()?;
+    let body = rest.get(..count as usize * 2)?;
+    Some(body.chunks_exact(2).map(|c| (c[0], c[1])).collect())
 }
 
 /// `<count>` then `<a> <b>` pairs. `None` when the pairs run past the end.
