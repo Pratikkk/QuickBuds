@@ -70,7 +70,17 @@ object Wire {
                 val start = buf.indexOf(START)
                 if (start < 0) { onDiscard?.invoke(buf); buf = ByteArray(0); break }
                 if (start > 0) { onDiscard?.invoke(buf.copyOfRange(0, start)); buf = buf.copyOfRange(start, buf.size) }
-                val (len, n) = readLen(buf) ?: break
+                val length = readLen(buf)
+                if (length == null) {
+                    // Three length bytes with no terminator cannot be a header: drop the AA and keep scanning.
+                    if (buf.size > 3) {
+                        onDiscard?.invoke(buf.copyOfRange(0, 1))
+                        buf = buf.copyOfRange(1, buf.size)
+                        continue
+                    }
+                    break
+                }
+                val (len, n) = length
                 if (len < 2 || len > MAX_LEN) { onDiscard?.invoke(buf.copyOfRange(0, 1)); buf = buf.copyOfRange(1, buf.size); continue }
                 val end = 1 + n + len
                 if (buf.size < end) break

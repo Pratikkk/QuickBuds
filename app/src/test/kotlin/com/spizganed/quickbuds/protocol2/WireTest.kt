@@ -46,6 +46,17 @@ class WireTest {
         assertEquals(listOf<Byte>(0x13, 0x37), noise)
     }
 
+    @Test fun badLengthDoesNotStallTheFrameAfterIt() {
+        val w = Wire.encode(msg(0x8106, 0xF0, 2))[0]
+        val r = Wire.Reassembler()
+        assertTrue(r.push(bytes(0xAA, 0x80, 0x80, 0x80)).isEmpty())
+        assertEquals(listOf(msg(0x8106, 0xF0, 2)), r.push(w))
+        assertEquals(
+            listOf(msg(0x0204, 1, 3)),
+            Wire.Reassembler().push(bytes(0xAA, 0x80, 0x80, 0x80) + Wire.encode(msg(0x0204, 1, 3))[0])
+        )
+    }
+
     @Test fun badInputIsDropped() {
         val r = Wire.Reassembler()
         assertTrue(r.push(bytes(0xAA, 6, 2, 0, 1, 1, 2, 3)).isEmpty())
