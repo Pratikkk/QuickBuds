@@ -5,13 +5,20 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothSocket
+import android.bluetooth.BluetoothSocketException
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
+import android.os.ParcelUuid
 import android.os.SystemClock
 import android.util.Log
 import android.widget.Toast
+import androidx.core.content.IntentCompat
 import com.spizganed.quickbuds.R
 import com.spizganed.quickbuds.protocol.AncEventParser
 import com.spizganed.quickbuds.protocol.AncModes
@@ -292,7 +299,13 @@ class BudsConnectionManager(private val context: Context) {
         if (!started) return
 
         Thread {
+            var uuidReceiver: BroadcastReceiver? = null
             try {
+                log("Bond state: ${ConnectDiagnostics.bondStateWord(device.bondState)}")
+                log("Cached service UUIDs: ${ConnectDiagnostics.formatUuids(device.uuids?.map { it.uuid.toString() }.orEmpty())}")
+                uuidReceiver = registerUuidReceiver(device)
+                runCatching { device.fetchUuidsWithSdp() }
+
                 // 079A first: it is the one that works (HeyMelody connects straight to it), while
                 // 1107 never connects on the Buds 4 and burns ~5 s. 1107 stays for other models.
                 val uuids = listOf(
@@ -310,6 +323,7 @@ class BudsConnectionManager(private val context: Context) {
 
                 for ((uuidStr, insecure) in tries) {
                     val kind = if (insecure) "insecure" else "secure"
+                    val tryStart = SystemClock.elapsedRealtime()
                     try {
                         log("Trying UUID: $uuidStr ($kind)")
                         val uuid = UUID.fromString(uuidStr)
@@ -317,12 +331,13 @@ class BudsConnectionManager(private val context: Context) {
                             else device.createRfcommSocketToServiceRecord(uuid)
                         handler.postDelayed(watchdog, CONNECT_TIMEOUT_MS)
                         socket?.connect()
-                        log("Connected via UUID: $uuidStr ($kind)")
+                        log("Connected via UUID: $uuidStr ($kind) (${SystemClock.elapsedRealtime() - tryStart} ms)")
                         break
                     } catch (e: Exception) {
                         lastError = e.message ?: e.javaClass.simpleName
-                        log("Failed UUID $uuidStr ($kind): $lastError")
+                        log("Failed UUID $uuidStr ($kind): $lastError (${SystemClock.elapsedRealtime() - tryStart} ms)")
                         log("Connect error: ${e.javaClass.simpleName}: ${e.message}")
+                        logSocketError(e)
                         try { socket?.close() } catch (_: Exception) {}
                         socket = null
                     } finally {
@@ -331,16 +346,18 @@ class BudsConnectionManager(private val context: Context) {
                 }
 
                 if (socket == null) {
+                    val tryStart = SystemClock.elapsedRealtime()
                     try {
                         log("Trying RFCOMM channel 15...")
                         val m = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
                         socket = m.invoke(device, 15) as BluetoothSocket
                         handler.postDelayed(watchdog, CONNECT_TIMEOUT_MS)
                         socket.connect()
-                        log("Connected via raw channel 15")
+                        log("Connected via raw channel 15 (${SystemClock.elapsedRealtime() - tryStart} ms)")
                     } catch (e: Exception) {
                         lastError = e.message ?: e.javaClass.simpleName
-                        log("Channel 15 failed: $lastError")
+                        log("Channel 15 failed: $lastError (${SystemClock.elapsedRealtime() - tryStart} ms)")
+                        logSocketError(e)
                         socket = null
                     } finally {
                         handler.removeCallbacks(watchdog)
@@ -376,10 +393,45 @@ class BudsConnectionManager(private val context: Context) {
                     return@Thread
                 }
             } finally {
+                uuidReceiver?.let { unregisterUuidReceiver(it) }
                 // Every exit clears the latch. An exception outside the socket tries used to keep it set.
                 isConnecting = false
             }
         }.start()
+    }
+
+    /** Listens for the fresh UUID list of [device] during one connect. Returns the receiver, or null on failure. */
+    private fun registerUuidReceiver(device: BluetoothDevice): BroadcastReceiver? {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                val extra = IntentCompat.getParcelableExtra(
+                    intent, BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java
+                )
+                if (extra?.address != device.address) return
+                val uuids = IntentCompat.getParcelableArrayExtra(
+                    intent, BluetoothDevice.EXTRA_UUID, ParcelUuid::class.java
+                )
+                    ?.mapNotNull { (it as? ParcelUuid)?.uuid?.toString() }
+                    .orEmpty()
+                log("Fresh service UUIDs: ${ConnectDiagnostics.formatUuids(uuids)}")
+            }
+        }
+        return try {
+            val filter = IntentFilter(BluetoothDevice.ACTION_UUID)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                context.registerReceiver(receiver, filter)
+            }
+            receiver
+        } catch (e: Exception) {
+            log("UUID refresh unavailable: ${e.javaClass.simpleName}")
+            null
+        }
+    }
+
+    private fun unregisterUuidReceiver(receiver: BroadcastReceiver) {
+        try { context.unregisterReceiver(receiver) } catch (_: Exception) {}
     }
 
     /**
@@ -2014,5 +2066,12 @@ class BudsConnectionManager(private val context: Context) {
     private fun log(msg: String) {
         Log.d("BudsConn", msg)
         PacketLogger.log(msg)
+    }
+
+    /** API 34 and later: the error code of a [BluetoothSocketException] that ended the try. */
+    private fun logSocketError(e: Exception) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return
+        val code = (e as? BluetoothSocketException)?.errorCode ?: return
+        log(ConnectDiagnostics.socketErrorLine(code))
     }
 }
