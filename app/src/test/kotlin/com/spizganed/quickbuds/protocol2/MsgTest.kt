@@ -177,8 +177,8 @@ class MsgTest {
         assertEquals(rows, g)
         val old = com.spizganed.quickbuds.protocol.KeyFunctionParser.parse(payload)
         assertEquals(old.entries.map { listOf(it.deviceType, it.button, it.action, it.function) }, g.map { listOf(it.dev, it.button, it.act, it.func) })
-        assertNull(dec(m(0x8108, 0, 0)))
-        assertEquals(1, (dec(m(0x8108, 0, 1, 1, 1, 1, 0, 9, 9, 9, 9)) as Msg.Gestures).table.size)
+        assertEquals(Msg.Gestures(emptyList(), 0, emptyList()), dec(m(0x8108, 0, 0)))
+        assertEquals(2, (dec(m(0x8108, 0, 1, 1, 1, 1, 0, 9, 9, 9, 9)) as Msg.Gestures).table.size)
     }
 
     @Test fun featureAndEqReplies() {

@@ -3,6 +3,7 @@ package com.spizganed.quickbuds.protocol2
 import com.spizganed.quickbuds.protocol.AncEventParser
 import com.spizganed.quickbuds.protocol.BatteryParser
 import com.spizganed.quickbuds.protocol.GameModeParser
+import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.WearingStatusParser
 import com.spizganed.quickbuds.protocol.Wire.Message
@@ -126,7 +127,13 @@ sealed class Msg {
     object Registered : Msg() { override fun toString() = "Registered" }
     /** A write reply (`0x84xx`): the command written, the status (0 accepted) and the bytes after it. */
     data class Ack(val cmd: Int, val status: Int, val data: List<Int>) : Msg()
-    data class Gestures(val table: List<Binding>) : Msg()
+    data class Gestures(
+        val table: List<Binding>,
+        /** The legacy status byte: 0 in a normal reply, -1 when the payload is too short. */
+        val status: Int = 0,
+        /** Bytes left after the whole entries; the legacy parser keeps them. */
+        val trailing: List<Int> = emptyList(),
+    ) : Msg()
     /** `0x810D`: (feature id, value). */
     data class Features(val list: List<Pair<Int, Int>>) : Msg()
     data class EqCurrent(val id: Int) : Msg()
@@ -214,11 +221,12 @@ object Decode {
             0x8109 -> WearingStatusParser.parseQueryResponse(p)?.let { Msg.Wear(wear(it)) }
             0x810C -> ok(p)?.let { anc(it, 0) }?.let { Msg.AncMsg(it) }
             0x8108 -> {
-                if (p.size >= 2 && p[0].toInt() == 0) {
-                    val n = minOf(u(p, 1), (p.size - 2) / 4)
-                    // A reply with no entries is no table: a write is built from the last good one.
-                    if (n == 0) null else Msg.Gestures((0 until n).map { Binding(u(p, 2 + it * 4), u(p, 3 + it * 4), u(p, 4 + it * 4), u(p, 5 + it * 4)) })
-                } else null
+                val t = KeyFunctionParser.parse(p)
+                Msg.Gestures(
+                    t.entries.map { Binding(it.deviceType, it.button, it.action, it.function) },
+                    t.status,
+                    t.trailing.map { it.toInt() and 0xFF },
+                )
             }
             0x810D -> ok(p)?.let { pairs(it, 0) }?.let { Msg.Features(it) }
             0x810F -> ok(p)?.takeIf { it.isNotEmpty() }?.let { Msg.EqCurrent(u(it, 0)) }
