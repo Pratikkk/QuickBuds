@@ -640,7 +640,8 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         // The phone may have changed its codec while the app was away, or does so when a stream starts.
         refreshCodecRow()
         val filter = IntentFilter(android.bluetooth.BluetoothA2dp.ACTION_PLAYING_STATE_CHANGED)
-        if (Build.VERSION.SDK_INT >= 33) registerReceiver(a2dpReceiver, filter, RECEIVER_NOT_EXPORTED) else registerReceiver(a2dpReceiver, filter)
+        // The Bluetooth stack sends ACTION_PLAYING_STATE_CHANGED from its own process, so a not-exported receiver never gets it. The action is protected.
+        if (Build.VERSION.SDK_INT >= 33) registerReceiver(a2dpReceiver, filter, RECEIVER_EXPORTED) else registerReceiver(a2dpReceiver, filter)
     }
 
     override fun onPause() {
