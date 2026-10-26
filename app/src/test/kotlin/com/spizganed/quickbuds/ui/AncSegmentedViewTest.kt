@@ -72,21 +72,6 @@ class AncSegmentedViewTest {
         }
     }
 
-    @Test fun oldFillFadesOutWhileTheNewFillFadesIn() {
-        assertEquals(1f, segmentFill(1, 1, 2, 0f), 0.0001f)
-        assertEquals(0f, segmentFill(2, 1, 2, 0f), 0.0001f)
-        assertEquals(0.5f, segmentFill(1, 1, 2, 0.5f), 0.0001f)
-        assertEquals(0.5f, segmentFill(2, 1, 2, 0.5f), 0.0001f)
-        assertEquals(0f, segmentFill(1, 1, 2, 1f), 0.0001f)
-        assertEquals(1f, segmentFill(2, 1, 2, 1f), 0.0001f)
-        assertEquals(0f, segmentFill(0, 1, 2, 0.5f), 0.0001f)
-    }
-
-    @Test fun disconnectFadesTheOldFillOut() {
-        assertEquals(0.5f, segmentFill(2, 2, -1, 0.5f), 0.0001f)
-        assertEquals(0f, segmentFill(2, 2, -1, 1f), 0.0001f)
-    }
-
     @Test fun aTapTravelsOnlyBetweenTwoCells() {
         assertTrue(selectionTravels(tapped = true, from = 1, to = 2))
         assertFalse(selectionTravels(tapped = false, from = 1, to = 2))

@@ -80,20 +80,6 @@ internal fun materialEase(progress: Float): Float = cubicBezier(0.2f, 0f, 0f, 1f
 /** QuickBuds standard-decelerate easing: cubic-bezier(0, 0, 0, 1). */
 internal fun quickBudsEase(progress: Float): Float = cubicBezier(0f, 0f, 0f, 1f, progress)
 
-/**
- * How much segment [index] shows as selected at [fraction] of a move from [from] to [to].
- * The old segment fades out as the new one fades in.
- */
-internal fun segmentFill(index: Int, from: Int, to: Int, fraction: Float): Float {
-    if (from == to) return if (index == from && from >= 0) 1f else 0f
-    val f = fraction.coerceIn(0f, 1f)
-    return when (index) {
-        to -> f
-        from -> 1f - f
-        else -> 0f
-    }
-}
-
 /** True only for a tap that moves the outline between two cells. */
 internal fun selectionTravels(tapped: Boolean, from: Int, to: Int): Boolean =
     tapped && from >= 0 && to >= 0 && from != to
