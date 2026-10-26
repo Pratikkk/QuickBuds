@@ -1,6 +1,6 @@
 package com.spizganed.quickbuds.protocol2
 
-import com.spizganed.quickbuds.protocol2.Wire.Message
+import com.spizganed.quickbuds.protocol.Wire.Message
 
 /**
  * Typed messages of docs/PROTOCOL.md: decodes what the buds send. Written from the spec, not from

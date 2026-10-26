@@ -1,5 +1,6 @@
 package com.spizganed.quickbuds.protocol2
 
+import com.spizganed.quickbuds.protocol.Wire
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

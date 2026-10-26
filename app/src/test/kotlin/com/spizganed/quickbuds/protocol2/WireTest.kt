@@ -1,7 +1,8 @@
 package com.spizganed.quickbuds.protocol2
 
-import com.spizganed.quickbuds.protocol2.Wire.Message
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Wire
+import com.spizganed.quickbuds.protocol.Wire.Message
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -55,6 +56,22 @@ class WireTest {
             listOf(msg(0x0204, 1, 3)),
             Wire.Reassembler().push(bytes(0xAA, 0x80, 0x80, 0x80) + Wire.encode(msg(0x0204, 1, 3))[0])
         )
+    }
+
+    @Test fun wholeFrameUnderSevenIsRejectedThenTheNextFrameParses() {
+        val next = Wire.encode(msg(0x0106, 1, 2))[0]
+        assertEquals(listOf(msg(0x0106, 1, 2)), Wire.Reassembler().push(bytes(0xAA, 6, 0, 0) + next))
+    }
+
+    @Test fun sliceUnderFourIsRejectedThenTheNextFrameParses() {
+        val next = Wire.encode(msg(0x0106, 1, 2))[0]
+        assertEquals(listOf(msg(0x0106, 1, 2)), Wire.Reassembler().push(bytes(0xAA, 3, 1) + next))
+    }
+
+    @Test fun frameOver2048IsRejected() {
+        val payload = ByteArray(2042) { 0x11 }
+        val frame = bytes(0xAA, 0x81, 0x10, 0, 0, 0x06, 0x81, 1, 0xFA, 0x07) + payload
+        assertTrue(Wire.Reassembler().push(frame).isEmpty())
     }
 
     @Test fun badInputIsDropped() {
