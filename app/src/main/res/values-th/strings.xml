@@ -562,5 +562,5 @@
     <string name="about_discord_desc">แชตกับนักพัฒนาบน Discord</string>
     <string name="about_privacy_reply">รหัสนี้ยังช่วยให้นักพัฒนาตอบรายงานที่คุณส่งได้ คำตอบจะมาพร้อมการนับรายวัน</string>
     <string name="issue_oneplus_title">ระบบอาจบล็อกการเชื่อมต่อ</string>
-    <string name="oneplus_hint">บนโทรศัพท์ OnePlus ฟังก์ชันหูฟังของระบบอาจบล็อก QuickBuds หาก QuickBuds เชื่อมต่อไม่ได้ ให้ใช้ การตั้งค่า › Bluetooth › หูฟังของคุณ › ฟังก์ชันหูฟัง</string>
+    <string name="oneplus_hint">บนโทรศัพท์ OnePlus, OPPO และ realme การตั้งค่าหูฟังของระบบอาจยึดลิงก์ของหูฟังและบล็อก QuickBuds หาก QuickBuds เชื่อมต่อไม่ได้ ให้ใช้การตั้งค่าหูฟังในการตั้งค่า › Bluetooth › หูฟังของคุณ</string>
 </resources>

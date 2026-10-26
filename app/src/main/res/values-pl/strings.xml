@@ -560,5 +560,5 @@
     <string name="about_discord_desc">Czat z deweloperem na Discordzie</string>
     <string name="about_privacy_reply">Identyfikator pozwala też deweloperowi odpowiedzieć na wysłane zgłoszenie. Odpowiedź przychodzi z dziennym zliczeniem.</string>
     <string name="issue_oneplus_title">System może blokować połączenie</string>
-    <string name="oneplus_hint">Na telefonach OnePlus funkcje słuchawek systemu mogą blokować QuickBuds. Jeśli QuickBuds nie połączy się, użyj Ustawienia › Bluetooth › Twoje słuchawki › Funkcje słuchawek.</string>
+    <string name="oneplus_hint">Na telefonach OnePlus, OPPO i realme ustawienia słuchawek systemu mogą utrzymywać połączenie słuchawek i blokować QuickBuds. Jeśli QuickBuds nie połączy się, użyj ustawień słuchawek w Ustawienia › Bluetooth › Twoje słuchawki.</string>
 </resources>

@@ -562,5 +562,5 @@
     <string name="about_discord_desc">在 Discord 上与开发者聊天</string>
     <string name="about_privacy_reply">该 ID 还能让开发者回复你发送的报告。回复随每日计数一起送达。</string>
     <string name="issue_oneplus_title">系统可能会阻止连接</string>
-    <string name="oneplus_hint">在 OnePlus 手机上，系统的耳机功能可能会阻止 QuickBuds 连接。如果 QuickBuds 无法连接，请使用设置 › 蓝牙 › 您的耳机 › 耳机功能。</string>
+    <string name="oneplus_hint">在 OnePlus、OPPO 和 realme 手机上，系统的耳机设置可能会占用耳机连接并阻止 QuickBuds 连接。如果 QuickBuds 无法连接，请使用设置 › 蓝牙 › 您的耳机中的耳机设置。</string>
 </resources>

@@ -7,7 +7,7 @@ import com.spizganed.quickbuds.protocol.ModelCatalog
 
 /**
  * Limits of the current earbuds and phone that the person should know. The keys come from the model's
- * `knownIssues` in `models.json` and from checks on the phone (Samsung codec, OnePlus link) and the rows. Each key has a title and a body string.
+ * `knownIssues` in `models.json` and from checks on the phone (Samsung codec, link hold) and the rows. Each key has a title and a body string.
  */
 object KnownIssues {
 
@@ -21,10 +21,10 @@ object KnownIssues {
         Issue("hires_no_codec", R.string.issue_hires_no_codec_title, R.string.issue_hires_no_codec_body),
     )
 
-    /** The issues of the current model and phone, in the order of [ALL]. The OnePlus link hint shows without a model too. */
+    /** The issues of the current model and phone, in the order of [ALL]. The link hint shows without a model too. */
     fun current(c: Context): List<Issue> {
         val keys = mutableSetOf<String>()
-        if (PhoneChecks.isOnePlus(Build.MANUFACTURER)) keys += ONEPLUS_LINK
+        if (PhoneChecks.isColorOsPhone(Build.MANUFACTURER)) keys += ONEPLUS_LINK
         val model = ModelCatalog.current(c) ?: return ALL.filter { it.key in keys }
         model.json.optJSONArray("knownIssues")?.let { a -> for (i in 0 until a.length()) keys += a.getString(i) }
         val hires = MainActivity.rowSupported(c, "hires")
@@ -35,10 +35,20 @@ object KnownIssues {
         return ALL.filter { it.key in keys }
     }
 
-    /** The launch prompt asks once per model that has issues. The OnePlus link hint is a phone fact, so it does not ask. */
+    /** The launch prompt asks once per model that has issues. The link hint is a phone fact, so it does not ask. */
     fun shouldAnnounce(c: Context): Boolean {
         val model = ModelCatalog.current(c) ?: return false
         return model.id !in announced(c) && current(c).any { it.key != ONEPLUS_LINK }
+    }
+
+    /** The link dialog asks once per install on a OnePlus, OPPO or realme phone, with or without a model. */
+    fun shouldAnnounceLink(manufacturer: String?, shownBefore: Boolean): Boolean =
+        PhoneChecks.isColorOsPhone(manufacturer) && !shownBefore
+
+    fun linkAnnounced(c: Context): Boolean = prefs(c).getBoolean(KEY_LINK_ANNOUNCED, false)
+
+    fun markLinkAnnounced(c: Context) {
+        prefs(c).edit().putBoolean(KEY_LINK_ANNOUNCED, true).apply()
     }
 
     fun markAnnounced(c: Context) {
@@ -51,5 +61,6 @@ object KnownIssues {
     private fun prefs(c: Context) = c.getSharedPreferences(ThemeRes.PREFS_NAME, Context.MODE_PRIVATE)
 
     private const val KEY_ANNOUNCED = "knownIssuesAnnounced"
+    private const val KEY_LINK_ANNOUNCED = "knownIssuesLinkAnnounced"
     private const val ONEPLUS_LINK = "oneplus_link"
 }

@@ -75,9 +75,9 @@ not only on OnePlus / OPPO phones. It knows every model in HeyMelody's and realm
 entries and 140 names. Three names have two ids. It shows only the features each model has. Each
 model also lists its known issues in Settings.
 
-On OnePlus phones (OxygenOS 12 and later), the system's Earbud functions can hold the control
-link of the earbuds. QuickBuds cannot connect in that case. Use Earbud functions on those phones, or
-report the case.
+On OnePlus, OPPO and realme phones (OxygenOS 12 and later, ColorOS, realme UI), the system's own
+earbud settings can hold the control link of the earbuds. QuickBuds cannot connect in that case. Use
+the earbud settings in Settings › Bluetooth › your earbuds, or report the case.
 
 <details><summary><b>Confirmed</b> (32 names)</summary>
 

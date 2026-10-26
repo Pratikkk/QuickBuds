@@ -133,19 +133,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- The system on a OnePlus phone can hold the buds' control link, so a hint shows while the app is disconnected. -->
-            <TextView
-                android:id="@+id/onePlusHint"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:paddingBottom="4dp"
-                android:textSize="13sp"
-                android:textColor="?attr/appColorTextSecondary"
-                android:text="@string/oneplus_hint" />
-
             <include layout="@layout/tile_battery" />
             <include layout="@layout/tile_noise" />
             <include layout="@layout/tile_settings" />

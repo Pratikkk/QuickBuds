@@ -560,5 +560,5 @@
     <string name="about_discord_desc">Чат з розробником у Discord</string>
     <string name="about_privacy_reply">ID також дає розробнику змогу відповісти на надісланий вами звіт. Відповідь приходить разом із щоденним підрахунком.</string>
     <string name="issue_oneplus_title">Система може блокувати підключення</string>
-    <string name="oneplus_hint">На телефонах OnePlus системні функції навушників можуть блокувати QuickBuds. Якщо QuickBuds не підключається, відкрийте Налаштування › Bluetooth › ваші навушники › Функції навушників.</string>
+    <string name="oneplus_hint">На телефонах OnePlus, OPPO і realme системні налаштування навушників можуть утримувати зв\'язок навушників і блокувати QuickBuds. Якщо QuickBuds не підключається, відкрийте налаштування навушників у Налаштування › Bluetooth › ваші навушники.</string>
 </resources>

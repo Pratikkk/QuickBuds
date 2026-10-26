@@ -560,5 +560,5 @@
     <string name="about_discord_desc">Discută cu dezvoltatorul pe Discord</string>
     <string name="about_privacy_reply">ID-ul permite dezvoltatorului să răspundă și la un raport trimis de tine. Răspunsul vine odată cu numărătoarea zilnică.</string>
     <string name="issue_oneplus_title">Sistemul poate bloca conexiunea</string>
-    <string name="oneplus_hint">Pe telefoanele OnePlus, funcțiile earbuds ale sistemului pot bloca QuickBuds. Dacă QuickBuds nu se conectează, folosește Setări › Bluetooth › earbuds-urile tale › Funcții earbuds.</string>
+    <string name="oneplus_hint">Pe telefoanele OnePlus, OPPO și realme, setările earbuds ale sistemului pot ține legătura earbuds-urilor și pot bloca QuickBuds. Dacă QuickBuds nu se conectează, folosește setările earbuds în Setări › Bluetooth › earbuds-urile tale.</string>
 </resources>

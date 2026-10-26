@@ -67,7 +67,6 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     private lateinit var btnSettings: ImageButton
     private lateinit var btnDevTools: ImageButton
     private lateinit var deviceNameText: TextView
-    private lateinit var onePlusHint: TextView
 
     // Header connection pill.
     private lateinit var connPill: LinearLayout
@@ -221,8 +220,6 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         val first = connectedUi == null
         connectedUi = connected
         statusView.connected = connected
-        // The system takes the buds' control link on OnePlus phones, so the hint shows only while the app is disconnected.
-        onePlusHint.visibility = if (!connected && PhoneChecks.isOnePlus(Build.MANUFACTURER)) View.VISIBLE else View.GONE
         // INVISIBLE, not GONE: the battery tile keeps its height, so nothing jumps on connect.
         if (first || animatorScale() == 0f) {
             deviceNameText.visibility = if (connected) View.VISIBLE else View.INVISIBLE
@@ -236,7 +233,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         val alpha = if (connected) 1f else DISABLED_ALPHA
         for (i in 0 until tiles.childCount) {
             val tile = tiles.getChildAt(i)
-            if (tile === batteryCard || tile === onePlusHint) continue
+            if (tile === batteryCard) continue
             setEnabledDeep(tile, connected)
             if (first || animatorScale() == 0f) tile.alpha = alpha
             else tile.animate().alpha(alpha).setDuration(CARD_ANIM_MS).start()
@@ -333,7 +330,6 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         mainLayout = findViewById<LinearLayout>(R.id.mainLayout)
         featureList = findViewById<LinearLayout>(R.id.featureList)
         deviceNameText = findViewById<TextView>(R.id.deviceNameText)
-        onePlusHint = findViewById(R.id.onePlusHint)
         findViewById<ImageButton>(R.id.btnModel).apply {
             background = ThemeRes.ripple(this@MainActivity, ThemeRes.iconButton(this@MainActivity))
             setImageDrawable(ThemeRes.tint(this@MainActivity, R.drawable.ic_model_list, ThemeRes.color(this@MainActivity,
@@ -392,7 +388,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     }
 
     /**
-     * At most one launch prompt per screen start, in this order: crash report, permissions, update, model test.
+     * At most one launch prompt per screen start, in this order: crash report, permissions, update, model test, known issues, the phone-link hint.
      * A prompt shows only when no sheet is open and this screen has the focus (no permission request on top).
      */
     private var promptShown = false
@@ -413,7 +409,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         featureList.postDelayed(askTest, 3000)
     }
 
-    private val askTest = Runnable { askTestPending = false; maybeShowReply(); maybeAskTest(); maybeAnnounceIssues() }
+    private val askTest = Runnable { askTestPending = false; maybeShowReply(); maybeAskTest(); maybeAnnounceIssues(); maybeAnnounceLink() }
 
     /** The developer's reply to a report of this install ([UsagePing.takeReply]); shown once, before the other prompts. */
     private fun maybeShowReply() {
@@ -430,6 +426,16 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
             this, getString(R.string.settings_issues_title), getString(R.string.issues_dialog_body),
             getString(R.string.issues_dialog_action), R.string.test_ask_later
         ) { startActivity(Intent(this, KnownIssuesActivity::class.java)) }
+    }
+
+    /** Once per install: the phone's earbud settings can hold the link ([KnownIssues.shouldAnnounceLink]). */
+    private fun maybeAnnounceLink() {
+        if (!KnownIssues.shouldAnnounceLink(Build.MANUFACTURER, KnownIssues.linkAnnounced(this)) || !claimPrompt()) return
+        KnownIssues.markLinkAnnounced(this)
+        ConfirmDialog.show(
+            this, getString(R.string.issue_oneplus_title), getString(R.string.oneplus_hint),
+            getString(R.string.welcome_done), cancelRes = null
+        )
     }
 
     /** Once per model: connected buds with a feature shown that no owner confirmed ([ModelTest]). */

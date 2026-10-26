@@ -560,5 +560,5 @@
     <string name="about_discord_desc">Chat s vývojářem na Discordu</string>
     <string name="about_privacy_reply">ID také umožní vývojáři odpovědět na vaše hlášení. Odpověď přijde s denním započtením.</string>
     <string name="issue_oneplus_title">Systém může blokovat připojení</string>
-    <string name="oneplus_hint">Na telefonech OnePlus mohou systémové funkce sluchátek blokovat QuickBuds. Pokud se QuickBuds nepřipojí, použijte Nastavení › Bluetooth › vaše sluchátka › Funkce sluchátek.</string>
+    <string name="oneplus_hint">Na telefonech OnePlus, OPPO a realme mohou systémová nastavení sluchátek držet spojení sluchátek a blokovat QuickBuds. Pokud se QuickBuds nepřipojí, použijte nastavení sluchátek v Nastavení › Bluetooth › vaše sluchátka.</string>
 </resources>

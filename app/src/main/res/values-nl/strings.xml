@@ -560,5 +560,5 @@
     <string name="about_discord_desc">Chat met de ontwikkelaar op Discord</string>
     <string name="about_privacy_reply">Met de ID kan de ontwikkelaar ook antwoorden op een rapport dat je stuurde. Het antwoord komt met de dagelijkse telling.</string>
     <string name="issue_oneplus_title">Het systeem kan de verbinding blokkeren</string>
-    <string name="oneplus_hint">Op OnePlus-telefoons kunnen de oordopjesfuncties van het systeem QuickBuds blokkeren. Als QuickBuds geen verbinding maakt, gebruik Instellingen › Bluetooth › je oordopjes › Oordopjesfuncties.</string>
+    <string name="oneplus_hint">Op OnePlus-, OPPO- en realme-telefoons kunnen de oordopjesinstellingen van het systeem de verbinding van de oordopjes vasthouden en QuickBuds blokkeren. Als QuickBuds geen verbinding maakt, gebruik de oordopjesinstellingen in Instellingen › Bluetooth › je oordopjes.</string>
 </resources>

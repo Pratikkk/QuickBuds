@@ -643,7 +643,7 @@
     <string name="issue_samsung_codec_title">No codec choice on Samsung phones</string>
     <string name="issue_samsung_codec_body">Samsung phones do not show the codec choice in Bluetooth settings. High-quality audio may do nothing.</string>
     <string name="issue_oneplus_title">The system can block the connection</string>
-    <string name="oneplus_hint">On OnePlus phones, the system\'s Earbud functions can block QuickBuds. If QuickBuds does not connect, use Settings › Bluetooth › your earbuds › Earbud functions.</string>
+    <string name="oneplus_hint">On OnePlus, OPPO and realme phones, the system\'s own earbud settings can hold the earbuds\' link and block QuickBuds. If QuickBuds does not connect, use the earbud settings in Settings › Bluetooth › your earbuds.</string>
     <string name="issue_hires_spatial_title">High-quality audio and 3D audio</string>
     <string name="issue_hires_spatial_body">The earbuds run only one of them. Turning one on turns the other off.</string>
     <string name="setup_issues_body">Settings lists the limits of your earbuds and phone. QuickBuds also tells you once when your model has any.</string>

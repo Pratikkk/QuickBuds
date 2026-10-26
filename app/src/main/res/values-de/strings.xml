@@ -560,5 +560,5 @@
     <string name="about_discord_desc">Auf Discord mit dem Entwickler chatten</string>
     <string name="about_privacy_reply">Mit der ID kann der Entwickler auch auf einen gesendeten Bericht antworten. Die Antwort kommt mit der täglichen Zählung.</string>
     <string name="issue_oneplus_title">Das System kann die Verbindung blockieren</string>
-    <string name="oneplus_hint">Auf OnePlus-Telefonen können die Earbud-Funktionen des Systems QuickBuds blockieren. Wenn QuickBuds keine Verbindung herstellt, verwenden Sie Einstellungen › Bluetooth › Ihre Earbuds › Earbud-Funktionen.</string>
+    <string name="oneplus_hint">Auf OnePlus-, OPPO- und realme-Telefonen können die Earbud-Einstellungen des Systems die Verbindung der Earbuds halten und QuickBuds blockieren. Wenn QuickBuds keine Verbindung herstellt, verwenden Sie die Earbud-Einstellungen in Einstellungen › Bluetooth › Ihre Earbuds.</string>
 </resources>

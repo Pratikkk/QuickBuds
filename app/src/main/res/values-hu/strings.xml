@@ -560,5 +560,5 @@
     <string name="about_discord_desc">Csevegj a fejlesztővel a Discordon</string>
     <string name="about_privacy_reply">Az azonosító lehetővé teszi, hogy a fejlesztő válaszoljon az elküldött jelentésedre. A válasz a napi számlálással érkezik.</string>
     <string name="issue_oneplus_title">A rendszer blokkolhatja a kapcsolatot</string>
-    <string name="oneplus_hint">OnePlus-telefonokon a rendszer fülhallgató-funkciói blokkolhatják a QuickBudsot. Ha a QuickBuds nem csatlakozik, használja a Beállítások › Bluetooth › fülhallgatók › Fülhallgató-funkciók menüpontot.</string>
+    <string name="oneplus_hint">OnePlus, OPPO és realme telefonokon a rendszer fülhallgató-beállításai tarthatják a fülhallgató kapcsolatát, és blokkolhatják a QuickBudsot. Ha a QuickBuds nem csatlakozik, használja a fülhallgató-beállításokat a Beállítások › Bluetooth › fülhallgatók menüben.</string>
 </resources>

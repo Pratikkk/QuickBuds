@@ -4,19 +4,30 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The OnePlus phone check uses the manufacturer string in any letter case. */
+/** The phone check uses the manufacturer string of OnePlus, OPPO and realme in any letter case. */
 class PhoneChecksTest {
 
-    @Test fun onePlusInAnyCaseIsOnePlus() {
-        assertTrue(PhoneChecks.isOnePlus("OnePlus"))
-        assertTrue(PhoneChecks.isOnePlus("oneplus"))
-        assertTrue(PhoneChecks.isOnePlus("ONEPLUS"))
+    @Test fun onePlusInAnyCaseIsTrue() {
+        assertTrue(PhoneChecks.isColorOsPhone("OnePlus"))
+        assertTrue(PhoneChecks.isColorOsPhone("oneplus"))
+        assertTrue(PhoneChecks.isColorOsPhone("ONEPLUS"))
     }
 
-    @Test fun otherManufacturersAreNotOnePlus() {
-        assertFalse(PhoneChecks.isOnePlus("OPPO"))
-        assertFalse(PhoneChecks.isOnePlus("realme"))
-        assertFalse(PhoneChecks.isOnePlus("Nothing"))
-        assertFalse(PhoneChecks.isOnePlus(""))
+    @Test fun oppoInAnyCaseIsTrue() {
+        assertTrue(PhoneChecks.isColorOsPhone("OPPO"))
+        assertTrue(PhoneChecks.isColorOsPhone("oppo"))
+    }
+
+    @Test fun realmeInAnyCaseIsTrue() {
+        assertTrue(PhoneChecks.isColorOsPhone("realme"))
+        assertTrue(PhoneChecks.isColorOsPhone("Realme"))
+    }
+
+    @Test fun otherManufacturersAreFalse() {
+        assertFalse(PhoneChecks.isColorOsPhone("Google"))
+        assertFalse(PhoneChecks.isColorOsPhone("Nothing"))
+        assertFalse(PhoneChecks.isColorOsPhone("samsung"))
+        assertFalse(PhoneChecks.isColorOsPhone(""))
+        assertFalse(PhoneChecks.isColorOsPhone(null))
     }
 }
