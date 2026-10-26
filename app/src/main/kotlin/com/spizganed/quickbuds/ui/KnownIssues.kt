@@ -7,7 +7,7 @@ import com.spizganed.quickbuds.protocol.ModelCatalog
 
 /**
  * Limits of the current earbuds and phone that the person should know. The keys come from the model's
- * `knownIssues` in `models.json` and from two checks on the phone and the rows. Each key has a title and a body string.
+ * `knownIssues` in `models.json` and from checks on the phone (Samsung codec, OnePlus link) and the rows. Each key has a title and a body string.
  */
 object KnownIssues {
 
@@ -16,14 +16,16 @@ object KnownIssues {
     private val ALL = listOf(
         Issue("spatial_silent", R.string.issue_spatial_silent_title, R.string.issue_spatial_silent_body),
         Issue("samsung_codec", R.string.issue_samsung_codec_title, R.string.issue_samsung_codec_body),
+        Issue("oneplus_link", R.string.issue_oneplus_title, R.string.oneplus_hint),
         Issue("hires_spatial", R.string.issue_hires_spatial_title, R.string.issue_hires_spatial_body),
         Issue("hires_no_codec", R.string.issue_hires_no_codec_title, R.string.issue_hires_no_codec_body),
     )
 
-    /** The issues of the current model and phone, in the order of [ALL]. Empty for an unknown model. */
+    /** The issues of the current model and phone, in the order of [ALL]. The OnePlus link hint shows without a model too. */
     fun current(c: Context): List<Issue> {
-        val model = ModelCatalog.current(c) ?: return emptyList()
         val keys = mutableSetOf<String>()
+        if (PhoneChecks.isOnePlus(Build.MANUFACTURER)) keys += ONEPLUS_LINK
+        val model = ModelCatalog.current(c) ?: return ALL.filter { it.key in keys }
         model.json.optJSONArray("knownIssues")?.let { a -> for (i in 0 until a.length()) keys += a.getString(i) }
         val hires = MainActivity.rowSupported(c, "hires")
         if (hires && Build.MANUFACTURER.equals("samsung", ignoreCase = true)) keys += "samsung_codec"
@@ -33,10 +35,10 @@ object KnownIssues {
         return ALL.filter { it.key in keys }
     }
 
-    /** The launch prompt asks once per model that has issues. */
+    /** The launch prompt asks once per model that has issues. The OnePlus link hint is a phone fact, so it does not ask. */
     fun shouldAnnounce(c: Context): Boolean {
         val model = ModelCatalog.current(c) ?: return false
-        return model.id !in announced(c) && current(c).isNotEmpty()
+        return model.id !in announced(c) && current(c).any { it.key != ONEPLUS_LINK }
     }
 
     fun markAnnounced(c: Context) {
@@ -49,4 +51,5 @@ object KnownIssues {
     private fun prefs(c: Context) = c.getSharedPreferences(ThemeRes.PREFS_NAME, Context.MODE_PRIVATE)
 
     private const val KEY_ANNOUNCED = "knownIssuesAnnounced"
+    private const val ONEPLUS_LINK = "oneplus_link"
 }

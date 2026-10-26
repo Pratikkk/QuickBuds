@@ -559,4 +559,6 @@
     <string name="reply_title">Απάντηση του προγραμματιστή</string>
     <string name="about_discord_desc">Συνομιλήστε με τον προγραμματιστή στο Discord</string>
     <string name="about_privacy_reply">Το αναγνωριστικό επιτρέπει στον προγραμματιστή να απαντήσει σε μια αναφορά που στείλατε. Η απάντηση έρχεται με την ημερήσια καταμέτρηση.</string>
+    <string name="issue_oneplus_title">Το σύστημα μπορεί να μπλοκάρει τη σύνδεση</string>
+    <string name="oneplus_hint">Σε τηλέφωνα OnePlus, οι λειτουργίες ακουστικών του συστήματος μπορούν να μπλοκάρουν το QuickBuds. Αν το QuickBuds δεν συνδεθεί, χρησιμοποιήστε Ρυθμίσεις › Bluetooth › τα ακουστικά σας › Λειτουργίες ακουστικών.</string>
 </resources>

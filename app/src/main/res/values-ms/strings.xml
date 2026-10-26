@@ -559,4 +559,6 @@
     <string name="reply_title">Balasan daripada pembangun</string>
     <string name="about_discord_desc">Sembang dengan pembangun di Discord</string>
     <string name="about_privacy_reply">ID ini juga membolehkan pembangun membalas laporan yang anda hantar. Balasan datang bersama pengiraan harian.</string>
+    <string name="issue_oneplus_title">Sistem boleh menyekat sambungan</string>
+    <string name="oneplus_hint">Pada telefon OnePlus, fungsi earbud sistem boleh menyekat QuickBuds. Jika QuickBuds tidak bersambung, gunakan Tetapan › Bluetooth › earbud anda › Fungsi earbud.</string>
 </resources>

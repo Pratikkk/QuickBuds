@@ -559,4 +559,6 @@
     <string name="reply_title">Sagot ng developer</string>
     <string name="about_discord_desc">Makipag-chat sa developer sa Discord</string>
     <string name="about_privacy_reply">Pinapayagan din ng ID ang developer na sumagot sa ulat na ipinadala mo. Dumarating ang sagot kasama ng pang-araw-araw na bilang.</string>
+    <string name="issue_oneplus_title">Maaaring harangin ng system ang koneksyon</string>
+    <string name="oneplus_hint">Sa mga OnePlus phone, maaaring harangin ng mga function ng earbud ng system ang QuickBuds. Kung hindi kumonekta ang QuickBuds, gamitin ang Settings › Bluetooth › ang iyong earbuds › Mga function ng earbud.</string>
 </resources>

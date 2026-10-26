@@ -67,6 +67,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
     private lateinit var btnSettings: ImageButton
     private lateinit var btnDevTools: ImageButton
     private lateinit var deviceNameText: TextView
+    private lateinit var onePlusHint: TextView
 
     // Header connection pill.
     private lateinit var connPill: LinearLayout
@@ -220,6 +221,8 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         val first = connectedUi == null
         connectedUi = connected
         statusView.connected = connected
+        // The system takes the buds' control link on OnePlus phones, so the hint shows only while the app is disconnected.
+        onePlusHint.visibility = if (!connected && PhoneChecks.isOnePlus(Build.MANUFACTURER)) View.VISIBLE else View.GONE
         // INVISIBLE, not GONE: the battery tile keeps its height, so nothing jumps on connect.
         if (first || animatorScale() == 0f) {
             deviceNameText.visibility = if (connected) View.VISIBLE else View.INVISIBLE
@@ -233,7 +236,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         val alpha = if (connected) 1f else DISABLED_ALPHA
         for (i in 0 until tiles.childCount) {
             val tile = tiles.getChildAt(i)
-            if (tile === batteryCard) continue
+            if (tile === batteryCard || tile === onePlusHint) continue
             setEnabledDeep(tile, connected)
             if (first || animatorScale() == 0f) tile.alpha = alpha
             else tile.animate().alpha(alpha).setDuration(CARD_ANIM_MS).start()
@@ -330,6 +333,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         mainLayout = findViewById<LinearLayout>(R.id.mainLayout)
         featureList = findViewById<LinearLayout>(R.id.featureList)
         deviceNameText = findViewById<TextView>(R.id.deviceNameText)
+        onePlusHint = findViewById(R.id.onePlusHint)
         findViewById<ImageButton>(R.id.btnModel).apply {
             background = ThemeRes.ripple(this@MainActivity, ThemeRes.iconButton(this@MainActivity))
             setImageDrawable(ThemeRes.tint(this@MainActivity, R.drawable.ic_model_list, ThemeRes.color(this@MainActivity,

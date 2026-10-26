@@ -559,4 +559,6 @@
     <string name="reply_title">Respuesta del desarrollador</string>
     <string name="about_discord_desc">Chatea con el desarrollador en Discord</string>
     <string name="about_privacy_reply">El ID también permite al desarrollador responder a un informe que enviaste. La respuesta llega con el recuento diario.</string>
+    <string name="issue_oneplus_title">El sistema puede bloquear la conexión</string>
+    <string name="oneplus_hint">En los teléfonos OnePlus, las funciones de los auriculares del sistema pueden bloquear QuickBuds. Si QuickBuds no se conecta, usa Ajustes › Bluetooth › tus auriculares › Funciones de los auriculares.</string>
 </resources>

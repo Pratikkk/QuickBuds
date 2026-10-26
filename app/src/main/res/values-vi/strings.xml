@@ -561,4 +561,6 @@
     <string name="reply_title">Phản hồi từ nhà phát triển</string>
     <string name="about_discord_desc">Trò chuyện với nhà phát triển trên Discord</string>
     <string name="about_privacy_reply">ID cũng cho phép nhà phát triển trả lời báo cáo bạn đã gửi. Câu trả lời đến cùng lượt đếm hằng ngày.</string>
+    <string name="issue_oneplus_title">Hệ thống có thể chặn kết nối</string>
+    <string name="oneplus_hint">Trên điện thoại OnePlus, các chức năng tai nghe của hệ thống có thể chặn QuickBuds. Nếu QuickBuds không kết nối, hãy dùng Cài đặt › Bluetooth › tai nghe của bạn › Chức năng tai nghe.</string>
 </resources>

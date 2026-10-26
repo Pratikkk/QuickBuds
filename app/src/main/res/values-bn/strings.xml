@@ -559,4 +559,6 @@
     <string name="reply_title">ডেভেলপারের উত্তর</string>
     <string name="about_discord_desc">Discord-এ ডেভেলপারের সাথে চ্যাট করুন</string>
     <string name="about_privacy_reply">আইডি ডেভেলপারকে আপনার পাঠানো রিপোর্টের উত্তর দিতেও সাহায্য করে। উত্তর দৈনিক গণনার সাথে আসে।</string>
+    <string name="issue_oneplus_title">সিস্টেম সংযোগ ব্লক করতে পারে</string>
+    <string name="oneplus_hint">OnePlus ফোনে, সিস্টেমের ইয়ারবাড ফাংশন QuickBuds-কে ব্লক করতে পারে। QuickBuds সংযোগ না করলে, সেটিংস › Bluetooth › আপনার ইয়ারবাড › ইয়ারবাড ফাংশন ব্যবহার করুন।</string>
 </resources>
