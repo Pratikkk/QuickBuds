@@ -31,13 +31,15 @@ capture the Bluetooth traffic. It also shows what HeyMelody sends.
 
 ```bash
 python3 scripts/check-locales.py   # every string in all 26 locales
+./gradlew :app:testDebugUnitTest  # the Android protocol tests (app/src/test)
+./gradlew :app:lintDebug          # Android lint
 cd core && cargo test              # the core crate tests (frames, messages, commands)
 cd desktop && cargo test           # the desktop tests, including core against protocol.rs
-./gradlew :app:testDebugUnitTest  # the Android protocol tests (app/src/test)
+cd desktop-egui && cargo test      # the egui desktop tests
 ```
 
-`scripts/release-build.sh` runs the locale check, the desktop tests and all release builds. It does not
-run lint, the Android unit tests or the core tests. Without the key, run the four commands above.
+`scripts/release-build.sh` runs all the commands above and all release builds. It stops at the first
+failed check and names it. These commands need no key.
 
 ## Translations
 
