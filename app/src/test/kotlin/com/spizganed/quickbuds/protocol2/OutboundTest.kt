@@ -3,6 +3,7 @@ package com.spizganed.quickbuds.protocol2
 import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Wire
 import com.spizganed.quickbuds.protocol.Feature
 import org.junit.Assert.assertEquals
 import org.junit.Test

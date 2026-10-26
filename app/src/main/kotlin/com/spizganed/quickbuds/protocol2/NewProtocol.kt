@@ -4,6 +4,7 @@ import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.Feature
 import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Wire
 
 /**
  * The typed protocol layer (docs/PROTOCOL.md): the one entry point of this package. The app does not call it yet; the shipping layer is `protocol/LegacyProtocol.kt`.

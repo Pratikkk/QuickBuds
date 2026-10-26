@@ -1,7 +1,8 @@
 package com.spizganed.quickbuds.protocol2
 
 import com.spizganed.quickbuds.protocol.FeaturePushParser
-import com.spizganed.quickbuds.protocol2.Wire.Message
+import com.spizganed.quickbuds.protocol.Wire
+import com.spizganed.quickbuds.protocol.Wire.Message
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

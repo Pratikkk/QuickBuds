@@ -4,7 +4,7 @@ import com.spizganed.quickbuds.protocol.AncEventParser
 import com.spizganed.quickbuds.protocol.BatteryParser
 import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.OpoProtocol
-import com.spizganed.quickbuds.protocol2.Wire.Message
+import com.spizganed.quickbuds.protocol.Wire.Message
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
