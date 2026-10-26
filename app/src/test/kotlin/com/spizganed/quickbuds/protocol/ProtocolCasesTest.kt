@@ -67,6 +67,7 @@ object ProtocolCases {
             0x8109 -> wearing(WearingStatusParser.parseQueryResponse(p.payload))
             0x8108 -> table(KeyFunctionParser.parse(p.payload))
             0x8122 -> presets(EqCodec.parseList(p.payload))
+            0x812F -> batches(OpoProtocol.batchReplies(p.payload))
             0x0503 -> features(FeaturePushParser.parse(p.payload))
             0x0204 -> when (p.payload.firstOrNull()?.toInt()?.and(0xFF)) {
                 0x01 -> battery(BatteryParser.parseActive(frame))
@@ -208,6 +209,10 @@ object ProtocolCases {
         for ((id, value) in map.toSortedMap()) out.put(id.toString(), value)
         return out
     }
+
+    private fun batches(list: List<Pair<Int, ByteArray>>): Any = JSONArray(list.map { (cmd, payload) ->
+        JSONObject().put("cmd", cmd).put("payload", hex(payload))
+    })
 
     // --- Bytes and JSON ---
 

@@ -801,6 +801,19 @@
    "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:958"
   },
   {
+   "id": "decode-batch-01",
+   "topic": "reply",
+   "kind": "decode",
+   "input": "AA 1F 00 00 2F 81 7F 18 00 00 01 0D 01 12 00 00 08 05 00 04 00 0B 00 11 01 18 01 06 00 1B 00 1D 01",
+   "model": null,
+   "expect": [{
+    "payload": "00 08 05 00 04 00 0B 00 11 01 18 01 06 00 1B 00 1D 01",
+    "cmd": 33037
+   }],
+   "evidence": "CAPTURE",
+   "source": "local/logs/buds4_session_20261014.log.txt:17"
+  },
+  {
    "id": "decode-featurepush-01",
    "topic": "featurepush",
    "kind": "decode",
@@ -1126,6 +1139,27 @@
     "payload": "18 00",
     "cmd": 1027,
     "seq": 105
+   },
+   "evidence": "TEST-LITERAL",
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+  },
+  {
+   "id": "build-feature-game-01",
+   "topic": "gamemode",
+   "kind": "build",
+   "input": {
+    "args": {
+     "id": 6,
+     "seq": 69,
+     "on": true
+    },
+    "builder": "setFeature"
+   },
+   "model": null,
+   "expect": {
+    "payload": "06 01",
+    "cmd": 1027,
+    "seq": 69
    },
    "evidence": "TEST-LITERAL",
    "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"

@@ -145,10 +145,11 @@ class ProtocolCasesGenerateTest {
         decode("decode-gesture-06", "gesture", GESTURE_06, "CAPTURE", LOG_14 + ":449"),
         decode("decode-gesture-07", "gesture", packetHex(0x8108, 0x14, ByteArray(0)), "TEST-LITERAL", LEGACY + ":1215"),
 
-        // --- decode: custom EQ list 0x8122 ---
+        // --- decode: custom EQ list 0x8122 and batch reply 0x812F ---
         decode("decode-eq-01", "eq", EQ_04, "CAPTURE", LOG_14 + ":132"),
         decode("decode-eq-02", "eq", packetHex(0x8122, 0x13, ProtocolCases.bytes("00 01 01")), "TEST-LITERAL", LEGACY + ":958"),
         decode("decode-eq-03", "eq", packetHex(0x8122, 0x13, ByteArray(0)), "TEST-LITERAL", LEGACY + ":958"),
+        decode("decode-batch-01", "reply", REPLY_11, "CAPTURE", LOG_14 + ":17"),
 
         // --- decode: feature push 0x0503 ---
         decode("decode-featurepush-01", "featurepush", FEATUREPUSH_01, "TEST-LITERAL", FEATURE_PUSH_TEST + ":13"),
@@ -182,6 +183,7 @@ class ProtocolCasesGenerateTest {
 
         // --- build: writes and feature switches ---
         build("build-feature-01", "other", "setFeature", args("id" to 0x18, "on" to false, "seq" to 0x69)),
+        build("build-feature-game-01", "gamemode", "setFeature", args("id" to 0x06, "on" to true, "seq" to 0x45)),
         build("build-anc-01", "anc", "anc", args("bit" to 5)),
         build("build-anc-02", "anc", "anc", args("bit" to 11)),
         build("build-hold-01", "anc", "setHoldAncModes", args("mask" to 0x0807, "type" to 1)),
@@ -299,6 +301,7 @@ class ProtocolCasesGenerateTest {
         private const val ANC_04 = "AA 0C 00 00 04 02 FF 05 00 03 01 01 20 00"
         private const val ANC_06 = "AA 0C 00 00 04 02 FF 05 00 03 01 01 08 00"
         private const val GAMEMODE_02 = "AA 09 00 00 04 02 FF 02 00 05 01"
+        private const val REPLY_11 = "AA 1F 00 00 2F 81 7F 18 00 00 01 0D 01 12 00 00 08 05 00 04 00 0B 00 11 01 18 01 06 00 1B 00 1D 01"
         private const val GESTURE_01 = "AA 0D 00 00 04 02 FF 06 00 F1 01 01 07 0B 02"
         private const val GESTURE_04 = "AA 0D 00 00 04 02 FF 06 00 F1 01 01 00 00 03"
         private const val GESTURE_06 = "AA 0D 00 00 04 02 FF 06 00 F1 02 01 04 08 03"
