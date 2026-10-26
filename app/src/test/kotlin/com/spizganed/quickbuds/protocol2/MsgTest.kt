@@ -66,10 +66,11 @@ class MsgTest {
         assertEquals(listOf(Cell(1, 100, false), Cell(2, 100, true)), new.cells)
         assertEquals(old.left!!.level, 100); assertEquals(old.right!!.isCharging, true); assertNull(old.case)
         assertEquals(Msg.AncMsg(Anc.Mode(8)), dec(push(3, 1, 1, 0x08, 0x00)))
-        assertEquals(Msg.AncMsg(Anc.Smart(0x20)), dec(push(3, 4, 1, 0x20, 0)))
+        // The legacy event gate accepts only `03 01 01`; the hold-cycle echo and the smart form are replies, not events.
+        assertNull(dec(push(3, 4, 1, 0x20, 0)))
         assertEquals(8, AncEventParser.rawValue(b(3, 1, 1, 8, 0)))
-        // The hold cycle push: the shipping decoder drops it, this one names it.
-        assertEquals(Msg.AncMsg(Anc.HoldCycle(1, 7)), dec(push(3, 2, 1, 7)))
+        // The hold cycle reply: `0x810C` names it.
+        assertNull(dec(push(3, 2, 1, 7)))
         assertEquals(Msg.FitTest(1, 1), dec(push(4, 1, 1, 2, 1)))
         assertEquals(Msg.FitTest(null, 6), dec(push(4, 2, 6)))
         assertEquals(Msg.GameMode(1, null), dec(push(5, 1)))
