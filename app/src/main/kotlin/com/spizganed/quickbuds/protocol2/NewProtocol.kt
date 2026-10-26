@@ -13,7 +13,7 @@ import com.spizganed.quickbuds.protocol.OpoProtocol
  * Plain Kotlin apart from the envelope, so a JVM test runs it.
  */
 object NewProtocol {
-    private fun pkt(f: Frame) = OpoProtocol.buildPacket(f.cmd, payload = f.payload)
+    private fun pkt(f: Frame) = OpoProtocol.buildPacket(f.cmd, f.seq, f.payload)
     private fun parseMac(s: String): Mac = s.split(":").map { it.toInt(16) }
 
     // --- In ---
