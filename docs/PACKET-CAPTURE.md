@@ -151,7 +151,7 @@ option in another place. Search Developer options for "snoop" if you cannot find
 3. Tap the bug report notification. Share or save the zip.
 4. Open the zip with a file manager. The log is `FS/data/misc/bluetooth/logs/btsnoop_hci.log`.
 5. The path can differ. Search the zip for `btsnoop_hci`.
-6. Remove that one file from the zip. Do not share the whole zip.
+6. Copy that one file out of the zip. Do not share the whole zip.
 7. Delete the zip.
 
 With a PC, use the adb steps in [Pull the log](#pull-the-log).
