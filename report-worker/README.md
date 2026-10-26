@@ -74,7 +74,7 @@ The next daily ping of that install returns the reply. The app stores the reply,
 the following ping. The Worker marks the reply as seen only after that ping. Until then the reply stays unread, so a lost
 answer comes again.
 
-The `ack` field holds the id of the newest reply the app stored, or `0` when it stored none. The Worker marks the row
+The `ack` field holds the id of the last reply the app stored, or `0` when it stored none. The Worker marks the row
 that matches both the id and the app's install ID. An app that sends no `ack` field gets the old behaviour: the Worker
 marks the reply as seen when it sends it.
 
