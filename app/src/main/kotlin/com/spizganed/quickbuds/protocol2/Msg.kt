@@ -154,8 +154,19 @@ sealed class Msg {
     data class Wear(val parts: List<Pair<Int, Int>>) : Msg()
     data class AncMsg(val anc: Anc) : Msg()
     data class FitTest(val left: Int?, val right: Int?) : Msg()
-    /** Both candidates; the model decides which one is the state. */
-    data class GameMode(val at1: Int?, val at3: Int?) : Msg()
+    /** Both candidates; [state] picks one by product id. */
+    data class GameMode(val at1: Int?, val at3: Int?) : Msg() {
+        /** The state for [productId]: [at3] for the four models, [at1] otherwise. null: no state byte. */
+        fun state(productId: String?): Boolean? =
+            (if (productId?.uppercase() in STATE_AT_3) at3 else at1)?.let { it != 0 }
+
+        companion object {
+            /** These models put the state in byte 3, not byte 1 `[VENDOR]`, unverified. */
+            val STATE_AT_3 = setOf("062410", "062810", "063010", "063410")
+        }
+    }
+    /** `0x0503`: feature id -> value; bytes after the last pair are ignored. */
+    data class FeaturePush(val values: Map<Int, Int>) : Msg()
     data class Devices(val list: List<Device>) : Msg()
     data class Hearing(val kind: Int, val status: Int) : Msg()
     data class ZenState(val state: Int) : Msg()
@@ -219,6 +230,7 @@ object Decode {
             0x810F -> ok(p)?.takeIf { it.isNotEmpty() }?.let { Msg.EqCurrent(u(it, 0)) }
             0x8122 -> ok(p)?.let { presets(it) }?.let { Msg.EqCustom(it) }
             0x8124 -> ok(p)?.takeIf { it.size >= 3 }?.let { Msg.BassLevel(it[2].toInt()) }
+            0x0503 -> featurePush(p)?.let { Msg.FeaturePush(it) }
             0x0504 -> if (p.isNotEmpty()) Msg.EqCurrent(u(p, 0)) else null
             0x8130 -> ok(p)?.firstOrNull()?.let { Msg.AlertVolume(it.toInt() and 0xFF) }
             0x8133 -> ok(p)?.takeIf { it.size >= 2 }?.let { Msg.TapLevel(u(it, 0), u(it, 1)) }
@@ -368,6 +380,14 @@ object Decode {
             if (d == null || t == null) null else Triple(d, t, c[2])
         }
         return v.ifEmpty { null }
+    }
+
+    /** `0x0503`: `<count> <id> <value>...`; bytes after the last pair are ignored. */
+    private fun featurePush(p: ByteArray): Map<Int, Int>? {
+        if (p.isEmpty()) return null
+        val count = u(p, 0)
+        if (p.size < 1 + count * 2) return null
+        return (0 until count).associate { u(p, 1 + it * 2) to u(p, 2 + it * 2) }
     }
 
     /** `<count>` then `<a> <b>` pairs from [from]. null when the pairs run past the end; a count of 0 is no list. */
