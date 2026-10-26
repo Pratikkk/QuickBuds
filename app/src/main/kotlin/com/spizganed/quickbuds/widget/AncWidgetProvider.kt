@@ -9,10 +9,8 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.RectF
-import android.graphics.Shader
 import android.net.Uri
 import android.text.SpannableString
 import android.text.Spanned
@@ -79,24 +77,15 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         LIST(R.layout.widget_list, R.layout.widget_list_n, R.layout.widget_list_md),
         STACK(R.layout.widget_stack, R.layout.widget_stack_n, R.layout.widget_stack_md);
 
-        /**
-         * The layout for the chosen style ([WidgetSettings.nothingStyle], [WidgetSettings.materialStyle]).
-         * Glass at the smallest 2x2 size uses its own compact battery page ([compact]).
-         */
-        fun layout(c: Context, compact: Boolean = false) = when {
-            WidgetSettings.nothingStyle(c) -> nothing
-            WidgetSettings.glassStyle(c) && this == PAGES_S && compact -> R.layout.widget_pages_gl
-            WidgetSettings.materialStyle(c) -> material
-            else -> classic
-        }
+        /** The layout for the chosen style ([WidgetSettings.nothingStyle], [WidgetSettings.materialStyle]). */
+        fun layout(c: Context) = if (WidgetSettings.nothingStyle(c)) nothing else if (WidgetSettings.materialStyle(c)) material else classic
     }
 
     /**
      * [shape] at the widget's size. Sizes in dp: [ring] and [font] (the number) for the sized shapes; [tiles] control
      * tiles shown, each [tileW] x [tileH]; [units] battery panels shown (0, 2 buds, or 3 with the case).
-     * [compact]: Glass at the smallest 2x2 size, with a 26 dp ring and a 26 dp case row.
      */
-    class Fit(val shape: Shape, val ring: Float = 0f, val font: Float = 0f, val tiles: Int = 4, val units: Int = 3, val tileW: Float = 0f, val tileH: Float = 99f, val compact: Boolean = false)
+    class Fit(val shape: Shape, val ring: Float = 0f, val font: Float = 0f, val tiles: Int = 4, val units: Int = 3, val tileW: Float = 0f, val tileH: Float = 99f)
 
     override fun onUpdate(context: Context, mgr: AppWidgetManager, ids: IntArray) {
         for (id in ids) update(context, mgr, id, kind, force = true)
@@ -212,7 +201,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             try {
                 val fit = fit(context, kind, id)
                 if (sweepK < 0f) {
-                    val sig = listOf(kind, fit.shape, fit.ring, fit.tiles, fit.units, fit.compact, WidgetStateStore.read(context), WidgetSettings.palette(context).tokens.toList(),
+                    val sig = listOf(kind, fit.shape, fit.ring, fit.tiles, fit.units, WidgetStateStore.read(context), WidgetSettings.palette(context).tokens.toList(),
                         context.getSharedPreferences(ThemeRes.PREFS_NAME, Context.MODE_PRIVATE).all.toSortedMap().toString(),
                         connecting, connectTick, awaitLevels).joinToString("|")
                     if (!force && lastSig[id] == sig) return
@@ -222,7 +211,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                     // A sweep frame changes only the rings, the numbers, the case bar and the page's dimming: a partial update is much lighter.
                     val state = WidgetStateStore.read(context)
                     val shown = if (state.connected) state else sweepState ?: state
-                    val pv = RemoteViews(context.packageName, fit.shape.layout(context, fit.compact))
+                    val pv = RemoteViews(context.packageName, fit.shape.layout(context))
                     battery(context, pv, WidgetSettings.palette(context), shown, fit, id, sweepK)
                     pv.setFloat(R.id.w_content, "setAlpha", sweepK)
                     mgr.partiallyUpdateAppWidget(id, pv)
@@ -266,7 +255,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
 
             val page = if (!live) Kind.BATTERY else provider.page ?: WidgetSettings.page(context, id, Kind.BATTERY)
             val list = live && page == Kind.CONTROLS && WidgetSettings.listOpen(context, id)
-            val v = RemoteViews(context.packageName, fit.shape.layout(context, fit.compact))
+            val v = RemoteViews(context.packageName, fit.shape.layout(context))
             // The host reapplies an update with the same layout onto the views it has, so switching
             // a flipper's child animates. The flip side: every state set here must be set both ways
             // (visibility, click), or the previous update's sticks.
@@ -346,9 +335,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             fun pages(wide: Boolean): Fit {
                 val pad = if (WidgetSettings.materialStyle(c)) 4f else 8f
                 val tw = if (wide) (w - 2 * g.side - 3 * g.gap) / 4 - 2 * pad else (w - 2 * g.side - g.gap) / 2 - 2 * pad
-                // Glass at the 2x2 minimum: a tighter page that fits 110 dp.
-                val compact = !wide && WidgetSettings.glassStyle(c) && w in 1f..120f && h in 1f..120f
-                return Fit(if (wide) Shape.PAGES_M else Shape.PAGES_S, tileW = tw, compact = compact)
+                return Fit(if (wide) Shape.PAGES_M else Shape.PAGES_S, tileW = tw)
             }
             if (w <= 0 || h <= 0) return pages(kind == Kind.COMBINED)
             val battery = kind != Kind.CONTROLS
@@ -610,7 +597,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
 
         private fun battery(context: Context, v: RemoteViews, p: Palette, state: WidgetStateStore.State, fit: Fit, id: Int, k: Float) {
             val paged = fit.shape.paged
-            val ringDp = if (paged) ringDp(context, fit.shape, id, fit.compact) else fit.ring
+            val ringDp = if (paged) ringDp(context, fit.shape, id) else fit.ring
             // k < 1: rings drawn to k of their level and the glyphs part-way to their ghost colour.
             val levels = intArrayOf(state.leftBattery, state.caseBattery, state.rightBattery).map { if (it < 0) -1 else Math.round(it * k) }.toIntArray()
             val statuses = intArrayOf(state.leftStatus, -1, state.rightStatus)
@@ -638,28 +625,23 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 panelBg(context, v, R.id.w_bar_bg, p)
                 panelOutline(context, v, R.id.w_bar_stroke, p)
                 // The case icon takes all the height the rings leave ([caseRowDp]); TALL's case row is 32dp. Nothing: at the
-                // rings' dot pitch, so the big icon keeps the app's case details (lid cut, LED). Glass at the 2x2 minimum:
-                // a 14dp glyph at the bitmap's real size, so the 18dp bar and the number fit.
-                val caseDp = if (paged) caseRowDp(context, id, fit.compact) else 32f - 2 * geo(context).row
-                val iconDp = if (p.glass && fit.compact) 14f else caseDp
+                // rings' dot pitch, so the big icon keeps the app's case details (lid cut, LED).
+                val caseDp = if (paged) caseRowDp(context, id) else 32f - 2 * geo(context).row
                 if (p.glass) {
-                    val hpx = ThemeRes.dp(context, iconDp).coerceAtLeast(1)
+                    val hpx = ThemeRes.dp(context, caseDp).coerceAtLeast(1)
                     val wpx = Math.round(hpx * 496f / 400f)
                     val gb = Bitmap.createBitmap(wpx + 12, hpx + 12, Bitmap.Config.ARGB_8888)
                     GlassArt.Glyph(context.getDrawable(R.drawable.ic_case)!!.mutate())
                         .draw(Canvas(gb), gb.width / 2f, gb.height / 2f - 2f, wpx.toFloat(), hpx.toFloat(), glyphTint(context, p, 1, -1, k), hpx / 42f, p.glassLight)
-                    // Pin the bitmap to the display density, so its intrinsic size is the px size the layout and barDp use.
-                    gb.density = context.resources.displayMetrics.densityDpi
                     v.setImageViewBitmap(R.id.w_case_icon, gb)
                     v.setInt(R.id.w_case_icon, "setColorFilter", 0)
                 } else {
-                    icon(context, v, R.id.w_case_icon, R.drawable.ic_case, iconDp, if (paged) ringCellDp(context, id) else fit.ring / RING_CELLS)
+                    icon(context, v, R.id.w_case_icon, R.drawable.ic_case, caseDp, if (paged) ringCellDp(context, id) else fit.ring / RING_CELLS)
                 }
                 // A colour filter keeps its alpha as a lightening of the glyph, so the fading ghost colour is laid on the panel first.
                 if (!p.glass) v.setInt(R.id.w_case_icon, "setColorFilter",
                     androidx.core.graphics.ColorUtils.compositeColors(glyphTint(context, p, 1, -1, k), p.card))
-                val barHeightDp = if (p.glass) GlassBarMath.barHeightDp(caseDp) else caseDp * 0.7f
-                v.setImageViewBitmap(R.id.w_case_bar, bar(context, p, levels[1], id, iconDp, barHeightDp, fit.compact))
+                v.setImageViewBitmap(R.id.w_case_bar, bar(context, p, levels[1], id, caseDp))
                 // The level is drawn into the bar ([bar]); the bar reads it out.
                 v.setViewVisibility(R.id.w_pct_case, View.GONE)
                 v.setContentDescription(R.id.w_case_bar, context.getString(R.string.status_case) + ", " + pctLabel(context, levels[1]))
@@ -672,9 +654,9 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
          * height), so ring and texts fill the panel as one centred group instead of a small ring
          * over a gap.
          */
-        private fun ringDp(context: Context, shape: Shape, id: Int, compact: Boolean = false): Float {
-            // Drawn large enough; the layout shrinks it to the panel's width. Glass at the 2x2 minimum: 26dp.
-            if (shape == Shape.PAGES_S) return if (compact) 26f else 96f
+        private fun ringDp(context: Context, shape: Shape, id: Int): Float {
+            // Drawn large enough; the layout shrinks it to the panel's width.
+            if (shape == Shape.PAGES_S) return 96f
             val o = AppWidgetManager.getInstance(context).getAppWidgetOptions(id)
             val w = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
             val h = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
@@ -1234,100 +1216,53 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         }
 
         /**
-         * The 2x2 / 3x3 battery's case bar, 70% of the case icon's height, the level inside it; Glass: 70% of the
-         * case row, at least 16 dp. Classic: `outline` track, `accent` fill, corners rounded at a third of its height,
-         * the number cut out of it. Nothing style: dot rows 1.4x the widget's pitch, 70% of the case icon's height,
-         * the percentage cut out of the dots ([GLYPHS]), lit column by column up to the level, the corner dots left out
-         * so the corners are round. Drawn no wider than its slot ([barDp]), so the dots are never scaled.
+         * The 2x2 / 3x3 battery's case bar, 70% of the case icon's height, the level inside it. Classic: `outline`
+         * track, `accent` fill, corners rounded at a third of its height, the number cut out of it. Nothing
+         * style: dot rows 1.4x the widget's pitch, 70% of the case icon's height, the percentage cut out of the dots ([GLYPHS]),
+         * lit column by column up to the level, the corner dots left out so the corners are round. Drawn exactly as wide as its slot ([barDp]), so the dots
+         * are never scaled.
          */
-        /**
-         * Glass: the case level as one capsule with its depth inside the bitmap. The track, the accent
-         * gradient and a 1dp rim stay. A 1dp top highlight and a 2dp bottom shadow sit on the inner
-         * edge. The number is centred: the unfilled part in the ink with a track outline, the filled
-         * part in the on-accent colour. With [scrim], the widget box is off: an ink scrim under the
-         * capsule keeps it readable on the wallpaper.
-         */
-        private fun glassBar(context: Context, p: Palette, level: Int, w: Int, h: Int, scrim: Boolean): Bitmap {
+        /** Glass: the case level as a capsule like the app's ring track: faint with a hairline rim, the accent fill, the number in the ink. */
+        private fun glassBar(context: Context, p: Palette, level: Int, w: Int, h: Int): Bitmap {
             val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
             val c = Canvas(bmp)
             val d = context.resources.displayMetrics.density
             val box = RectF(d, d, w - d, h - d)
-            val rad = box.height() / 2f
-            val capsule = android.graphics.Path().apply { addRoundRect(box, rad, rad, android.graphics.Path.Direction.CW) }
+            val rad = (h - 2 * d) / 2f
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-            if (scrim) {
-                paint.color = Palette.withAlpha(p.ink, 0.35f)
-                c.drawRoundRect(box, rad, rad, paint)
-            }
             paint.color = if (p.glassLight) 0x1A14152B else 0x14FFFFFF
             c.drawRoundRect(box, rad, rad, paint)
-            val fillW = if (level >= 1) box.left + ThemeRes.dp(context, GlassBarMath.fillWidthDp(GlassBarMath.innerBarWidthDp(w / d), level)) else 0f
+            val fillW = if (level in 1..100) box.left + box.width() * level / 100f else 0f
             if (fillW > 0f) {
-                val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    shader = LinearGradient(0f, box.top, 0f, box.bottom, p.accent, GlassBarMath.gradientBottom(p.accent), Shader.TileMode.CLAMP)
-                }
-                c.save()
-                c.clipPath(capsule)
-                c.clipRect(0f, 0f, fillW, h.toFloat())
-                c.drawRoundRect(box, rad, rad, fill)
+                c.save(); c.clipRect(0f, 0f, maxOf(fillW, h / 2f), h.toFloat())
+                paint.color = p.accent
+                c.drawRoundRect(box, rad, rad, paint)
                 c.restore()
             }
-            // The inner edges: a lit top line and a shadow that fades up from the bottom, both clipped to the capsule.
-            paint.shader = null
-            paint.style = Paint.Style.FILL
-            c.save()
-            c.clipPath(capsule)
-            paint.color = if (p.glassLight) 0x1F14152B else 0x73FFFFFF
-            c.drawRect(box.left, box.top + d / 2, box.right, box.top + d / 2 + d, paint)
-            paint.shader = LinearGradient(0f, box.bottom - d / 2 - 2 * d, 0f, box.bottom - d / 2, 0,
-                if (p.glassLight) 0x2E14152B else 0x40000000, Shader.TileMode.CLAMP)
-            c.drawRect(box.left, box.bottom - d / 2 - 2 * d, box.right, box.bottom - d / 2, paint)
-            c.restore()
-            paint.shader = null
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = d
+            paint.style = Paint.Style.STROKE; paint.strokeWidth = d
             paint.color = if (p.glassLight) 0x2614152B else 0x2EFFFFFF
             c.drawRoundRect(box, rad, rad, paint)
             val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
-                textSize = GlassBarMath.numberSp(h / d) * context.resources.displayMetrics.scaledDensity
-                textAlign = Paint.Align.CENTER
-                color = if (scrim) (if (p.isLight) 0xFF14152B.toInt() else Color.WHITE) else p.text
-                setShadowLayer(0.5f * d, 0f, 0.5f * d, Palette.withAlpha(p.ink, 0.55f))
+                textSize = h * 0.52f; textAlign = Paint.Align.CENTER; color = p.text
             }
             val y = h / 2f - (text.fontMetrics.ascent + text.fontMetrics.descent) / 2
             val label = pctLabel(context, level)
-            // The unfilled part reads as ink, with a 1dp track outline so a light wallpaper cannot swallow it.
-            c.save()
-            c.clipRect(maxOf(fillW, 0f), 0f, w.toFloat(), h.toFloat())
-            c.drawText(label, w / 2f, y, Paint(text).apply {
-                style = Paint.Style.STROKE
-                strokeWidth = d
-                color = p.track
-                clearShadowLayer()
-            })
-            c.drawText(label, w / 2f, y, text)
-            c.restore()
-            // The filled part: one more pass at the fill edge.
-            text.color = if (scrim) (if (p.isLight) 0xFF14152B.toInt() else Color.WHITE) else p.onAccent
-            c.save()
-            c.clipRect(0f, 0f, fillW, h.toFloat())
-            c.drawText(label, w / 2f, y, text)
-            c.restore()
-            // Pin the bitmap to the display density, so its intrinsic size is the px size barDp uses.
-            bmp.density = context.resources.displayMetrics.densityDpi
+            c.save(); c.clipRect(maxOf(fillW, 0f), 0f, w.toFloat(), h.toFloat()); c.drawText(label, w / 2f, y, text); c.restore()
+            text.color = p.onAccent
+            c.save(); c.clipRect(0f, 0f, fillW, h.toFloat()); c.drawText(label, w / 2f, y, text); c.restore()
             return bmp
         }
 
-        private fun bar(context: Context, p: Palette, level: Int, id: Int, caseDp: Float, barHeightDp: Float, compact: Boolean = false): Bitmap {
+        private fun bar(context: Context, p: Palette, level: Int, id: Int, caseDp: Float): Bitmap {
             val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = if (p.glass) Palette.withAlpha(p.ink, 0.14f) else p.outline }
             if (WidgetSettings.nothingStyle(context)) {
                 // 7 rows at that pitch, as many as fill 70% of the case icon's height, the percentage inside.
                 val pitch = DOT_DP * 20f / 22f * 7 / 5 * context.resources.displayMetrics.density
                 // 70% of the case icon's height (as tall as the icon was too big); odd, so the 7-row
                 // digits sit exactly in the middle.
-                val rows = ((ThemeRes.dp(context, barHeightDp) / pitch).toInt() - 1 or 1).coerceAtLeast(9)
-                val cols = (ThemeRes.dp(context, barDp(context, id, caseDp, compact)) / pitch).toInt().coerceAtLeast(rows + 1)
+                val rows = ((ThemeRes.dp(context, caseDp * 0.7f) / pitch).toInt() - 1 or 1).coerceAtLeast(9)
+                val cols = (ThemeRes.dp(context, barDp(context, id, caseDp)) / pitch).toInt().coerceAtLeast(rows + 1)
                 val bmp = Bitmap.createBitmap(Math.round(cols * pitch), Math.round(rows * pitch), Bitmap.Config.ARGB_8888)
                 val c = Canvas(bmp)
                 // The percentage is part of the matrix: 5x7 digits in inverted dots. Centred; a label
@@ -1354,11 +1289,10 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 }
                 return bmp
             }
-            if (p.glass) return glassBar(context, p, level, ThemeRes.dp(context, barDp(context, id, caseDp, compact)).coerceAtLeast(1),
-                ThemeRes.dp(context, barHeightDp).coerceAtLeast(1), !WidgetSettings.background(context, id))
+            if (p.glass) return glassBar(context, p, level, ThemeRes.dp(context, barDp(context, id, caseDp)).coerceAtLeast(1), ThemeRes.dp(context, caseDp * 0.7f).coerceAtLeast(1))
             // Classic (the Nothing layout's ideas, smooth): as wide as its slot, the number knocked out.
-            val w = ThemeRes.dp(context, barDp(context, id, caseDp, compact)).coerceAtLeast(1)
-            val h = ThemeRes.dp(context, barHeightDp).coerceAtLeast(1)
+            val w = ThemeRes.dp(context, barDp(context, id, caseDp)).coerceAtLeast(1)
+            val h = ThemeRes.dp(context, caseDp * 0.7f).coerceAtLeast(1)
             val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
             val c = Canvas(bmp)
             val box = RectF(0f, 0f, w.toFloat(), h.toFloat())
@@ -1416,14 +1350,11 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
          * paddings, the case icon and its margin). The level sits inside the bar.
          * Falls back to 60dp when the host gives no size.
          */
-        private fun barDp(context: Context, id: Int, caseDp: Float, compact: Boolean = false): Float {
+        private fun barDp(context: Context, id: Int, caseDp: Float): Float {
             val w = AppWidgetManager.getInstance(context).getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
             if (w <= 0) return 60f
-            // The compact Glass page: the layout's own paddings and the icon's real width (widget_pages_gl.xml).
-            if (compact) return GlassBarMath.barWidthDp(w.toFloat(), context.resources.displayMetrics.density)
             val g = geo(context)
-            val icon = caseDp * 496f / 400f
-            return (w - 2 * g.side - 2 * g.row - icon - 6f - 2f).coerceAtLeast(20f)
+            return (w - 2 * g.side - 2 * g.row - caseDp * 496f / 400f - 6f - 2f).coerceAtLeast(20f)
         }
 
         /**
@@ -1431,9 +1362,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
          * paddings between them): page padding, ring panel (paddings, ring, percentage with its margin, Classic's
          * wear label), gap, case row padding ([Geo]). Falls back to 30dp when the host gives no size.
          */
-        private fun caseRowDp(context: Context, id: Int, compact: Boolean = false): Float {
-            // Glass at the 2x2 minimum: the 26dp case row that holds the 18dp bar.
-            if (compact) return 26f
+        private fun caseRowDp(context: Context, id: Int): Float {
             val o = AppWidgetManager.getInstance(context).getAppWidgetOptions(id)
             val w = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
             val h = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
