@@ -1,5 +1,7 @@
 package com.spizganed.quickbuds.ui
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Bitmap
@@ -14,6 +16,20 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import com.spizganed.quickbuds.widget.QuickBudsWidget
+
+/**
+ * The pill position at [fraction] of a move from [from] to [to], clamped to the track. [last] is
+ * the last segment index. The spring overshoots, so a fraction above 1 is valid: the pill then
+ * stays on the edge and never leaves the track.
+ */
+internal fun segmentPosition(from: Float, to: Float, fraction: Float, last: Int): Float =
+    (from + (to - from) * fraction).coerceIn(0f, last.toFloat())
+
+/**
+ * True when the view has a selection. [selected] is the segment index; -1 means no selection.
+ * The animated position does not decide this: a move to segment 0 passes below 0.
+ */
+internal fun hasSelection(selected: Int): Boolean = selected >= 0
 
 /**
  * Noise-control switcher: a card-style container (22dp radius, 4dp padding)
@@ -35,7 +51,12 @@ class AncSegmentedView(
             if (v == field) return
             val from = field
             field = v
-            anim?.cancel()
+            // A replaced animator must not move pos: the new one starts from the current frame.
+            anim?.apply {
+                removeAllUpdateListeners()
+                removeAllListeners()
+                cancel()
+            }
             appearAnim?.cancel()
             if (p.glass && !nothing && width > 0) {
                 // Glass: the pill appears and leaves with a pop instead of snapping, also from and to "nothing chosen".
@@ -44,11 +65,24 @@ class AncSegmentedView(
                 appear = 1f
             } else appear = if (v < 0) 0f else 1f
             if (width == 0 || from < 0 || v < 0) { pos = v.toFloat(); invalidate(); return }
-            anim = ValueAnimator.ofFloat(pos, v.toFloat()).apply {
+            val start = pos
+            val last = labels.size - 1
+            val target = v.toFloat().coerceIn(0f, last.toFloat())
+            anim = ValueAnimator.ofFloat(0f, 1f).apply {
                 duration = 380
                 // The pill overshoots its target a little and settles: quick, with a spring.
                 interpolator = android.view.animation.OvershootInterpolator(1.1f)
-                addUpdateListener { pos = it.animatedValue as Float; postInvalidateOnAnimation() }
+                addUpdateListener {
+                    pos = segmentPosition(start, target, it.animatedValue as Float, last)
+                    postInvalidateOnAnimation()
+                }
+                addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        // End on the target, also after a cancel with no replacement.
+                        pos = target
+                        postInvalidateOnAnimation()
+                    }
+                })
                 start()
             }
         }
@@ -139,8 +173,8 @@ class AncSegmentedView(
         plate.setBounds(0, 0, width, height)
         plate.draw(canvas)
         textPaint.getTextBounds("H", 0, 1, capBounds)
-        // The pill may overshoot while it springs, but never past the plate: clamp (an overshoot below 0 hid it, a flash on Off).
-        val shown = if (appear <= 0.01f && selected < 0) -1f else pos.coerceIn(0f, (n - 1).toFloat())
+        // The shared clamp in segmentPosition keeps the pill on the plate while it springs.
+        val shown = if (appear <= 0.01f && !hasSelection(selected)) -1f else pos
         val a = appear.coerceIn(0f, 1f)
         if (shown >= 0f && a > 0f) {
             val left = inset + segW * shown
@@ -194,7 +228,7 @@ class AncSegmentedView(
         val idle = Palette.blend(p.container, p.text, 0.08f)
         textPaint.getTextBounds("H", 0, 1, capBounds)
         for (i in 0 until n) {
-            val on = if (pos < 0f) 0f else (1f - kotlin.math.abs(pos - i)).coerceIn(0f, 1f)
+            val on = if (!hasSelection(selected)) 0f else (1f - kotlin.math.abs(pos - i)).coerceIn(0f, 1f)
             val left = i * (segW + gap)
             val cx = left + segW / 2
             trackPaint.color = Palette.blend(if (icons.isEmpty()) p.container else idle, p.accent, on)
@@ -233,7 +267,7 @@ class AncSegmentedView(
             canvas.drawRoundRect(box, rad - pitch, rad - pitch, trackPaint)
             // The selected segment: an accent outline a cell wide, the track inside (not a fill).
             // Centred in the snapped track on a whole-cell gap, and concentric with its corners.
-            if (pos >= 0f) {
+            if (hasSelection(selected)) {
                 val inset = (dp(4f) / pitch).toInt().coerceAtLeast(1) * pitch
                 val segW = (width - inset * 2) / labels.size
                 box.set(inset + segW * pos, inset, inset + segW * (pos + 1), trackH - inset)
@@ -254,7 +288,7 @@ class AncSegmentedView(
     /** Classic: the sliding accent fill (the dot style draws an outline in [track]). */
     private fun pill(canvas: Canvas) {
         val h = height.toFloat()
-        if (pos >= 0f && !nothing) {
+        if (hasSelection(selected) && !nothing) {
             val inset = dp(4f)
             val left = inset + (width - inset * 2) / labels.size * pos
             box.set(left, inset, left + (width - inset * 2) / labels.size, h - inset)
@@ -282,7 +316,7 @@ class AncSegmentedView(
         val baseline = if (icons.isEmpty()) h / 2 + capH / 2 else iconTop + iconH + dp(5f) + capH
         labels.forEachIndexed { i, label ->
             // The segment under the moving fill brightens as the fill arrives.
-            val closeness = if (pos < 0f) 0f else (1f - kotlin.math.abs(pos - i)).coerceIn(0f, 1f)
+            val closeness = if (!hasSelection(selected)) 0f else (1f - kotlin.math.abs(pos - i)).coerceIn(0f, 1f)
             val c = Palette.blend(p.textSecondary, if (nothing) p.accent else p.onAccent, closeness)
             val cx = inset + segW * i + segW / 2
             val dot = dots.getOrNull(i)
