@@ -46,4 +46,51 @@ class AncSegmentedViewTest {
         assertTrue(hasSelection(3))
         assertFalse(hasSelection(-1))
     }
+
+    @Test fun materialEaseFollowsTheStandardCurve() {
+        assertEquals(0f, materialEase(0f), 0.0001f)
+        assertEquals(0.15625f, materialEase(0.1f), 0.0002f)
+        assertEquals(0.8778f, materialEase(0.5f), 0.0005f)
+        assertEquals(1f, materialEase(1f), 0.0001f)
+    }
+
+    @Test fun quickBudsEaseFollowsStandardDecelerate() {
+        assertEquals(0f, quickBudsEase(0f), 0.0001f)
+        assertEquals(0.8899f, quickBudsEase(0.5f), 0.0005f)
+        assertEquals(1f, quickBudsEase(1f), 0.0001f)
+    }
+
+    @Test fun easingNeverGoesBack() {
+        for (ease in listOf(::materialEase, ::quickBudsEase)) {
+            var last = ease(0f)
+            for (step in 1..100) {
+                val next = ease(step / 100f)
+                assertTrue("ease went back at $step", next >= last)
+                last = next
+            }
+        }
+    }
+
+    @Test fun oldFillFadesOutWhileTheNewFillFadesIn() {
+        assertEquals(1f, segmentFill(1, 1, 2, 0f), 0.0001f)
+        assertEquals(0f, segmentFill(2, 1, 2, 0f), 0.0001f)
+        assertEquals(0.5f, segmentFill(1, 1, 2, 0.5f), 0.0001f)
+        assertEquals(0.5f, segmentFill(2, 1, 2, 0.5f), 0.0001f)
+        assertEquals(0f, segmentFill(1, 1, 2, 1f), 0.0001f)
+        assertEquals(1f, segmentFill(2, 1, 2, 1f), 0.0001f)
+        assertEquals(0f, segmentFill(0, 1, 2, 0.5f), 0.0001f)
+    }
+
+    @Test fun disconnectFadesTheOldFillOut() {
+        assertEquals(0.5f, segmentFill(2, 2, -1, 0.5f), 0.0001f)
+        assertEquals(0f, segmentFill(2, 2, -1, 1f), 0.0001f)
+    }
+
+    @Test fun aTapTravelsOnlyBetweenTwoCells() {
+        assertTrue(selectionTravels(tapped = true, from = 1, to = 2))
+        assertFalse(selectionTravels(tapped = false, from = 1, to = 2))
+        assertFalse(selectionTravels(tapped = true, from = -1, to = 2))
+        assertFalse(selectionTravels(tapped = true, from = 2, to = -1))
+        assertFalse(selectionTravels(tapped = true, from = 2, to = 2))
+    }
 }

@@ -12,9 +12,11 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
+import android.provider.Settings
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
+import android.view.animation.LinearInterpolator
 import com.spizganed.quickbuds.widget.QuickBudsWidget
 
 /**
@@ -31,12 +33,57 @@ internal fun segmentPosition(from: Float, to: Float, fraction: Float, last: Int)
  */
 internal fun hasSelection(selected: Int): Boolean = selected >= 0
 
+/** One coordinate of a cubic Bezier curve at parameter [t]. */
+private fun bezier(v1: Float, v2: Float, t: Float): Float {
+    val u = 1f - t
+    return 3f * u * u * t * v1 + 3f * u * t * t * v2 + t * t * t
+}
+
+/** The y value at x = [progress] on a cubic Bezier with the given control points. */
+internal fun cubicBezier(x1: Float, y1: Float, x2: Float, y2: Float, progress: Float): Float {
+    val x = progress.coerceIn(0f, 1f)
+    if (x <= 0f) return 0f
+    if (x >= 1f) return 1f
+    var low = 0f
+    var high = 1f
+    repeat(24) {
+        val mid = (low + high) / 2f
+        if (bezier(x1, x2, mid) < x) low = mid else high = mid
+    }
+    return bezier(y1, y2, (low + high) / 2f)
+}
+
+/** Material standard easing: cubic-bezier(0.2, 0, 0, 1). */
+internal fun materialEase(progress: Float): Float = cubicBezier(0.2f, 0f, 0f, 1f, progress)
+
+/** QuickBuds standard-decelerate easing: cubic-bezier(0, 0, 0, 1). */
+internal fun quickBudsEase(progress: Float): Float = cubicBezier(0f, 0f, 0f, 1f, progress)
+
 /**
- * Noise-control switcher: a card-style container (22dp radius, 4dp padding)
- * holding equal-width 62dp segments, each a 22dp icon over an 11.5sp label. The accent fill SLIDES
- * to the active segment. A tap reports the segment index through [onSegmentTapped]; the fill only
- * moves when [selected] is set — i.e. when the buds' state says so. [selected] = -1 is the neutral
- * (disconnected) state: no fill. With no icons (Dev Tools' Simple / Detailed tabs) it is a 48dp text-only switch.
+ * How much segment [index] shows as selected at [fraction] of a move from [from] to [to].
+ * The old segment fades out as the new one fades in.
+ */
+internal fun segmentFill(index: Int, from: Int, to: Int, fraction: Float): Float {
+    if (from == to) return if (index == from && from >= 0) 1f else 0f
+    val f = fraction.coerceIn(0f, 1f)
+    return when (index) {
+        to -> f
+        from -> 1f - f
+        else -> 0f
+    }
+}
+
+/** True only for a tap that moves the outline between two cells. */
+internal fun selectionTravels(tapped: Boolean, from: Int, to: Int): Boolean =
+    tapped && from >= 0 && to >= 0 && from != to
+
+/**
+ * Noise-control switcher. Material uses 52dp circles and a tonal fill that fades in place.
+ * QuickBuds uses one card, hairline dividers and a 2dp accent outline. A tap moves the QuickBuds
+ * outline; a buds report fades it in place. Glass and Pixel art keep their own look.
+ *
+ * A tap reports the segment index through [onSegmentTapped]. [selected] = -1 is the neutral
+ * (disconnected) state: no selection.
  */
 class AncSegmentedView(
     context: Context,
@@ -52,17 +99,22 @@ class AncSegmentedView(
             val from = field
             field = v
             // A replaced animator must not move pos: the new one starts from the current frame.
-            anim?.apply {
-                removeAllUpdateListeners()
-                removeAllListeners()
-                cancel()
-            }
-            appearAnim?.cancel()
-            if (p.glass && !nothing && width > 0) {
+            stop(anim)
+            stop(appearAnim)
+            stop(fillAnim)
+            stop(quickAnim)
+            if (p.glass && !nothing) {
                 // Glass: the pill appears and leaves with a pop instead of snapping, also from and to "nothing chosen".
+                if (width == 0) { pos = v.toFloat(); appear = if (v < 0) 0f else 1f; invalidate(); return }
                 if (v < 0) { animateAppear(0f); return }
                 if (from < 0) { pos = v.toFloat(); animateAppear(1f); return }
                 appear = 1f
+            } else if (material) {
+                animateMaterial(from, v)
+                return
+            } else if (!nothing) {
+                animateQuickBuds(from, v)
+                return
             } else appear = if (v < 0) 0f else 1f
             if (width == 0 || from < 0 || v < 0) { pos = v.toFloat(); invalidate(); return }
             val start = pos
@@ -87,12 +139,38 @@ class AncSegmentedView(
             }
         }
 
+    private fun stop(a: ValueAnimator?) {
+        a?.apply {
+            removeAllUpdateListeners()
+            removeAllListeners()
+            cancel()
+        }
+    }
+
     private var pos = -1f
     private var anim: ValueAnimator? = null
 
     /** Glass: how much of the pill shows, 0 (nothing chosen) to 1. Overshoots a little on its way in. */
     private var appear = 0f
     private var appearAnim: ValueAnimator? = null
+
+    /** Material: the old and the new fill fade together. */
+    private var fillAnim: ValueAnimator? = null
+
+    /** QuickBuds: the outline travels, or fades in place when the buds report the change. */
+    private var quickAnim: ValueAnimator? = null
+    private var quickTravel = false
+    private var outlineFrom = -1
+    private var outlineTo = -1
+    private var outlineMix = 1f
+
+    /** The cell under the finger, and its state-layer amount. */
+    private var pressIndex = -1
+    private var pressLevel = 0f
+    private var pressAnim: ValueAnimator? = null
+
+    /** True only while a tap callback runs, so a synchronous selection travels and a report fades. */
+    private var tapInFlight = false
 
     private fun animateAppear(to: Float) {
         appearAnim = ValueAnimator.ofFloat(appear, to).apply {
@@ -103,11 +181,152 @@ class AncSegmentedView(
         }
     }
 
+    private fun animationsEnabled() = Settings.Global.getFloat(
+        context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f
+    ) != 0f
+
+    /** Material: the old fill fades out while the new fill fades in. The label colour takes 150 ms. */
+    private fun animateMaterial(from: Int, to: Int) {
+        java.util.Arrays.fill(fillMixes, 0f)
+        java.util.Arrays.fill(colorMixes, 0f)
+        if (from in labels.indices) {
+            fillMixes[from] = 1f
+            colorMixes[from] = 1f
+        }
+        invalidate()
+        if (width == 0 || !animationsEnabled()) { settleMaterial(to); return }
+        fillAnim = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 200
+            interpolator = LinearInterpolator()
+            addUpdateListener {
+                val elapsed = it.animatedFraction * 200f
+                val fill = materialEase(elapsed / 200f)
+                val color = materialEase((elapsed / 150f).coerceAtMost(1f))
+                for (i in labels.indices) {
+                    fillMixes[i] = segmentFill(i, from, to, fill)
+                    colorMixes[i] = segmentFill(i, from, to, color)
+                }
+                postInvalidateOnAnimation()
+            }
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) = settleMaterial(to)
+            })
+            start()
+        }
+    }
+
+    private fun settleMaterial(to: Int) {
+        java.util.Arrays.fill(fillMixes, 0f)
+        java.util.Arrays.fill(colorMixes, 0f)
+        if (to in labels.indices) {
+            fillMixes[to] = 1f
+            colorMixes[to] = 1f
+        }
+        invalidate()
+    }
+
+    /**
+     * QuickBuds: a tap moves the outline between two cells. A report from the buds fades the old
+     * outline out and the new one in at the same place. A disconnect fades the outline out.
+     */
+    private fun animateQuickBuds(from: Int, to: Int) {
+        val last = labels.size - 1
+        val travel = selectionTravels(tapInFlight, from, to) && width > 0
+        if (width == 0 || !animationsEnabled()) { settleQuickBuds(to); return }
+        quickTravel = travel
+        outlineFrom = from
+        outlineTo = to
+        outlineMix = 0f
+        java.util.Arrays.fill(colorMixes, 0f)
+        if (from in labels.indices) colorMixes[from] = 1f
+        if (travel) pos = from.toFloat()
+        val duration = if (to < 0) 150L else 200L
+        quickAnim = ValueAnimator.ofFloat(0f, 1f).apply {
+            this.duration = duration
+            interpolator = LinearInterpolator()
+            addUpdateListener {
+                val elapsed = it.animatedFraction * duration
+                val motion = quickBudsEase(elapsed / duration)
+                val color = quickBudsEase((elapsed / 150f).coerceAtMost(1f))
+                if (travel) {
+                    pos = segmentPosition(from.toFloat(), to.toFloat(), motion, last)
+                    outlineMix = 1f
+                } else {
+                    pos = to.toFloat()
+                    outlineMix = motion
+                }
+                for (i in labels.indices) colorMixes[i] = segmentFill(i, from, to, color)
+                postInvalidateOnAnimation()
+            }
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) = settleQuickBuds(to)
+            })
+            start()
+        }
+    }
+
+    private fun settleQuickBuds(to: Int) {
+        java.util.Arrays.fill(colorMixes, 0f)
+        quickTravel = false
+        outlineFrom = -1
+        outlineTo = to
+        outlineMix = 1f
+        if (to in labels.indices) {
+            pos = to.toFloat()
+            colorMixes[to] = 1f
+        } else pos = -1f
+        invalidate()
+    }
+
+    private fun pressCell(index: Int) {
+        if (index !in labels.indices) return
+        if (pressIndex == index && pressLevel > 0f) return
+        stop(pressAnim)
+        pressIndex = index
+        pressLevel = 0f
+        animatePress(1f, 100)
+    }
+
+    private fun releasePress() {
+        if (pressIndex < 0) return
+        animatePress(0f, 150)
+    }
+
+    private fun animatePress(target: Float, duration: Long) {
+        stop(pressAnim)
+        if (!animationsEnabled()) {
+            pressLevel = target
+            if (target == 0f) pressIndex = -1
+            invalidate()
+            return
+        }
+        pressAnim = ValueAnimator.ofFloat(pressLevel, target).apply {
+            this.duration = duration
+            interpolator = LinearInterpolator()
+            addUpdateListener {
+                pressLevel = it.animatedValue as Float
+                postInvalidateOnAnimation()
+            }
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    if (target == 0f) {
+                        pressLevel = 0f
+                        pressIndex = -1
+                    }
+                    postInvalidateOnAnimation()
+                }
+            })
+            start()
+        }
+    }
+
     private fun dp(v: Float) = ThemeRes.dp(context, v).toFloat()
 
     private val p = ThemeRes.palette(context)
     private val labels = labels.toMutableList()
     private val icons: MutableList<Drawable> = iconRes.map { ThemeRes.depth(context, context.getDrawable(it)!!.mutate()) }.toMutableList()
+    private val fillMixes = FloatArray(labels.size)
+    private val colorMixes = FloatArray(labels.size)
 
     /**
      * Nothing style: the widget's dot-matrix mode icons ([QuickBudsWidget.modeIcon]), white, tinted when drawn.
@@ -133,6 +352,14 @@ class AncSegmentedView(
         style = Paint.Style.STROKE; strokeWidth = dp(1f); color = p.outline
     }
     private val pillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = p.accent }
+    private val quickBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeWidth = dp(2f); color = p.accent
+    }
+    private val pressPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val dividerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeWidth = dp(1f); color = p.outline
+    }
+    private val clipPath = android.graphics.Path()
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textSize = dp(if (iconRes.isEmpty()) 14f else 11.5f); textAlign = Paint.Align.CENTER
         typeface = ThemeRes.medium(context)
@@ -152,9 +379,9 @@ class AncSegmentedView(
     private val iconOnly = icons.isNotEmpty() && labels.all { it.isEmpty() }
 
     /**
-     * Material style. With icons: round 52dp toggle buttons with the label under each (the noise control).
-     * Text only: equal 12dp tiles with a 4dp gap (a choice group). The selected one fills with the accent;
-     * every option keeps one shape. The fill fades between options instead of sliding.
+     * Material style. With icons: round 52dp buttons with the label under each (the noise control).
+     * Text only: equal 12dp tiles with a 4dp gap (a choice group). The selected fill uses `tonal`
+     * and the label uses `text`; both fade between options instead of sliding.
      */
     private val material = ThemeRes.material(context)
 
@@ -228,79 +455,144 @@ class AncSegmentedView(
         val idle = Palette.blend(p.container, p.text, 0.08f)
         textPaint.getTextBounds("H", 0, 1, capBounds)
         for (i in 0 until n) {
-            val on = if (!hasSelection(selected)) 0f else (1f - kotlin.math.abs(pos - i)).coerceIn(0f, 1f)
+            val fill = fillMixes[i].coerceIn(0f, 1f)
+            val color = colorMixes[i].coerceIn(0f, 1f)
             val left = i * (segW + gap)
             val cx = left + segW / 2
-            trackPaint.color = Palette.blend(if (icons.isEmpty()) p.container else idle, p.accent, on)
+            trackPaint.color = Palette.blend(if (icons.isEmpty()) p.container else idle, p.tonal, fill)
             if (icons.isEmpty()) {
                 box.set(left, 0f, left + segW, height.toFloat())
                 canvas.drawRoundRect(box, dp(12f), dp(12f), trackPaint)
-                textPaint.color = Palette.blend(p.textSecondary, p.onAccent, on)
+                if (i == pressIndex && pressLevel > 0f) {
+                    pressPaint.color = Palette.withAlpha(p.text, 0.12f * pressLevel)
+                    canvas.drawRoundRect(box, dp(12f), dp(12f), pressPaint)
+                }
+                textPaint.color = Palette.blend(p.textSecondary, p.text, color)
                 canvas.drawText(labels[i], cx, height / 2f + capBounds.height() / 2f, textPaint)
                 continue
             }
             val r = dp(26f)
             canvas.drawCircle(cx, r, r, trackPaint)
+            if (i == pressIndex && pressLevel > 0f) {
+                pressPaint.color = Palette.withAlpha(p.text, 0.12f * pressLevel)
+                canvas.drawCircle(cx, r, r, pressPaint)
+            }
+            val tint = Palette.blend(p.textSecondary, p.text, color)
             icons.getOrNull(i)?.run {
-                setTint(Palette.blend(p.textSecondary, p.onAccent, on))
+                setTint(tint)
                 val s = dp(12f).toInt()
                 setBounds((cx - s).toInt(), (r - s).toInt(), (cx + s).toInt(), (r + s).toInt())
                 draw(canvas)
             }
-            textPaint.color = Palette.blend(p.textSecondary, p.text, on)
+            textPaint.color = tint
             canvas.drawText(labels[i], cx, r * 2 + dp(6f) + capBounds.height(), textPaint)
         }
     }
 
-    /** Track and outline, dots in the dot style (one-cell outline). */
-    private fun track(canvas: Canvas) {
+    /**
+     * QuickBuds: one card with a cell per option. The chosen cell has a 2dp accent outline, inset
+     * 4dp. Hairline dividers separate the cells. There is no inner track and no red pill.
+     */
+    private fun drawQuickBuds(canvas: Canvas) {
+        val n = labels.size
         val h = height.toFloat()
-        if (nothing) {
-            // The outline as the shape in its colour with the track a cell inside, and a radius a little under
-            // half the height: a stroke, or a full half-height radius, left a lone dot at each end.
-            val pitch = DotArt.pitchPx(context)
-            val trackH = (h / pitch).toInt() * pitch
-            box.set(0f, 0f, width.toFloat(), trackH)
-            val rad = minOf(dp(22f), trackH / 2 * 0.85f)
-            canvas.drawRoundRect(box, rad, rad, strokePaint.apply { style = Paint.Style.FILL })
-            box.inset(pitch, pitch)
-            canvas.drawRoundRect(box, rad - pitch, rad - pitch, trackPaint)
-            // The selected segment: an accent outline a cell wide, the track inside (not a fill).
-            // Centred in the snapped track on a whole-cell gap, and concentric with its corners.
-            if (hasSelection(selected)) {
-                val inset = (dp(4f) / pitch).toInt().coerceAtLeast(1) * pitch
-                val segW = (width - inset * 2) / labels.size
-                box.set(inset + segW * pos, inset, inset + segW * (pos + 1), trackH - inset)
-                val pr = minOf(rad - inset, box.height() / 2 * 0.85f)
-                canvas.drawRoundRect(box, pr, pr, pillPaint)
-                box.inset(pitch, pitch)
-                canvas.drawRoundRect(box, pr - pitch, pr - pitch, trackPaint)
+        val radius = dp(24f)
+        trackPaint.color = p.card
+        box.set(0f, 0f, width.toFloat(), h)
+        canvas.drawRoundRect(box, radius, radius, trackPaint)
+        strokePaint.strokeWidth = dp(1f)
+        strokePaint.color = p.outline
+        val edge = dp(0.5f)
+        box.set(edge, edge, width - edge, h - edge)
+        canvas.drawRoundRect(box, radius, radius, strokePaint)
+
+        val segW = width.toFloat() / n
+        if (n > 1) {
+            for (i in 1 until n) {
+                val x = i * segW
+                canvas.drawLine(x, 0f, x, h, dividerPaint)
             }
-            return
         }
-        val e = if (nothing) DotArt.pitchPx(context) / 2 else dp(0.5f)
-        box.set(e, e, width - e, h - e)
-        canvas.drawRoundRect(box, dp(22f), dp(22f), trackPaint)
-        strokePaint.strokeWidth = if (nothing) 0f else dp(1f)
-        canvas.drawRoundRect(box, dp(22f), dp(22f), strokePaint)
+
+        if (pressIndex in 0 until n && pressLevel > 0f) {
+            clipPath.reset()
+            clipPath.addRoundRect(0f, 0f, width.toFloat(), h, radius, radius, android.graphics.Path.Direction.CW)
+            canvas.save()
+            canvas.clipPath(clipPath)
+            pressPaint.color = Palette.withAlpha(if (p.isLight) p.text else Color.WHITE, 0.10f * pressLevel)
+            canvas.drawRect(pressIndex * segW, 0f, (pressIndex + 1) * segW, h, pressPaint)
+            canvas.restore()
+        }
+
+        if (quickTravel) {
+            drawQuickOutline(canvas, pos, 1f)
+        } else {
+            if (outlineFrom in 0 until n && outlineMix < 1f) drawQuickOutline(canvas, outlineFrom.toFloat(), 1f - outlineMix)
+            if (outlineTo in 0 until n) drawQuickOutline(canvas, outlineTo.toFloat(), outlineMix)
+        }
+
+        textPaint.getTextBounds("H", 0, 1, capBounds)
+        val capH = capBounds.height().toFloat()
+        val textOnly = icons.isEmpty()
+        val iconSize = dp(22f)
+        val iconTop = (h - (if (textOnly) capH else iconSize + dp(5f) + capH)) / 2f
+        for (i in 0 until n) {
+            val cx = (i + 0.5f) * segW
+            val tint = Palette.blend(p.textSecondary, p.accent, colorMixes[i].coerceIn(0f, 1f))
+            if (!textOnly) icons.getOrNull(i)?.run {
+                setTint(tint)
+                setBounds(
+                    (cx - iconSize / 2).toInt(), iconTop.toInt(),
+                    (cx + iconSize / 2).toInt(), (iconTop + iconSize).toInt()
+                )
+                draw(canvas)
+            }
+            textPaint.color = tint
+            val baseline = if (textOnly) iconTop + capH else iconTop + iconSize + dp(5f) + capH
+            canvas.drawText(labels[i], cx, baseline, textPaint)
+        }
     }
 
-    /** Classic: the sliding accent fill (the dot style draws an outline in [track]). */
-    private fun pill(canvas: Canvas) {
+    private fun drawQuickOutline(canvas: Canvas, position: Float, alpha: Float) {
+        if (position < 0f || position > labels.size - 1 || alpha <= 0f) return
+        val segW = width.toFloat() / labels.size
+        val left = segW * position
+        val inset = dp(4f)
+        box.set(left + inset, inset, left + segW - inset, height - inset)
+        quickBorderPaint.alpha = (alpha.coerceIn(0f, 1f) * 255).toInt()
+        canvas.drawRoundRect(box, dp(20f), dp(20f), quickBorderPaint)
+    }
+
+    /** Pixel art: the dotted outline with one cell of dots selected. */
+    private fun track(canvas: Canvas) {
         val h = height.toFloat()
-        if (hasSelection(selected) && !nothing) {
-            val inset = dp(4f)
-            val left = inset + (width - inset * 2) / labels.size * pos
-            box.set(left, inset, left + (width - inset * 2) / labels.size, h - inset)
-            canvas.drawRoundRect(box, dp(18f), dp(18f), pillPaint)
+        // The outline as the shape in its colour with the track a cell inside, and a radius a little under
+        // half the height: a stroke, or a full half-height radius, left a lone dot at each end.
+        val pitch = DotArt.pitchPx(context)
+        val trackH = (h / pitch).toInt() * pitch
+        box.set(0f, 0f, width.toFloat(), trackH)
+        val rad = minOf(dp(22f), trackH / 2 * 0.85f)
+        canvas.drawRoundRect(box, rad, rad, strokePaint.apply { style = Paint.Style.FILL })
+        box.inset(pitch, pitch)
+        canvas.drawRoundRect(box, rad - pitch, rad - pitch, trackPaint)
+        // The selected segment: an accent outline a cell wide, the track inside (not a fill).
+        // Centred in the snapped track on a whole-cell gap, and concentric with its corners.
+        if (hasSelection(selected)) {
+            val inset = (dp(4f) / pitch).toInt().coerceAtLeast(1) * pitch
+            val segW = (width - inset * 2) / labels.size
+            box.set(inset + segW * pos, inset, inset + segW * (pos + 1), trackH - inset)
+            val pr = minOf(rad - inset, box.height() / 2 * 0.85f)
+            canvas.drawRoundRect(box, pr, pr, pillPaint)
+            box.inset(pitch, pitch)
+            canvas.drawRoundRect(box, pr - pitch, pr - pitch, trackPaint)
         }
     }
 
     override fun onDraw(canvas: Canvas) {
         if (material) { drawMaterial(canvas); return }
+        if (!nothing) { drawQuickBuds(canvas); return }
         val h = height.toFloat()
-        if (nothing) DotArt.draw(context, canvas, width, height) { track(it) } else track(canvas)
-        pill(canvas)
+        DotArt.draw(context, canvas, width, height) { track(it) }
 
         val inset = dp(4f)
         val segW = (width - inset * 2) / labels.size
@@ -337,13 +629,34 @@ class AncSegmentedView(
         }
     }
 
+    private fun indexAt(x: Float): Int = ((x / width) * labels.size).toInt().coerceIn(0, labels.size - 1)
+
     override fun onTouchEvent(e: MotionEvent): Boolean {
         if (!isEnabled) return false
-        if (e.actionMasked == MotionEvent.ACTION_UP) {
-            val i = ((e.x / width) * labels.size).toInt().coerceIn(0, labels.size - 1)
-            performClick()
-            Haptics.commit(this)
-            onSegmentTapped?.invoke(i)
+        // Glass and Pixel art keep their own press behaviour.
+        val layer = (material && !p.glass) || (!material && !nothing)
+        when (e.actionMasked) {
+            MotionEvent.ACTION_DOWN -> if (layer) pressCell(indexAt(e.x))
+            MotionEvent.ACTION_MOVE -> if (layer) {
+                if (e.x < 0f || e.x > width) releasePress()
+                else {
+                    val i = indexAt(e.x)
+                    if (i != pressIndex) pressCell(i)
+                }
+            }
+            MotionEvent.ACTION_UP -> {
+                if (layer) releasePress()
+                val i = indexAt(e.x)
+                performClick()
+                Haptics.commit(this)
+                tapInFlight = true
+                try {
+                    onSegmentTapped?.invoke(i)
+                } finally {
+                    tapInFlight = false
+                }
+            }
+            MotionEvent.ACTION_CANCEL -> if (layer) releasePress()
         }
         return true
     }
