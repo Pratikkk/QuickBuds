@@ -35,7 +35,7 @@ key from the URL, so a URL never holds the key.
 - The text list: `curl -H "Authorization: Bearer $READ_KEY" https://quickbuds-report.<subdomain>.workers.dev/reports`
 - For a script: add `?format=json`, and keep the header.
 - Only newer reports: add `?after=<id>`. More reports: add `?limit=100`.
-- The apps send a daily count to `/ping`.
+- The apps send a daily count and a reply acknowledgement to `/ping`.
 - Counts: use `/reports?stats=1`, and `?days=<n>`.
 
 The key is the only access control. Keep the key private.
@@ -70,5 +70,12 @@ A report that carries an install ID can get one answer. Write it with SQL, 600 c
 npx wrangler d1 execute quickbuds-reports --remote --command "UPDATE reports SET reply = 'Text' WHERE id = 42"
 ```
 
-The next daily ping of that install returns the reply once. The app shows it in a sheet and the Worker marks it as seen.
+The next daily ping of that install returns the reply. The app stores the reply, then sends its id in the `ack` field of
+the following ping. The Worker marks the reply as seen only after that ping. Until then the reply stays unread, so a lost
+answer comes again.
+
+The `ack` field holds the id of the last reply the app stored, or `0` when it stored none. The Worker marks the row
+that matches both the id and the app's install ID. An app that sends no `ack` field gets the old behaviour: the Worker
+marks the reply as seen when it sends it.
+
 A database made before replies needs the two `ALTER TABLE` lines in `schema.sql` first.
