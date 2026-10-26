@@ -164,6 +164,7 @@ says what to include. Each report lets the next release fix that model.
 
 The developer can answer a report. The answer shows once in the app, on the next daily count (see Privacy).
 To talk to the developer and other owners, join the [Discord server](https://discord.gg/pvsnEf9TrZ).
+If the earbuds do not connect, follow [Send a snoop log for a connect problem](./docs/PACKET-CAPTURE.md#send-a-snoop-log-for-a-connect-problem).
 
 ## For developers
 

@@ -120,6 +120,89 @@ tshark on the phone (Termux): `pkg install x11-repo && pkg install wireshark-qt`
 Send the tshark output, or the lines for your actions. Add your notes: the setting, the old and new value,
 and the time. That is enough to add a command to PROTOCOL.md.
 
+## Send a snoop log for a connect problem
+
+Use this section when QuickBuds does not connect, for example in issue #18. You need only the phone.
+Prefer to send the log in private. Step 4 gives the reason.
+
+### 1. Turn on the snoop log with the phone
+
+1. Open Settings › About phone (or **About device**). Tap **Build number** 7 times. This opens
+   Developer options.
+2. Open Developer options › **Enable Bluetooth HCI snoop log**. Set it to **Enabled** or **Full**.
+3. Turn Bluetooth off and on again. The log starts again with the new setting.
+
+The name can differ. OnePlus, OPPO, realme, and Xiaomi phones can use another name, or put the
+option in another place. Search Developer options for "snoop" if you cannot find the option.
+
+### 2. Reproduce the problem one time
+
+1. Disconnect other Bluetooth devices: the car, the watch, and other headphones. The log then holds
+   as little other traffic as possible.
+2. Open QuickBuds and connect the earbuds one time.
+3. Wait for the connection, or for the failure. Dev tools › **Simple** shows "Could not connect to
+   the buds", and **Detailed** shows "All connection methods failed".
+4. Write down the time of the test.
+
+### 3. Get the log file without a PC
+
+1. Open Developer options › **Take bug report** (or **Bug report**).
+2. Select **Full**. Wait for the phone to finish.
+3. Tap the bug report notification. Share or save the zip.
+4. Open the zip with a file manager. The log is `FS/data/misc/bluetooth/logs/btsnoop_hci.log`.
+5. The path can differ. Search the zip for `btsnoop_hci`.
+6. Copy that one file out of the zip. Do not share the whole zip.
+7. Delete the zip.
+
+With a PC, use the adb steps in [Pull the log](#pull-the-log).
+
+### 4. Protect your privacy
+
+A bug report zip holds personal data: accounts, other apps, and Wi-Fi names. Never post the zip in
+public.
+
+Everyone who gets the raw `btsnoop_hci.log` file sees your Bluetooth addresses, device names, and
+data from other connected Bluetooth devices. Send it in private, unless you accept that.
+
+### 5. Where to send the file
+
+Send the `btsnoop_hci.log` file in a direct message to the developer on the QuickBuds Discord
+server: https://discord.gg/pvsnEf9TrZ.
+
+If you accept that everyone sees this data, you can do one of these:
+
+- Attach the filtered `connect.pcapng` file from step 6 to the GitHub issue.
+- Share the raw `btsnoop_hci.log` file through a share link that you remove after the case. For
+  example, use Google Drive with "anyone with the link", then remove the file.
+
+The filtered `connect.pcapng` file still holds the Bluetooth addresses.
+
+### 6. Filter for a connect problem
+
+This step needs Wireshark or tshark. The frames that matter are the connection, the service search,
+and the RFCOMM setup. The audio frames do not matter.
+
+The field names below come from the Wireshark display-filter reference:
+https://www.wireshark.org/docs/dfref/.
+
+```bash
+tshark -r btsnoop_hci.log \
+  -Y 'bthci_evt.code == 0x03 || bthci_evt.code == 0x05 || bthci_cmd.opcode == 0x0405 || bthci_cmd.opcode == 0x0406 || btl2cap.cid == 0x0001 || btsdp || btrfcomm.dlci == 0 || (btrfcomm && btrfcomm.frame_type != 0xef)' \
+  -w connect.pcapng
+```
+
+- `bthci_evt.code`: `0x03` is Connect Complete, `0x05` is Disconnect Complete.
+- `bthci_cmd.opcode`: `0x0405` is Create Connection, `0x0406` is Disconnect.
+- `btl2cap.cid == 0x0001`: the L2CAP signalling channel.
+- `btsdp`: the service search.
+- `btrfcomm.dlci == 0`: the RFCOMM multiplexer control channel.
+- `btrfcomm.frame_type != 0xef`: the RFCOMM control frames, without the UIH data frames.
+
+To do it in Wireshark, open the file, type the filter in the display filter bar, and press Enter.
+Then use File › Export Specified Packets, select **Displayed**, and save.
+
+If you send the raw `btsnoop_hci.log` file in private, the developer can do the filtering.
+
 ## Still open, and capturable
 
 - `act 0x03` in the on-call group (`btn 0x06`): a third slot HeyMelody's UI has never used.
