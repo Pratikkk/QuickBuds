@@ -2,6 +2,7 @@ package com.spizganed.quickbuds.protocol2
 
 import com.spizganed.quickbuds.protocol.AncEventParser
 import com.spizganed.quickbuds.protocol.BatteryParser
+import com.spizganed.quickbuds.protocol.GameModeParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.WearingStatusParser
 import com.spizganed.quickbuds.protocol.Wire.Message
@@ -161,13 +162,7 @@ sealed class Msg {
     /** Both candidates; [state] picks one by product id. */
     data class GameMode(val at1: Int?, val at3: Int?) : Msg() {
         /** The state for [productId]: [at3] for the four models, [at1] otherwise. null: no state byte. */
-        fun state(productId: String?): Boolean? =
-            (if (productId?.uppercase() in STATE_AT_3) at3 else at1)?.let { it != 0 }
-
-        companion object {
-            /** These models put the state in byte 3, not byte 1 `[VENDOR]`, unverified. */
-            val STATE_AT_3 = setOf("062410", "062810", "063010", "063410")
-        }
+        fun state(productId: String?): Boolean? = GameModeParser.state(at1, at3, productId)
     }
     /** `0x0503`: feature id -> value; bytes after the last pair are ignored. */
     data class FeaturePush(val values: Map<Int, Int>) : Msg()
@@ -489,7 +484,7 @@ object Decode {
                 val r = (0 until n / 2).map { d(it * 2) to d(it * 2 + 1) }
                 Msg.FitTest(r.firstOrNull { it.first == 1 }?.second, r.firstOrNull { it.first == 2 }?.second)
             }
-            code == 0x05 && n >= 1 -> Msg.GameMode(d(0), if (n >= 3) d(2) else null)
+            code == 0x05 -> GameModeParser.candidates(p)?.let { (at1, at3) -> Msg.GameMode(at1, at3) }
             code == 0x06 -> devices(p, 1)?.let { Msg.Devices(it) }
             code == 0x08 && n >= 2 -> Msg.Hearing(d(0), d(1))
             code == 0x0A && n >= 1 -> Msg.ZenState(d(0))
