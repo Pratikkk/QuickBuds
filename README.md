@@ -199,6 +199,26 @@ The ID also lets the developer answer a report you sent. The answer comes back w
 (then no reply can reach you). About › Privacy › Reset install ID forgets the ID. On the PC, delete the `app_id` key in `settings.json`.
 The Worker code is in [report-worker/](./report-worker).
 
+## Feature ideas
+
+These are ideas, not plans. Nothing here is promised. To propose one, open a
+[feature idea](https://github.com/spizganed/QuickBuds/issues/new?template=feature-idea.yml).
+
+**Launch an app with an earbud gesture.** You pick a gesture, for example a triple tap on the left bud.
+You pick an installed app or action. Examples are Spotify, a playlist, or a voice assistant such as
+Gemini, ChatGPT or Claude. QuickBuds runs it when the gesture happens.
+
+Open questions:
+
+- Do the earbuds report a gesture over the control link when that gesture has no function set? If yes,
+  the app can act on it. If no, a workaround needs its own research.
+- HeyMelody already offers "voice assistant" as a triple-tap function on some models. Then the phone's
+  chosen assistant app starts. That path can work for models that offer it.
+- It differs from HeyMelody's firmware "Spotify Tap", which no model uses (see
+  [ROADMAP.md](./docs/ROADMAP.md)).
+
+Status: idea, no research yet.
+
 ## License
 
 Copyright (C) 2026 spizganed
