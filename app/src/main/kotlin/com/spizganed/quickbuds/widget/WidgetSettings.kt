@@ -74,6 +74,9 @@ object WidgetSettings {
     /** The Material style ([ThemeRes.material]): Classic layouts on one background, only a selection filled, no outlines. */
     fun materialStyle(c: Context) = ThemeRes.material(c)
 
+    /** The Glass style ([ThemeRes.glass]): Material's shapes on translucent surfaces. */
+    fun glassStyle(c: Context) = ThemeRes.glass(c)
+
     private const val KEY_BACKGROUND = "widgetBackground_"
 
     /** Material style: widget [id]'s box is drawn (default) or left out, so the content sits on the wallpaper as on Google's widgets. */
