@@ -11,7 +11,7 @@ import org.junit.Test
  */
 class AncSegmentedViewTest {
 
-    /** OvershootInterpolator(1.1f) peaks at 1.0447: t*t*((1.1+1)*t + 1.1) + 1 at t = 0.5. */
+    /** OvershootInterpolator(1.1f) peaks at 1.0447. */
     private val peak = 1.0447f
 
     @Test fun moveToOneZeroAtTheOvershootPeakStopsAtZero() {
