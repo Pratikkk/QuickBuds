@@ -33,6 +33,27 @@ internal fun segmentPosition(from: Float, to: Float, fraction: Float, last: Int)
  */
 internal fun hasSelection(selected: Int): Boolean = selected >= 0
 
+/**
+ * The position a new travel starts from. [current] is the frame on screen now. When it is on the
+ * track, the travel continues from it; a second tap during a move does not jump to [from].
+ * [last] is the last segment index.
+ */
+internal fun travelStart(current: Float, from: Int, last: Int): Float =
+    if (current in 0f..last.toFloat()) current else from.toFloat().coerceIn(0f, last.toFloat())
+
+/**
+ * The fill mix of every segment at [fraction] of a fade that starts from the [current] mixes.
+ * The target segment goes to 1 and every other segment goes to 0. At fraction 0 the result is
+ * [current], so a second tap during a fade continues from the mixes on screen.
+ */
+internal fun fadeMixes(current: FloatArray, to: Int, fraction: Float): FloatArray {
+    val f = fraction.coerceIn(0f, 1f)
+    return FloatArray(current.size) { i ->
+        val target = if (i == to) 1f else 0f
+        current[i] + (target - current[i]) * f
+    }
+}
+
 /** One coordinate of a cubic Bezier curve at parameter [t]. */
 private fun bezier(v1: Float, v2: Float, t: Float): Float {
     val u = 1f - t
@@ -58,20 +79,6 @@ internal fun materialEase(progress: Float): Float = cubicBezier(0.2f, 0f, 0f, 1f
 
 /** QuickBuds standard-decelerate easing: cubic-bezier(0, 0, 0, 1). */
 internal fun quickBudsEase(progress: Float): Float = cubicBezier(0f, 0f, 0f, 1f, progress)
-
-/**
- * How much segment [index] shows as selected at [fraction] of a move from [from] to [to].
- * The old segment fades out as the new one fades in.
- */
-internal fun segmentFill(index: Int, from: Int, to: Int, fraction: Float): Float {
-    if (from == to) return if (index == from && from >= 0) 1f else 0f
-    val f = fraction.coerceIn(0f, 1f)
-    return when (index) {
-        to -> f
-        from -> 1f - f
-        else -> 0f
-    }
-}
 
 /** True only for a tap that moves the outline between two cells. */
 internal fun selectionTravels(tapped: Boolean, from: Int, to: Int): Boolean =
@@ -110,7 +117,7 @@ class AncSegmentedView(
                 if (from < 0) { pos = v.toFloat(); animateAppear(1f); return }
                 appear = 1f
             } else if (material) {
-                animateMaterial(from, v)
+                animateMaterial(v)
                 return
             } else if (!nothing) {
                 animateQuickBuds(from, v)
@@ -186,14 +193,10 @@ class AncSegmentedView(
     ) != 0f
 
     /** Material: the old fill fades out while the new fill fades in. The label colour takes 150 ms. */
-    private fun animateMaterial(from: Int, to: Int) {
-        java.util.Arrays.fill(fillMixes, 0f)
-        java.util.Arrays.fill(colorMixes, 0f)
-        if (from in labels.indices) {
-            fillMixes[from] = 1f
-            colorMixes[from] = 1f
-        }
-        invalidate()
+    private fun animateMaterial(to: Int) {
+        // A second tap continues from the mixes on screen: do not reset them to the old target.
+        val fillStart = fillMixes.copyOf()
+        val colorStart = colorMixes.copyOf()
         if (width == 0 || !animationsEnabled()) { settleMaterial(to); return }
         fillAnim = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = 200
@@ -202,10 +205,8 @@ class AncSegmentedView(
                 val elapsed = it.animatedFraction * 200f
                 val fill = materialEase(elapsed / 200f)
                 val color = materialEase((elapsed / 150f).coerceAtMost(1f))
-                for (i in labels.indices) {
-                    fillMixes[i] = segmentFill(i, from, to, fill)
-                    colorMixes[i] = segmentFill(i, from, to, color)
-                }
+                fadeMixes(fillStart, to, fill).copyInto(fillMixes)
+                fadeMixes(colorStart, to, color).copyInto(colorMixes)
                 postInvalidateOnAnimation()
             }
             addListener(object : AnimatorListenerAdapter() {
@@ -233,13 +234,14 @@ class AncSegmentedView(
         val last = labels.size - 1
         val travel = selectionTravels(tapInFlight, from, to) && width > 0
         if (width == 0 || !animationsEnabled()) { settleQuickBuds(to); return }
+        // A second tap continues from the outline and the colours on screen.
+        val start = if (travel) travelStart(pos, from, last) else 0f
+        val colorStart = colorMixes.copyOf()
         quickTravel = travel
         outlineFrom = from
         outlineTo = to
         outlineMix = 0f
-        java.util.Arrays.fill(colorMixes, 0f)
-        if (from in labels.indices) colorMixes[from] = 1f
-        if (travel) pos = from.toFloat()
+        if (travel) pos = start
         val duration = if (to < 0) 150L else 200L
         quickAnim = ValueAnimator.ofFloat(0f, 1f).apply {
             this.duration = duration
@@ -249,13 +251,13 @@ class AncSegmentedView(
                 val motion = quickBudsEase(elapsed / duration)
                 val color = quickBudsEase((elapsed / 150f).coerceAtMost(1f))
                 if (travel) {
-                    pos = segmentPosition(from.toFloat(), to.toFloat(), motion, last)
+                    pos = segmentPosition(start, to.toFloat(), motion, last)
                     outlineMix = 1f
                 } else {
                     pos = to.toFloat()
                     outlineMix = motion
                 }
-                for (i in labels.indices) colorMixes[i] = segmentFill(i, from, to, color)
+                fadeMixes(colorStart, to, color).copyInto(colorMixes)
                 postInvalidateOnAnimation()
             }
             addListener(object : AnimatorListenerAdapter() {
