@@ -2,11 +2,13 @@ package com.spizganed.quickbuds.protocol2
 
 /**
  * Typed messages of docs/PROTOCOL.md: builds what the app sends. Each function returns a [Frame]
- * (command, payload); the link layer adds the sequence number and the frame. Written from the spec.
+ * (command, payload); the link layer adds the sequence number and the frame. [seq] holds the fixed
+ * number of the battery and wearing queries. Written from the spec.
  */
-data class Frame(val cmd: Int, val payload: ByteArray) {
-    override fun equals(other: Any?) = other is Frame && cmd == other.cmd && payload.contentEquals(other.payload)
-    override fun hashCode() = cmd * 31 + payload.contentHashCode()
+data class Frame(val cmd: Int, val payload: ByteArray, val seq: Int? = null) {
+    override fun equals(other: Any?) =
+        other is Frame && cmd == other.cmd && seq == other.seq && payload.contentEquals(other.payload)
+    override fun hashCode() = (cmd * 31 + (seq ?: 0)) * 31 + payload.contentHashCode()
     override fun toString() = "Frame(%04X %s)".format(cmd, payload.joinToString(" ") { "%02X".format(it) })
 }
 
@@ -66,8 +68,10 @@ object Cmd {
 
     // --- Reads ---
 
-    fun battery() = f(0x0106)
-    fun wearing() = f(0x0109)
+    /** `0x0106` with the fixed sequence `0xF0`, as legacy `queryBattery` (`LegacyProtocol.kt` 391). */
+    fun battery() = Frame(0x0106, ByteArray(0), seq = 0xF0)
+    /** `0x0109` with the fixed sequence `0xF2`, as legacy `queryWearingStatus` (`LegacyProtocol.kt` 227). */
+    fun wearing() = Frame(0x0109, ByteArray(0), seq = 0xF2)
     fun firmware() = f(0x0105)
     /** `0x010C <what> <arg>`: `01 01` current mode, `02 01` shared hold cycle (`02 03` left, `02 04` right), `04 01` the level Smart chose. */
     fun ancRead(what: Int, arg: Int) = f(0x010C, what, arg)
