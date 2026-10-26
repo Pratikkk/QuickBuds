@@ -7,7 +7,7 @@ import com.spizganed.quickbuds.protocol.ModelCatalog
 
 /**
  * Limits of the current earbuds and phone that the person should know. The keys come from the model's
- * `knownIssues` in `models.json` and from two checks on the phone and the rows. Each key has a title and a body string.
+ * `knownIssues` in `models.json` and from checks on the phone (Samsung codec, OnePlus link) and the rows. Each key has a title and a body string.
  */
 object KnownIssues {
 
