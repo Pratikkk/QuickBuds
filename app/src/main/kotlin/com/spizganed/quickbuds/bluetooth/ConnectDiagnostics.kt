@@ -15,7 +15,18 @@ object ConnectDiagnostics {
     fun formatUuids(uuids: List<String>): String =
         if (uuids.isEmpty()) "none" else uuids.joinToString(", ") { it.lowercase() }
 
-    /** `android.bluetooth.BluetoothSocketException` constant names, by error code (API 34). */
+    /**
+     * Whether a failed connect asks for a fresh UUID list. It asks on the first failed try of a
+     * connect cycle only, and not while an earlier answer still waits.
+     */
+    fun shouldFetchFreshUuids(reconnectAttempts: Int, refreshPending: Boolean): Boolean =
+        reconnectAttempts == 0 && !refreshPending
+
+    /**
+     * `android.bluetooth.BluetoothSocketException` constant names, by error code.
+     * Codes 0..20 are API 34 (android-14.0.0_r1). Code 21 is in later Android 14 builds
+     * (android-14.0.0_r75) and in main.
+     */
     private val SOCKET_ERRORS = mapOf(
         0 to "UNSPECIFIED",
         1 to "L2CAP_UNKNOWN",

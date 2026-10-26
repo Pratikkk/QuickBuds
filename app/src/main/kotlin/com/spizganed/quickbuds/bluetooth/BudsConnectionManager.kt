@@ -63,6 +63,8 @@ class BudsConnectionManager(private val context: Context) {
         private const val PENDING_MS = 2000L
         /** A blocked socket.connect() gets its socket closed after this long, so the try can fail. */
         private const val CONNECT_TIMEOUT_MS = 12_000L
+        /** A fresh UUID query gets this long for its answer, then its receiver goes away. */
+        private const val UUID_REFRESH_TIMEOUT_MS = 10_000L
         /** Virtual buds: a refused or silent TCP connect must not hang the UI. */
         private const val VIRTUAL_CONNECT_TIMEOUT_MS = 5_000
     }
@@ -207,6 +209,9 @@ class BudsConnectionManager(private val context: Context) {
     private var isReady = false
     private var isConnecting = false
     private var reconnectAttempts = 0
+    /** The receiver of the pending fresh-UUID query, and its timeout. Both live on [handler]. */
+    private var uuidReceiver: BroadcastReceiver? = null
+    private var uuidTimeout: Runnable? = null
 
     // Reconnect-after-loss state — see reconnectAfterLoss().
     private var lastDevice: BluetoothDevice? = null
@@ -299,12 +304,9 @@ class BudsConnectionManager(private val context: Context) {
         if (!started) return
 
         Thread {
-            var uuidReceiver: BroadcastReceiver? = null
             try {
                 log("Bond state: ${ConnectDiagnostics.bondStateWord(device.bondState)}")
                 log("Cached service UUIDs: ${ConnectDiagnostics.formatUuids(device.uuids?.map { it.uuid.toString() }.orEmpty())}")
-                uuidReceiver = registerUuidReceiver(device)
-                runCatching { device.fetchUuidsWithSdp() }
 
                 // 079A first: it is the one that works (HeyMelody connects straight to it), while
                 // 1107 never connects on the Buds 4 and burns ~5 s. 1107 stays for other models.
@@ -376,6 +378,7 @@ class BudsConnectionManager(private val context: Context) {
                     onLinkUp(device)
                 } else {
                     log("All connection methods failed: $lastError")
+                    startUuidRefresh(device, attempts = reconnectAttempts)
                     disconnect()
                     if (generation == connectGeneration && reconnectAttempts < 5) {
                         reconnectAttempts++
@@ -393,11 +396,40 @@ class BudsConnectionManager(private val context: Context) {
                     return@Thread
                 }
             } finally {
-                uuidReceiver?.let { unregisterUuidReceiver(it) }
                 // Every exit clears the latch. An exception outside the socket tries used to keep it set.
                 isConnecting = false
             }
         }.start()
+    }
+
+    /**
+     * Asks for a fresh UUID list after the failed tries. The receiver waits for the answer or
+     * [UUID_REFRESH_TIMEOUT_MS]. An auto-retry does not ask again, and a waiting answer blocks a
+     * second receiver.
+     */
+    private fun startUuidRefresh(device: BluetoothDevice, attempts: Int) {
+        handler.post {
+            if (!ConnectDiagnostics.shouldFetchFreshUuids(attempts, refreshPending = uuidReceiver != null)) return@post
+            val receiver = registerUuidReceiver(device) ?: return@post
+            val timeout = Runnable { finishUuidRefresh(receiver) }
+            uuidReceiver = receiver
+            uuidTimeout = timeout
+            handler.postDelayed(timeout, UUID_REFRESH_TIMEOUT_MS)
+            val started = runCatching { device.fetchUuidsWithSdp() }.getOrDefault(false)
+            if (!started) {
+                log("Fresh UUID query did not start.")
+                finishUuidRefresh(receiver)
+            }
+        }
+    }
+
+    /** Stops the wait for [receiver] once. The answer and the timeout both come here. */
+    private fun finishUuidRefresh(receiver: BroadcastReceiver) {
+        if (uuidReceiver !== receiver) return
+        uuidReceiver = null
+        uuidTimeout?.let { handler.removeCallbacks(it) }
+        uuidTimeout = null
+        unregisterUuidReceiver(receiver)
     }
 
     /** Listens for the fresh UUID list of [device] during one connect. Returns the receiver, or null on failure. */
@@ -414,6 +446,7 @@ class BudsConnectionManager(private val context: Context) {
                     ?.mapNotNull { (it as? ParcelUuid)?.uuid?.toString() }
                     .orEmpty()
                 log("Fresh service UUIDs: ${ConnectDiagnostics.formatUuids(uuids)}")
+                finishUuidRefresh(this)
             }
         }
         return try {

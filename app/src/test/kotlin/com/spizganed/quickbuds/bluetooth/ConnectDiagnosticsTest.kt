@@ -1,7 +1,9 @@
 package com.spizganed.quickbuds.bluetooth
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** The diagnostic words and text for a connect: no Android types, so a plain JVM test. */
@@ -37,6 +39,14 @@ class ConnectDiagnosticsTest {
         assertEquals("L2CAP_TIMEOUT", ConnectDiagnostics.socketErrorName(14))
         assertEquals("UNIX_FILE_SOCKET_CREATION_FAILURE", ConnectDiagnostics.socketErrorName(21))
         assertNull(ConnectDiagnostics.socketErrorName(22))
+    }
+
+    @Test
+    fun queriesFreshUuidsOnTheFirstFailedTryOnly() {
+        assertTrue(ConnectDiagnostics.shouldFetchFreshUuids(0, refreshPending = false))
+        assertFalse(ConnectDiagnostics.shouldFetchFreshUuids(1, refreshPending = false))
+        assertFalse(ConnectDiagnostics.shouldFetchFreshUuids(5, refreshPending = false))
+        assertFalse(ConnectDiagnostics.shouldFetchFreshUuids(0, refreshPending = true))
     }
 
     @Test
