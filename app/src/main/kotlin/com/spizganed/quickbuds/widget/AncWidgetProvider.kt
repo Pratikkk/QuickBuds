@@ -1416,12 +1416,11 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             val w = AppWidgetManager.getInstance(context).getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
             if (w <= 0) return 60f
             val g = geo(context)
-            // The compact Glass page has 4dp row padding and 8dp inside the row; the other pages have 6dp inside.
+            // The compact Glass page has 4dp row padding; the other pages use their style's padding.
             val row = if (compact) 4f else g.row
-            val inner = if (compact) 8f else 6f
             // The Glass case icon's bitmap has 6px padding on each side.
             val icon = caseDp * 496f / 400f + if (compact) 12f / context.resources.displayMetrics.density else 0f
-            return (w - 2 * g.side - 2 * row - icon - inner - 2f).coerceAtLeast(20f)
+            return (w - 2 * g.side - 2 * row - icon - 6f - 2f).coerceAtLeast(20f)
         }
 
         /**
