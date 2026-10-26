@@ -1,10 +1,17 @@
 package com.spizganed.quickbuds.protocol2
 
+import com.spizganed.quickbuds.protocol.AncEventParser
+import com.spizganed.quickbuds.protocol.BatteryParser
+import com.spizganed.quickbuds.protocol.EqCodec
+import com.spizganed.quickbuds.protocol.GameModeParser
+import com.spizganed.quickbuds.protocol.KeyFunctionParser
+import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.WearingStatusParser
 import com.spizganed.quickbuds.protocol.Wire.Message
 
 /**
- * Typed messages of docs/PROTOCOL.md: decodes what the buds send. Written from the spec, not from
- * the `protocol` package. Input is a [Message] from the link layer; output is [Msg].
+ * Typed messages of docs/PROTOCOL.md: decodes what the buds send. The topic decoders of the
+ * `protocol` package do the parsing (legacy behaviour wins). Input is a [Message] from the link layer; output is [Msg].
  */
 
 /** A MAC in written order. */
@@ -121,7 +128,13 @@ sealed class Msg {
     object Registered : Msg() { override fun toString() = "Registered" }
     /** A write reply (`0x84xx`): the command written, the status (0 accepted) and the bytes after it. */
     data class Ack(val cmd: Int, val status: Int, val data: List<Int>) : Msg()
-    data class Gestures(val table: List<Binding>) : Msg()
+    data class Gestures(
+        val table: List<Binding>,
+        /** The legacy status byte: 0 in a normal reply, -1 when the payload is too short. */
+        val status: Int = 0,
+        /** Bytes left after the whole entries; the legacy parser keeps them. */
+        val trailing: List<Int> = emptyList(),
+    ) : Msg()
     /** `0x810D`: (feature id, value). */
     data class Features(val list: List<Pair<Int, Int>>) : Msg()
     data class EqCurrent(val id: Int) : Msg()
@@ -157,13 +170,7 @@ sealed class Msg {
     /** Both candidates; [state] picks one by product id. */
     data class GameMode(val at1: Int?, val at3: Int?) : Msg() {
         /** The state for [productId]: [at3] for the four models, [at1] otherwise. null: no state byte. */
-        fun state(productId: String?): Boolean? =
-            (if (productId?.uppercase() in STATE_AT_3) at3 else at1)?.let { it != 0 }
-
-        companion object {
-            /** These models put the state in byte 3, not byte 1 `[VENDOR]`, unverified. */
-            val STATE_AT_3 = setOf("062410", "062810", "063010", "063410")
-        }
+        fun state(productId: String?): Boolean? = GameModeParser.state(at1, at3, productId)
     }
     /** `0x0503`: feature id -> value; bytes after the last pair are ignored. */
     data class FeaturePush(val values: Map<Int, Int>) : Msg()
@@ -204,31 +211,27 @@ object Decode {
     /** Decodes one message. null: not a message this layer knows, or a malformed one. */
     fun decode(m: Message): Msg? {
         val p = m.payload
-        if (m.cmd == PUSH) return push(p)
+        if (m.cmd == PUSH) return push(m)
         return when (m.cmd) {
             0x8100 -> Bitmap.parse(p)?.let { Msg.BitmapReply(it) }
             0x8103 -> if (p.size == 4 && p[0].toInt() == 0) Msg.ProductId(u(p, 1) or (u(p, 2) shl 8) or (u(p, 3) shl 16)) else null
             0x8105 -> firmware(p)?.let { Msg.Firmware(it) }
             0x8200 -> if (p.size >= 2 && p[0].toInt() == 0 && p.size >= 2 + u(p, 1)) Msg.Offered(ints(p, 2).take(u(p, 1))) else null
             0x8205 -> Msg.Registered
-            0x8106 -> ok(p)?.let { battery(it, 0) }?.let { Msg.Battery(it) }
-            0x8109 -> {
-                // `<count> <pairs>`, or a status byte first; a list is valid when its parts are 1-3.
-                val list = pairs(p, 0)?.takeIf { l -> l.all { it.first in 1..3 } }
-                    ?: pairs(p, 1)?.takeIf { l -> l.all { it.first in 1..3 } }
-                list?.let { l -> Msg.Wear(l.map { it.first to (it.second and 7) }) }
-            }
+            0x8106 -> BatteryParser.parse(frame(m))?.let { Msg.Battery(cells(it)) }
+            0x8109 -> WearingStatusParser.parseQueryResponse(p)?.let { Msg.Wear(wear(it)) }
             0x810C -> ok(p)?.let { anc(it, 0) }?.let { Msg.AncMsg(it) }
             0x8108 -> {
-                if (p.size >= 2 && p[0].toInt() == 0) {
-                    val n = minOf(u(p, 1), (p.size - 2) / 4)
-                    // A reply with no entries is no table: a write is built from the last good one.
-                    if (n == 0) null else Msg.Gestures((0 until n).map { Binding(u(p, 2 + it * 4), u(p, 3 + it * 4), u(p, 4 + it * 4), u(p, 5 + it * 4)) })
-                } else null
+                val t = KeyFunctionParser.parse(p)
+                Msg.Gestures(
+                    t.entries.map { Binding(it.deviceType, it.button, it.action, it.function) },
+                    t.status,
+                    t.trailing.map { it.toInt() and 0xFF },
+                )
             }
-            0x810D -> ok(p)?.let { pairs(it, 0) }?.let { Msg.Features(it) }
+            0x810D -> ok(p)?.let { features(it) }?.let { Msg.Features(it) }
             0x810F -> ok(p)?.takeIf { it.isNotEmpty() }?.let { Msg.EqCurrent(u(it, 0)) }
-            0x8122 -> ok(p)?.let { presets(it) }?.let { Msg.EqCustom(it) }
+            0x8122 -> EqCodec.parseList(p)?.let { list -> Msg.EqCustom(list.map { preset(it) }) }
             0x8124 -> ok(p)?.takeIf { it.size >= 3 }?.let { Msg.BassLevel(it[2].toInt()) }
             0x0503 -> featurePush(p)?.let { Msg.FeaturePush(it) }
             0x0504 -> if (p.isNotEmpty()) Msg.EqCurrent(u(p, 0)) else null
@@ -350,26 +353,10 @@ object Decode {
         }
     }
 
-    /** `<count>` then per preset `<flag> <min> <max> <id> <nameLen> <name> <bands> [<freq u16 LE> <gain s8>]...`. */
-    private fun presets(p: ByteArray): List<EqPreset>? {
-        if (p.isEmpty()) return null
-        var i = 1
-        val out = ArrayList<EqPreset>()
-        repeat(u(p, 0)) {
-            if (i + 5 > p.size) return null
-            val k = u(p, i + 4)
-            if (i + 6 + k > p.size) return null
-            val bands = u(p, i + 5 + k)
-            if (i + 6 + k + bands * 3 > p.size) return null
-            val at = i + 6 + k
-            out += EqPreset(
-                u(p, i + 3), String(p, i + 5, k, Charsets.UTF_8), u(p, i) == 1, p[i + 1].toInt() to p[i + 2].toInt(),
-                (0 until bands).map { (u(p, at + it * 3) or (u(p, at + it * 3 + 1) shl 8)) to p[at + it * 3 + 2].toInt() },
-            )
-            i = at + bands * 3
-        }
-        return out
-    }
+    /** The legacy preset keeps the tag bytes; the typed range comes from them. */
+    private fun preset(p: EqCodec.Preset) = EqPreset(
+        p.id, p.name, p.selected, p.tag[0].toInt() to p.tag[1].toInt(), p.freqs.zip(p.gains),
+    )
 
     /** `00 <count>` then UTF-8 `device,type,version` triples joined by commas. */
     private fun firmware(p: ByteArray): List<Triple<Int, Int, String>>? {
@@ -390,17 +377,32 @@ object Decode {
         return (0 until count).associate { u(p, 1 + it * 2) to u(p, 2 + it * 2) }
     }
 
-    /** `<count>` then `<a> <b>` pairs from [from]. null when the pairs run past the end; a count of 0 is no list. */
-    private fun pairs(p: ByteArray, from: Int = 0): List<Pair<Int, Int>>? {
-        if (from >= p.size) return null
-        val n = u(p, from)
-        if (n == 0 || p.size - from - 1 < n * 2) return null
-        return (0 until n).map { u(p, from + 1 + it * 2) to u(p, from + 2 + it * 2) }
+    /** `0x810D`: `<count>` then `<id> <value>` pairs. A count of 0 is an empty map; a short list keeps the whole pairs, as the legacy layer does. */
+    private fun features(p: ByteArray): List<Pair<Int, Int>>? {
+        if (p.isEmpty()) return null
+        val n = u(p, 0)
+        return (0 until n).mapNotNull { i ->
+            val o = 1 + i * 2
+            if (o + 1 < p.size) u(p, o) to u(p, o + 1) else null
+        }
     }
 
-    /** Level 0 means "not known" (a closed case): left out. */
-    private fun battery(p: ByteArray, from: Int): List<Cell>? =
-        pairs(p, from)?.filter { it.second and 0x7F != 0 }?.map { Cell(it.first, it.second and 0x7F, it.second and 0x80 != 0) }
+    /** The legacy decoder reads a whole packet, so rebuild one from the message. */
+    private fun frame(m: Message) = OpoProtocol.buildPacket(m.cmd, m.seq, m.payload)
+
+    /** Map the legacy battery result to cells: left, right, case, with level 0 left out. */
+    private fun cells(r: BatteryParser.Result) = listOfNotNull(
+        r.left?.let { Cell(1, it.level, it.isCharging) },
+        r.right?.let { Cell(2, it.level, it.isCharging) },
+        r.case?.let { Cell(3, it.level, it.isCharging) },
+    )
+
+    /** Map the legacy wearing result to (part, state) pairs in part order. */
+    private fun wear(r: WearingStatusParser.Result) = listOfNotNull(
+        if (r.leftValid) 1 to r.leftStatus else null,
+        if (r.rightValid) 2 to r.rightStatus else null,
+        if (r.caseStatus != -1) 3 to r.caseStatus else null,
+    )
 
     /** `<count>` then `<MAC 6> <len> <state> <flags> <nameLen> <name>`. */
     fun devices(p: ByteArray, from: Int = 0): List<Device>? {
@@ -463,20 +465,21 @@ object Decode {
     }
 
     /** `payload[0]` is the event code. */
-    private fun push(p: ByteArray): Msg? {
+    private fun push(m: Message): Msg? {
+        val p = m.payload
         if (p.isEmpty()) return null
         val code = u(p, 0)
         val n = p.size - 1  // bytes after the code
         fun d(i: Int) = u(p, 1 + i)
         return when {
-            code == 0x01 -> battery(p, 1)?.let { Msg.Battery(it) }
-            code == 0x02 -> pairs(p, 1)?.let { l -> Msg.Wear(l.map { it.first to (it.second and 7) }) }
-            code == 0x03 -> anc(p, 1)?.let { Msg.AncMsg(it) }
+            code == 0x01 -> BatteryParser.parseActive(frame(m))?.let { Msg.Battery(cells(it)) }
+            code == 0x02 -> WearingStatusParser.parseActiveReport(p)?.let { Msg.Wear(wear(it)) }
+            code == 0x03 -> if (AncEventParser.isAncEvent(p)) Msg.AncMsg(Anc.Mode(AncEventParser.rawValue(p))) else null
             code == 0x04 -> {
                 val r = (0 until n / 2).map { d(it * 2) to d(it * 2 + 1) }
                 Msg.FitTest(r.firstOrNull { it.first == 1 }?.second, r.firstOrNull { it.first == 2 }?.second)
             }
-            code == 0x05 && n >= 1 -> Msg.GameMode(d(0), if (n >= 3) d(2) else null)
+            code == 0x05 -> GameModeParser.candidates(p)?.let { (at1, at3) -> Msg.GameMode(at1, at3) }
             code == 0x06 -> devices(p, 1)?.let { Msg.Devices(it) }
             code == 0x08 && n >= 2 -> Msg.Hearing(d(0), d(1))
             code == 0x0A && n >= 1 -> Msg.ZenState(d(0))

@@ -22,12 +22,10 @@ class MsgTest {
             b(0, 0xFF, 0x77, 0x5A, 0xEA, 0x67, 0x0E, 0x20, 0x07), b(0, 0x9B, 0x2C, 0x50, 0x80),
         )
         for (bit in 0 until 72) maps += ByteArray(11).also { it[1 + bit / 8] = (1 shl (bit % 8)).toByte() }
-        // The shipping table holds the commands for bits 35, 64, 67 and 68.
-        val added = setOf(0x0419, 0x0136, 0x0433, 0x0432, 0x0135, 0x0435, 0x0117)
         for (map in maps) {
             val new = Bitmap.parse(map)!!
             val old = Capabilities.parse(map)!!
-            for (cmd in 0..0x0FFF) if (cmd !in added) assertEquals("cmd $cmd", cmd in old, new.allows(cmd))
+            for (cmd in 0..0x0FFF) assertEquals("cmd $cmd", cmd in old, new.allows(cmd))
         }
         assertTrue(Bitmap.UNKNOWN.allows(0x0422) && !Bitmap.UNKNOWN.known)
         assertTrue(Bitmap.parse(b(0, 0xFF, 0x77, 0x5A, 0xEA, 0x67, 0x0E, 0x20, 0x07))!!.allows(0x012F))
@@ -66,10 +64,11 @@ class MsgTest {
         assertEquals(listOf(Cell(1, 100, false), Cell(2, 100, true)), new.cells)
         assertEquals(old.left!!.level, 100); assertEquals(old.right!!.isCharging, true); assertNull(old.case)
         assertEquals(Msg.AncMsg(Anc.Mode(8)), dec(push(3, 1, 1, 0x08, 0x00)))
-        assertEquals(Msg.AncMsg(Anc.Smart(0x20)), dec(push(3, 4, 1, 0x20, 0)))
+        // The legacy event gate accepts only `03 01 01`; the hold-cycle echo and the smart form are replies, not events.
+        assertNull(dec(push(3, 4, 1, 0x20, 0)))
         assertEquals(8, AncEventParser.rawValue(b(3, 1, 1, 8, 0)))
-        // The hold cycle push: the shipping decoder drops it, this one names it.
-        assertEquals(Msg.AncMsg(Anc.HoldCycle(1, 7)), dec(push(3, 2, 1, 7)))
+        // The hold cycle reply: `0x810C` names it.
+        assertNull(dec(push(3, 2, 1, 7)))
         assertEquals(Msg.FitTest(1, 1), dec(push(4, 1, 1, 2, 1)))
         assertEquals(Msg.FitTest(null, 6), dec(push(4, 2, 6)))
         assertEquals(Msg.GameMode(1, null), dec(push(5, 1)))
@@ -176,14 +175,17 @@ class MsgTest {
         assertEquals(rows, g)
         val old = com.spizganed.quickbuds.protocol.KeyFunctionParser.parse(payload)
         assertEquals(old.entries.map { listOf(it.deviceType, it.button, it.action, it.function) }, g.map { listOf(it.dev, it.button, it.act, it.func) })
-        assertNull(dec(m(0x8108, 0, 0)))
-        assertEquals(1, (dec(m(0x8108, 0, 1, 1, 1, 1, 0, 9, 9, 9, 9)) as Msg.Gestures).table.size)
+        assertEquals(Msg.Gestures(emptyList(), 0, emptyList()), dec(m(0x8108, 0, 0)))
+        assertEquals(2, (dec(m(0x8108, 0, 1, 1, 1, 1, 0, 9, 9, 9, 9)) as Msg.Gestures).table.size)
     }
 
     @Test fun featureAndEqReplies() {
         val f = dec(m(0x810D, 0, 8, 5, 0, 4, 0, 0x0B, 1, 0x11, 1, 0x18, 1, 6, 0, 0x1B, 0, 0x1D, 1)) as Msg.Features
         assertEquals(8, f.list.size)
         assertEquals(4 to 0, f.list[1])
+        assertEquals(Msg.Features(emptyList()), dec(m(0x810D, 0, 0)))
+        assertEquals(Msg.Features(listOf(5 to 0)), dec(m(0x810D, 0, 3, 5, 0, 4)))
+        assertNull(dec(m(0x810D, 0)))
         assertEquals(Msg.EqCurrent(2), dec(m(0x810F, 0, 2)))
         assertEquals(Msg.EqCurrent(1), Decode.decode(Message(0x0504, 0xFF, b(1))))
         assertEquals(Msg.BassLevel(-2), dec(m(0x8124, 0, 0xFB, 5, 0xFE)))
