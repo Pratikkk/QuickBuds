@@ -561,4 +561,6 @@
     <string name="about_privacy_reply">Identyfikator pozwala też deweloperowi odpowiedzieć na wysłane zgłoszenie. Odpowiedź przychodzi z dziennym zliczeniem.</string>
     <string name="issue_oneplus_title">System może blokować połączenie</string>
     <string name="oneplus_hint">Na telefonach OnePlus, OPPO i realme ustawienia słuchawek systemu mogą utrzymywać połączenie słuchawek i blokować QuickBuds. Jeśli QuickBuds nie połączy się, użyj ustawień słuchawek w Ustawienia › Bluetooth › Twoje słuchawki.</string>
+    <string name="connect_try_failed">Nie udało się połączyć (próba %1$d z %2$d)</string>
+    <string name="connect_gave_up">Nie udało się połączyć po %1$d próbach. Dotknij Połącz, aby spróbować ponownie.</string>
 </resources>

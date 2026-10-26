@@ -23,4 +23,12 @@ class ConnectRetryTest {
         assertFalse(ConnectRetry.shouldAutoRetry(generationAtStart = 7, currentGeneration = 7, attempts = 5))
         assertFalse(ConnectRetry.shouldAutoRetry(generationAtStart = 7, currentGeneration = 7, attempts = 6))
     }
+
+    @Test
+    fun oneCycleMakesFiveTriesInTotal() {
+        // Each failed try counts first, then asks for a retry: the first try plus 4 retries.
+        var tries = 0
+        do { tries++ } while (ConnectRetry.shouldAutoRetry(1, 1, tries))
+        assertTrue(tries == ConnectRetry.MAX_TRIES)
+    }
 }

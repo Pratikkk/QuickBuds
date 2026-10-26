@@ -563,4 +563,6 @@
     <string name="about_privacy_reply">आईडी से डेवलपर आपकी भेजी रिपोर्ट का उत्तर भी दे सकता है। उत्तर दैनिक गिनती के साथ आता है।</string>
     <string name="issue_oneplus_title">सिस्टम कनेक्शन ब्लॉक कर सकता है</string>
     <string name="oneplus_hint">OnePlus, OPPO और realme फ़ोन पर, सिस्टम की ईयरबड सेटिंग्स ईयरबड का लिंक पकड़ सकती हैं और QuickBuds को ब्लॉक कर सकती हैं। अगर QuickBuds कनेक्ट नहीं होता, तो सेटिंग्स › Bluetooth › आपके ईयरबड में ईयरबड सेटिंग्स का उपयोग करें।</string>
+    <string name="connect_try_failed">कनेक्ट नहीं हो सका (प्रयास %1$d/%2$d)</string>
+    <string name="connect_gave_up">%1$d प्रयासों के बाद भी कनेक्ट नहीं हो सका। फिर से कोशिश करने के लिए Connect पर टैप करें।</string>
 </resources>

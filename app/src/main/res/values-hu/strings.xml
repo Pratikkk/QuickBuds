@@ -561,4 +561,6 @@
     <string name="about_privacy_reply">Az azonosító lehetővé teszi, hogy a fejlesztő válaszoljon az elküldött jelentésedre. A válasz a napi számlálással érkezik.</string>
     <string name="issue_oneplus_title">A rendszer blokkolhatja a kapcsolatot</string>
     <string name="oneplus_hint">OnePlus, OPPO és realme telefonokon a rendszer fülhallgató-beállításai tarthatják a fülhallgató kapcsolatát, és blokkolhatják a QuickBudsot. Ha a QuickBuds nem csatlakozik, használja a fülhallgató-beállításokat a Beállítások › Bluetooth › fülhallgatók menüben.</string>
+    <string name="connect_try_failed">Nem sikerült csatlakozni (%1$d./%2$d próbálkozás)</string>
+    <string name="connect_gave_up">%1$d próbálkozás után sem sikerült csatlakozni. Koppints a Csatlakozás gombra az újrapróbáláshoz.</string>
 </resources>

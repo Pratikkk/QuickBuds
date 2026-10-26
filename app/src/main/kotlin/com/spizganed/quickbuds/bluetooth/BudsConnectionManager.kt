@@ -380,9 +380,12 @@ class BudsConnectionManager(private val context: Context) {
                     log("All connection methods failed: $lastError")
                     startUuidRefresh(device, attempts = reconnectAttempts)
                     teardownLink()
+                    // A user Disconnect or a new connect raised the generation: this attempt ends quietly.
+                    val stillOurs = generation == connectGeneration
+                    reconnectAttempts++
+                    if (stillOurs) toast(context.getString(R.string.connect_try_failed, reconnectAttempts, ConnectRetry.MAX_TRIES))
                     if (ConnectRetry.shouldAutoRetry(generation, connectGeneration, reconnectAttempts)) {
-                        reconnectAttempts++
-                        log("Auto-retry $reconnectAttempts/5 in 5s...")
+                        log("Auto-retry $reconnectAttempts/${ConnectRetry.MAX_TRIES} in 5s...")
                         val retry = Runnable {
                             pendingRetry = null
                             if (generation == connectGeneration && !isConnected() && !isConnecting) connect(device)
@@ -390,7 +393,10 @@ class BudsConnectionManager(private val context: Context) {
                         pendingRetry = retry
                         handler.postDelayed(retry, 5000)
                     } else {
-                        log("Giving up after 5 connect tries. Tap CONNECT to retry manually.")
+                        if (stillOurs) {
+                            log("Giving up after ${ConnectRetry.MAX_TRIES} connect tries. Tap CONNECT to retry manually.")
+                            toast(context.getString(R.string.connect_gave_up, ConnectRetry.MAX_TRIES))
+                        }
                         reconnectAttempts = 0
                     }
                     return@Thread
@@ -983,6 +989,9 @@ class BudsConnectionManager(private val context: Context) {
         syncHandler.removeCallbacks(tickRunnable)
         if (sync.active()) syncHandler.postDelayed(tickRunnable, 500)
     }
+
+    /** A short toast from any thread. */
+    private fun toast(text: String) = handler.post { Toast.makeText(context, text, Toast.LENGTH_SHORT).show() }
 
     private fun toastLogName(kind: FeatureSync.ToastKind) = when (kind) {
         FeatureSync.ToastKind.REFUSED_MISSING, FeatureSync.ToastKind.REFUSED_NOW -> "REFUSED"

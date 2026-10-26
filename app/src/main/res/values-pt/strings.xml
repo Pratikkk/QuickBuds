@@ -561,4 +561,6 @@
     <string name="about_privacy_reply">O ID também permite que o desenvolvedor responda a um relatório que você enviou. A resposta chega com a contagem diária.</string>
     <string name="issue_oneplus_title">O sistema pode bloquear a conexão</string>
     <string name="oneplus_hint">Em telefones OnePlus, OPPO e realme, as configurações de fones do sistema podem manter o vínculo dos fones e bloquear o QuickBuds. Se o QuickBuds não se conectar, use as configurações de fones em Configurações › Bluetooth › seus fones.</string>
+    <string name="connect_try_failed">Não foi possível conectar (tentativa %1$d de %2$d)</string>
+    <string name="connect_gave_up">Não foi possível conectar após %1$d tentativas. Toque em Conectar para tentar novamente.</string>
 </resources>

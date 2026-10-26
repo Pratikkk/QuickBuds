@@ -561,4 +561,6 @@
     <string name="about_privacy_reply">Mit der ID kann der Entwickler auch auf einen gesendeten Bericht antworten. Die Antwort kommt mit der täglichen Zählung.</string>
     <string name="issue_oneplus_title">Das System kann die Verbindung blockieren</string>
     <string name="oneplus_hint">Auf OnePlus-, OPPO- und realme-Telefonen können die Earbud-Einstellungen des Systems die Verbindung der Earbuds halten und QuickBuds blockieren. Wenn QuickBuds keine Verbindung herstellt, verwenden Sie die Earbud-Einstellungen in Einstellungen › Bluetooth › Ihre Earbuds.</string>
+    <string name="connect_try_failed">Verbindung fehlgeschlagen (Versuch %1$d von %2$d)</string>
+    <string name="connect_gave_up">Keine Verbindung nach %1$d Versuchen. Tippe auf Verbinden, um es erneut zu versuchen.</string>
 </resources>

@@ -561,4 +561,6 @@
     <string name="about_privacy_reply">Kimlik, geliştiricinin gönderdiğiniz bir rapora yanıt vermesini de sağlar. Yanıt günlük sayımla birlikte gelir.</string>
     <string name="issue_oneplus_title">Sistem bağlantıyı engelleyebilir</string>
     <string name="oneplus_hint">OnePlus, OPPO ve realme telefonlarda sistemin kulaklık ayarları kulaklıkların bağlantısını tutabilir ve QuickBuds uygulamasını engelleyebilir. QuickBuds bağlanmazsa Ayarlar › Bluetooth › kulaklığınız bölümünde kulaklık ayarlarını kullanın.</string>
+    <string name="connect_try_failed">Bağlanılamadı (deneme %1$d/%2$d)</string>
+    <string name="connect_gave_up">%1$d denemeden sonra bağlanılamadı. Tekrar denemek için Bağlan düğmesine dokunun.</string>
 </resources>

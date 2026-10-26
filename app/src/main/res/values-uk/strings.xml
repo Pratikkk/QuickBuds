@@ -561,4 +561,6 @@
     <string name="about_privacy_reply">ID також дає розробнику змогу відповісти на надісланий вами звіт. Відповідь приходить разом із щоденним підрахунком.</string>
     <string name="issue_oneplus_title">Система може блокувати підключення</string>
     <string name="oneplus_hint">На телефонах OnePlus, OPPO і realme системні налаштування навушників можуть утримувати зв\'язок навушників і блокувати QuickBuds. Якщо QuickBuds не підключається, відкрийте налаштування навушників у Налаштування › Bluetooth › ваші навушники.</string>
+    <string name="connect_try_failed">Не вдалося підключитися (спроба %1$d з %2$d)</string>
+    <string name="connect_gave_up">Не вдалося підключитися після %1$d спроб. Натисніть «Підключити», щоб спробувати знову.</string>
 </resources>

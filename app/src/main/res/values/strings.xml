@@ -651,4 +651,6 @@
     <string name="about_discord" translatable="false">Discord</string>
     <string name="about_discord_desc">Chat with the developer on Discord</string>
     <string name="about_privacy_reply">The ID also lets the developer answer a report you sent. The answer comes with the daily count.</string>
+    <string name="connect_try_failed">Could not connect (try %1$d of %2$d)</string>
+    <string name="connect_gave_up">Could not connect after %1$d tries. Tap Connect to try again.</string>
 </resources>

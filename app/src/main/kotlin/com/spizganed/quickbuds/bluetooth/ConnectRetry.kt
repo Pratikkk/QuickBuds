@@ -6,11 +6,14 @@ package com.spizganed.quickbuds.bluetooth
  */
 object ConnectRetry {
 
+    /** Connect tries in one cycle, the first one included. */
+    const val MAX_TRIES = 5
+
     /**
      * True when no connect or disconnect changed [currentGeneration] since the attempt started at
-     * [generationAtStart], and [attempts] still allows a retry. A user Disconnect or a new connect
+     * [generationAtStart], and fewer than [MAX_TRIES] tries ([attempts]) have failed. A user Disconnect or a new connect
      * raises the generation and stops the retry.
      */
     fun shouldAutoRetry(generationAtStart: Int, currentGeneration: Int, attempts: Int): Boolean =
-        generationAtStart == currentGeneration && attempts < 5
+        generationAtStart == currentGeneration && attempts < MAX_TRIES
 }

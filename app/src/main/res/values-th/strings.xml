@@ -563,4 +563,6 @@
     <string name="about_privacy_reply">รหัสนี้ยังช่วยให้นักพัฒนาตอบรายงานที่คุณส่งได้ คำตอบจะมาพร้อมการนับรายวัน</string>
     <string name="issue_oneplus_title">ระบบอาจบล็อกการเชื่อมต่อ</string>
     <string name="oneplus_hint">บนโทรศัพท์ OnePlus, OPPO และ realme การตั้งค่าหูฟังของระบบอาจยึดลิงก์ของหูฟังและบล็อก QuickBuds หาก QuickBuds เชื่อมต่อไม่ได้ ให้ใช้การตั้งค่าหูฟังในการตั้งค่า › Bluetooth › หูฟังของคุณ</string>
+    <string name="connect_try_failed">เชื่อมต่อไม่ได้ (ครั้งที่ %1$d จาก %2$d)</string>
+    <string name="connect_gave_up">เชื่อมต่อไม่ได้หลังลอง %1$d ครั้ง แตะ เชื่อมต่อ เพื่อลองอีกครั้ง</string>
 </resources>

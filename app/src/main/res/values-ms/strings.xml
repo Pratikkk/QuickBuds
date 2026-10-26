@@ -561,4 +561,6 @@
     <string name="about_privacy_reply">ID ini juga membolehkan pembangun membalas laporan yang anda hantar. Balasan datang bersama pengiraan harian.</string>
     <string name="issue_oneplus_title">Sistem boleh menyekat sambungan</string>
     <string name="oneplus_hint">Pada telefon OnePlus, OPPO dan realme, tetapan earbud sistem boleh menahan pautan earbud dan menyekat QuickBuds. Jika QuickBuds tidak bersambung, gunakan tetapan earbud dalam Tetapan › Bluetooth › earbud anda.</string>
+    <string name="connect_try_failed">Tidak dapat bersambung (cubaan %1$d daripada %2$d)</string>
+    <string name="connect_gave_up">Tidak dapat bersambung selepas %1$d cubaan. Ketik Sambung untuk mencuba lagi.</string>
 </resources>

@@ -561,4 +561,6 @@
     <string name="about_privacy_reply">ID-ul permite dezvoltatorului să răspundă și la un raport trimis de tine. Răspunsul vine odată cu numărătoarea zilnică.</string>
     <string name="issue_oneplus_title">Sistemul poate bloca conexiunea</string>
     <string name="oneplus_hint">Pe telefoanele OnePlus, OPPO și realme, setările earbuds ale sistemului pot ține legătura earbuds-urilor și pot bloca QuickBuds. Dacă QuickBuds nu se conectează, folosește setările earbuds în Setări › Bluetooth › earbuds-urile tale.</string>
+    <string name="connect_try_failed">Conectarea a eșuat (încercarea %1$d din %2$d)</string>
+    <string name="connect_gave_up">Conectarea a eșuat după %1$d încercări. Atinge Conectare pentru a încerca din nou.</string>
 </resources>
