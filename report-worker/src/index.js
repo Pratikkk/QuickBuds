@@ -1,7 +1,7 @@
 // The problem-report Worker. The apps POST /report as JSON; the developer reads GET /reports with the key in the
 // Authorization header, or types the key on the page at GET /.
 // It stores only reports the apps would send: a known model, a description and, when a log is on, frames from the buds.
-import catalog from "../../app/src/main/assets/models.json";
+import catalog from "../../app/src/main/assets/models.json" with { type: "json" };
 import { latest } from "./update.js";
 import { scheduled as digestScheduled, queue as digestQueue } from "./digest.js";
 
@@ -154,11 +154,15 @@ async function ping(req, env) {
   const version = str(r.version, 20);
   const id = str(r.id, 36).toLowerCase();
   if (!PLATFORMS.has(platform) || !/^\d+(\.\d+){1,3}$/.test(version)) return answer(422, "Unknown platform or version.");
+  // An app that sends `ack` stored the reply with that id: it confirms storage, not only display.
+  const ackGiven = r !== null && Object.hasOwn(r, "ack");
+  const ack = ackGiven && Number.isSafeInteger(r.ack) && r.ack > 0 ? r.ack : 0;
+  const knownInstall = APP_ID.test(id);
   const day = new Date().toISOString().slice(0, 10);
   const batch = [env.DB.prepare(
     "INSERT INTO daily_use (day, platform, version, n) VALUES (?, ?, ?, 1) ON CONFLICT (day, platform, version) DO UPDATE SET n = n + 1",
   ).bind(day, platform, version)];
-  if (APP_ID.test(id)) {
+  if (knownInstall) {
     batch.push(
       env.DB.prepare(
         "INSERT INTO installs (id, platform, version, first_day, last_day) VALUES (?, ?, ?, ?, ?) " +
@@ -168,21 +172,30 @@ async function ping(req, env) {
     );
   }
   await env.DB.batch(batch);
-  const reply = APP_ID.test(id) ? await takeReply(env, id) : null;
+  // Mark the reply the app stored before the read below. Both ids bind, so no other install's row can change.
+  if (knownInstall && ack > 0) {
+    try {
+      await env.DB.prepare("UPDATE reports SET reply_seen = 1 WHERE id = ? AND app_id = ?").bind(ack, id).run();
+    } catch {
+      // The reply stays unread and the app sends the same ack on its next ping.
+    }
+  }
+  const reply = knownInstall ? await takeReply(env, id, !ackGiven) : null;
   return Response.json({ ok: true, message: "ok", ...(reply && { reply }) });
 }
 
 /**
  * The developer's answer to a report of this install, once: the oldest unread one. The app shows it in a sheet.
  * A failed read never fails the ping. The text is the `reply` column of the report (set with SQL, see the README).
+ * An old app, which sends no `ack`, gets the reply marked seen here. A new app marks it seen with its next `ack`.
  */
-async function takeReply(env, id) {
+async function takeReply(env, id, markSeen) {
   try {
     const row = await env.DB.prepare(
       "SELECT id, reply FROM reports WHERE app_id = ? AND reply IS NOT NULL AND reply_seen = 0 ORDER BY id LIMIT 1",
     ).bind(id).first();
     if (!row) return null;
-    await env.DB.prepare("UPDATE reports SET reply_seen = 1 WHERE id = ?").bind(row.id).run();
+    if (markSeen) await env.DB.prepare("UPDATE reports SET reply_seen = 1 WHERE id = ?").bind(row.id).run();
     return { id: row.id, text: String(row.reply).slice(0, 600) };
   } catch {
     return null;

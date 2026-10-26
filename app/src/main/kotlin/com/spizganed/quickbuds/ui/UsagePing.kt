@@ -1,6 +1,7 @@
 package com.spizganed.quickbuds.ui
 
 import android.content.Context
+import android.util.Log
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -29,12 +30,20 @@ object UsagePing {
     private const val URL_PING = "https://quickbuds-report.spizganed.workers.dev/ping"
     private const val KEY_DAY = "usagePingDay"
     private const val KEY_REPLY = "pendingReply"
+    private const val KEY_REPLY_ID = "pendingReplyId"
 
     /** The developer's reply that the last ping brought, taken once; null when there is none. */
     fun takeReply(c: Context): String? {
         val prefs = c.getSharedPreferences(ThemeRes.PREFS_NAME, Context.MODE_PRIVATE)
         return prefs.getString(KEY_REPLY, null)?.also { prefs.edit().remove(KEY_REPLY).apply() }
     }
+
+    /** The body of one ping. `ack` is the id of the newest reply the app stored; 0 when it stored none. */
+    internal fun pingBody(version: String, id: String, ack: Long): String =
+        JSONObject().put("platform", "Android").put("version", version).put("id", id).put("ack", ack).toString()
+
+    /** True when the answer carries a reply id that the app did not store or show yet. */
+    internal fun isNewReply(replyId: Long, lastReplyId: Long): Boolean = replyId > 0 && replyId > lastReplyId
 
     /** Settings and the setup guide: the daily count is on unless the user turns it off. */
     const val KEY_ENABLED = "usagePingEnabled"
@@ -44,7 +53,7 @@ object UsagePing {
         if (!prefs.getBoolean(KEY_ENABLED, true)) return
         val today = System.currentTimeMillis() / 86_400_000L
         if (prefs.getLong(KEY_DAY, -1L) == today) return
-        val body = JSONObject().put("platform", "Android").put("version", UpdateChecker.installed(c)).put("id", appId(c)).toString()
+        val body = pingBody(UpdateChecker.installed(c), appId(c), prefs.getLong(KEY_REPLY_ID, 0L))
         Thread {
             try {
                 val conn = URL(URL_PING).openConnection() as HttpURLConnection
@@ -57,14 +66,20 @@ object UsagePing {
                     conn.outputStream.use { it.write(body.toByteArray()) }
                     if (conn.responseCode == 200) {
                         prefs.edit().putLong(KEY_DAY, today).apply()
-                        // The answer can carry the developer's reply to a report of this install, once.
-                        val reply = runCatching {
-                            JSONObject(conn.inputStream.bufferedReader().readText()).optJSONObject("reply")?.optString("text")
+                        // The answer can carry the developer's reply to a report of this install. Store it once;
+                        // the next ping confirms the id in `ack`, and the Worker then marks the reply seen.
+                        val answer = runCatching {
+                            JSONObject(conn.inputStream.bufferedReader().readText()).optJSONObject("reply")
                         }.getOrNull()
-                        if (!reply.isNullOrBlank()) prefs.edit().putString(KEY_REPLY, reply).apply()
+                        val text = answer?.optString("text").orEmpty()
+                        val replyId = answer?.optLong("id", 0L) ?: 0L
+                        if (text.isNotBlank() && isNewReply(replyId, prefs.getLong(KEY_REPLY_ID, 0L)))
+                            prefs.edit().putString(KEY_REPLY, text).putLong(KEY_REPLY_ID, replyId).apply()
                     }
                 } finally { conn.disconnect() }
-            } catch (_: Exception) { }
+            } catch (e: Exception) {
+                Log.w("UsagePing", "The ping failed.", e)
+            }
         }.start()
     }
 }
