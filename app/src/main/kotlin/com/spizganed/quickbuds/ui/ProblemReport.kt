@@ -8,6 +8,7 @@ import com.spizganed.quickbuds.bluetooth.BudsConnectionManager
 import com.spizganed.quickbuds.bluetooth.PacketLogger
 import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.ModelCatalog
+import com.spizganed.quickbuds.protocol.OppoPacketFramer
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
@@ -80,21 +81,24 @@ object ProblemReport {
 
     /**
      * A packet line whose bytes hold device addresses and names (PROTOCOL-LEGACY.md §9 device list and device manager:
-     * `0x8112`, `0x0429`, `0x8132`, push `0x0204` sub `06`) keeps only its 9-byte header.
+     * `0x8112`, `0x0429`, `0x8132`, push `0x0204` sub `06` and `F2`) keeps only its header.
      */
     private fun dropDeviceNames(line: String): String {
         val at = line.indexOf("DEVICES:")
         return if (at < 0) line else line.substring(0, at) + "DEVICES: [device names removed]"
     }
 
-    private fun dropDeviceBytes(line: String): String {
+    internal fun dropDeviceBytes(line: String): String {
         val at = line.indexOf(": AA ")
         if (at < 0) return line
         val b = line.substring(at + 2).split(' ').mapNotNull { it.toIntOrNull(16) }
-        if (b.size < 10) return line
-        val cmd = b[4] or (b[5] shl 8)
-        if (cmd !in DEVICE_CMDS && !(cmd == 0x0204 && b[9] == 0x06)) return line
-        return line.substring(0, at + 2) + b.take(9).joinToString(" ") { "%02X".format(it) } + " [device data removed]"
+        val lenBytes = OppoPacketFramer.readLength(ByteArray(b.size) { b[it].toByte() })?.second ?: return line
+        val head = 8 + lenBytes
+        if (b.size <= head) return line
+        val cmd = b[head - 5] or (b[head - 4] shl 8)
+        val push = cmd == 0x0204 && (b[head] == 0x06 || b[head] == 0xF2)
+        if (cmd !in DEVICE_CMDS && !push) return line
+        return line.substring(0, at + 2) + b.take(head).joinToString(" ") { "%02X".format(it) } + " [device data removed]"
     }
 
     private val DEVICE_CMDS = setOf(0x8112, 0x0429, 0x8132)
