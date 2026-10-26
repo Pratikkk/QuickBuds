@@ -184,6 +184,7 @@ class MsgTest {
         assertEquals(8, f.list.size)
         assertEquals(4 to 0, f.list[1])
         assertEquals(Msg.Features(emptyList()), dec(m(0x810D, 0, 0)))
+        assertEquals(Msg.Features(listOf(5 to 0)), dec(m(0x810D, 0, 3, 5, 0, 4)))
         assertNull(dec(m(0x810D, 0)))
         assertEquals(Msg.EqCurrent(2), dec(m(0x810F, 0, 2)))
         assertEquals(Msg.EqCurrent(1), Decode.decode(Message(0x0504, 0xFF, b(1))))

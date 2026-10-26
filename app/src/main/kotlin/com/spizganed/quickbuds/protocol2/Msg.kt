@@ -377,12 +377,14 @@ object Decode {
         return (0 until count).associate { u(p, 1 + it * 2) to u(p, 2 + it * 2) }
     }
 
-    /** `0x810D`: `<count>` then `<id> <value>` pairs. A count of 0 is an empty map, as the legacy layer accepts. */
+    /** `0x810D`: `<count>` then `<id> <value>` pairs. A count of 0 is an empty map; a short list keeps the whole pairs, as the legacy layer does. */
     private fun features(p: ByteArray): List<Pair<Int, Int>>? {
         if (p.isEmpty()) return null
         val n = u(p, 0)
-        if (p.size - 1 < n * 2) return null
-        return (0 until n).map { u(p, 1 + it * 2) to u(p, 2 + it * 2) }
+        return (0 until n).mapNotNull { i ->
+            val o = 1 + i * 2
+            if (o + 1 < p.size) u(p, o) to u(p, o + 1) else null
+        }
     }
 
     /** The legacy decoder reads a whole packet, so rebuild one from the message. */
