@@ -80,20 +80,21 @@ object ProblemReport {
 
     /**
      * A packet line whose bytes hold device addresses and names (PROTOCOL-LEGACY.md §9 device list and device manager:
-     * `0x8112`, `0x0429`, `0x8132`, push `0x0204` sub `06`) keeps only its 9-byte header.
+     * `0x8112`, `0x0429`, `0x8132`, push `0x0204` sub `06` and `F2`) keeps only its 9-byte header.
      */
     private fun dropDeviceNames(line: String): String {
         val at = line.indexOf("DEVICES:")
         return if (at < 0) line else line.substring(0, at) + "DEVICES: [device names removed]"
     }
 
-    private fun dropDeviceBytes(line: String): String {
+    internal fun dropDeviceBytes(line: String): String {
         val at = line.indexOf(": AA ")
         if (at < 0) return line
         val b = line.substring(at + 2).split(' ').mapNotNull { it.toIntOrNull(16) }
         if (b.size < 10) return line
         val cmd = b[4] or (b[5] shl 8)
-        if (cmd !in DEVICE_CMDS && !(cmd == 0x0204 && b[9] == 0x06)) return line
+        val push = cmd == 0x0204 && (b[9] == 0x06 || b[9] == 0xF2)
+        if (cmd !in DEVICE_CMDS && !push) return line
         return line.substring(0, at + 2) + b.take(9).joinToString(" ") { "%02X".format(it) } + " [device data removed]"
     }
 

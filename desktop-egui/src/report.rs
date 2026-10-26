@@ -67,11 +67,13 @@ fn host() -> Option<String> {
     name.filter(|n| n.len() >= 3)
 }
 
-/// Device list and device manager packets hold addresses and names: only the header stays.
+/// Device list and device manager packets hold addresses and names: only the header stays. The `0x0204` push
+/// carries them in sub `06` (device list) and sub `F2` (connected-devices info).
 fn device_bytes(l: &Line) -> bool {
     if l.bytes.len() < 10 || l.bytes[0] != 0xAA { return false; }
     let pl = payload_of(&l.bytes);
-    matches!(cmd_of(&l.bytes), 0x8112 | 0x0429 | 0x8132) || (cmd_of(&l.bytes) == EVT_PUSH && pl.first() == Some(&0x06))
+    matches!(cmd_of(&l.bytes), 0x8112 | 0x0429 | 0x8132)
+        || (cmd_of(&l.bytes) == EVT_PUSH && matches!(pl.first(), Some(&0x06) | Some(&0xF2)))
 }
 
 fn lines(log: &[Line]) -> String {
@@ -191,6 +193,7 @@ pub fn known(model: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::build_packet;
 
     #[test]
     fn macs() {
@@ -207,7 +210,55 @@ mod tests {
         };
         let out = lines(&[l]);
         assert!(out.contains("[device data removed]"), "{out}");
-        assert!(!out.contains("11 22 33 44"), "{out}");
+        assert!(!out.contains("11223344"), "{out}");
+    }
+
+    /// One RX line from `build_packet`, so the header is the one the log holds: `AA <len> 00 00 <cmd LE>
+    /// <seq> <payload len LE>`, payload from byte 9 for a payload of 127 bytes or fewer.
+    fn rx(cmd: u16, pl: &[u8]) -> Line {
+        Line { at: "12:00:00.000".into(), dir: "RX".into(), bytes: build_packet(cmd, 0x11, pl), human: None }
+    }
+
+    /// The `0x0204` push `F2` (PROTOCOL-LEGACY.md §9): `<count>`, then per device the MAC (6 bytes, reversed),
+    /// connect count (u16 LE), name length, name.
+    fn f2_payload() -> Vec<u8> {
+        let mut pl = vec![0xF2, 1];
+        pl.extend_from_slice(&[0x11, 0x22, 0x33, 0x44, 0x55, 0x66]);
+        pl.extend_from_slice(&[0x02, 0x00]);
+        pl.push(4);
+        pl.extend_from_slice(b"Buds");
+        pl
+    }
+
+    #[test]
+    fn f2_connected_devices_lose_their_addresses_and_name() {
+        let frame = build_packet(EVT_PUSH, 0x11, &f2_payload());
+        let out = lines(&[rx(EVT_PUSH, &f2_payload())]);
+        assert!(out.contains("[device data removed]"), "{out}");
+        assert!(out.contains(&hex(&frame[..9])), "{out}");
+        assert!(!out.contains(&hex(&[0x11, 0x22, 0x33, 0x44, 0x55, 0x66])), "{out}");
+        assert!(!out.contains(&hex(b"Buds")), "{out}");
+    }
+
+    #[test]
+    fn sub_six_device_list_still_loses_its_bytes() {
+        let out = lines(&[rx(EVT_PUSH, &[0x06, 1, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66])]);
+        assert!(out.contains("[device data removed]"), "{out}");
+        assert!(!out.contains(&hex(&[0x11, 0x22, 0x33, 0x44, 0x55, 0x66])), "{out}");
+    }
+
+    #[test]
+    fn another_push_sub_is_left_alone() {
+        let l = rx(EVT_PUSH, &[0xF4, 0x7B, 0x7D]);
+        let raw = crate::devlog::raw(&l) + "\n";
+        assert_eq!(lines(&[l]), raw);
+    }
+
+    #[test]
+    fn battery_push_is_left_alone() {
+        let l = rx(EVT_PUSH, &[0x01, 0x02, 0x01, 0x64, 0x02, 0x64]);
+        let raw = crate::devlog::raw(&l) + "\n";
+        assert_eq!(lines(&[l]), raw);
     }
 
     #[test]
