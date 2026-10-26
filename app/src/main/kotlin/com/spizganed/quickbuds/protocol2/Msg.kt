@@ -10,8 +10,8 @@ import com.spizganed.quickbuds.protocol.WearingStatusParser
 import com.spizganed.quickbuds.protocol.Wire.Message
 
 /**
- * Typed messages of docs/PROTOCOL.md: decodes what the buds send. Written from the spec, not from
- * the `protocol` package. Input is a [Message] from the link layer; output is [Msg].
+ * Typed messages of docs/PROTOCOL.md: decodes what the buds send. The topic decoders of the
+ * `protocol` package do the parsing (legacy behaviour wins). Input is a [Message] from the link layer; output is [Msg].
  */
 
 /** A MAC in written order. */

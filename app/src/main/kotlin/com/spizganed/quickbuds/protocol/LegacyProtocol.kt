@@ -1,8 +1,9 @@
 package com.spizganed.quickbuds.protocol
 
 /*
- * The legacy protocol: every builder and parser of the old wire code, in one file.
- * The typed layer (protocol2/NewProtocol.kt) is not in use yet; tests keep it byte-identical to this file.
+ * The legacy protocol: the command builders, replies and the parsers not yet in a topic file.
+ * The framer is in Wire.kt; the topic decoders are in Battery.kt, Anc.kt, GameMode.kt, Gestures.kt and Eq.kt.
+ * The typed layer (protocol2/NewProtocol.kt) is not in use yet; it calls these decoders.
  * Shared data is not here: Feature.kt, Capabilities.kt, ModelCatalog.kt, AncModes.kt.
  */
 
