@@ -299,4 +299,3 @@ object KeyFunctionParser {
         return body.toIntOrNull(16)
     }
 }
-

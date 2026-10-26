@@ -801,4 +801,3 @@ object UserInteractionParser {
         return sb.toString()
     }
 }
-
