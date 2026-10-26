@@ -97,3 +97,8 @@ dependencies {
     // The Android stub of org.json throws in JVM tests.
     testImplementation("org.json:json:20240303")
 }
+
+tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    // The protocol-case generator writes testdata/protocol_cases.json only when asked: -Dqb.generate=true.
+    systemProperty("qb.generate", System.getProperty("qb.generate") ?: "false")
+}
