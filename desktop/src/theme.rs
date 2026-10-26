@@ -77,7 +77,10 @@ fn name_key(id: &str) -> &'static str {
 }
 
 /// A built-in preset from its style in themes.xml, with the user's accent if one is set.
-fn built_in(id: &str, tr: &[String]) -> Pal {
+fn built_in(id: &str, tr: &[String]) -> Pal { built_in_with(id, tr, &load_settings()) }
+
+/// [built_in] from a given settings value. A test passes an empty one, so the user's file does not decide.
+fn built_in_with(id: &str, tr: &[String], settings: &Value) -> Pal {
     let style = match id { OLED => "Theme.App.OLED", DARK => "Theme.App.Dark", _ => "Theme.App.Light" };
     let at = THEMES.find(&format!("<style name=\"{style}\"")).expect(style);
     let c = |n: &'static str| xml_color(THEMES, at, n);
@@ -85,7 +88,7 @@ fn built_in(id: &str, tr: &[String]) -> Pal {
     // pale blue-grey accent) for the dark presets, the system accent for White; a user accent wins.
     let sys = if crate::MATERIAL.get() { crate::SYS_ACCENT.get() } else { None };
     let phone = crate::MATERIAL.get() && id != WHITE;
-    let accent = load_settings()["palette_accent"][id].as_str().and_then(parse_hex)
+    let accent = settings["palette_accent"][id].as_str().and_then(parse_hex)
         .or(if phone { parse_hex(PHONE_ACCENT) } else { sys });
     let tok = |name: &'static str, phone_hex: &str| if phone { parse_hex(phone_hex).expect(phone_hex) } else { c(name) };
     // Classic Dark on the phone: neutral 900 page, neutral 800 card.
@@ -392,10 +395,12 @@ mod tests {
     #[test]
     fn built_ins_and_colours() {
         let tr = crate::translations("");
-        let dark = built_in(DARK, &tr);
+        // Empty settings: the user's saved accent does not decide the result.
+        let no_settings = json!({});
+        let dark = built_in_with(DARK, &tr, &no_settings);
         assert_eq!(hex(dark.bg), "#121214");
-        assert_eq!(hex(built_in(WHITE, &tr).card), "#FFFFFF");
-        assert!(is_light(&built_in(WHITE, &tr)) && !is_light(&dark));
+        assert_eq!(hex(built_in_with(WHITE, &tr, &no_settings).card), "#FFFFFF");
+        assert!(is_light(&built_in_with(WHITE, &tr, &no_settings)) && !is_light(&dark));
         assert_eq!(parse_hex("d71920"), Some(Color::from_rgb_u8(0xD7, 0x19, 0x20)));
         assert_eq!(parse_hex("#12345"), None);
         assert!((contrast(Color::from_rgb_u8(0, 0, 0), Color::from_rgb_u8(255, 255, 255)) - 21.0).abs() < 0.01);
