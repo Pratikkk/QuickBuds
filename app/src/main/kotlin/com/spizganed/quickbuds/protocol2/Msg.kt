@@ -229,7 +229,7 @@ object Decode {
                     t.trailing.map { it.toInt() and 0xFF },
                 )
             }
-            0x810D -> ok(p)?.let { pairs(it, 0) }?.let { Msg.Features(it) }
+            0x810D -> ok(p)?.let { features(it) }?.let { Msg.Features(it) }
             0x810F -> ok(p)?.takeIf { it.isNotEmpty() }?.let { Msg.EqCurrent(u(it, 0)) }
             0x8122 -> EqCodec.parseList(p)?.let { list -> Msg.EqCustom(list.map { preset(it) }) }
             0x8124 -> ok(p)?.takeIf { it.size >= 3 }?.let { Msg.BassLevel(it[2].toInt()) }
@@ -377,12 +377,12 @@ object Decode {
         return (0 until count).associate { u(p, 1 + it * 2) to u(p, 2 + it * 2) }
     }
 
-    /** `<count>` then `<a> <b>` pairs from [from]. null when the pairs run past the end; a count of 0 is no list. */
-    private fun pairs(p: ByteArray, from: Int = 0): List<Pair<Int, Int>>? {
-        if (from >= p.size) return null
-        val n = u(p, from)
-        if (n == 0 || p.size - from - 1 < n * 2) return null
-        return (0 until n).map { u(p, from + 1 + it * 2) to u(p, from + 2 + it * 2) }
+    /** `0x810D`: `<count>` then `<id> <value>` pairs. A count of 0 is an empty map, as the legacy layer accepts. */
+    private fun features(p: ByteArray): List<Pair<Int, Int>>? {
+        if (p.isEmpty()) return null
+        val n = u(p, 0)
+        if (p.size - 1 < n * 2) return null
+        return (0 until n).map { u(p, 1 + it * 2) to u(p, 2 + it * 2) }
     }
 
     /** The legacy decoder reads a whole packet, so rebuild one from the message. */

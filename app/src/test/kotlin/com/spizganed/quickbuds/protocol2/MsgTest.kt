@@ -22,12 +22,10 @@ class MsgTest {
             b(0, 0xFF, 0x77, 0x5A, 0xEA, 0x67, 0x0E, 0x20, 0x07), b(0, 0x9B, 0x2C, 0x50, 0x80),
         )
         for (bit in 0 until 72) maps += ByteArray(11).also { it[1 + bit / 8] = (1 shl (bit % 8)).toByte() }
-        // The shipping table holds the commands for bits 35, 64, 67 and 68.
-        val added = setOf(0x0419, 0x0136, 0x0433, 0x0432, 0x0135, 0x0435, 0x0117)
         for (map in maps) {
             val new = Bitmap.parse(map)!!
             val old = Capabilities.parse(map)!!
-            for (cmd in 0..0x0FFF) if (cmd !in added) assertEquals("cmd $cmd", cmd in old, new.allows(cmd))
+            for (cmd in 0..0x0FFF) assertEquals("cmd $cmd", cmd in old, new.allows(cmd))
         }
         assertTrue(Bitmap.UNKNOWN.allows(0x0422) && !Bitmap.UNKNOWN.known)
         assertTrue(Bitmap.parse(b(0, 0xFF, 0x77, 0x5A, 0xEA, 0x67, 0x0E, 0x20, 0x07))!!.allows(0x012F))
@@ -185,6 +183,8 @@ class MsgTest {
         val f = dec(m(0x810D, 0, 8, 5, 0, 4, 0, 0x0B, 1, 0x11, 1, 0x18, 1, 6, 0, 0x1B, 0, 0x1D, 1)) as Msg.Features
         assertEquals(8, f.list.size)
         assertEquals(4 to 0, f.list[1])
+        assertEquals(Msg.Features(emptyList()), dec(m(0x810D, 0, 0)))
+        assertNull(dec(m(0x810D, 0)))
         assertEquals(Msg.EqCurrent(2), dec(m(0x810F, 0, 2)))
         assertEquals(Msg.EqCurrent(1), Decode.decode(Message(0x0504, 0xFF, b(1))))
         assertEquals(Msg.BassLevel(-2), dec(m(0x8124, 0, 0xFB, 5, 0xFE)))

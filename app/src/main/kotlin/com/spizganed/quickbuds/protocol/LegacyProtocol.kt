@@ -654,6 +654,8 @@ object OpoProtocol {
         bytes.joinToString(" ") { "%02X".format(it) }
 }
 
+// ===== UserInteractionParser =====
+
 /**
  * Decoder for the 0x0204 "user interaction" active report — the F1 family.
  *
@@ -779,6 +781,9 @@ object UserInteractionParser {
 
         // Options: little-endian int16 pairs from payload[5] onward, matching
         // UserInteractionEventInfo's own walk (pos += 2 while pos+1 < end).
+        // TODO(capture): this loop starts the options at payload[5], but the class comment
+        // and protocol2 start them at payload[6]. payload[5] is also the context byte.
+        // A capture with an option must decide which offset is correct.
         val options = mutableListOf<Int>()
         var pos = 5
         while (pos + 1 < payload.size) {
