@@ -1,5 +1,8 @@
 package com.spizganed.quickbuds.protocol2
 
+import com.spizganed.quickbuds.protocol.BatteryParser
+import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.WearingStatusParser
 import com.spizganed.quickbuds.protocol.Wire.Message
 
 /**
@@ -204,20 +207,15 @@ object Decode {
     /** Decodes one message. null: not a message this layer knows, or a malformed one. */
     fun decode(m: Message): Msg? {
         val p = m.payload
-        if (m.cmd == PUSH) return push(p)
+        if (m.cmd == PUSH) return push(m)
         return when (m.cmd) {
             0x8100 -> Bitmap.parse(p)?.let { Msg.BitmapReply(it) }
             0x8103 -> if (p.size == 4 && p[0].toInt() == 0) Msg.ProductId(u(p, 1) or (u(p, 2) shl 8) or (u(p, 3) shl 16)) else null
             0x8105 -> firmware(p)?.let { Msg.Firmware(it) }
             0x8200 -> if (p.size >= 2 && p[0].toInt() == 0 && p.size >= 2 + u(p, 1)) Msg.Offered(ints(p, 2).take(u(p, 1))) else null
             0x8205 -> Msg.Registered
-            0x8106 -> ok(p)?.let { battery(it, 0) }?.let { Msg.Battery(it) }
-            0x8109 -> {
-                // `<count> <pairs>`, or a status byte first; a list is valid when its parts are 1-3.
-                val list = pairs(p, 0)?.takeIf { l -> l.all { it.first in 1..3 } }
-                    ?: pairs(p, 1)?.takeIf { l -> l.all { it.first in 1..3 } }
-                list?.let { l -> Msg.Wear(l.map { it.first to (it.second and 7) }) }
-            }
+            0x8106 -> BatteryParser.parse(frame(m))?.let { Msg.Battery(cells(it)) }
+            0x8109 -> WearingStatusParser.parseQueryResponse(p)?.let { Msg.Wear(wear(it)) }
             0x810C -> ok(p)?.let { anc(it, 0) }?.let { Msg.AncMsg(it) }
             0x8108 -> {
                 if (p.size >= 2 && p[0].toInt() == 0) {
@@ -398,9 +396,22 @@ object Decode {
         return (0 until n).map { u(p, from + 1 + it * 2) to u(p, from + 2 + it * 2) }
     }
 
-    /** Level 0 means "not known" (a closed case): left out. */
-    private fun battery(p: ByteArray, from: Int): List<Cell>? =
-        pairs(p, from)?.filter { it.second and 0x7F != 0 }?.map { Cell(it.first, it.second and 0x7F, it.second and 0x80 != 0) }
+    /** The legacy decoder reads a whole packet, so rebuild one from the message. */
+    private fun frame(m: Message) = OpoProtocol.buildPacket(m.cmd, m.seq, m.payload)
+
+    /** Map the legacy battery result to cells: left, right, case, with level 0 left out. */
+    private fun cells(r: BatteryParser.Result) = listOfNotNull(
+        r.left?.let { Cell(1, it.level, it.isCharging) },
+        r.right?.let { Cell(2, it.level, it.isCharging) },
+        r.case?.let { Cell(3, it.level, it.isCharging) },
+    )
+
+    /** Map the legacy wearing result to (part, state) pairs in part order. */
+    private fun wear(r: WearingStatusParser.Result) = listOfNotNull(
+        if (r.leftValid) 1 to r.leftStatus else null,
+        if (r.rightValid) 2 to r.rightStatus else null,
+        if (r.caseStatus != -1) 3 to r.caseStatus else null,
+    )
 
     /** `<count>` then `<MAC 6> <len> <state> <flags> <nameLen> <name>`. */
     fun devices(p: ByteArray, from: Int = 0): List<Device>? {
@@ -463,14 +474,15 @@ object Decode {
     }
 
     /** `payload[0]` is the event code. */
-    private fun push(p: ByteArray): Msg? {
+    private fun push(m: Message): Msg? {
+        val p = m.payload
         if (p.isEmpty()) return null
         val code = u(p, 0)
         val n = p.size - 1  // bytes after the code
         fun d(i: Int) = u(p, 1 + i)
         return when {
-            code == 0x01 -> battery(p, 1)?.let { Msg.Battery(it) }
-            code == 0x02 -> pairs(p, 1)?.let { l -> Msg.Wear(l.map { it.first to (it.second and 7) }) }
+            code == 0x01 -> BatteryParser.parseActive(frame(m))?.let { Msg.Battery(cells(it)) }
+            code == 0x02 -> WearingStatusParser.parseActiveReport(p)?.let { Msg.Wear(wear(it)) }
             code == 0x03 -> anc(p, 1)?.let { Msg.AncMsg(it) }
             code == 0x04 -> {
                 val r = (0 until n / 2).map { d(it * 2) to d(it * 2 + 1) }
