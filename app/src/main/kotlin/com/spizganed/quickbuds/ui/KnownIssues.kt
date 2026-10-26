@@ -21,14 +21,14 @@ object KnownIssues {
         Issue("hires_no_codec", R.string.issue_hires_no_codec_title, R.string.issue_hires_no_codec_body),
     )
 
-    /** The issues of the current model and phone, in the order of [ALL]. Empty for an unknown model. */
+    /** The issues of the current model and phone, in the order of [ALL]. The OnePlus link hint shows without a model too. */
     fun current(c: Context): List<Issue> {
-        val model = ModelCatalog.current(c) ?: return emptyList()
         val keys = mutableSetOf<String>()
+        if (PhoneChecks.isOnePlus(Build.MANUFACTURER)) keys += ONEPLUS_LINK
+        val model = ModelCatalog.current(c) ?: return ALL.filter { it.key in keys }
         model.json.optJSONArray("knownIssues")?.let { a -> for (i in 0 until a.length()) keys += a.getString(i) }
         val hires = MainActivity.rowSupported(c, "hires")
         if (hires && Build.MANUFACTURER.equals("samsung", ignoreCase = true)) keys += "samsung_codec"
-        if (PhoneChecks.isOnePlus(Build.MANUFACTURER)) keys += "oneplus_link"
         if (hires && MainActivity.rowSupported(c, "spatial") && !MainActivity.spatialSwitchOnly(c)) keys += "hires_spatial"
         // The data says this model has no high-quality codec, so the switch cannot change the sound.
         if (hires && model.json.has("codecs") && ModelCatalog.bestHiResCodec(model.json) == null) keys += "hires_no_codec"
