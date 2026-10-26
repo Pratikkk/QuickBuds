@@ -38,12 +38,13 @@ object UsagePing {
         return prefs.getString(KEY_REPLY, null)?.also { prefs.edit().remove(KEY_REPLY).apply() }
     }
 
-    /** The body of one ping. `ack` is the id of the newest reply the app stored; 0 when it stored none. */
+    /** The body of one ping. `ack` is the id of the last reply the app stored; 0 when it stored none. */
     internal fun pingBody(version: String, id: String, ack: Long): String =
         JSONObject().put("platform", "Android").put("version", version).put("id", id).put("ack", ack).toString()
 
-    /** True when the answer carries a reply id that the app did not store or show yet. */
-    internal fun isNewReply(replyId: Long, lastReplyId: Long): Boolean = replyId > 0 && replyId > lastReplyId
+    /** True when the app must store the reply in the answer. It keeps one reply until the user sees it. */
+    internal fun shouldStoreReply(text: String, replyId: Long, storedReplyId: Long, waiting: Boolean): Boolean =
+        text.isNotBlank() && replyId > 0 && replyId != storedReplyId && !waiting
 
     /** Settings and the setup guide: the daily count is on unless the user turns it off. */
     const val KEY_ENABLED = "usagePingEnabled"
@@ -73,7 +74,8 @@ object UsagePing {
                         }.getOrNull()
                         val text = answer?.optString("text").orEmpty()
                         val replyId = answer?.optLong("id", 0L) ?: 0L
-                        if (text.isNotBlank() && isNewReply(replyId, prefs.getLong(KEY_REPLY_ID, 0L)))
+                        val waiting = prefs.getString(KEY_REPLY, null) != null
+                        if (shouldStoreReply(text, replyId, prefs.getLong(KEY_REPLY_ID, 0L), waiting))
                             prefs.edit().putString(KEY_REPLY, text).putLong(KEY_REPLY_ID, replyId).apply()
                     }
                 } finally { conn.disconnect() }
