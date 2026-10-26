@@ -1,5 +1,6 @@
 package com.spizganed.quickbuds.protocol2
 
+import com.spizganed.quickbuds.bluetooth.PacketLogger
 import com.spizganed.quickbuds.protocol.AncEventParser
 import com.spizganed.quickbuds.protocol.BatteryParser
 import com.spizganed.quickbuds.protocol.Capabilities
@@ -333,12 +334,19 @@ class MsgTest {
                 assertTrue("$cmd ${p.toList()}", payloadOf(old).contentEquals(new.payload))
             }
         }
-        // The JSON echo (the shipping code parses with the Android library, which a JVM test lacks).
+        // The JSON echo. Both layers use org.json; the legacy error path logs through android.util.Log,
+        // which a JVM test does not mock, so the log is off for the bad JSON case.
         val ack = Decode.answer(Message(0x0204, 0xFF, byteArrayOf(0xF4.toByte()) + "{\"cmd\":\"a2dp_caton\",\"ver\":\"1\"}".toByteArray()), 0)!!
         assertEquals(0x8204, ack.cmd)
         assertEquals("{\"cmd\":\"a2dp_caton\"}", String(ack.payload, 2, ack.payload.size - 2))
         assertEquals("{}", String(Decode.answer(Message(0x0204, 1, byteArrayOf(0xF4.toByte()) + "{\"x\":[1,{\"a\":null}],\"cmd\":3}".toByteArray()), 0)!!.payload, 2, 2))
-        val bad = Decode.answer(Message(0x0204, 1, byteArrayOf(0xF4.toByte()) + "not json".toByteArray()), 0)!!
+        val wasEnabled = PacketLogger.ENABLED
+        PacketLogger.ENABLED = false
+        val bad = try {
+            Decode.answer(Message(0x0204, 1, byteArrayOf(0xF4.toByte()) + "not json".toByteArray()), 0)!!
+        } finally {
+            PacketLogger.ENABLED = wasEnabled
+        }
         assertTrue(bad.payload.contentEquals(byteArrayOf(1, 0xF4.toByte())))
         assertEquals(0x21, Decode.answer(Message(0x0500, 0x21, b(0, 0, 0, 0)), 0)!!.seq)
         assertEquals(listOf(0, 0x34, 0x12, 0, 0x67), Decode.answer(Message(0x0500, 0x14, b()), unix)!!.payload.map { it.toInt() and 0xFF })

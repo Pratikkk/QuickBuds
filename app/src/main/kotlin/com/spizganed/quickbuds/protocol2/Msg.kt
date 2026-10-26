@@ -6,12 +6,14 @@ import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.GameModeParser
 import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Replies
 import com.spizganed.quickbuds.protocol.WearingStatusParser
 import com.spizganed.quickbuds.protocol.Wire.Message
 
 /**
  * Typed messages of docs/PROTOCOL.md: decodes what the buds send. The topic decoders of the
- * `protocol` package do the parsing (legacy behaviour wins). Input is a [Message] from the link layer; output is [Msg].
+ * `protocol` package do the parsing (legacy behaviour wins). Replies and batch come from `protocol/Replies.kt`.
+ * Input is a [Message] from the link layer; output is [Msg].
  */
 
 /** A MAC in written order. */
@@ -269,7 +271,7 @@ object Decode {
         0x051C -> Request.Capabilities
         0x051D -> Request.SpatialMode
         0x0501, 0x0502 -> Request.Camera(cmd)
-        else -> if ((cmd shr 8) !in listOf(0x01, 0x02, 0x03, 0x04, 0x05, 0x0F)) Request.Unknown(cmd) else null
+        else -> if (!Replies.knownGroup(cmd)) Request.Unknown(cmd) else null
     }
 
     /** `<kind> <len u16 LE> <data> <id u32 BE>`, from [from]. */
@@ -308,34 +310,8 @@ object Decode {
     }
 
     /** The answer to a message the buds sent on their own, or null (no answer is due). [unix]: the phone's clock. */
-    fun answer(m: Message, unix: Long): Message? {
-        if (m.cmd and 0x8000 != 0) return null
-        val p = m.payload
-        val body: ByteArray = when {
-            m.cmd == PUSH && p.firstOrNull()?.toInt()?.and(0xFF) == 0xF2 -> byteArrayOf(0, 0xF2.toByte())
-            m.cmd == PUSH && p.firstOrNull()?.toInt()?.and(0xFF) == 0xF4 -> jsonAck(p.copyOfRange(1, p.size))
-            m.cmd == PUSH -> return null
-            else -> when ((decode(m) as? Msg.Ask)?.request ?: return null) {
-                Request.Time -> byteArrayOf(0, unix.toByte(), (unix shr 8).toByte(), (unix shr 16).toByte(), (unix shr 24).toByte())
-                Request.AppList -> byteArrayOf(0, 1, 0)
-                Request.Capabilities -> byteArrayOf(0, 0, 0)
-                // Always "invalid": the phone's spatial mode is not known here.
-                Request.SpatialMode -> byteArrayOf(1)
-                is Request.Camera -> return null
-                is Request.Unknown -> byteArrayOf(1)
-            }
-        }
-        return Message(m.cmd or 0x8000, m.seq, body)
-    }
-
-    /** `F4` JSON: `00 F4 {"cmd":<its cmd>}`; `01 F4` when it does not parse. */
-    private fun jsonAck(json: ByteArray): ByteArray {
-        val head = byteArrayOf(0, 0xF4.toByte())
-        if (json.isEmpty()) return head
-        val obj = MiniJson.parseObject(String(json, Charsets.UTF_8)) ?: return byteArrayOf(1, 0xF4.toByte())
-        val cmd = obj["cmd"] as? String
-        return head + (if (cmd == null) "{}" else "{\"cmd\":${MiniJson.quote(cmd)}}").toByteArray()
-    }
+    fun answer(m: Message, unix: Long): Message? =
+        Replies.answerBody(m.cmd, m.payload, unix)?.let { Message(m.cmd or REPLY, m.seq, it) }
 
     /** The bytes after a `00` status byte. A reply with another status carries no data. */
     private fun ok(p: ByteArray): ByteArray? = if (p.isNotEmpty() && p[0].toInt() == 0) p.copyOfRange(1, p.size) else null
@@ -510,102 +486,6 @@ object Decode {
     }
 
     /** `0x812F`: `00 <count>`, then `<cmd LE> <len LE> <reply payload>`. Each answer is the reply `cmd | 0x8000` with the batch's seq. */
-    fun unbatch(m: Message): List<Message> {
-        val p = m.payload
-        if (p.size < 2 || p[0].toInt() != 0) return emptyList()
-        val out = ArrayList<Message>()
-        var i = 2
-        repeat(u(p, 1)) {
-            if (i + 4 > p.size) return out
-            val len = le16(p, i + 2)!!
-            if (i + 4 + len > p.size) return out
-            out += Message((le16(p, i)!!) or REPLY, m.seq, p.copyOfRange(i + 4, i + 4 + len))
-            i += 4 + len
-        }
-        return out
-    }
-}
-
-/**
- * Just enough JSON for the diagnostic push: is it an object, and what are its top-level strings.
- * ponytail: strict RFC 8259 objects only, nested values are skipped; the vendor parser is more lenient.
- */
-internal object MiniJson {
-    fun quote(s: String) = buildString {
-        append('"')
-        for (c in s) when {
-            c == '"' -> append("\\\"")
-            c == '\\' -> append("\\\\")
-            c < ' ' -> append("\\u%04x".format(c.code))
-            else -> append(c)
-        }
-        append('"')
-    }
-
-    /** The object's top-level string values (other values map to Unit), or null when [text] is not a JSON object. */
-    fun parseObject(text: String): Map<String, Any>? = try {
-        val r = Reader(text)
-        r.ws()
-        val v = r.value()
-        v as? Map<String, Any>
-    } catch (e: IllegalStateException) {
-        null
-    }
-
-    private class Reader(val s: String) {
-        var i = 0
-        fun ws() { while (i < s.length && s[i] in " \t\r\n") i++ }
-        fun peek() = if (i < s.length) s[i] else error("end")
-        fun expect(c: Char) { ws(); if (peek() != c) error("expected $c"); i++ }
-
-        fun value(): Any {
-            ws()
-            return when (val c = peek()) {
-                '{' -> obj()
-                '[' -> { i++; ws(); if (peek() == ']') i++ else do { value(); ws(); val d = peek(); i++; if (d != ',' && d != ']') error("array") } while (s[i - 1] == ','); Unit }
-                '"' -> str()
-                't' -> lit("true")
-                'f' -> lit("false")
-                'n' -> lit("null")
-                else -> if (c == '-' || c.isDigit()) num() else error("value")
-            }
-        }
-
-        fun obj(): Map<String, Any> {
-            val out = HashMap<String, Any>()
-            i++; ws()
-            if (peek() == '}') { i++; return out }
-            while (true) {
-                ws(); val k = str(); expect(':'); out[k] = value(); ws()
-                val d = peek(); i++
-                if (d == '}') return out
-                if (d != ',') error("object")
-            }
-        }
-
-        fun str(): String {
-            if (peek() != '"') error("string")
-            i++
-            val b = StringBuilder()
-            while (true) {
-                val c = peek(); i++
-                when (c) {
-                    '"' -> return b.toString()
-                    '\\' -> {
-                        val e = peek(); i++
-                        when (e) {
-                            'n' -> b.append('\n'); 't' -> b.append('\t'); 'r' -> b.append('\r'); 'b' -> b.append('\b'); 'f' -> b.append('\u000c')
-                            'u' -> { if (i + 4 > s.length) error("u"); b.append(s.substring(i, i + 4).toInt(16).toChar()); i += 4 }
-                            '"', '\\', '/' -> b.append(e)
-                            else -> error("escape")
-                        }
-                    }
-                    else -> if (c < ' ') error("control") else b.append(c)
-                }
-            }
-        }
-
-        fun lit(w: String): Any { if (!s.startsWith(w, i)) error("literal"); i += w.length; return Unit }
-        fun num(): Any { val st = i; while (i < s.length && (s[i].isDigit() || s[i] in "+-.eE")) i++; s.substring(st, i).toDoubleOrNull() ?: error("number"); return Unit }
-    }
+    fun unbatch(m: Message): List<Message> =
+        Replies.batchReplies(m.payload).map { (cmd, payload) -> Message(cmd, m.seq, payload) }
 }
