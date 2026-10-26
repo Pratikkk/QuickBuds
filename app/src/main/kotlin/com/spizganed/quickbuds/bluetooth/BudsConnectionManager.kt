@@ -319,6 +319,13 @@ class BudsConnectionManager(private val context: Context) {
                 val tries = listOf(false, true).flatMap { insecure -> uuids.map { it to insecure } }
                 var socket: BluetoothSocket? = null
                 var lastError: String? = null
+                // Every socket try counts: the 4 UUID tries and channel 15, 5 in total, then the app stops.
+                val totalTries = tries.size + 1
+                var failedTries = 0
+                fun tryFailed() {
+                    failedTries++
+                    if (generation == connectGeneration) toast(context.getString(R.string.connect_try_failed, failedTries, totalTries))
+                }
 
                 // socket.connect() has no timeout. A close after 12 s makes a stuck call throw.
                 val watchdog = Runnable { try { socket?.close() } catch (_: Exception) {} }
@@ -340,6 +347,7 @@ class BudsConnectionManager(private val context: Context) {
                         log("Failed UUID $uuidStr ($kind): $lastError (${SystemClock.elapsedRealtime() - tryStart} ms)")
                         log("Connect error: ${e.javaClass.simpleName}: ${e.message}")
                         logSocketError(e)
+                        tryFailed()
                         try { socket?.close() } catch (_: Exception) {}
                         socket = null
                     } finally {
@@ -360,6 +368,7 @@ class BudsConnectionManager(private val context: Context) {
                         lastError = e.message ?: e.javaClass.simpleName
                         log("Channel 15 failed: $lastError (${SystemClock.elapsedRealtime() - tryStart} ms)")
                         logSocketError(e)
+                        tryFailed()
                         socket = null
                     } finally {
                         handler.removeCallbacks(watchdog)
@@ -380,25 +389,13 @@ class BudsConnectionManager(private val context: Context) {
                     log("All connection methods failed: $lastError")
                     startUuidRefresh(device, attempts = reconnectAttempts)
                     teardownLink()
-                    // A user Disconnect or a new connect raised the generation: this attempt ends quietly.
-                    val stillOurs = generation == connectGeneration
-                    reconnectAttempts++
-                    if (stillOurs) toast(context.getString(R.string.connect_try_failed, reconnectAttempts, ConnectRetry.MAX_TRIES))
-                    if (ConnectRetry.shouldAutoRetry(generation, connectGeneration, reconnectAttempts)) {
-                        log("Auto-retry $reconnectAttempts/${ConnectRetry.MAX_TRIES} in 5s...")
-                        val retry = Runnable {
-                            pendingRetry = null
-                            if (generation == connectGeneration && !isConnected() && !isConnecting) connect(device)
-                        }
-                        pendingRetry = retry
-                        handler.postDelayed(retry, 5000)
-                    } else {
-                        if (stillOurs) {
-                            log("Giving up after ${ConnectRetry.MAX_TRIES} connect tries. Tap CONNECT to retry manually.")
-                            toast(context.getString(R.string.connect_gave_up, ConnectRetry.MAX_TRIES))
-                        }
-                        reconnectAttempts = 0
+                    // One round of 5 socket tries, then stop: no automatic second round. A user
+                    // Disconnect or a new connect raised the generation, so that attempt ends quietly.
+                    if (generation == connectGeneration) {
+                        log("Giving up after $totalTries connect tries. Tap CONNECT to retry manually.")
+                        toast(context.getString(R.string.connect_gave_up, totalTries))
                     }
+                    reconnectAttempts = 0
                     return@Thread
                 }
             } finally {
