@@ -379,8 +379,8 @@ class BudsConnectionManager(private val context: Context) {
                 } else {
                     log("All connection methods failed: $lastError")
                     startUuidRefresh(device, attempts = reconnectAttempts)
-                    disconnect()
-                    if (generation == connectGeneration && reconnectAttempts < 5) {
+                    teardownLink()
+                    if (ConnectRetry.shouldAutoRetry(generation, connectGeneration, reconnectAttempts)) {
                         reconnectAttempts++
                         log("Auto-retry $reconnectAttempts/5 in 5s...")
                         val retry = Runnable {
@@ -627,11 +627,20 @@ class BudsConnectionManager(private val context: Context) {
 
     fun disconnect() {
         // A deliberate disconnect must not be undone by a queued reconnect.
+        connectGeneration++
+        teardownLink()
+    }
+
+    /**
+     * Closes the link and clears its state. It does not raise [connectGeneration], so a failed
+     * connect attempt can clean up and still schedule its auto-retry. A user Disconnect uses
+     * [disconnect], which raises the generation first.
+     */
+    private fun teardownLink() {
         pendingReconnect?.let { handler.removeCallbacks(it) }
         pendingReconnect = null
         pendingRetry?.let { handler.removeCallbacks(it) }
         pendingRetry = null
-        connectGeneration++
         isReady = false
         isConnecting = false
         connectedThread?.cancel()
