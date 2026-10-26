@@ -1,5 +1,6 @@
 package com.spizganed.quickbuds.ui
 
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -92,5 +93,43 @@ class AncSegmentedViewTest {
         assertFalse(selectionTravels(tapped = true, from = -1, to = 2))
         assertFalse(selectionTravels(tapped = true, from = 2, to = -1))
         assertFalse(selectionTravels(tapped = true, from = 2, to = 2))
+    }
+
+    @Test fun aSecondTapStartsTheTravelAtTheCurrentPosition() {
+        // Halfway from cell 1 to cell 2, then a tap on cell 0. The old target is 2.
+        assertEquals(1.5f, travelStart(1.5f, from = 2, last = 3), 0.0001f)
+        assertEquals(1.2f, travelStart(1.2f, from = 2, last = 3), 0.0001f)
+    }
+
+    @Test fun aTravelWithNoFrameOnScreenStartsAtTheOldCell() {
+        assertEquals(2f, travelStart(-1f, from = 2, last = 3), 0.0001f)
+        // A current position off the track cannot start a travel.
+        assertEquals(0f, travelStart(9f, from = 0, last = 3), 0.0001f)
+    }
+
+    @Test fun aSecondTapStartsTheFillsAtTheCurrentMix() {
+        val current = floatArrayOf(0f, 0.4f, 0.6f)
+        assertArrayEquals(current, fadeMixes(current, to = 0, fraction = 0f), 0.0001f)
+    }
+
+    @Test fun theFillsFadeFromTheCurrentMixToTheNewTarget() {
+        val current = floatArrayOf(0.1f, 0.4f, 0.6f)
+        assertArrayEquals(
+            floatArrayOf(1f, 0f, 0f),
+            fadeMixes(current, to = 0, fraction = 1f),
+            0.0001f
+        )
+        // Halfway to cell 0: 0.1 becomes 0.55, 0.4 becomes 0.2, 0.6 becomes 0.3.
+        assertArrayEquals(
+            floatArrayOf(0.55f, 0.2f, 0.3f),
+            fadeMixes(current, to = 0, fraction = 0.5f),
+            0.0001f
+        )
+    }
+
+    @Test fun aDisconnectFadesEveryFillToZero() {
+        val current = floatArrayOf(0.2f, 0.8f, 0f)
+        assertArrayEquals(current, fadeMixes(current, to = -1, fraction = 0f), 0.0001f)
+        assertArrayEquals(floatArrayOf(0f, 0f, 0f), fadeMixes(current, to = -1, fraction = 1f), 0.0001f)
     }
 }
