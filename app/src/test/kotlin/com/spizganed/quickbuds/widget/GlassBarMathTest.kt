@@ -35,6 +35,21 @@ class GlassBarMathTest {
     }
 
     @Test
+    fun `the compact Glass bar fits 110 dp without scaling`() {
+        val slot = GlassBarMath.barSlotDp(110f, 2.75f)
+        assertEquals(64.55f, slot, 0.01f)
+        val bar = GlassBarMath.barWidthDp(110f, 2.75f)
+        assertEquals(63.55f, bar, 0.01f)
+        assertTrue(bar <= slot)
+    }
+
+    @Test
+    fun `the fill is the level's share of the inner capsule`() {
+        assertEquals(64f, GlassBarMath.innerBarWidthDp(66f), 0f)
+        assertEquals(32f, GlassBarMath.fillWidthDp(GlassBarMath.innerBarWidthDp(66f), 50), 0f)
+    }
+
+    @Test
     fun `the compact Glass battery page fits 110 dp`() {
         assertEquals(108.2f, GlassBarMath.compactPageHeightDp(19.2f), 0.01f)
         assertTrue(GlassBarMath.compactPageHeightDp(19.2f) <= 110f)

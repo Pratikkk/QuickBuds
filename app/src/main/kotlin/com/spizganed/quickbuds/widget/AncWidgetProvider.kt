@@ -639,7 +639,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
                 panelOutline(context, v, R.id.w_bar_stroke, p)
                 // The case icon takes all the height the rings leave ([caseRowDp]); TALL's case row is 32dp. Nothing: at the
                 // rings' dot pitch, so the big icon keeps the app's case details (lid cut, LED). Glass at the 2x2 minimum:
-                // 14dp, so the 18dp bar and the number fit.
+                // a 14dp glyph at the bitmap's real size, so the 18dp bar and the number fit.
                 val caseDp = if (paged) caseRowDp(context, id, fit.compact) else 32f - 2 * geo(context).row
                 val iconDp = if (p.glass && fit.compact) 14f else caseDp
                 if (p.glass) {
@@ -1232,11 +1232,11 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         }
 
         /**
-         * The 2x2 / 3x3 battery's case bar, 70% of the case icon's height, the level inside it. Classic: `outline`
-         * track, `accent` fill, corners rounded at a third of its height, the number cut out of it. Nothing
-         * style: dot rows 1.4x the widget's pitch, 70% of the case icon's height, the percentage cut out of the dots ([GLYPHS]),
-         * lit column by column up to the level, the corner dots left out so the corners are round. Drawn exactly as wide as its slot ([barDp]), so the dots
-         * are never scaled.
+         * The 2x2 / 3x3 battery's case bar, 70% of the case icon's height, the level inside it; Glass: 70% of the
+         * case row, at least 16 dp. Classic: `outline` track, `accent` fill, corners rounded at a third of its height,
+         * the number cut out of it. Nothing style: dot rows 1.4x the widget's pitch, 70% of the case icon's height,
+         * the percentage cut out of the dots ([GLYPHS]), lit column by column up to the level, the corner dots left out
+         * so the corners are round. Drawn no wider than its slot ([barDp]), so the dots are never scaled.
          */
         /**
          * Glass: the case level as one capsule with its depth inside the bitmap. The track, the accent
@@ -1259,7 +1259,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             }
             paint.color = if (p.glassLight) 0x1A14152B else 0x14FFFFFF
             c.drawRoundRect(box, rad, rad, paint)
-            val fillW = if (level >= 1) box.left + ThemeRes.dp(context, GlassBarMath.fillWidthDp(w / d, level)) else 0f
+            val fillW = if (level >= 1) box.left + ThemeRes.dp(context, GlassBarMath.fillWidthDp(GlassBarMath.innerBarWidthDp(w / d), level)) else 0f
             if (fillW > 0f) {
                 val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     shader = LinearGradient(0f, box.top, 0f, box.bottom, p.accent, GlassBarMath.gradientBottom(p.accent), Shader.TileMode.CLAMP)
@@ -1415,12 +1415,11 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
         private fun barDp(context: Context, id: Int, caseDp: Float, compact: Boolean = false): Float {
             val w = AppWidgetManager.getInstance(context).getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
             if (w <= 0) return 60f
+            // The compact Glass page: the layout's own paddings and the icon's real width (widget_pages_gl.xml).
+            if (compact) return GlassBarMath.barWidthDp(w.toFloat(), context.resources.displayMetrics.density)
             val g = geo(context)
-            // The compact Glass page has 4dp row padding; the other pages use their style's padding.
-            val row = if (compact) 4f else g.row
-            // The Glass case icon's bitmap has 6px padding on each side.
-            val icon = caseDp * 496f / 400f + if (compact) 12f / context.resources.displayMetrics.density else 0f
-            return (w - 2 * g.side - 2 * row - icon - 6f - 2f).coerceAtLeast(20f)
+            val icon = caseDp * 496f / 400f
+            return (w - 2 * g.side - 2 * g.row - icon - 6f - 2f).coerceAtLeast(20f)
         }
 
         /**
