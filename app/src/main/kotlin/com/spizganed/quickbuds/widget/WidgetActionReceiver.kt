@@ -99,10 +99,9 @@ class WidgetActionReceiver : BroadcastReceiver() {
             putExtra(BudsService.EXTRA_WIDGET_FEATURE, feature)
             putExtra(BudsService.EXTRA_WIDGET_FEATURE_ON, featureOn)
         }
-        context.sendBroadcast(localIntent)
-
-        // Background service off: only a running service (the app is open) takes the command.
-        if (!BudsService.backgroundAllowed(context)) return
+        // One path per tap: a running service gets both the broadcast and the start intent, and each sends the command.
+        // Background service off: only a running service (the app is open) takes the broadcast.
+        if (!BudsService.backgroundAllowed(context)) { context.sendBroadcast(localIntent); return }
 
         try {
             val serviceIntent = Intent(context, BudsService::class.java).apply {
@@ -120,6 +119,8 @@ class WidgetActionReceiver : BroadcastReceiver() {
             }
         } catch (e: Exception) {
             Log.e("BudsWidget", "[RX] startService failed", e)
+            // A service that already runs still takes the command.
+            context.sendBroadcast(localIntent)
         }
     }
 
