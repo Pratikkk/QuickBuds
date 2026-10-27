@@ -1002,6 +1002,7 @@ Every rule in this section names the model id, the byte and the value. A topic s
 - Buds 4 `065414`: `1:516 2:8807 3:3154531 5:3584`, hold `27`. It matches HeyMelody's menus `[TESTED]`.
 - `gesture` → `act`: 1-6 are themselves. 16/17/18 = acts 1/2/3 (stem-press models). 11, 20, 27 = the hold's ANC cycle on act 4 (options = the model's top-level noise modes). 7, 8, 12-15 are text-only rows.
 - Call control (all `btn 06`, `dev 04`): 28/32 = act 1, 29/33/36 = act 2, 30/34 = act 3, 31/35 = act 6. `options` 524288 = answer/end `1D`, 262144 = decline `1C`, 131072 = AI summary. A row without none (512) has one fixed option and writes nothing.
+- OPPO Enco Air5 Pro `06C410`: the `F1` gesture report carries button id `06` `[VENDOR]`.
 - realme models `[VENDOR]` (realme Link, issue #8), wired: per bud, double tap, triple tap and hold, the same `fn` bytes, `dev` 1 / 2, `btn 01`. The Air7 Pro's owner confirms them `[TESTED]`. The others are unverified.
 - realme hold with the noise cycle: `holdMask` 8833 `[VENDOR]`. One mask for both buds: write `0x0404 02 01 <mask>`, read `0x010C 02 01`.
 - Holding both buds (Air 3S `061012`, T01 `064412`, T110 `062812`, T200 Lite `065052`, T200x `065852`): one entry `04 01 04 <fn>`, game mode `11` or none. The buds read it back as its own `dev 04` entry. Our key `bothHold` shows it as a gesture row. The app writes it like an on-call row. Not offered: volume on the noise-cycle hold (T500 `067052`, Air8 `066812`, T200x `065852`), AI options.
