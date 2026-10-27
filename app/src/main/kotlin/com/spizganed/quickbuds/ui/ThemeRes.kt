@@ -285,7 +285,7 @@ object ThemeRes {
      * that matters.
      */
     @Suppress("DEPRECATION")
-    private fun applyLegacyLanguage(activity: Activity) {
+    private fun applyLanguageBelow33(activity: Activity) {
         if (Build.VERSION.SDK_INT >= 33) return
         val tag = language(activity)
         val locale = if (tag.isEmpty()) Resources.getSystem().configuration.locales[0] else Locale.forLanguageTag(tag)
@@ -306,7 +306,7 @@ object ThemeRes {
      * the decor exists.
      */
     fun select(activity: Activity) {
-        applyLegacyLanguage(activity)
+        applyLanguageBelow33(activity)
         val p = palette(activity)
         if (p.builtIn && PaletteStore.accentOverride(activity, p.id) == null && !PaletteStore.wallpaper(activity)) {
             activity.setTheme(styleFor(p.id))

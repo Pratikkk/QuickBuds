@@ -172,7 +172,7 @@ If the earbuds do not connect, follow [Send a snoop log for a connect problem](.
 - [build-android.md](./docs/build-android.md) and [build-desktop.md](./docs/build-desktop.md): the build steps for each app.
 - [report-worker/](./report-worker): the Cloudflare Worker behind Feedback, the daily count and the replies.
 - [PACKET-CAPTURE.md](./docs/PACKET-CAPTURE.md): capturing the earbuds' traffic, HeyMelody's included.
-- [PROTOCOL.md](./docs/PROTOCOL.md): the wire format, every claim tagged with its source. [PROTOCOL-LEGACY.md](./docs/PROTOCOL-LEGACY.md) is the layer that ships.
+- [PROTOCOL.md](./docs/PROTOCOL.md): the wire format, every claim tagged with its source.
 - [ROADMAP.md](./docs/ROADMAP.md): the plan, and the features decided against.
 
 Everything to build and release QuickBuds is in this repository, except the signing key. If the

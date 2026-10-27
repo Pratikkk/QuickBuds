@@ -21,7 +21,7 @@ package com.spizganed.quickbuds.protocol
  * Evidence: a 74-byte payload, `00 12 ...`, where 2 + 0x12*4 = 74 EXACTLY. The
  * count is the second byte. `KeyFunctionItem.cs` does not model this: it describes
  * ONE entry's bytes, not the payload around it — which is exactly how the off-by-one
- * got in. See PROTOCOL-LEGACY.md §6.
+ * got in. See PROTOCOL.md §15.
  *
  * THE ENTRY FIELD ORDER IS AS THAT FILE SAYS, and the reply supports it: the third
  * byte is a small value (1..6, one per action this button supports) and the fourth
@@ -30,15 +30,15 @@ package com.spizganed.quickbuds.protocol
  * `{1..6}`, which is the less plausible reading.
  *
  * The `function` VALUES were unknown for a long time and are now MEASURED — see
- * `GestureAction.functionByte` and PROTOCOL-LEGACY.md §6. Do not re-derive them.
+ * `GestureAction.functionByte` and PROTOCOL.md §15. Do not re-derive them.
  *
  * THE `buttonAction` NUMBERS ARE MEASURED, not guessed: 1 single, 2 double, 3 triple,
- * 4 hold, 5 slide, 6 long hold (PROTOCOL-LEGACY.md §6). They are NOT the `0x0204`
+ * 4 hold, 5 slide, 6 long hold (PROTOCOL.md §15). They are NOT the `0x0204`
  * subType `0xF1` action numbers: `F1` reports single tap as `0x00` and long press as
  * `0x04`, and this reply binds `0x01` as well as `0x04`.
  *
  * The field is still printed as a NUMBER ONLY, so the line needs no name table.
- * Guessing ANC bits already cost this project a regression (PROTOCOL-LEGACY.md §5).
+ * Guessing ANC bits already cost this project a regression (PROTOCOL.md §14).
  *
  * Because the layout is exactly the thing that was once wrong here, the log line
  * still ends with `RAW=[...]`, so a capture stays readable by eye even if a future
@@ -82,7 +82,7 @@ object KeyFunctionParser {
      *
      * **THE BYTES ARE MEASURED; THE ENGLISH LABELS ARE `[TESTED]`.** The two rows are
      * double tap (`None` / `Answer + end call`) and long hold (`None` / `Decline call`),
-     * confirmed on a real call (PROTOCOL-LEGACY.md §6). Writing these bytes back is safe:
+     * confirmed on a real call (PROTOCOL.md §15). Writing these bytes back is safe:
      * they are HeyMelody's own, byte-for-byte.
      *
      * `act 0x02` and `act 0x03` also exist in `btn 0x01` (the primary group) with UNRELATED
@@ -100,7 +100,7 @@ object KeyFunctionParser {
      * entries, and the very next `0x8108` read-back always expanded it into identical `fn`
      * values on BOTH `dev=0x01` and `dev=0x02` — never `dev=0x04` itself on a READ.
      *
-     * The hold's ANC-cycle membership (`setSupportNoiseReduction`, PROTOCOL-LEGACY.md §5) is a
+     * The hold's ANC-cycle membership (`setSupportNoiseReduction`, PROTOCOL.md §14) is a
      * DIFFERENT command with no `deviceType` byte in its payload at all — its shared-both-buds
      * behaviour is a property of that command itself, not this alias. Do not assume the two
      * are the same mechanism.

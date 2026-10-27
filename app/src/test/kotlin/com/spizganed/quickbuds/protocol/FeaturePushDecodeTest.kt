@@ -1,8 +1,7 @@
-package com.spizganed.quickbuds.protocol2
+package com.spizganed.quickbuds.protocol
 
-import com.spizganed.quickbuds.protocol.FeaturePushParser
-import com.spizganed.quickbuds.protocol.Wire
 import com.spizganed.quickbuds.protocol.Wire.Message
+
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -55,7 +54,7 @@ class FeaturePushDecodeTest {
         assertNull(decode())
     }
 
-    /** A count of 0 is an empty list; the shipping parser accepts it. */
+    /** A count of 0 is an empty list; [FeaturePushParser] accepts it. */
     @Test fun countZeroIsAnEmptyList() {
         assertEquals(Msg.FeaturePush(emptyMap()), decode(0x00))
     }
@@ -64,8 +63,8 @@ class FeaturePushDecodeTest {
         assertEquals(Msg.FeaturePush(mapOf(0x7F to 1)), decode(0x01, 0x7F, 0x01))
     }
 
-    /** The same bytes give the same pairs as the shipping parser. */
-    @Test fun matchesTheShippingParser() {
+    /** The same bytes give the same pairs as [FeaturePushParser]. */
+    @Test fun matchesFeaturePushParser() {
         val payloads = listOf(
             b(0x01, 0x06, 0x01),
             b(0x01, 0x1B, 0x01, 0x30),

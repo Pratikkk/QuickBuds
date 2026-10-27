@@ -1,8 +1,7 @@
-package com.spizganed.quickbuds.protocol2
+package com.spizganed.quickbuds.protocol
 
-import com.spizganed.quickbuds.protocol.OpoProtocol
-import com.spizganed.quickbuds.protocol.Wire
 import com.spizganed.quickbuds.protocol.Wire.Message
+
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -19,7 +18,7 @@ class WireTest {
         assertArrayEquals(bytes(0xAA, 0x83, 0x01), Wire.encode(msg(0x0418, 3, 124))[0].copyOfRange(0, 3))
     }
 
-    @Test fun sameBytesAsTheShippingEncoder() {
+    @Test fun sameBytesAsTheEncoder() {
         for (n in listOf(0, 1, 3, 100, 120, 121, 122, 250, 600)) {
             val m = msg(0x0403, 9, n)
             val old = OpoProtocol.buildPacket(m.cmd, seq = m.seq, payload = m.payload)

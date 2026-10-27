@@ -11,7 +11,7 @@ import android.os.Process
 import com.spizganed.quickbuds.protocol.Feature
 
 /**
- * Game equalizer (PROTOCOL-LEGACY.md §9): while the buds' switch [Feature.GAME_EQ] is on, tells them when a game
+ * Game equalizer (PROTOCOL.md §18): while the buds' switch [Feature.GAME_EQ] is on, tells them when a game
  * comes to the foreground and when it leaves. Needs "Usage access"; without it, nothing is sent.
  * A game is an app Android marks as one (`ApplicationInfo.CATEGORY_GAME`).
  */

@@ -271,7 +271,7 @@ object LogDecoder {
                 // it with the model's table (AncModes).
                 //
                 // The caveat, stated so the line is not over-trusted: the switch-list query
-                // (`02 01`) answers `02 <kind> <mask LE>` (PROTOCOL-LEGACY.md §5), a mask and
+                // (`02 01`) answers `02 <kind> <mask LE>` (PROTOCOL.md §14), a mask and
                 // not a mode, so the name is only meaningful for the current-mode query.
                 val hex = OpoProtocol.bytesToHex(payload)
                 "ANC query response (0x810C): ${AncEventParser.describe(payload)} [$hex]"
