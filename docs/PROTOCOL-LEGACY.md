@@ -839,7 +839,7 @@ entry: <MAC, 6 bytes reversed> <len> <state> <flags> <nameLen> <name UTF-8>
 Some firmwares wait for these answers and reset the link when none comes. Nord Buds 3 Pro
 (`064414`, issue #2) `[CAPTURE]` sends `0x0500` with a real Seq and `00 00 00 00`. It sends the request again, then stops
 answering queries. It resets the link 3-5 s after connect, every time, if no answer comes. Buds 4
-sends `0x0500` empty and works either way. Both apps answer from one function (`Replies.answerFor`,
+sends `0x0500` empty and works either way. Each app answers from one function (`Replies.answerFor`,
 `protocol::answer_for`). Every answer echoes the request's Seq and sets `0x8000` on its cmd.
 
 | From the buds | Answer | Meaning |
