@@ -27,6 +27,8 @@ import com.spizganed.quickbuds.protocol.LogDecoder
 import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.EqCodec
+import com.spizganed.quickbuds.protocol.EqSnapshot
+import com.spizganed.quickbuds.protocol.EqState
 import com.spizganed.quickbuds.protocol.GameModeParser
 import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.OpoProtocol
@@ -483,6 +485,9 @@ class BudsConnectionManager(private val context: Context) {
         reconnectAttempts = 0
         connectedAt = System.currentTimeMillis()
         caseClosing = false
+        eqMac = audioDevice?.address
+        if (eqMac != null) eqState = EqState.forLink(eqSnapshot, eqMac)
+        eqReadGate.onLinkUp()
         if (audioDevice != null && audioAfterRestart) { audioAfterRestart = false; setPhoneAudio(audioDevice, on = true) }
         handler.post { listeners.forEach { it.onConnected(true) } }
         syncPrimed = false
@@ -648,6 +653,7 @@ class BudsConnectionManager(private val context: Context) {
         pendingRetry = null
         isReady = false
         isConnecting = false
+        eqMac = null
         connectedThread?.cancel()
         connectedThread = null
         bluetoothSocket = null
@@ -774,14 +780,35 @@ class BudsConnectionManager(private val context: Context) {
     // --- Equalizer (PROTOCOL-LEGACY.md §9). Read on demand by the EQ screen, re-read after every write. ---
     /** The events these buds offer (`0x8200`), once read; reset on each connect. */
     @Volatile private var offeredEvents: Set<Int>? = null
-    @Volatile var eqCurrent: Int? = null
-        private set
-    @Volatile var eqCustom: List<EqCodec.Preset> = emptyList()
-        private set
-    @Volatile var bassWaveLevel: Int? = null
-        private set
 
-    fun refreshEq() = sendThenRead()
+    /** The EQ values the screen reads. See [EqState]. */
+    @Volatile private var eqState = EqState()
+    val eqCurrent: Int? get() = eqState.current
+    val eqCustom: List<EqCodec.Preset> get() = eqState.custom
+    val bassWaveLevel: Int? get() = eqState.bassWave
+
+    /**
+     * The saved snapshot, read at construction. It paints the screen before the bind.
+     * It is used for a link only when its MAC matches the device ([EqState.forLink]).
+     */
+    @Volatile private var eqSnapshot: EqSnapshot? =
+        EqSnapshot.decode(featurePrefs().getString(EqSnapshot.KEY, null))
+    /** The MAC of the linked buds; null while no link is up, and in virtual mode. */
+    @Volatile private var eqMac: String? = null
+    private val eqReadGate = EqReadGate()
+
+    /** Stores [next] and writes the snapshot. Every EQ change goes through here. */
+    private fun setEq(next: EqState) {
+        eqState = next
+        val mac = eqMac ?: return
+        EqSnapshot(mac, next.current, next.bassWave, next.custom).also {
+            eqSnapshot = it
+            featurePrefs().edit().putString(EqSnapshot.KEY, it.encode()).apply()
+        }
+    }
+
+    /** One EQ read set per link: the bind ask before the link up sends nothing. */
+    fun refreshEq() { if (eqReadGate.take()) sendThenRead() }
 
     // Each write updates the cached state FIRST, then sends and re-reads. The three replies land one
     // by one and each repaints; without this, the replies that arrive before the new values snapped
@@ -791,10 +818,10 @@ class BudsConnectionManager(private val context: Context) {
     @Volatile private var eqPicked: Int? = null
     @Volatile private var eqPickedAt = 0L
 
-    private fun picked(id: Int) {
-        eqCurrent = id
+    private fun picked(id: Int): EqState {
         eqPicked = id
         eqPickedAt = System.currentTimeMillis()
+        return eqState.copy(current = id)
     }
 
     /** The buds report [id] as current: kept unless an unconfirmed pick of another preset is under 4 s old. */
@@ -802,27 +829,27 @@ class BudsConnectionManager(private val context: Context) {
         val want = eqPicked
         if (want != null && want != id && System.currentTimeMillis() - eqPickedAt < 4000) return
         eqPicked = null
-        eqCurrent = id
+        setEq(eqState.copy(current = id))
     }
 
     /** Counts picks: a queued pick that a newer one replaced is not sent. */
     @Volatile private var eqPickSeq = 0
 
     fun selectBuiltInEq(id: Int) {
-        picked(id)
+        setEq(picked(id))
         sendThenRead(Commands.setBuiltInEq(id) to "EQ built-in $id", ++eqPickSeq)
     }
 
     /** Selects a custom preset unchanged: the same frame as a save, but a newer pick may replace it. */
     fun selectCustomEq(p: EqCodec.Preset) {
-        picked(p.id)
+        setEq(picked(p.id))
         sendThenRead(Commands.customEq(EqCodec.ACTION_SAVE, p) to "EQ custom ${p.id} '${p.name}'", ++eqPickSeq)
     }
 
     /** Selects AND saves a custom preset — `0x0418` is both (a band edit or rename is the same frame). */
     fun saveCustomEq(p: EqCodec.Preset) {
-        picked(p.id)
-        eqCustom = eqCustom.map { if (it.id == p.id) p else it }
+        val next = picked(p.id)
+        setEq(next.withList(next.custom.map { if (it.id == p.id) p else it }))
         sendThenRead(Commands.customEq(EqCodec.ACTION_SAVE, p) to "EQ custom ${p.id} '${p.name}'")
     }
 
@@ -834,7 +861,7 @@ class BudsConnectionManager(private val context: Context) {
         sendThenRead(Commands.customEq(EqCodec.ACTION_DELETE,p) to "EQ delete ${p.id} '${p.name}'")
 
     fun setBassWaveLevel(level: Int) {
-        bassWaveLevel = level
+        setEq(eqState.copy(bassWave = level))
         sendThenRead(Commands.setBassWaveLevel(level) to "BassWave level $level")
     }
 
@@ -1766,9 +1793,9 @@ class BudsConnectionManager(private val context: Context) {
         // --- Equalizer replies and push, [CAPTURE] 2026-09-23 ---
         when (cmd) {
             0x810F -> if (payload.size >= 2 && payload[0].toInt() == 0) reportedEq(payload[1].toInt() and 0xFF)
-            0x8122 -> EqCodec.parseList(payload)?.let { eqCustom = it }
+            0x8122 -> EqCodec.parseList(payload)?.let { setEq(eqState.withList(it)) }
                 ?: log("EQ: could not parse custom list RAW=[${OpoProtocol.bytesToHex(payload)}]")
-            0x8124 -> if (payload.size >= 4 && payload[0].toInt() == 0) bassWaveLevel = payload[3].toInt()
+            0x8124 -> if (payload.size >= 4 && payload[0].toInt() == 0) setEq(eqState.copy(bassWave = payload[3].toInt()))
             OpoProtocol.CMD_EQ_CHANGED -> if (payload.isNotEmpty()) reportedEq(payload[0].toInt() and 0xFF)
         }
         // A refused feature write. Status 1 is a switch the buds lack. Status 2 is a switch they have but will not take now
