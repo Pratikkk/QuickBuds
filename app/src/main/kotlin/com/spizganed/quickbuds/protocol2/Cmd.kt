@@ -1,11 +1,14 @@
 package com.spizganed.quickbuds.protocol2
 
+import com.spizganed.quickbuds.protocol.Commands
+import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.Replies
 
 /**
  * Typed messages of docs/PROTOCOL.md: builds what the app sends. Each function returns a [Frame]
- * (command, payload); the link layer adds the sequence number and the frame. [seq] holds the fixed
- * number of the battery and wearing queries. The batch frame comes from `protocol/Replies.kt`. Written from the spec.
+ * (command, payload); the link layer adds the sequence number and the frame. The payload comes from
+ * `protocol/Commands.kt`, so both layers build it in one place. [seq] holds the fixed number of the
+ * battery and wearing queries. The batch frame comes from `protocol/Replies.kt`. Written from the spec.
  */
 data class Frame(val cmd: Int, val payload: ByteArray, val seq: Int? = null) {
     override fun equals(other: Any?) =
@@ -24,33 +27,19 @@ object Cmd {
     fun broadcastCodes() = f(0x0200)
 
     /** `0x0205 <count> <codes>`. Count first: `01 01 02 02` would mean "count 1, battery only". */
-    fun register(codes: List<Int>) = f(0x0205, codes.size, *codes.toIntArray())
+    fun register(codes: List<Int>) = Frame(0x0205, Commands.registerNotificationsPayload(codes))
     /** `0x0201 <code>`, for buds without `0x0205` in the bitmap. */
-    fun registerOne(code: Int) = f(0x0201, code)
+    fun registerOne(code: Int) = Frame(0x0201, Commands.registerOnePayload(code))
 
     /**
      * The events to subscribe to: battery, wearing, ANC, plus fit test, hearing test and personalised ANC where the
      * bitmap has their commands. Kept to the codes the buds offer when they answered `0x0200`.
      */
-    fun notifyIds(bitmap: Bitmap, offered: List<Int>?): List<Int> {
-        val ids = mutableListOf(0x01, 0x02, 0x03)
-        if (bitmap.allows(0x0405)) ids += 0x04
-        if (bitmap.allows(0x040D)) ids += 0x08
-        if (bitmap.allows(0x0412)) ids += 0x0B
-        return if (offered == null) ids else ids.filter { it in offered }
-    }
+    fun notifyIds(bitmap: Bitmap, offered: List<Int>?): List<Int> =
+        Commands.notifyIds(bitmap.allows(0x0405), bitmap.allows(0x040D), bitmap.allows(0x0412), offered?.toSet())
 
-    /** The id the model list uses: four colour ranges fold into one id. */
-    fun foldProduct(id: Int): Int = when (id) {
-        in 0x100100..0x100102 -> 0x060414
-        in 0x100200..0x100202 -> 0x060814
-        in 0x108100..0x108102 -> 0x068414
-        in 0x108200..0x108202 -> 0x068814
-        else -> id
-    }
-
-    /** Six hex digits, as the model list writes ids: `065414`. */
-    fun productText(id: Int) = "%06X".format(foldProduct(id))
+    /** Six hex digits, as the model list writes ids. The fold has one place: [ModelCatalog.normalise]. */
+    fun productText(id: Int) = "%06X".format(ModelCatalog.normalise(id))
 
     /** The `versionType` 2 versions in reply order, joined by dots. */
     fun firmwareText(parts: List<Triple<Int, Int, String>>): String? =
@@ -129,8 +118,8 @@ object Cmd {
     // --- Sound and device settings (section 13) ---
 
     fun alertVolumeRead() = f(0x0130)
-    /** `0x0427 <level>`, 1..10. Each write plays a prompt: send on slider release only. */
-    fun alertVolume(level: Int) = f(0x0427, level)
+    /** `0x0427 <level>`, clamped to 1..10, as the shipping builder does. Each write plays a prompt: send on slider release only. */
+    fun alertVolume(level: Int) = f(0x0427, level.coerceIn(1, 10))
     fun tapLevelRead() = f(0x0133)
     /** `0x042D <level>`, 1..5. A lower level triggers more easily. */
     fun tapLevel(level: Int) = f(0x042D, level)

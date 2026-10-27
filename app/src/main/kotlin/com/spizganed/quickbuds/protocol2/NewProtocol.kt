@@ -46,8 +46,8 @@ object NewProtocol {
     fun holdCycle(mask: Int, kind: Int) = pkt(Cmd.holdCycle(kind, mask))
     fun feature(id: Int, on: Boolean) = pkt(Cmd.feature(id, on))
     fun bassLevel(level: Int) = pkt(Cmd.bassSet(level))
-    /** The legacy builder limits the level to 1..10; so does this. */
-    fun alertVolume(level: Int) = pkt(Cmd.alertVolume(level.coerceIn(1, 10)))
+    /** The builder limits the level to 1..10, as the shipping builder does. */
+    fun alertVolume(level: Int) = pkt(Cmd.alertVolume(level))
     fun tapLevel(level: Int) = pkt(Cmd.tapLevel(level))
     fun headGesture(type: Int) = pkt(Cmd.headGesture(type))
     fun spatial(type: Int) = pkt(Cmd.spatial(type))
