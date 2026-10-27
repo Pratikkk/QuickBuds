@@ -60,8 +60,8 @@ object NewProtocol {
     fun connectDevice(mac: String, on: Boolean) = pkt(Cmd.deviceConnect(parseMac(mac), on))
     fun preferredSet(mac: String?) = pkt(Cmd.preferredSet(mac?.let { parseMac(it) }))
     fun preferredRead() = pkt(Cmd.preferredRead())
-    /** After the dual switch: `0x0413` with the auto-switch flag, the opposite of the switch. */
-    fun dualFollowup(dualOn: Boolean) = pkt(Cmd.phoneState(Cmd.PhoneState(autoSwitch = !dualOn)))
+    /** After the dual switch: `0x0413 08 00 01` after OFF, `08 00 00` after ON. */
+    fun dualFollowup(dualOn: Boolean) = pkt(Cmd.dualFollowup(dualOn))
     fun earScan(on: Boolean, id: Int) = pkt(Cmd.earScan(on, id))
     fun hearingTest(on: Boolean) = pkt(Cmd.hearingTest(on))
     fun tone(side: Int, freq: Int, value: Int) = pkt(Cmd.tone(side, freq, value))

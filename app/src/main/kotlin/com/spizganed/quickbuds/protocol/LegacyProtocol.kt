@@ -381,17 +381,13 @@ object OpoProtocol {
     fun setHeadMotionType(type: Int): ByteArray = Commands.headMotionType(type)
     fun queryHeadMotionType(): ByteArray = Commands.queryHeadMotionType()
 
-    fun queryDevices(): ByteArray = buildPacket(CMD_QUERY_DEVICES)
-    private fun macBytes(mac: String) = mac.split(":").map { it.toInt(16).toByte() }.toByteArray()
-    fun connectDevice(mac: String, on: Boolean): ByteArray =
-        buildPacket(CMD_MULTI_CONNECT, payload = byteArrayOf(if (on) 0x01 else 0x02) + macBytes(mac))
+    fun queryDevices(): ByteArray = Commands.queryDevices()
+    fun connectDevice(mac: String, on: Boolean): ByteArray = Commands.connectDevice(mac, on)
     /** [mac] null = automatic. */
-    fun setPreferred(mac: String?): ByteArray = buildPacket(CMD_MULTI_CONNECT,
-        payload = if (mac == null) byteArrayOf(0x04, 0x00) else byteArrayOf(0x04, 0x01) + macBytes(mac))
-    fun queryPreferred(): ByteArray = buildPacket(CMD_QUERY_PREFERRED, payload = byteArrayOf(0x02))
+    fun setPreferred(mac: String?): ByteArray = Commands.setPreferred(mac)
+    fun queryPreferred(): ByteArray = Commands.queryPreferred()
     /** `08 00 01` after dual OFF, `08 00 00` after ON — copied from HeyMelody, not understood. */
-    fun dualFollowup(dualOn: Boolean): ByteArray =
-        buildPacket(CMD_DUAL_FOLLOWUP, payload = byteArrayOf(0x08, 0x00, if (dualOn) 0x00 else 0x01))
+    fun dualFollowup(dualOn: Boolean): ByteArray = Commands.dualFollowup(dualOn)
 
     /** getKeyFunction (0x0108) — read the CURRENT gesture bindings. Built in [Commands.queryKeyFunction]. */
     fun queryKeyFunction(): ByteArray = Commands.queryKeyFunction()

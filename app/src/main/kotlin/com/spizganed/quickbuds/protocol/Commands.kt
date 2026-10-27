@@ -380,4 +380,37 @@ internal object Commands {
         act.toByte(),
         fn.toByte()
     )
+
+    // --- Dual connection ---
+
+    fun queryDevices(): ByteArray = OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_DEVICES)
+
+    /** The MAC in written order, as the connect and preferred writes send it. */
+    internal fun macBytes(mac: String): ByteArray = mac.split(":").map { it.toInt(16).toByte() }.toByteArray()
+
+    /** `0x0429 01|02 <MAC>`: connect or disconnect a device. */
+    fun connectDevice(mac: String, on: Boolean): ByteArray =
+        OpoProtocol.buildPacket(OpoProtocol.CMD_MULTI_CONNECT, payload = connectDevicePayload(macBytes(mac), on))
+
+    internal fun connectDevicePayload(mac: ByteArray, on: Boolean): ByteArray =
+        byteArrayOf(if (on) 0x01 else 0x02) + mac
+
+    /** `0x0429 04 00` automatic, `04 01 <MAC>` a chosen device. A null [mac] means automatic. */
+    fun setPreferred(mac: String?): ByteArray =
+        OpoProtocol.buildPacket(OpoProtocol.CMD_MULTI_CONNECT, payload = preferredPayload(mac?.let { macBytes(it) }))
+
+    internal fun preferredPayload(mac: ByteArray?): ByteArray =
+        if (mac == null) byteArrayOf(0x04, 0x00) else byteArrayOf(0x04, 0x01) + mac
+
+    fun queryPreferred(): ByteArray =
+        OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_PREFERRED, payload = preferredReadPayload())
+
+    internal fun preferredReadPayload(): ByteArray = byteArrayOf(0x02)
+
+    /** `08 00 01` after dual OFF, `08 00 00` after ON — copied from HeyMelody, not understood. The literal stays. */
+    fun dualFollowup(dualOn: Boolean): ByteArray =
+        OpoProtocol.buildPacket(OpoProtocol.CMD_DUAL_FOLLOWUP, payload = dualFollowupPayload(dualOn))
+
+    internal fun dualFollowupPayload(dualOn: Boolean): ByteArray =
+        byteArrayOf(0x08, 0x00, if (dualOn) 0x00 else 0x01)
 }

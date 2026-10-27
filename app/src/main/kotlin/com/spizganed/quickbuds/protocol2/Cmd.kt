@@ -144,10 +144,14 @@ object Cmd {
 
     fun devicesRead() = f(0x0112)
     /** `0x0429 01|02 <MAC>`: connect or disconnect a device. The MAC is in written order. */
-    fun deviceConnect(mac: Mac, on: Boolean) = f(0x0429, if (on) 1 else 2, *mac.toIntArray())
+    fun deviceConnect(mac: Mac, on: Boolean) =
+        Frame(0x0429, Commands.connectDevicePayload(ByteArray(mac.size) { mac[it].toByte() }, on))
     /** `0x0429 04 00` automatic, `04 01 <MAC>` a chosen device. */
-    fun preferredSet(mac: Mac?) = if (mac == null) f(0x0429, 4, 0) else f(0x0429, 4, 1, *mac.toIntArray())
-    fun preferredRead() = f(0x0132, 2)
+    fun preferredSet(mac: Mac?) = Frame(0x0429, Commands.preferredPayload(mac?.let { m -> ByteArray(m.size) { m[it].toByte() } }))
+    fun preferredRead() = Frame(0x0132, Commands.preferredReadPayload())
+
+    /** `0x0413 08 00 01` after dual OFF, `08 00 00` after ON. The literal stays, as the shipping builder sends it. */
+    fun dualFollowup(dualOn: Boolean) = Frame(0x0413, Commands.dualFollowupPayload(dualOn))
 
     /** The phone's state for switching between devices. A null field is left out. */
     data class PhoneState(val version: Int? = null, val screenOn: Boolean? = null, val held: Boolean? = null, val autoSwitch: Boolean? = null, val music: Boolean? = null)

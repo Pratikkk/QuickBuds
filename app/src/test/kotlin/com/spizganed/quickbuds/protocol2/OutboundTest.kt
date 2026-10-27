@@ -140,7 +140,7 @@ class OutboundTest {
         val s = "0A:1B:2C:3D:4E:5F"
         for (on in listOf(true, false)) {
             same("connect $on", OpoProtocol.connectDevice(s, on), Cmd.deviceConnect(mac(s), on)) { NewProtocol.connectDevice(s, on) }
-            same("followup $on", OpoProtocol.dualFollowup(on), Cmd.phoneState(Cmd.PhoneState(autoSwitch = !on))) { NewProtocol.dualFollowup(on) }
+            same("followup $on", OpoProtocol.dualFollowup(on), Cmd.dualFollowup(on)) { NewProtocol.dualFollowup(on) }
         }
         same("preferred", OpoProtocol.setPreferred(s), Cmd.preferredSet(mac(s))) { NewProtocol.preferredSet(s) }
         same("preferred auto", OpoProtocol.setPreferred(null), Cmd.preferredSet(null)) { NewProtocol.preferredSet(null) }
