@@ -8,8 +8,8 @@ import android.view.View
 import android.widget.LinearLayout
 import com.spizganed.quickbuds.R
 import com.spizganed.quickbuds.protocol.GoldenSound
-import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.widget.WidgetStateStore
+import com.spizganed.quickbuds.protocol.HearingCommands
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -82,10 +82,10 @@ class GoldenTestSheet(
         if (scan) {
             state = State.SCAN
             sheet.title(s(R.string.golden_scanning)).message(s(R.string.golden_scan_hint)).confirm("…") {}
-            send(arrayOf(OpoProtocol.earScan(true, uid)))
+            send(arrayOf(HearingCommands.earScan(true, uid)))
             handler.postDelayed(scanTimeout, 15_000)
         } else {
-            send(arrayOf(OpoProtocol.hearingTest(true)))
+            send(arrayOf(HearingCommands.hearingTest(true)))
             begin(0)
         }
     }
@@ -95,7 +95,7 @@ class GoldenTestSheet(
         if (state != State.SCAN || id != uid) return
         handler.removeCallbacks(scanTimeout)
         scanData = data
-        send(arrayOf(OpoProtocol.earScan(false, uid), OpoProtocol.hearingTest(true)))
+        send(arrayOf(HearingCommands.earScan(false, uid), HearingCommands.hearingTest(true)))
         begin(0)
     }
 
@@ -118,7 +118,7 @@ class GoldenTestSheet(
         handler.removeCallbacks(tone)
         panel.visibility = View.GONE
         sheet.title(s(R.string.golden_creating)).message(null).confirm("…") {}
-        send(arrayOf(OpoProtocol.hearingToneStop(), OpoProtocol.hearingTest(false), OpoProtocol.hearingFilter(uid, values)))
+        send(arrayOf(HearingCommands.hearingToneStop(), HearingCommands.hearingTest(false), HearingCommands.hearingFilter(uid, values)))
         handler.postDelayed(filterTimeout, 3_000)
     }
 
@@ -154,8 +154,8 @@ class GoldenTestSheet(
             warnedLoud = true
             sheet.message(s(R.string.golden_loud))
         }
-        send(arrayOf(OpoProtocol.hearingToneStop(),
-            OpoProtocol.hearingTone(step / 6 + 1, step % 6 + 1, GoldenSound.STOPS[slider.value])))
+        send(arrayOf(HearingCommands.hearingToneStop(),
+            HearingCommands.hearingTone(step / 6 + 1, step % 6 + 1, GoldenSound.STOPS[slider.value])))
     }
 
     /** Status event `0x08` (kind 2 test, 4 scan): 1 / 3 audio playing, 5 a bud out, 7 / 10 / 255 failed. */
@@ -184,8 +184,8 @@ class GoldenTestSheet(
         handler.removeCallbacks(tone)
         handler.removeCallbacks(scanTimeout)
         when (state) {
-            State.SCAN -> send(arrayOf(OpoProtocol.earScan(false, uid)))
-            State.TEST -> send(arrayOf(OpoProtocol.hearingToneStop(), OpoProtocol.hearingTest(false)))
+            State.SCAN -> send(arrayOf(HearingCommands.earScan(false, uid)))
+            State.TEST -> send(arrayOf(HearingCommands.hearingToneStop(), HearingCommands.hearingTest(false)))
             else -> {}
         }
         if (state != State.DONE) state = State.IDLE

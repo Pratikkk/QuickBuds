@@ -6,6 +6,9 @@ import com.spizganed.quickbuds.protocol.BatteryParser
 import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.Wire.Message
+import com.spizganed.quickbuds.protocol.Commands
+import com.spizganed.quickbuds.protocol.HearingCommands
+import com.spizganed.quickbuds.protocol.Replies
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -51,7 +54,7 @@ class MsgTest {
         for ((c, p) in replies) pl += b(c and 0xFF, c shr 8, p.size, 0) + p
         val parts = Decode.unbatch(Message(0x812F, 7, pl))
         assertEquals(3, parts.size)
-        val old = OpoProtocol.batchReplies(pl)
+        val old = Replies.batchReplies(pl)
         old.zip(parts).forEach { (o, n) -> assertEquals(o.first or 0x8000, n.cmd); assertTrue(o.second.contentEquals(n.payload)); assertEquals(7, n.seq) }
         assertEquals(old.size, parts.size)
         assertEquals(2, Decode.unbatch(Message(0x812F, 7, pl.copyOf(pl.size - 1))).size)
@@ -201,41 +204,41 @@ class MsgTest {
 
     @Test fun connectionFramesMatchTheShippingBuilders() {
         assertEquals(Frame(0x0205, b(3, 1, 2, 3)), Cmd.register(listOf(1, 2, 3)))
-        assertTrue(payloadOf(OpoProtocol.registerNotifications(listOf(1, 2, 3))).contentEquals(Cmd.register(listOf(1, 2, 3)).payload))
+        assertTrue(payloadOf(Commands.registerNotifications(listOf(1, 2, 3))).contentEquals(Cmd.register(listOf(1, 2, 3)).payload))
         assertEquals(Frame(0x0201, b(4)), Cmd.registerOne(4))
         val buds4 = Bitmap.parse(b(0, 0xFF, 0x77, 0x5A, 0xEA, 0x67, 0x0E, 0x20, 0x07))!!
         val offered = listOf(1, 2, 3, 4, 8, 0x0B, 0xF1, 0xF2, 0xF3)
-        assertEquals(OpoProtocol.notifyIds(buds4.allows(0x0405), buds4.allows(0x040D), buds4.allows(0x0412), offered.toSet()).sorted(), Cmd.notifyIds(buds4, offered).sorted())
+        assertEquals(Commands.notifyIds(buds4.allows(0x0405), buds4.allows(0x040D), buds4.allows(0x0412), offered.toSet()).sorted(), Cmd.notifyIds(buds4, offered).sorted())
         assertEquals(listOf(1, 2), Cmd.notifyIds(Bitmap.UNKNOWN, listOf(2, 1)))
         for (id in listOf(0x065414, 0x100100, 0x100102, 0x100103, 0x108201, 0x060C12))
             assertEquals(com.spizganed.quickbuds.protocol.Capabilities.productId(b(0, id and 0xFF, (id shr 8) and 0xFF, id shr 16)), Cmd.productText(id))
         assertEquals("138.138.105", Cmd.firmwareText(listOf(Triple(1, 2, "138"), Triple(2, 2, "138"), Triple(3, 1, "01"), Triple(3, 2, "105"))))
         val qs = listOf(Frame(0x0102, b(0xFF, 0xFF)), Frame(0x0106, b()), Frame(0x010C, b(1, 1)))
-        val oldBatch = payloadOf(OpoProtocol.batch(qs.map { OpoProtocol.buildPacket(it.cmd, payload = it.payload) }))
+        val oldBatch = payloadOf(Replies.batch(qs.map { OpoProtocol.buildPacket(it.cmd, payload = it.payload) }))
         assertTrue(oldBatch.contentEquals(Cmd.batch(qs).payload))
     }
 
     @Test fun writesMatchTheShippingBuilders() {
         for ((bit, bytes) in listOf(0 to b(1, 1, 1), 1 to b(1, 1, 2), 2 to b(1, 1, 4), 4 to b(1, 1, 0x10), 11 to b(1, 1, 0, 8))) {
             assertEquals(Frame(0x0404, bytes), Cmd.ancSet(bit))
-            assertTrue(payloadOf(OpoProtocol.anc(bit)).contentEquals(Cmd.ancSet(bit).payload))
+            assertTrue(payloadOf(Commands.anc(bit)).contentEquals(Cmd.ancSet(bit).payload))
         }
         for ((kind, mask) in listOf(1 to 3, 1 to 0x0807, 3 to 1, 4 to 0x0100, 1 to 0x01020304, 1 to 0))
-            assertTrue("$kind $mask", payloadOf(OpoProtocol.setHoldAncModes(mask, kind)).contentEquals(Cmd.holdCycle(kind, mask).payload))
+            assertTrue("$kind $mask", payloadOf(Commands.holdAncModes(mask, kind)).contentEquals(Cmd.holdCycle(kind, mask).payload))
         val t = listOf(Binding(1, 1, 2, 0x11), Binding(4, 6, 6, 0x1C))
-        val oldT = OpoProtocol.setKeyFunction(t.map { com.spizganed.quickbuds.protocol.KeyFunctionParser.Entry(it.dev, it.button, it.act, it.func) })
+        val oldT = Commands.setKeyFunction(t.map { com.spizganed.quickbuds.protocol.KeyFunctionParser.Entry(it.dev, it.button, it.act, it.func) })
         assertTrue(payloadOf(oldT).contentEquals(Cmd.gestureTable(t).payload))
         // Call-control capture: `0401 01 04 06 06 1C`.
         assertEquals(Frame(0x0401, b(1, 4, 6, 6, 0x1C)), Cmd.gestureTable(t.drop(1)))
         assertEquals(Frame(0x0403, b(0x1D, 1)), Cmd.feature(0x1D, true))
-        assertTrue(payloadOf(OpoProtocol.setFeature(0x1D, true)).contentEquals(Cmd.feature(0x1D, true).payload))
+        assertTrue(payloadOf(Commands.feature(0x1D, true)).contentEquals(Cmd.feature(0x1D, true).payload))
         assertEquals(Frame(0x0406, b(2)), Cmd.eqSelect(2))
         assertEquals(Frame(0x041B, b(0xFB, 5, 0xFD)), Cmd.bassSet(-3))
-        assertTrue(payloadOf(OpoProtocol.setBassWaveLevel(-3)).contentEquals(Cmd.bassSet(-3).payload))
+        assertTrue(payloadOf(Commands.setBassWaveLevel(-3)).contentEquals(Cmd.bassSet(-3).payload))
         assertEquals(Frame(0x010C, b(1, 1)), Cmd.ancRead(1, 1))
         val o = com.spizganed.quickbuds.protocol.EqCodec.Preset(5, "Mine", listOf(62, 250, 1000), listOf(-2, 0, 3), false, byteArrayOf(0xFA.toByte(), 6))
         for ((a, code) in listOf(Cmd.EqAction.Create to 1, Cmd.EqAction.Save to 2, Cmd.EqAction.Delete to 3))
-            assertTrue(payloadOf(OpoProtocol.customEq(code, o)).contentEquals(Cmd.eqPreset(a, o).payload))
+            assertTrue(payloadOf(Commands.customEq(code, o)).contentEquals(Cmd.eqPreset(a, o).payload))
     }
 
     private fun at(n: Int, vararg tail: Int) = IntArray(n) + tail
@@ -277,41 +280,41 @@ class MsgTest {
         assertNull(dec(m(0x811F, 0, 0, 0, 0, 9, 3, 0, 0, 0, 0, 0)))
         // Frames against the shipping builders.
         val iv = v.toIntArray()
-        assertTrue(payloadOf(OpoProtocol.earScan(true, 0x01020304)).contentEquals(Cmd.earScan(true, 0x01020304).payload))
-        assertTrue(payloadOf(OpoProtocol.hearingTest(false)).contentEquals(Cmd.hearingTest(false).payload))
-        assertTrue(payloadOf(OpoProtocol.hearingTone(2, 3, -30)).contentEquals(Cmd.tone(2, 3, -30).payload))
-        assertTrue(payloadOf(OpoProtocol.hearingFilter(7, iv)).contentEquals(Cmd.goldenFilter(7, v).payload))
-        assertTrue(tail(OpoProtocol.earScanFilter(7, ByteArray(168) { 9 }), 174).contentEquals(Cmd.goldenScanFilter(7, ByteArray(168) { 9 }).payload))
-        assertTrue(tail(OpoProtocol.hearingRecord(0x01020304, "2026/09/29 01:53", iv), apply[1].payload.size).contentEquals(apply[1].payload))
-        assertTrue(payloadOf(OpoProtocol.hearingRestore(11)).contentEquals(apply[0].payload))
-        assertTrue(tail(OpoProtocol.earScanData(0x01020304, ByteArray(168) { 9 }), 175).contentEquals(apply[2].payload))
+        assertTrue(payloadOf(HearingCommands.earScan(true, 0x01020304)).contentEquals(Cmd.earScan(true, 0x01020304).payload))
+        assertTrue(payloadOf(HearingCommands.hearingTest(false)).contentEquals(Cmd.hearingTest(false).payload))
+        assertTrue(payloadOf(HearingCommands.hearingTone(2, 3, -30)).contentEquals(Cmd.tone(2, 3, -30).payload))
+        assertTrue(payloadOf(HearingCommands.hearingFilter(7, iv)).contentEquals(Cmd.goldenFilter(7, v).payload))
+        assertTrue(tail(HearingCommands.earScanFilter(7, ByteArray(168) { 9 }), 174).contentEquals(Cmd.goldenScanFilter(7, ByteArray(168) { 9 }).payload))
+        assertTrue(tail(HearingCommands.hearingRecord(0x01020304, "2026/09/29 01:53", iv), apply[1].payload.size).contentEquals(apply[1].payload))
+        assertTrue(payloadOf(HearingCommands.hearingRestore(11)).contentEquals(apply[0].payload))
+        assertTrue(tail(HearingCommands.earScanData(0x01020304, ByteArray(168) { 9 }), 175).contentEquals(apply[2].payload))
     }
 
     @Test fun settingFramesMatchTheShippingBuilders() {
-        assertTrue(payloadOf(OpoProtocol.setCodec(8, true)).contentEquals(Cmd.codec(8, true).payload))
-        assertTrue(payloadOf(OpoProtocol.setCodec(2, true)).contentEquals(Cmd.codec(2, true).payload))
+        assertTrue(payloadOf(Commands.codec(8, true)).contentEquals(Cmd.codec(8, true).payload))
+        assertTrue(payloadOf(Commands.codec(2, true)).contentEquals(Cmd.codec(2, true).payload))
         assertEquals(Frame(0x041A, b(3, 0, 0)), Cmd.codec(3, false))
         // LHDC (7) is dropped when LHDC V5 (8) is offered too.
         assertEquals(listOf(1, 2, 3, 6, 8), Cmd.codecsOf(0x00E7))
-        assertTrue(payloadOf(OpoProtocol.setAlertVolume(6)).contentEquals(Cmd.alertVolume(6).payload))
-        assertTrue(payloadOf(OpoProtocol.setTapLevel(3)).contentEquals(Cmd.tapLevel(3).payload))
-        assertTrue(payloadOf(OpoProtocol.setGameSoundType(3)).contentEquals(Cmd.gameSound(3).payload))
-        assertTrue(payloadOf(OpoProtocol.gameEqState(true)).contentEquals(Cmd.gameEq(true).payload))
-        assertTrue(payloadOf(OpoProtocol.setSpatialType(2)).contentEquals(Cmd.spatial(2).payload))
-        assertTrue(payloadOf(OpoProtocol.spatialOnBuds()).contentEquals(Cmd.spatialSource(0).payload))
-        assertTrue(payloadOf(OpoProtocol.setHeadMotionType(1)).contentEquals(Cmd.headGesture(1).payload))
-        assertTrue(payloadOf(OpoProtocol.findTone(true)).contentEquals(Cmd.find(true).payload))
-        assertTrue(payloadOf(OpoProtocol.fitTest(false)).contentEquals(Cmd.fitTest(false).payload))
-        assertTrue(payloadOf(OpoProtocol.personalNoise(2)).contentEquals(Cmd.personalAnc(2).payload))
-        assertTrue(payloadOf(OpoProtocol.queryPreferred()).contentEquals(Cmd.preferredRead().payload))
-        assertTrue(payloadOf(OpoProtocol.connectDevice("01:02:03:04:05:06", true)).contentEquals(Cmd.deviceConnect(listOf(1, 2, 3, 4, 5, 6), true).payload))
-        assertTrue(payloadOf(OpoProtocol.setPreferred(null)).contentEquals(Cmd.preferredSet(null).payload))
-        assertTrue(payloadOf(OpoProtocol.setPreferred("01:02:03:04:05:06")).contentEquals(Cmd.preferredSet(listOf(1, 2, 3, 4, 5, 6)).payload))
+        assertTrue(payloadOf(Commands.alertVolume(6)).contentEquals(Cmd.alertVolume(6).payload))
+        assertTrue(payloadOf(Commands.setTapLevel(3)).contentEquals(Cmd.tapLevel(3).payload))
+        assertTrue(payloadOf(Commands.gameSoundType(3)).contentEquals(Cmd.gameSound(3).payload))
+        assertTrue(payloadOf(Commands.gameEqState(true)).contentEquals(Cmd.gameEq(true).payload))
+        assertTrue(payloadOf(Commands.spatialType(2)).contentEquals(Cmd.spatial(2).payload))
+        assertTrue(payloadOf(Commands.spatialOnBuds()).contentEquals(Cmd.spatialSource(0).payload))
+        assertTrue(payloadOf(Commands.headMotionType(1)).contentEquals(Cmd.headGesture(1).payload))
+        assertTrue(payloadOf(Commands.findTone(true)).contentEquals(Cmd.find(true).payload))
+        assertTrue(payloadOf(Commands.fitTest(false)).contentEquals(Cmd.fitTest(false).payload))
+        assertTrue(payloadOf(Commands.personalNoise(2)).contentEquals(Cmd.personalAnc(2).payload))
+        assertTrue(payloadOf(Commands.queryPreferred()).contentEquals(Cmd.preferredRead().payload))
+        assertTrue(payloadOf(Commands.connectDevice("01:02:03:04:05:06", true)).contentEquals(Cmd.deviceConnect(listOf(1, 2, 3, 4, 5, 6), true).payload))
+        assertTrue(payloadOf(Commands.setPreferred(null)).contentEquals(Cmd.preferredSet(null).payload))
+        assertTrue(payloadOf(Commands.setPreferred("01:02:03:04:05:06")).contentEquals(Cmd.preferredSet(listOf(1, 2, 3, 4, 5, 6)).payload))
         // Phone state: `08 00 01` after dual off, `08 00 00` after on.
         assertEquals(Frame(0x0413, b(8, 0, 1)), Cmd.dualFollowup(false))
         assertEquals(Frame(0x0413, b(8, 0, 0)), Cmd.dualFollowup(true))
-        assertTrue(payloadOf(OpoProtocol.dualFollowup(false)).contentEquals(Cmd.dualFollowup(false).payload))
-        assertTrue(payloadOf(OpoProtocol.dualFollowup(true)).contentEquals(Cmd.dualFollowup(true).payload))
+        assertTrue(payloadOf(Commands.dualFollowup(false)).contentEquals(Cmd.dualFollowup(false).payload))
+        assertTrue(payloadOf(Commands.dualFollowup(true)).contentEquals(Cmd.dualFollowup(true).payload))
         assertEquals(Frame(0x0413, b(0x1F, 0, 1, 1, 0, 1, 1)), Cmd.phoneState(Cmd.PhoneState(1, true, false, true, true)))
         assertEquals(Frame(0x0413, b(0, 0)), Cmd.phoneState(Cmd.PhoneState()))
     }
@@ -325,7 +328,7 @@ class MsgTest {
         )
         for ((cmd, p) in cases) {
             val new = Decode.answer(Message(cmd, 0x14, p), unix)
-            val old = OpoProtocol.answerFor(cmd, 0x14, p, unix)
+            val old = Replies.answerFor(cmd, 0x14, p, unix)
             if (old == null) assertNull("$cmd", new)
             else {
                 assertTrue("$cmd", new != null)

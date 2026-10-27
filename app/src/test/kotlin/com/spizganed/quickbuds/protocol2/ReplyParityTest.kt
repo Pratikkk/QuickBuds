@@ -1,7 +1,7 @@
 package com.spizganed.quickbuds.protocol2
 
 import com.spizganed.quickbuds.bluetooth.PacketLogger
-import com.spizganed.quickbuds.protocol.OpoProtocol
+import com.spizganed.quickbuds.protocol.Replies
 import org.json.JSONObject
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertNull
@@ -35,7 +35,7 @@ class ReplyParityTest {
 
     /** Both layers must return the same bytes, or no answer at all. */
     private fun assertParity(what: String, cmd: Int, seq: Int, payload: ByteArray, clock: Long) {
-        val old = OpoProtocol.answerFor(cmd, seq, payload, clock)
+        val old = Replies.answerFor(cmd, seq, payload, clock)
         val new = NewProtocol.answer(cmd, seq, payload, clock)
         if (old == null) assertNull("$what 0x%04X: the new layer answered".format(cmd), new)
         else assertArrayEquals("$what 0x%04X: the reply packet differs".format(cmd), old, new)

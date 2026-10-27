@@ -20,6 +20,8 @@ import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.Feature
 import com.spizganed.quickbuds.protocol.FeatureSync
+import com.spizganed.quickbuds.protocol.Commands
+import com.spizganed.quickbuds.protocol.HearingCommands
 
 /**
  * Golden Sound (PROTOCOL-LEGACY.md §9): the on/off switch, the profiles kept on this phone (a tap applies
@@ -48,7 +50,7 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
             manager = (service as BudsService.LocalBinder).getService().manager
             manager?.addListener(this@GoldenSoundActivity)
             manager?.featureStates?.let { onFeatureStates(it) }
-            manager?.golden(OpoProtocol.queryGoldenActive(), OpoProtocol.queryGoldenActiveScan())
+            manager?.golden(HearingCommands.queryGoldenActive(), HearingCommands.queryGoldenActiveScan())
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
@@ -120,8 +122,8 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
         val r = GoldenSound.records(this).firstOrNull { it.uid == activeUid } ?: return
         if (hearingCurves.containsKey(r.uid)) { paintRadar(); return }
         manager?.golden(*listOfNotNull(
-            OpoProtocol.hearingFilter(r.uid, r.values),
-            if (r.scan.isNotEmpty()) OpoProtocol.earScanFilter(r.uid, r.scan) else null
+            HearingCommands.hearingFilter(r.uid, r.values),
+            if (r.scan.isNotEmpty()) HearingCommands.earScanFilter(r.uid, r.scan) else null
         ).toTypedArray())
     }
 
@@ -160,10 +162,10 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
     /** Applies a record as HeyMelody does: description id, record, ear scan, then the switch on. */
     private fun apply(r: GoldenSound.Record) {
         manager?.golden(*listOfNotNull(
-            if (r.descId > 0) OpoProtocol.hearingRestore(r.descId) else null,
-            OpoProtocol.hearingRecord(r.uid, r.name, r.values),
-            if (r.scan.isNotEmpty()) OpoProtocol.earScanData(r.uid, r.scan) else null,
-            OpoProtocol.setFeature(Feature.GOLDEN_SOUND, true)
+            if (r.descId > 0) HearingCommands.hearingRestore(r.descId) else null,
+            HearingCommands.hearingRecord(r.uid, r.name, r.values),
+            if (r.scan.isNotEmpty()) HearingCommands.earScanData(r.uid, r.scan) else null,
+            Commands.feature(Feature.GOLDEN_SOUND, true)
         ).toTypedArray())
         activeUid = r.uid
         paintList()
