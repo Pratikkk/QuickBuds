@@ -303,4 +303,81 @@ internal object Commands {
 
     /** -> `0x8124` `00 FB 05 <level>`. */
     fun queryBassWaveLevel(): ByteArray = OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_BASSWAVE_LEVEL)
+
+    // --- Gestures ---
+
+    /**
+     * getKeyFunction (0x0108) — read the CURRENT gesture bindings.
+     *
+     * READ-ONLY, and deliberately so: it reports what the buds are already doing,
+     * so it cannot change state or break a binding. The 0x8108 reply carries the function
+     * enum; PROTOCOL-LEGACY.md §6 lists the measured values.
+     *
+     * Payload is a bare query (no payload), matching the other 0x01xx reads. The buds
+     * DO answer it: the reply is `<status> <count> <4-byte entries>...` and its layout
+     * is `[CAPTURE]`-confirmed — see PROTOCOL-LEGACY.md §6 and `KeyFunctionParser`, which
+     * logs it RAW and grouped so two readings can be diffed.
+     *
+     * The `function` VALUES are no longer a mystery either: they were MEASURED by
+     * diffing two of these replies around a change made in the vendor app. See
+     * `GestureAction.functionByte`.
+     */
+    fun queryKeyFunction(): ByteArray = OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_KEY_FUNCTION)
+
+    /**
+     * setKeyFunction (0x0401) — write gesture bindings back.
+     *
+     * Payload is `<count>` then 4 bytes per entry, and the entries are the SAME
+     * [KeyFunctionParser.Entry] type the read reply decodes into, deliberately: using
+     * one type for both directions is what stops the two from drifting, and it means a
+     * table read back from the buds can be written out again unmodified.
+     *
+     * NO LEADING STATUS BYTE, unlike the reply. The reply is `<status> <count> ...`
+     * (`[CAPTURE]`), but a status byte is something the device REPORTS; a write supplies
+     * only the count and its entries.
+     *
+     * WHY THE CALLER STILL RE-READS: the payload layout above is `[OSS]`, and the ONE
+     * thing the device has taught us about this command is that it ignores a wrong
+     * command number in total silence (see CMD_SET_KEY_FUNCTION). A silent ignore looks
+     * exactly like success unless the table is read back, so the read-back is not
+     * belt-and-braces — it is the only evidence there is.
+     *
+     * LEB128 is safe here: the largest realistic payload is an 18-entry table,
+     * `1 + 18*4 = 73` bytes, so `TotalLen = 80` fits in one LEB128 byte. `buildPacket()`
+     * would only need real LEB128 above ~30 entries, which this device does not have.
+     */
+    fun setKeyFunction(entries: List<KeyFunctionParser.Entry>): ByteArray =
+        OpoProtocol.buildPacket(OpoProtocol.CMD_SET_KEY_FUNCTION, payload = keyFunctionPayload(entries.map {
+            intArrayOf(it.deviceType, it.button, it.action, it.function)
+        }))
+
+    /** The write payload: `<count>`, then `deviceType, button, action, function` per entry. */
+    internal fun keyFunctionPayload(entries: List<IntArray>): ByteArray {
+        val payload = ByteArray(1 + entries.size * KeyFunctionParser.ENTRY_SIZE)
+        payload[0] = entries.size.toByte()
+        for ((i, e) in entries.withIndex()) {
+            val o = 1 + i * KeyFunctionParser.ENTRY_SIZE
+            for (k in 0 until KeyFunctionParser.ENTRY_SIZE) payload[o + k] = e[k].toByte()
+        }
+        return payload
+    }
+
+    /**
+     * setKeyFunction write for the on-call group (`btn 0x06`) — `[CAPTURE]`, same capture as
+     * [holdAncModes]. HeyMelody writes ONE entry, `deviceType = 0x04`
+     * ([KeyFunctionParser.DEVICE_TYPE_BOTH]), which the buds fan out to both sides: the
+     * following `0x8108` read-back always showed the SAME `fn` on `dev=0x01` AND `dev=0x02`,
+     * never `dev=0x04` itself. See [KeyFunctionParser.BUTTON_ON_CALL] for the full capture and
+     * the confirmed act-to-row mapping.
+     */
+    fun setOnCall(act: Int, fn: Int, button: Int = KeyFunctionParser.BUTTON_ON_CALL): ByteArray =
+        OpoProtocol.buildPacket(OpoProtocol.CMD_SET_KEY_FUNCTION, payload = onCallPayload(act, fn, button))
+
+    internal fun onCallPayload(act: Int, fn: Int, button: Int): ByteArray = byteArrayOf(
+        0x01,
+        KeyFunctionParser.DEVICE_TYPE_BOTH.toByte(),
+        button.toByte(),
+        act.toByte(),
+        fn.toByte()
+    )
 }

@@ -76,7 +76,7 @@ object Cmd {
 
     /** `0x0401 <count> <entries>`: the whole table, every time. */
     fun gestureTable(table: List<Binding>): Frame =
-        f(0x0401, table.size, *table.flatMap { listOf(it.dev, it.button, it.act, it.func) }.toIntArray())
+        Frame(0x0401, Commands.keyFunctionPayload(table.map { intArrayOf(it.dev, it.button, it.act, it.func) }))
 
     /** `0x0403 <id> <01|00>`. */
     fun feature(id: Int, on: Boolean) = Frame(0x0403, Commands.featurePayload(id, on))
