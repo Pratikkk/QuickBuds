@@ -34,7 +34,7 @@ class BudsService : Service(), BudsConnectionManager.Listener {
     private val binder = LocalBinder()
     var manager: BudsConnectionManager? = null
         private set
-    private val gameEq = GameEqWatcher(this) { manager }
+    private val gameEq = GameEqWatcher(this, { manager }, { asleep })
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -72,6 +72,8 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         asleep = true
         statusLog("[SVC] Sleep (screen locked)")
         handler.removeCallbacksAndMessages(null)
+        // The game-EQ poll must not wake the phone every 2 s.
+        gameEq.stop()
         manager?.disconnect()
     }
 
@@ -79,6 +81,8 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         if (!asleep) return
         asleep = false
         statusLog("[SVC] Wake (unlocked)")
+        // Start the poll again only when game EQ is on; the link comes up after this call.
+        gameEq.update()
         if (backgroundAllowed(this)) forceConnect(false)
     }
 
