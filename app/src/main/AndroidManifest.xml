@@ -36,6 +36,8 @@
     -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- JobScheduler needs it for the update job's network constraint (UpdateChecker.scheduleBackground). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!--
       For two API<=28 paths: the crash log in Download/QuickBuds and the Dev

@@ -424,7 +424,9 @@ class AncSegmentedView(
 
     /** Tells the screen reader that the label or the selected state of segment [index] changed. */
     private fun notifySegmentChanged(index: Int) {
-        if (index !in labels.indices || !isShown) return
+        // Android throws "Accessibility off" for an event sent while no accessibility service runs.
+        val a11y = context.getSystemService(android.view.accessibility.AccessibilityManager::class.java)
+        if (index !in labels.indices || !isShown || a11y?.isEnabled != true) return
         val event = AccessibilityEvent.obtain(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
         event.packageName = context.packageName
         event.className = "android.widget.RadioButton"
