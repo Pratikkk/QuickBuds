@@ -123,7 +123,7 @@ mod tests {
 
     #[test]
     fn captured_frames() {
-        // PROTOCOL-LEGACY.md §2 examples
+        // PROTOCOL.md section 2 examples
         assert_eq!(encode(&Message { cmd: 0x0100, seq: 1, payload: vec![] }, BUDGET), [vec![0xAA, 7, 0, 0, 0, 1, 1, 0, 0]]);
         assert_eq!(encode(&Message { cmd: 0x0404, seq: 6, payload: vec![1, 1, 1] }, BUDGET),
             [vec![0xAA, 0x0A, 0, 0, 4, 4, 6, 3, 0, 1, 1, 1]]);

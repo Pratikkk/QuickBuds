@@ -150,7 +150,7 @@ object PaletteStore {
     private const val KEY_AUTO = "paletteAuto"
     private const val KEY_AUTO_DARK = "paletteAutoDark"
     /** The pre-preset theme index (0 OLED, 1 Dark, 2 Light), migrated once. */
-    private const val KEY_LEGACY = "theme"
+    private const val KEY_THEME_INT = "theme"
     private const val KEY_WALLPAPER = "paletteWallpaper"
 
     /** Wallpaper colours exist on Android 12+ (the system's tonal palettes). */
@@ -205,7 +205,7 @@ object PaletteStore {
     fun defaults(p: android.content.SharedPreferences) {
         if (defaultsChecked) return
         defaultsChecked = true
-        if (p.contains(KEY_ACTIVE) || p.contains(KEY_LEGACY) || p.contains(KEY_AUTO)) return
+        if (p.contains(KEY_ACTIVE) || p.contains(KEY_THEME_INT) || p.contains(KEY_AUTO)) return
         p.edit().putString(KEY_ACTIVE, OLED).putBoolean(KEY_AUTO, true).putBoolean(KEY_WALLPAPER, true)
             .putBoolean(ThemeRes.KEY_MATERIAL, true).apply()
     }
@@ -216,8 +216,8 @@ object PaletteStore {
         val p = prefs(c)
         if (p.getBoolean(KEY_AUTO, false)) return if (systemLight(c)) WHITE else autoDark(c)
         p.getString(KEY_ACTIVE, null)?.let { return it }
-        val migrated = when (p.getInt(KEY_LEGACY, 0)) { 1 -> DARK; 2 -> WHITE; else -> OLED }
-        p.edit().putString(KEY_ACTIVE, migrated).remove(KEY_LEGACY).apply()
+        val migrated = when (p.getInt(KEY_THEME_INT, 0)) { 1 -> DARK; 2 -> WHITE; else -> OLED }
+        p.edit().putString(KEY_ACTIVE, migrated).remove(KEY_THEME_INT).apply()
         return migrated
     }
 

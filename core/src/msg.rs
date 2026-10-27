@@ -22,9 +22,9 @@ fn mac_at(p: &[u8], i: usize) -> Option<[u8; 6]> {
     Some(m)
 }
 
-// --- §4 Command bitmap ---
+// --- §5 Command bitmap ---
 
-/// Commands behind each bit of the `0x8100` reply (PROTOCOL.md §4).
+/// Commands behind each bit of the `0x8100` reply (PROTOCOL.md §5).
 const BITS: [&[u16]; 69] = [
     &[0x0105], &[0x0106], &[0x0107], &[0x0108, 0x0401, 0x0416], &[0x0109], &[0x0400], &[0x0402], &[0x0403],
     &[0x010C, 0x0404], &[0x0405], &[0x0406, 0x010F], &[0x0407], &[], &[0x0408], &[0x0409], &[], &[],

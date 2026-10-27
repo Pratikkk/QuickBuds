@@ -1,13 +1,11 @@
-package com.spizganed.quickbuds.protocol2
+package com.spizganed.quickbuds.protocol
 
-import com.spizganed.quickbuds.protocol.BatteryParser
-import com.spizganed.quickbuds.protocol.OpoProtocol
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/** PROTOCOL.md section 8: a count of 0, or a list that runs past the end, is no list. */
+/** PROTOCOL.md section 13: a count of 0, or a list that runs past the end, is no list. */
 class BatteryParserTest {
     private fun bytes(vararg v: Int) = ByteArray(v.size) { v[it].toByte() }
     private fun reply(vararg p: Int) = OpoProtocol.buildPacket(0x8106, 1, bytes(*p))

@@ -1,12 +1,11 @@
-package com.spizganed.quickbuds.protocol2
+package com.spizganed.quickbuds.protocol
 
-import com.spizganed.quickbuds.protocol.Capabilities
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The shipping bitmap table holds all 69 bits of PROTOCOL.md section 4. */
+/** The bitmap table holds all 69 bits of PROTOCOL.md section 5. */
 class CapabilitiesTest {
     private fun bytes(vararg v: Int) = ByteArray(v.size) { v[it].toByte() }
     private fun onlyBit(bit: Int) = ByteArray(10).also { it[1 + bit / 8] = (1 shl (bit % 8)).toByte() }
@@ -17,6 +16,14 @@ class CapabilitiesTest {
         assertTrue(listOf(0x0432, 0x0135, 0x0435).all { it in Capabilities.parse(onlyBit(67))!! })
         assertTrue(0x0117 in Capabilities.parse(onlyBit(68))!!)
         assertTrue(0x0419 !in Capabilities.parse(onlyBit(34))!!)
+    }
+
+    @Test fun productIdFoldsTheColourRanges() {
+        for ((id, text) in listOf(0x100100 to "060414", 0x100102 to "060414", 0x100200 to "060814",
+            0x108100 to "068414", 0x108202 to "068814", 0x065414 to "065414")) {
+            val p = byteArrayOf(0, (id and 0xFF).toByte(), ((id shr 8) and 0xFF).toByte(), ((id shr 16) and 0xFF).toByte())
+            assertEquals(text, Capabilities.productId(p))
+        }
     }
 
     @Test fun buds4Capture() {

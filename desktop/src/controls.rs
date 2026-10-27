@@ -1,7 +1,7 @@
 //! Controls (`GestureActivity`, `GestureConfig.kt`): per bud, which action each gesture does; the hold's noise
 //! cycle; the on-call rows. Rows and options come from the model's HeyMelody `control` / `callControl` lists, the
 //! current bindings from the buds' own table (`0x8108`) and hold cycle (`0x810C 02`), read when the page opens.
-//! `fn` values are measured (PROTOCOL-LEGACY.md §6): never derive new ones.
+//! `fn` values are measured (PROTOCOL.md section 15): never derive new ones.
 
 use crate::gesture_logic::*;
 use crate::types::*;

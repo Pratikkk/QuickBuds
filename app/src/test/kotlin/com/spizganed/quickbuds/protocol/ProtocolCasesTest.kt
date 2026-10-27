@@ -7,7 +7,7 @@ import org.junit.Test
 import java.io.File
 
 /**
- * Runs every case of `testdata/protocol_cases.json` against the legacy protocol layer.
+ * Runs every case of `testdata/protocol_cases.json` against the protocol layer.
  * The JSON file is the contract that the merged layer and the Rust core must also keep.
  */
 class ProtocolCasesTest {
@@ -31,7 +31,7 @@ class ProtocolCasesTest {
     }
 }
 
-/** The shared codec: it turns one JSON case into the legacy output, and it compares JSON values. */
+/** The shared codec: it turns one JSON case into the output, and it compares JSON values. */
 object ProtocolCases {
 
     /** A request or reply, with the fixed header offsets removed. */
@@ -48,7 +48,7 @@ object ProtocolCases {
         else -> error("unknown kind ${c.getString("kind")}")
     }
 
-    /** A byte stream through the legacy framer. Chunks are appended in order. */
+    /** A byte stream through the framer. Chunks are appended in order. */
     private fun frames(chunks: JSONArray): JSONArray {
         val framer = OppoPacketFramer()
         val out = JSONArray()
@@ -59,7 +59,7 @@ object ProtocolCases {
         return out
     }
 
-    /** One whole packet through the legacy decoder that the command selects. */
+    /** One whole packet through the decoder that the command selects. */
     private fun decode(frame: ByteArray, model: String?): Any? {
         val p = packet(frame)
         return when (p.cmd) {
@@ -75,9 +75,9 @@ object ProtocolCases {
                 0x03 -> anc(p.payload)
                 0x05 -> GameModeParser.parseActive(p.payload, model)
                 0xF1 -> UserInteractionParser.describe(p.payload)
-                else -> error("no legacy decoder for 0x0204 subtype ${hex(p.payload)}")
+                else -> error("no decoder for 0x0204 subtype ${hex(p.payload)}")
             }
-            else -> error("no legacy decoder for cmd 0x%04X".format(p.cmd))
+            else -> error("no decoder for cmd 0x%04X".format(p.cmd))
         }
     }
 

@@ -1,4 +1,4 @@
-//! The LEGACY wire format (docs/PROTOCOL-LEGACY.md §2): `AA <TotalLen LEB128> 00 00 <cmd lo> <cmd hi> <seq> <len lo> <len hi> <payload>`.
+//! The wire format (docs/PROTOCOL.md section 2): `AA <TotalLen LEB128> 00 00 <cmd lo> <cmd hi> <seq> <len lo> <len hi> <payload>`.
 //! TotalLen counts everything after itself: 7 + payload.
 //! Framing, decoders and answers of the old link. `newproto.rs` bridges the new protocol in `buds_core`; the tests use it. The old builders also stay as the
 //! reference of the core tests; the senders use `buds_core::cmd`. Shared ids and types are in `types.rs`.
@@ -243,7 +243,7 @@ pub fn decode(p: &[u8]) -> Option<Event> {
         EVT_PUSH => match sub? {
             0x01 => Event::Battery(battery(&pl[1..])?),
             0x02 => Event::Wear(wear_bits(pairs(&pl[1..]).filter(valid_wear)?)),
-            // `03 01 01 <mode LE, 1-4 bytes>` (PROTOCOL.md §9)
+            // `03 01 01 <mode LE, 1-4 bytes>` (PROTOCOL.md §14)
             0x03 if pl.len() >= 4 && pl[1] == 1 && pl[2] == 1 => Event::AncRaw(le(&pl[3..])),
             0x03 if pl.len() >= 4 && pl[1] == 4 && pl[2] == 1 => Event::SmartLevel(le(&pl[3..])),
             0x05 if pl.len() >= 2 => Event::GameMode(pl.to_vec()),
@@ -254,7 +254,7 @@ pub fn decode(p: &[u8]) -> Option<Event> {
                 Event::FitResult(of(1), of(2))
             }
             0xF5 if pl.len() >= 2 => Event::HeadMotion(pl[1]),
-            // `0F <flags u16 LE> <data>` (PROTOCOL.md §5): the first flag wins. Bit 0 alert-sound volume; bits 1 and 2 are not used here; bit 4 tap level.
+            // `0F <flags u16 LE> <data>` (PROTOCOL.md §10): the first flag wins. Bit 0 alert-sound volume; bits 1 and 2 are not used here; bit 4 tap level.
             0x0F if pl.len() >= 4 => {
                 let flags = pl[1] as u16 | (pl[2] as u16) << 8;
                 if flags & 1 != 0 { Event::AlertVolume(pl[3]) }
@@ -271,7 +271,7 @@ pub fn decode(p: &[u8]) -> Option<Event> {
     })
 }
 
-/// `0x012F` payload (PROTOCOL-LEGACY.md "Batch query"): `<count>`, then `<cmd LE> <len LE> <payload>` per query.
+/// `0x012F` payload (PROTOCOL.md "Batch query", section 12): `<count>`, then `<cmd LE> <len LE> <payload>` per query.
 pub fn batch_payload(queries: &[(u16, Vec<u8>)]) -> Vec<u8> {
     let mut b = vec![queries.len() as u8];
     for (cmd, pl) in queries {
@@ -284,7 +284,7 @@ pub fn batch_payload(queries: &[(u16, Vec<u8>)]) -> Vec<u8> {
 
 
 /// HeyMelody's answer `(cmd, payload)` to a frame the buds send on their own, or `None`
-/// (PROTOCOL-LEGACY.md §9 "Requests from the buds"). `[VENDOR]`
+/// (PROTOCOL.md section 11 "Requests from the buds and replies"). `[VENDOR]`
 pub fn answer_for(p: &[u8], unix: u32) -> Option<(u16, Vec<u8>)> {
     let cmd = cmd_of(p);
     let pl = payload_of(p);
@@ -610,7 +610,7 @@ mod tests {
 
     #[test]
     fn codecs() {
-        // Buds 4 `0x8123` = `00 46 01`: AAC, LDAC, LHDC (bit 8 is past the table); PROTOCOL-LEGACY.md trusts it only on `hiRes`.
+        // Buds 4 `0x8123` = `00 46 01`: AAC, LDAC, LHDC (bit 8 is past the table); PROTOCOL.md section 21.7 trusts it only on `hiRes`.
         assert_eq!(codecs_of(0x0146), [2, 3, 7]);
         assert_eq!(codecs_of(0b1100_0000), [8]);
         assert_eq!(codecs_of(0b0100_0001), [1, 7]);

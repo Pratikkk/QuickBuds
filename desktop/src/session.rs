@@ -316,7 +316,7 @@ struct Conn<'a> {
     link: bt::Link,
     /// 0 for the bridge.
     addr: u64,
-    /// The legacy framer: the byte stream into whole packets (docs/PROTOCOL-LEGACY.md §2).
+    /// The framer: the byte stream into whole packets (docs/PROTOCOL.md section 2).
     framer: Framer,
     /// Messages received on this connection: none after the init sequence means the new protocol failed.
     rx: u32,
@@ -576,7 +576,7 @@ impl<'a> Conn<'a> {
         end
     }
 
-    /// PROTOCOL-LEGACY.md "Init sequence": 300 ms before the first frame, then 200 ms apart; reads only if listed.
+    /// PROTOCOL.md "Init sequence", section 6: 300 ms before the first frame, then 200 ms apart; reads only if listed.
     fn init(&mut self, sync: &mut Sync) -> Result<(), String> {
         self.pump(300, sync)?;
         for f in [cmd::handshake(), cmd::product_id(), cmd::broadcast_codes()] {

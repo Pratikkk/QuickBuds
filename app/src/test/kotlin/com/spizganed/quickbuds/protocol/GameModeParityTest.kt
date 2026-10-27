@@ -1,17 +1,17 @@
-package com.spizganed.quickbuds.protocol2
+package com.spizganed.quickbuds.protocol
 
-import com.spizganed.quickbuds.protocol.GameModeParser
 import com.spizganed.quickbuds.protocol.Wire.Message
+
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** The legacy product-id rule is the source of truth for the game-mode state. */
+/** The product-id rule is the source of truth for the game-mode state. */
 class GameModeParityTest {
     private fun b(vararg v: Int) = ByteArray(v.size) { v[it].toByte() }
     private fun push(vararg p: Int) = Message(0x0204, 0xFF, b(*p))
     private val models = listOf(null, "062410", "062810", "063010", "063410", "065414", "06241")
 
-    @Test fun productRuleMatchesTheLegacyParser() {
+    @Test fun productRuleMatchesTheParser() {
         for (p in listOf(
             intArrayOf(5, 1),
             intArrayOf(5, 0, 0, 1),

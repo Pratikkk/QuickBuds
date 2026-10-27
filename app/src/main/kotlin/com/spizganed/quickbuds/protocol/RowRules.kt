@@ -151,7 +151,7 @@ object RowRules {
     fun asksWind(model: JSONObject?): Boolean = model?.optInt("windMode") == 1
 
     /**
-     * The ids a model without `statusQuery` is asked, as `LegacyProtocol.queryStatus` asks them.
+     * The ids a model without `statusQuery` is asked, as `Commands.queryStatus` asks them.
      * [asksWind] adds the wind id on top.
      */
     val DEFAULT_IDS: Set<Int> = setOf(

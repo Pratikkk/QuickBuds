@@ -25,6 +25,7 @@ import com.spizganed.quickbuds.protocol.AncModes
 import com.spizganed.quickbuds.protocol.BatteryParser
 import com.spizganed.quickbuds.protocol.LogDecoder
 import com.spizganed.quickbuds.protocol.Capabilities
+import com.spizganed.quickbuds.protocol.Decode
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.EqSnapshot
@@ -228,10 +229,10 @@ class BudsConnectionManager(private val context: Context) {
 
     /** Bumped on every connect and on every disconnect: a late connect thread must not install a socket. */
     private var connectGeneration = 0
-    /** Set by the all-zero wear push the buds send just before a lid close drops the link (PROTOCOL-LEGACY.md §8). */
+    /** Set by the all-zero wear push the buds send just before a lid close drops the link (PROTOCOL.md §13). */
     @Volatile private var caseClosing = false
     /**
-     * Set by a write that restarts the buds (power saving, PROTOCOL-LEGACY.md §9). They come back with
+     * Set by a write that restarts the buds (power saving, PROTOCOL.md §16). They come back with
      * our link only, not the phone's audio, so the next successful connect asks for it: the
      * restart was the user's own action, unlike a system auto-connect (see [connect]).
      */
@@ -758,7 +759,7 @@ class BudsConnectionManager(private val context: Context) {
     /**
      * `[count]` then per device `[MAC, 6 bytes reversed][entry length][state][flags][nameLen][name UTF-8]`.
      * State `02` = connected, `00` = not. Flags `[VENDOR]`: bit 0 this phone, bit 2 audio playing
-     * (bit 1 the main audio device, bits 3-5 the device type). PROTOCOL-LEGACY.md §9.
+     * (bit 1 the main audio device, bits 3-5 the device type). PROTOCOL.md §19.
      */
     private fun parseDevices(p: ByteArray, start: Int): List<PairedDevice>? {
         if (p.size <= start) return null
@@ -778,7 +779,7 @@ class BudsConnectionManager(private val context: Context) {
         return out
     }
 
-    // --- Equalizer (PROTOCOL-LEGACY.md §9). Read on demand by the EQ screen, re-read after every write. ---
+    // --- Equalizer (PROTOCOL.md §17). Read on demand by the EQ screen, re-read after every write. ---
     /** The events these buds offer (`0x8200`), once read; reset on each connect. */
     @Volatile private var offeredEvents: Set<Int>? = null
 
@@ -892,13 +893,13 @@ class BudsConnectionManager(private val context: Context) {
         }
     }
 
-    /** Find my earbuds: both buds' own locator tone. `[CAPTURE]` 2026-09-23, PROTOCOL-LEGACY.md §9. */
+    /** Find my earbuds: both buds' own locator tone. `[CAPTURE]` 2026-09-23, PROTOCOL.md §18. */
     fun setFindTone(on: Boolean) = sendRaw(Commands.findTone(on),"Find tone -> $on")
 
     private val FEATURES_KEY = Capabilities.KEY_FEATURES
 
     /**
-     * Latest `0x810D` reply as feature id -> value (PROTOCOL-LEGACY.md §9). Persisted, so the switches
+     * Latest `0x810D` reply as feature id -> value (PROTOCOL.md §16). Persisted, so the switches
      * open at the last known state instead of jumping when the connect-time read lands.
      */
     @Volatile var featureStates: Map<Int, Int> = featurePrefs().getString(FEATURES_KEY, "")!!
@@ -976,7 +977,7 @@ class BudsConnectionManager(private val context: Context) {
         }
     }
 
-    /** Engine seqs travel as 0xC0..0xDF; the generic counter in LegacyProtocol never uses that range. */
+    /** Engine seqs travel as 0xC0..0xDF; the generic counter in OpoProtocol never uses that range. */
     private fun wireSeq(seq: Int) = 0xC0 + (seq % 0x20)
 
     /** Runs an engine output list on the sync thread. */
@@ -1083,7 +1084,7 @@ class BudsConnectionManager(private val context: Context) {
             .getOrNull(codec - 1) ?: "#$codec"
 
     /**
-     * Golden Sound test frames, sent in order on one thread (PROTOCOL-LEGACY.md §9): a tone is a stop then
+     * Golden Sound test frames, sent in order on one thread (PROTOCOL.md §20): a tone is a stop then
      * the tone, a record is applied in four writes. A `0x0403` among them is followed by a status read.
      */
     fun golden(vararg packets: ByteArray) {
@@ -1102,7 +1103,7 @@ class BudsConnectionManager(private val context: Context) {
 
     /**
      * Spatial type on buds with `0x0422` (0 off, 1 fixed, 2 head tracking), null until read. Changes
-     * repaint through [Listener.onFeatureStates]. `[VENDOR]`, unverified on buds (PROTOCOL-LEGACY.md §9).
+     * repaint through [Listener.onFeatureStates]. `[VENDOR]`, unverified on buds (PROTOCOL.md §18).
      */
     @Volatile var spatialType: Int? = null
         private set
@@ -1174,7 +1175,7 @@ class BudsConnectionManager(private val context: Context) {
     /** The default from the last `0x8133` reply; the push carries the level only. */
     private var tapLevelDefault = 0
 
-    /** `0x0420 01 <1|0>`: a game app is in the foreground (PROTOCOL-LEGACY.md §9). */
+    /** `0x0420 01 <1|0>`: a game app is in the foreground (PROTOCOL.md §18). */
     fun setGameEqState(inGame: Boolean) = sendRaw(Commands.gameEqState(inGame),"Game equalizer in game=$inGame")
 
     fun refreshTapLevel() = sendRaw(Commands.queryTapLevel(), "query tap level")
@@ -1217,7 +1218,7 @@ class BudsConnectionManager(private val context: Context) {
 
     /**
      * The hold's ANC-cycle membership — `setSupportNoiseReduction`, `[CAPTURE]` 2026-09-22
-     * (PROTOCOL-LEGACY.md §5). `mask` bits use [OpoProtocol.anc]'s numbering (Off 0, On 1,
+     * (PROTOCOL.md §14). `mask` bits use [OpoProtocol.anc]'s numbering (Off 0, On 1,
      * Transparency 2, Adaptive 11). Verified the same way every gesture write is: re-read after a delay and log
      * the diff, because a wrong command number here would be ignored exactly as silently as
      * everywhere else in this protocol.
@@ -1271,7 +1272,7 @@ class BudsConnectionManager(private val context: Context) {
     }
 
     /**
-     * `0x010D` for the model in use (PROTOCOL-LEGACY.md §9): its own id list plus the ids a model
+     * `0x010D` for the model in use (PROTOCOL.md §16): its own id list plus the ids a model
      * flag names and both game-mode ids ([RowRules.askQuery]). A model without a list uses the
      * default list, which already holds those ids except wind noise.
      */
@@ -1325,7 +1326,7 @@ class BudsConnectionManager(private val context: Context) {
 
     /**
      * The hold's ANC-cycle masks, as last read from `0x010C` `02 <type>` (`[CAPTURE]`,
-     * PROTOCOL-LEGACY.md §5), by noise type ([OpoProtocol.HOLD_TYPE_SHARED], or `_LEFT` / `_RIGHT`).
+     * PROTOCOL.md §14), by noise type ([OpoProtocol.HOLD_TYPE_SHARED], or `_LEFT` / `_RIGHT`).
      * Empty until the first reply arrives — same "do not invent it" rule as [lastKeyFnTable], though there is
      * nothing here that writes FROM this field; it exists purely so a UI can show the
      * current cycle without threading its own query/response plumbing.
@@ -1669,7 +1670,7 @@ class BudsConnectionManager(private val context: Context) {
             return
         }
 
-        // `00 <count>` + UTF-8 `deviceType,versionType,version` triples (PROTOCOL-LEGACY.md §3), shown in the
+        // `00 <count>` + UTF-8 `deviceType,versionType,version` triples (PROTOCOL.md §7), shown in the
         // Earbud settings hub the way HeyMelody shows it.
         if (cmd == 0x8105) {
             val text = if (payload.size > 2) String(payload, 2, payload.size - 2, Charsets.UTF_8) else ""
@@ -1921,7 +1922,7 @@ class BudsConnectionManager(private val context: Context) {
         if (cmd == 0x8123 && payload.size >= 3 && payload[0].toInt() == 0) {
             val mask = OpoProtocol.u16(payload, 1)
             // HeyMelody drops LHDC (7) when LHDC V5 (8) is offered too.
-            codecs = (1..8).filter { mask and (1 shl (it - 1)) != 0 }.let { if (8 in it) it - 7 else it }
+            codecs = Decode.codecsOf(mask)
             log("CODECS: $codecs RAW=[${OpoProtocol.bytesToHex(payload)}]")
             handler.post { listeners.forEach { it.onFeatureStates(featureStates) } }
             return
@@ -1952,7 +1953,7 @@ class BudsConnectionManager(private val context: Context) {
             return
         }
 
-        // --- Golden Sound (PROTOCOL-LEGACY.md §9) ---
+        // --- Golden Sound (PROTOCOL.md §20) ---
         if (cmd == OpoProtocol.CMD_ACTIVE_REPORT && payload.size >= 3 && payload[0].toInt() == OpoProtocol.EVT_GOLDEN_STATUS) {
             val kind = payload[1].toInt() and 0xFF
             val status = payload[2].toInt() and 0xFF
@@ -2000,7 +2001,7 @@ class BudsConnectionManager(private val context: Context) {
             return
         }
 
-        // --- Personalized ANC, [VENDOR] (PROTOCOL-LEGACY.md §9) ---
+        // --- Personalized ANC, [VENDOR] (PROTOCOL.md §20) ---
         if (cmd == 0x811A && payload.size >= 2 && payload[0].toInt() == 0) {
             log("PERSONAL ANC stored=${payload[1]}")
             handler.post { listeners.forEach { it.onPersonalNoiseStored(payload[1].toInt() != 0) } }
@@ -2012,7 +2013,7 @@ class BudsConnectionManager(private val context: Context) {
             handler.post { listeners.forEach { it.onTapLevel(payload[1].toInt(), payload[2].toInt()) } }
             return
         }
-        // Public event `0F <flags u16 LE> <data>` (PROTOCOL.md section 5): the first flag that matches wins. Bit 0: the alert-sound
+        // Public event `0F <flags u16 LE> <data>` (PROTOCOL.md section 10): the first flag that matches wins. Bit 0: the alert-sound
         // volume changed on the buds; bit 1: nothing; bit 2: handheld-device info (not used here); bit 4: a tap level change.
         if (cmd == OpoProtocol.CMD_ACTIVE_REPORT && payload.size >= 4 && payload[0].toInt() == OpoProtocol.EVT_PUBLIC) {
             val flags = (payload[1].toInt() and 0xFF) or ((payload[2].toInt() and 0xFF) shl 8)

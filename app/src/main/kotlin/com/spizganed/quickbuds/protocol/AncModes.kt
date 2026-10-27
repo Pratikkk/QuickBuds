@@ -5,7 +5,7 @@ import com.spizganed.quickbuds.ui.ThemeRes
 import org.json.JSONArray
 
 /**
- * The noise-control modes one model has and the `0x0404` bit of each (PROTOCOL-LEGACY.md §5).
+ * The noise-control modes one model has and the `0x0404` bit of each (PROTOCOL.md §14).
  *
  * `[VENDOR]` HeyMelody's per-model list, `ancModes` in `assets/models.json`: a tree of
  * `{modeType, protocolIndex, childrenMode}`. A SET sends a mode's own `protocolIndex` as a bit;

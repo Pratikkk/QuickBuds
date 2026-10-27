@@ -1,11 +1,11 @@
-package com.spizganed.quickbuds.protocol2
+package com.spizganed.quickbuds.protocol
 
-import com.spizganed.quickbuds.protocol.KeyFunctionParser
 import com.spizganed.quickbuds.protocol.Wire.Message
+
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** The legacy gesture table parser is tolerant: a status byte, trailing bytes and a short payload are all kept. */
+/** The gesture table parser is tolerant: a status byte, trailing bytes and a short payload are all kept. */
 class GestureParityTest {
     private fun b(vararg v: Int) = ByteArray(v.size) { v[it].toByte() }
     private fun reply(vararg p: Int) = Message(0x8108, 1, b(*p))
@@ -36,7 +36,7 @@ class GestureParityTest {
         assertSame(reply())
     }
 
-    @Test fun shortAndMismatchedPayloadsKeepTheLegacyTable() {
+    @Test fun shortAndMismatchedPayloadsKeepTheTable() {
         assertSame(reply(0, 1, 1, 1, 1, 1))
         assertSame(reply(0, 1, 1, 1, 1, 1, 0, 9, 9, 9, 9))
     }

@@ -432,7 +432,7 @@ class DevToolsActivity : Activity() {
             return "Download/$EXPORT_DIR_NAME/$name"
         }
 
-        // Legacy path (API < 29): plain files, permission already checked by caller.
+        // API < 29 path: plain files, permission already checked by caller.
         @Suppress("DEPRECATION")
         val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
             EXPORT_DIR_NAME)

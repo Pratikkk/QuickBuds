@@ -1,22 +1,20 @@
-package com.spizganed.quickbuds.protocol2
+package com.spizganed.quickbuds.protocol
 
-import com.spizganed.quickbuds.protocol.BatteryParser
-import com.spizganed.quickbuds.protocol.OpoProtocol
-import com.spizganed.quickbuds.protocol.WearingStatusParser
 import com.spizganed.quickbuds.protocol.Wire.Message
+
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** The legacy decoder is the source of truth for battery and wearing. */
+/** The battery decoder is the source of truth for the query and the push. */
 class BatteryParityTest {
     private fun b(vararg v: Int) = ByteArray(v.size) { v[it].toByte() }
     private fun reply(cmd: Int, vararg p: Int) = Message(cmd, 1, b(*p))
     private fun push(vararg p: Int) = Message(0x0204, 0xFF, b(*p))
 
-    private fun legacyBattery(m: Message) =
+    private fun queryBattery(m: Message) =
         BatteryParser.parse(OpoProtocol.buildPacket(m.cmd, m.seq, m.payload))
 
-    private fun legacyBatteryPush(m: Message) =
+    private fun pushBattery(m: Message) =
         BatteryParser.parseActive(OpoProtocol.buildPacket(m.cmd, m.seq, m.payload))
 
     private fun cells(r: BatteryParser.Result?) = r?.let {
@@ -27,7 +25,7 @@ class BatteryParityTest {
         )
     }
 
-    @Test fun queryReplyMatchesTheLegacyDecoder() {
+    @Test fun queryReplyMatchesTheDecoder() {
         for (p in listOf(
             intArrayOf(0, 3, 1, 0x46, 2, 0xC6, 3, 0),
             intArrayOf(0, 0),
@@ -36,11 +34,11 @@ class BatteryParityTest {
             intArrayOf(0, 1, 1, 0x5A),
         )) {
             val m = reply(0x8106, *p)
-            assertEquals("${m.payload.toList()}", cells(legacyBattery(m)), (Decode.decode(m) as? Msg.Battery)?.cells)
+            assertEquals("${m.payload.toList()}", cells(queryBattery(m)), (Decode.decode(m) as? Msg.Battery)?.cells)
         }
     }
 
-    @Test fun activePushMatchesTheLegacyDecoder() {
+    @Test fun activePushMatchesTheDecoder() {
         for (p in listOf(
             intArrayOf(1, 3, 1, 0x64, 2, 0xE4, 3, 0),
             intArrayOf(1, 0),
@@ -48,7 +46,7 @@ class BatteryParityTest {
             intArrayOf(2, 1, 1, 0x64),
         )) {
             val m = push(*p)
-            assertEquals("${m.payload.toList()}", cells(legacyBatteryPush(m)), (Decode.decode(m) as? Msg.Battery)?.cells)
+            assertEquals("${m.payload.toList()}", cells(pushBattery(m)), (Decode.decode(m) as? Msg.Battery)?.cells)
         }
     }
 
@@ -60,7 +58,7 @@ class BatteryParityTest {
         )
     }
 
-    @Test fun wearingReplyMatchesTheLegacyDecoder() {
+    @Test fun wearingReplyMatchesTheDecoder() {
         for (p in listOf(
             intArrayOf(3, 1, 7, 2, 7, 3, 4),
             intArrayOf(0, 3, 1, 3, 2, 3, 3, 4),
@@ -76,7 +74,7 @@ class BatteryParityTest {
         }
     }
 
-    @Test fun wearingPushMatchesTheLegacyDecoder() {
+    @Test fun wearingPushMatchesTheDecoder() {
         for (p in listOf(
             intArrayOf(2, 3, 1, 7, 2, 7, 3, 4),
             intArrayOf(2, 9, 1, 7, 2, 7, 3, 4, 1, 7, 2, 7, 3, 4, 1, 7, 2, 7, 3, 4),

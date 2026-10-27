@@ -6,7 +6,7 @@ import org.json.JSONObject
 
 /**
  * Which model the connected buds are, from HeyMelody's own list (`assets/models.json`,
- * PROTOCOL-LEGACY.md §4). `[VENDOR]`: the entries whose
+ * PROTOCOL.md §6). `[VENDOR]`: the entries whose
  * name equals the Bluetooth name and those whose id equals the product id; one in both wins, then
  * the first name match, then the first id match. A model picked by hand overrides all of it.
  */
@@ -77,7 +77,7 @@ object ModelCatalog {
     }
 
     fun find(models: List<Model>, id: String?, name: String?): Model? {
-        // HeyMelody's order (PROTOCOL-LEGACY.md §4): name and id, then name (some buds reuse another model's id,
+        // HeyMelody's order (PROTOCOL.md §6): name and id, then name (some buds reuse another model's id,
         // issue #5), then id (a renamed device).
         val byId = { m: Model -> id != null && m.id.equals(id, ignoreCase = true) }
         val byName = { m: Model -> name != null && m.name == name }

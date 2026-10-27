@@ -4,7 +4,7 @@ package com.spizganed.quickbuds.protocol
 
 /**
  * Custom EQ presets — the `0x8122` list and the `0x0418` select/save frame.
- * `[CAPTURE]` 2026-09-23, confirmed against HeyMelody screenshots; see PROTOCOL-LEGACY.md §9.
+ * `[CAPTURE]` 2026-09-23, confirmed against HeyMelody screenshots; see PROTOCOL.md §17.
  *
  * List entry: `<flag> <tag 2B> <id> <nameLen> <name> <bandCount> [freq u16 LE, gain s8]...`
  * `flag` 01 = selected. `tag` is `FA 06` in every frame seen: `[VENDOR]` the gain range, min -6 then

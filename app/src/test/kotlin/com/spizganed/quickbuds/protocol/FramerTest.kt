@@ -1,14 +1,12 @@
-package com.spizganed.quickbuds.protocol2
+package com.spizganed.quickbuds.protocol
 
-import com.spizganed.quickbuds.protocol.OppoPacketFramer
-import com.spizganed.quickbuds.protocol.OpoProtocol
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The shipping framer joins slices as PROTOCOL.md §2 says. */
-class LegacyFramerTest {
+/** The framer joins slices as PROTOCOL.md section 2 says. */
+class FramerTest {
     private fun bytes(vararg v: Int) = ByteArray(v.size) { v[it].toByte() }
     private fun feed(f: OppoPacketFramer, b: ByteArray) = f.append(b, b.size)
     private fun slice(kind: Int, fsn: Int, d: ByteArray) = bytes(0xAA, 3 + d.size, kind, 0, fsn) + d
