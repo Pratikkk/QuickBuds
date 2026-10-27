@@ -91,7 +91,8 @@ pub enum Cmd {
     EqCreate(Preset),
     EqDelete(Preset),
     BassWave(bool),
-    BassLevel(i8),
+    /// (level, band): band 0 is the one BassWave level, 1-3 a realme dynamic sound slider.
+    BassLevel(i8, u8),
     /// `0x0403` switches in this order, then the status re-read.
     Features(Vec<(u8, bool)>),
     /// The locator tone on both buds.
@@ -174,6 +175,8 @@ pub struct Snapshot {
     pub eq_custom: Vec<Preset>,
     pub bass_on: Option<bool>,
     pub bass_level: Option<i8>,
+    /// realme dynamic sound: the last level written to each slider (low, medium, high). The buds do not read back.
+    pub bass_bands: [Option<i8>; 3],
     /// `0x810D`: every feature id the buds listed, with its value.
     pub features: Vec<(u8, u8)>,
     pub alert_volume: Option<u8>,
@@ -715,9 +718,9 @@ impl<'a> Conn<'a> {
                         self.pump(250, sync)?;
                         self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?;
                     }
-                    Cmd::BassLevel(l) => {
-                        self.s.bass_level = Some(l);
-                        self.eq_write(cmd::bass_set(l), sync)?;
+                    Cmd::BassLevel(l, band) => {
+                        if band == 0 { self.s.bass_level = Some(l); } else { self.s.bass_bands[band as usize - 1] = Some(l); }
+                        self.eq_write(cmd::bass_set(l, band), sync)?;
                     }
                     // As `setFeatures`: the write, then the status read that shows what the buds kept.
                     // Power saving restarts the buds: the link drops and the idle rescan reconnects.

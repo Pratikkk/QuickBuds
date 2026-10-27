@@ -104,7 +104,8 @@ pub fn setup(main: &MainWindow) {
         send(a, Cmd::EqSave(p));
     }));
     eq.on_bass_toggled(|on| with_app(|a| send(a, Cmd::BassWave(on))));
-    eq.on_bass_released(|v| with_app(|a| send(a, Cmd::BassLevel(v as i8))));
+    eq.on_bass_released(|v| with_app(|a| send(a, Cmd::BassLevel(v as i8, 0))));
+    eq.on_bass_band_released(|band, v| with_app(|a| send(a, Cmd::BassLevel(v as i8, band as u8))));
 }
 
 /// The curve, and in the Dot matrix style its dots (drawn at physical pixels, the plot is logical).
@@ -151,7 +152,14 @@ pub fn apply(a: &mut App) {
 
     // Never under a finger: a re-read landing mid-drag would yank the knob back.
     let dragging = eq.get_dragging();
-    if !dragging { eq.set_bass_level(s.bass_level.unwrap_or(0) as i32); }
+    eq.set_bass_bands(eq_bass_bands(s.model));
+    if !dragging {
+        eq.set_bass_level(s.bass_level.unwrap_or(0) as i32);
+        let [low, mid, high] = s.bass_bands.map(|b| b.unwrap_or(0) as i32);
+        eq.set_bass_low(low);
+        eq.set_bass_mid(mid);
+        eq.set_bass_high(high);
+    }
 
     let edit = editing(s).filter(|p| Some(p.id) == current).cloned();
     eq.set_editing(edit.is_some());

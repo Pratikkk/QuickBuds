@@ -162,6 +162,9 @@ export global Tr {
     in property <string> eq-recommended;
     in property <string> eq-basswave;
     in property <string> eq-basswave-sub;
+    in property <string> eq-bass-low;
+    in property <string> eq-bass-mid;
+    in property <string> eq-bass-high;
     in property <string> eq-custom;
     in property <string> eq-delete;
     in property <string> eq-add;
@@ -1039,6 +1042,11 @@ export global Eq {
     in property <bool> has-bass;
     in property <bool> bass-on;
     in-out property <int> bass-level;
+    // realme dynamic sound: three sliders (low, medium, high) in place of the one level.
+    in property <bool> bass-bands;
+    in-out property <int> bass-low;
+    in-out property <int> bass-mid;
+    in-out property <int> bass-high;
     // The selected custom preset, in the editor.
     in property <bool> editing;
     in-out property <string> edit-name;
@@ -1061,6 +1069,7 @@ export global Eq {
     callback band-released(int, int);
     callback bass-toggled(bool);
     callback bass-released(int);
+    callback bass-band-released(int, int);
 }
 
 // A row in a preset Card: flat, the selected one has an accent bar and accent text.
@@ -1378,7 +1387,7 @@ component EqPage inherits VerticalLayout {
                         toggled(on) => { Eq.bass-toggled(on); }
                     }
                     // Grows open and shuts, as the phone's (Motion.slide there).
-                    HSlider {
+                    if !Eq.bass-bands: HSlider {
                         height: Eq.bass-on ? 48px : 0;
                         opacity: Eq.bass-on ? 1 : 0;
                         animate height, opacity { duration: Eq.bass-on ? 280ms : 220ms; easing: ease-out; }
@@ -1386,6 +1395,30 @@ component EqPage inherits VerticalLayout {
                         minimum: -5; maximum: 5;
                         value <=> Eq.bass-level;
                         released(v) => { Eq.bass-released(v); }
+                    }
+                    // realme dynamic sound: a label over each slider; the band byte is 1 low, 2 medium, 3 high.
+                    if Eq.bass-bands: VerticalLayout {
+                        height: Eq.bass-on ? self.preferred-height : 0;
+                        opacity: Eq.bass-on ? 1 : 0;
+                        animate height, opacity { duration: Eq.bass-on ? 280ms : 220ms; easing: ease-out; }
+                        Text { text: Tr.eq-bass-low; color: Palette.text2; font-size: 13px; }
+                        HSlider {
+                            minimum: -5; maximum: 5;
+                            value <=> Eq.bass-low;
+                            released(v) => { Eq.bass-band-released(1, v); }
+                        }
+                        Text { text: Tr.eq-bass-mid; color: Palette.text2; font-size: 13px; }
+                        HSlider {
+                            minimum: -5; maximum: 5;
+                            value <=> Eq.bass-mid;
+                            released(v) => { Eq.bass-band-released(2, v); }
+                        }
+                        Text { text: Tr.eq-bass-high; color: Palette.text2; font-size: 13px; }
+                        HSlider {
+                            minimum: -5; maximum: 5;
+                            value <=> Eq.bass-high;
+                            released(v) => { Eq.bass-band-released(3, v); }
+                        }
                     }
                 }
             }

@@ -454,6 +454,9 @@ fn set_texts(tr: &Tr, s: &[String]) {
     tr.set_eq_recommended(t(s, "eq_recommended").into());
     tr.set_eq_basswave(t(s, "eq_basswave").into());
     tr.set_eq_basswave_sub(t(s, "eq_basswave_sub").into());
+    tr.set_eq_bass_low(t(s, "eq_bass_low").into());
+    tr.set_eq_bass_mid(t(s, "eq_bass_mid").into());
+    tr.set_eq_bass_high(t(s, "eq_bass_high").into());
     tr.set_eq_custom(t(s, "eq_custom").into());
     tr.set_eq_delete(t(s, "eq_delete").into());
     tr.set_eq_add(t(s, "eq_add").into());

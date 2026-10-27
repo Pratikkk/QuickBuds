@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Jelas &amp; tajam</string>
     <string name="eq_basswave">Penggalak bes</string>
     <string name="eq_basswave_sub">Bes lebih dalam yang menyesuaikan dengan muzik</string>
+    <string name="eq_bass_low">Frekuensi rendah</string>
+    <string name="eq_bass_mid">Frekuensi sederhana</string>
+    <string name="eq_bass_high">Frekuensi tinggi</string>
     <string name="eq_custom">Tersuai</string>
     <string name="eq_rename">Namakan semula</string>
     <string name="eq_edit">Edit praset</string>

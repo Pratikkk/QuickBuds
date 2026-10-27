@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">クリアで鮮明</string>
     <string name="eq_basswave">低音ブースト</string>
     <string name="eq_basswave_sub">音楽に合わせて変化する深い低音</string>
+    <string name="eq_bass_low">低周波数</string>
+    <string name="eq_bass_mid">中周波数</string>
+    <string name="eq_bass_high">高周波数</string>
     <string name="eq_custom">カスタム</string>
     <string name="eq_rename">名前を変更</string>
     <string name="eq_edit">プリセットを編集</string>

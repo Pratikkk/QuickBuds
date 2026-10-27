@@ -294,12 +294,16 @@ internal object Commands {
 
     internal fun customEqPayload(action: Int, p: EqCodec.Preset): ByteArray = EqCodec.encode(action, p)
 
-    /** BassWave level, signed -5..+5; `FB 05` is the range (min, max) HeyMelody sends. */
-    fun setBassWaveLevel(level: Int): ByteArray =
-        OpoProtocol.buildPacket(OpoProtocol.CMD_SET_BASSWAVE_LEVEL, payload = bassWaveLevelPayload(level))
+    /**
+     * BassWave level, signed -5..+5; `FB 05` is the range (min, max) HeyMelody sends.
+     * [band] 0 sends no band byte; realme dynamic sound (`bassBands` 3) sends 1 low, 2 medium, 3 high.
+     */
+    fun setBassWaveLevel(level: Int, band: Int = 0): ByteArray =
+        OpoProtocol.buildPacket(OpoProtocol.CMD_SET_BASSWAVE_LEVEL, payload = bassWaveLevelPayload(level, band))
 
-    internal fun bassWaveLevelPayload(level: Int): ByteArray =
-        byteArrayOf(0xFB.toByte(), 0x05, level.toByte())
+    internal fun bassWaveLevelPayload(level: Int, band: Int = 0): ByteArray =
+        if (band > 0) byteArrayOf(0xFB.toByte(), 0x05, level.toByte(), band.toByte())
+        else byteArrayOf(0xFB.toByte(), 0x05, level.toByte())
 
     /** -> `0x8124` `00 FB 05 <level>`. */
     fun queryBassWaveLevel(): ByteArray = OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_BASSWAVE_LEVEL)

@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Tiszta és éles</string>
     <string name="eq_basswave">Basszuskiemelés</string>
     <string name="eq_basswave_sub">Mélyebb basszus, amely a zenéhez igazodik</string>
+    <string name="eq_bass_low">Mély frekvenciák</string>
+    <string name="eq_bass_mid">Közepes frekvenciák</string>
+    <string name="eq_bass_high">Magas frekvenciák</string>
     <string name="eq_custom">Egyéni</string>
     <string name="eq_rename">Átnevezés</string>
     <string name="eq_edit">Előbeállítás szerkesztése</string>

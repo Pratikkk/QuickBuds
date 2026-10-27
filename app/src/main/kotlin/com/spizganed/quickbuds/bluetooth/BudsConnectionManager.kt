@@ -853,7 +853,7 @@ class BudsConnectionManager(private val context: Context) {
     private fun setEq(next: EqState) {
         eqState = next
         val mac = eqMac ?: return
-        EqSnapshot(mac, next.current, next.bassWave, next.custom).also {
+        EqSnapshot(mac, next.current, next.bassWave, next.custom, next.bassBands).also {
             eqSnapshot = it
             featurePrefs().edit().putString(EqSnapshot.KEY, it.encode()).apply()
         }
@@ -915,6 +915,12 @@ class BudsConnectionManager(private val context: Context) {
     fun setBassWaveLevel(level: Int) {
         setEq(eqState.copy(bassWave = level))
         sendThenRead(Commands.setBassWaveLevel(level) to "BassWave level $level")
+    }
+
+    /** realme dynamic sound: [band] 1 low, 2 medium, 3 high. */
+    fun setBassBand(band: Int, level: Int) {
+        setEq(eqState.copy(bassBands = eqState.bassBands.toMutableList().also { it[band - 1] = level }))
+        sendThenRead(Commands.setBassWaveLevel(level, band) to "BassWave band $band level $level")
     }
 
     /** Optional write, then the EQ reads these buds list (see Capabilities), in order on one thread. */

@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Klar und scharf</string>
     <string name="eq_basswave">Bass-Boost</string>
     <string name="eq_basswave_sub">Tieferer Bass, der sich der Musik anpasst</string>
+    <string name="eq_bass_low">Tiefe Frequenzen</string>
+    <string name="eq_bass_mid">Mittlere Frequenzen</string>
+    <string name="eq_bass_high">Hohe Frequenzen</string>
     <string name="eq_custom">Benutzerdefiniert</string>
     <string name="eq_rename">Umbenennen</string>
     <string name="eq_edit">Preset bearbeiten</string>

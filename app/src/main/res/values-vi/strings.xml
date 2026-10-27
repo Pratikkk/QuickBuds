@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Trong và sắc nét</string>
     <string name="eq_basswave">Tăng cường bass</string>
     <string name="eq_basswave_sub">Bass sâu hơn, thích ứng theo nhạc</string>
+    <string name="eq_bass_low">Tần số thấp</string>
+    <string name="eq_bass_mid">Tần số trung</string>
+    <string name="eq_bass_high">Tần số cao</string>
     <string name="eq_custom">Tùy chỉnh</string>
     <string name="eq_rename">Đổi tên</string>
     <string name="eq_edit">Sửa cấu hình</string>

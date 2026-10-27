@@ -63,6 +63,9 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         fun hasBassWave(context: Context) =
             flag(context, "bassEngine") && Capabilities.supports(context, OpoProtocol.CMD_SET_BASSWAVE_LEVEL)
 
+        /** `[VENDOR]` realme Link's dynamic sound: three sliders with a band byte (`bassBands` 3). */
+        fun hasBassBands(context: Context) = ModelCatalog.current(context)?.json?.optInt("bassBands") == 3
+
         /** `[VENDOR]` HeyMelody's EQ row: the model has EQ data and the buds accept its command ([RowRules]). */
         fun hasEq(context: Context) = RowRules.EQ in RowRules.rows(
             ModelCatalog.current(context)?.json,
@@ -170,6 +173,10 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
     private lateinit var bassSwitch: Switch
     private lateinit var bassRow: LinearLayout
     private lateinit var bassSlider: LevelSliderView
+    /** realme dynamic sound: low, medium and high, each with a label. Shown in place of [bassSlider]. */
+    private val bandSliders = mutableListOf<LevelSliderView>()
+    /** What opens under the switch: [bassSlider], or the three band sliders. */
+    private lateinit var bassPanel: View
     private lateinit var customHeader: TextView
     private lateinit var customCard: LinearLayout
     private lateinit var customActions: LinearLayout
@@ -271,6 +278,25 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
             setPadding(pad, 0, pad, pad)
         }
         bassCard.addView(bassSlider)
+        val bands = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = View.GONE
+            val pad = ThemeRes.dp(this@EqActivity, 8f)
+            setPadding(pad, 0, pad, pad)
+        }
+        for ((i, label) in listOf(R.string.eq_bass_low, R.string.eq_bass_mid, R.string.eq_bass_high).withIndex()) {
+            bands.addView(TextView(this).apply {
+                setText(label)
+                setTextColor(ThemeRes.color(this@EqActivity, R.attr.appColorTextSecondary))
+                textSize = 13f
+                setPadding(dp(10f), dp(6f), 0, 0)
+            })
+            bands.addView(LevelSliderView(this, -5, 5).apply {
+                onRelease = { motion.onUserAction(); manager?.setBassBand(i + 1, it) }
+            }.also { bandSliders += it })
+        }
+        bassCard.addView(bands)
+        bassPanel = if (hasBassBands(this)) bands else bassSlider
         root.addView(bassCard.apply {
             (layoutParams as? LinearLayout.LayoutParams)?.topMargin = dp(14f)
             if (!hasBassWave(this@EqActivity)) visibility = View.GONE
@@ -317,7 +343,7 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
 
     private fun render() {
         // Never rebuild under a finger: a re-read landing mid-drag would yank the knob back.
-        if (bassSlider.dragging) return
+        if (bassSlider.dragging || bandSliders.any { it.dragging }) return
         val m = manager
         val connected = m?.isConnected() == true
         val animate = motion.animate()
@@ -335,10 +361,11 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         val bassOn = (m?.featureStates ?: Capabilities.reply(this).orEmpty())[Feature.BASSWAVE] == 1
         bassSwitch.setFromBuds(bassOn)
         state.bassWave?.let { bassSlider.value = it }
+        state.bassBands.forEachIndexed { i, v -> v?.let { bandSliders[i].value = it } }
         // The buds move the switch; the slider follows it, animated only after the first paint.
-        if (bassOn != (bassSlider.visibility == View.VISIBLE)) {
-            if (bassPainted && animate) slide(bassSlider, bassOn, if (bassOn) 450 else 320)
-            else bassSlider.visibility = if (bassOn) View.VISIBLE else View.GONE
+        if (bassOn != (bassPanel.visibility == View.VISIBLE)) {
+            if (bassPainted && animate) slide(bassPanel, bassOn, if (bassOn) 450 else 320)
+            else bassPanel.visibility = if (bassOn) View.VISIBLE else View.GONE
         }
         bassPainted = true
 

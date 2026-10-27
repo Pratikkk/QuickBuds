@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Net ve canlı</string>
     <string name="eq_basswave">Bas güçlendirme</string>
     <string name="eq_basswave_sub">Müziğe uyum sağlayan daha derin bas</string>
+    <string name="eq_bass_low">Düşük frekanslar</string>
+    <string name="eq_bass_mid">Orta frekanslar</string>
+    <string name="eq_bass_high">Yüksek frekanslar</string>
     <string name="eq_custom">Özel</string>
     <string name="eq_rename">Yeniden adlandır</string>
     <string name="eq_edit">Ön ayarı düzenle</string>

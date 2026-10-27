@@ -87,6 +87,7 @@ object SimpleLog {
             label.startsWith("EQ create") -> "Custom equalizer preset " + label.substringAfter(" '").removeSuffix("'") + " created"
             label.startsWith("EQ delete") -> "Custom equalizer preset " + label.substringAfter(" '").removeSuffix("'") + " deleted"
             label.startsWith("BassWave level") -> "Bass boost level set to $number"
+            label.startsWith("BassWave band") -> "Bass boost band $number set to " + label.substringAfterLast(' ')
             label.startsWith("Find tone") -> if (label.endsWith("true")) "Ringing the earbuds" else "Stopped ringing the earbuds"
             label.startsWith("Fit test") -> if (label.endsWith("start")) "Fit test started" else "Fit test stopped"
             label.startsWith("Alert volume") -> "Alert sound volume set to $number"

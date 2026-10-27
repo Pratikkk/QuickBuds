@@ -99,7 +99,7 @@ pub fn show(app: &mut App, ui: &mut Ui, body: Rect) -> f32 {
             let sl = glass::slider_at(ui, "bassl", sr, &mut v, -5.0, 5.0, true);
             glass::text(ui, Pos2::new(sr.right() + 16.0, sr.center().y), Align2::LEFT_CENTER, &format!("{:+}", v as i32), 15.0, 1.0);
             if sl.changed { st.bass = Some(v); }
-            if sl.released { sends.push(Cmd::BassLevel(v as i8)); st.bass = None; }
+            if sl.released { sends.push(Cmd::BassLevel(v as i8, 0)); st.bass = None; }
         }
         y += h + 18.0;
     }

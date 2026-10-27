@@ -395,6 +395,9 @@ pub fn eq_has_bass(model: Option<&Value>, caps: &Caps) -> bool {
     flag(model, "bassEngine") && caps.supports(CMD_SET_BASSWAVE)
 }
 
+/// `bassBands` 3: realme dynamic sound, three sliders with a band byte (PROTOCOL.md section 17).
+pub fn eq_bass_bands(model: Option<&Value>) -> bool { model.map_or(false, |m| m["bassBands"].as_i64() == Some(3)) }
+
 /// `customEqMax`, else 3.
 pub fn eq_max_custom(model: Option<&Value>) -> usize {
     model.and_then(|m| m["customEqLimit"].as_u64()).filter(|&n| n > 0).unwrap_or(3) as usize

@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">साफ और स्पष्ट</string>
     <string name="eq_basswave">बेस बूस्ट</string>
     <string name="eq_basswave_sub">संगीत के अनुसार ढलने वाला गहरा बेस</string>
+    <string name="eq_bass_low">निम्न आवृत्ति</string>
+    <string name="eq_bass_mid">मध्यम आवृत्ति</string>
+    <string name="eq_bass_high">उच्च आवृत्ति</string>
     <string name="eq_custom">कस्टम</string>
     <string name="eq_rename">नाम बदलें</string>
     <string name="eq_edit">प्रीसेट संपादित करें</string>

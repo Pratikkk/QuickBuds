@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Čistý a ostrý</string>
     <string name="eq_basswave">Zesílení basů</string>
     <string name="eq_basswave_sub">Hlubší basy, které se přizpůsobují hudbě</string>
+    <string name="eq_bass_low">Nízké frekvence</string>
+    <string name="eq_bass_mid">Střední frekvence</string>
+    <string name="eq_bass_high">Vysoké frekvence</string>
     <string name="eq_custom">Vlastní</string>
     <string name="eq_rename">Přejmenovat</string>
     <string name="eq_edit">Upravit předvolbu</string>

@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Clara y nítida</string>
     <string name="eq_basswave">Refuerzo de graves</string>
     <string name="eq_basswave_sub">Graves más profundos que se adaptan a la música</string>
+    <string name="eq_bass_low">Frecuencias bajas</string>
+    <string name="eq_bass_mid">Frecuencias medias</string>
+    <string name="eq_bass_high">Frecuencias altas</string>
     <string name="eq_custom">Personalizado</string>
     <string name="eq_rename">Cambiar nombre</string>
     <string name="eq_edit">Editar preajuste</string>
