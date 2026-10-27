@@ -53,6 +53,7 @@ class KeepAliveReceiver : BroadcastReceiver() {
         val serviceIntent = Intent(context, BudsService::class.java)
         serviceIntent.action = BudsService.ACTION_FORCE_CONNECT
         serviceIntent.putExtra(BudsService.EXTRA_DELAY_MS, delayMs)
+        serviceIntent.putExtra(BudsService.EXTRA_FROM_LINK, true)
         // Android 8+ refuses a background startService. Android 12+ can also refuse
         // startForegroundService. A lost connect is better than a crash in the receiver.
         startNoThrow({ context.startForegroundService(serviceIntent) }) {

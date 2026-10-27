@@ -282,17 +282,17 @@ class BudsConnectionManager(private val context: Context) {
     }
 
     /**
-     * Whether Android reports [device] connected on A2DP or HEADSET. This is the live audio link
-     * of buds that are out of the case. [LinkState.UNKNOWN] means the answer is not available
-     * (no adapter, no permission), so the caller connects as before.
+     * Whether Android has an A2DP or HEADSET link up: the live audio link of buds that are out of the
+     * case. `BluetoothManager.getConnectedDevices` takes GATT only, so this reads the adapter's
+     * per-profile state. [LinkState.UNKNOWN] means no answer (no adapter, no permission): connect as before.
      */
-    fun audioLinkState(device: BluetoothDevice): LinkState {
-        val manager = context.getSystemService(BluetoothManager::class.java) ?: return LinkState.UNKNOWN
-        if (manager.adapter?.isEnabled != true) return LinkState.UNKNOWN
+    @SuppressLint("MissingPermission")
+    fun audioLinkState(): LinkState {
+        val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter ?: return LinkState.UNKNOWN
+        if (!adapter.isEnabled) return LinkState.UNKNOWN
         return try {
-            val profiles = listOf(BluetoothProfile.A2DP, BluetoothProfile.HEADSET)
-            val connected = profiles.any { p -> manager.getConnectedDevices(p).any { it.address == device.address } }
-            if (connected) LinkState.CONNECTED else LinkState.DISCONNECTED
+            val states = listOf(BluetoothProfile.A2DP, BluetoothProfile.HEADSET).map { adapter.getProfileConnectionState(it) }
+            if (BluetoothProfile.STATE_CONNECTED in states) LinkState.CONNECTED else LinkState.DISCONNECTED
         } catch (e: Exception) {
             LinkState.UNKNOWN
         }

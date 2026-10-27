@@ -131,16 +131,18 @@ class BudsService : Service(), BudsConnectionManager.Listener {
             ACTION_FORCE_CONNECT -> {
                 val withAudio = intent.getBooleanExtra(EXTRA_WITH_AUDIO, false)
                 val user = intent.getBooleanExtra(EXTRA_USER_CONNECT, false)
+                // KeepAliveReceiver: Android just reported the buds' link, so the link check is not needed.
+                val fromLink = intent.getBooleanExtra(EXTRA_FROM_LINK, false)
                 val delayMs = intent.getLongExtra(EXTRA_DELAY_MS, 0L)
                 // A delayed connect is the ACL fallback (KeepAliveReceiver): the audio-profile
                 // broadcast normally connects first, and then this finds us connected and does nothing.
                 if (delayMs > 0) {
                     aclConnect?.let { handler.removeCallbacks(it) }
-                    val run = Runnable { aclConnect = null; forceConnect(withAudio, user) }
+                    val run = Runnable { aclConnect = null; forceConnect(withAudio, user, fromLink) }
                     aclConnect = run
                     handler.postDelayed(run, delayMs)
                 } else {
-                    forceConnect(withAudio, user)
+                    forceConnect(withAudio, user, fromLink)
                 }
             }
             ACTION_FORCE_DISCONNECT -> {
@@ -223,7 +225,7 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         return START_STICKY
     }
 
-    private fun forceConnect(withAudio: Boolean, user: Boolean = false) {
+    private fun forceConnect(withAudio: Boolean, user: Boolean = false, fromLink: Boolean = false) {
         // A missed unlock broadcast must never leave the service asleep: check the real state.
         if (asleep && !shouldSleep()) { asleep = false; statusLog("[SVC] Wake (state check)") }
         if (asleep) {
@@ -237,10 +239,9 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         // An automatic connect needs the live audio link. With the buds in the closed case the
         // A2DP / HEADSET state is disconnected, and 5 socket tries would only fail. Virtual buds
         // keep their own path, and an unknown state connects as before.
-        if (!user) {
+        if (!user && !fromLink) {
             val virtual = VirtualBuds.on(this)
-            val device = if (virtual) null else try { BudsDevice.find(this) } catch (_: Exception) { null }
-            val link = device?.let { manager?.audioLinkState(it) } ?: LinkState.UNKNOWN
+            val link = if (virtual) LinkState.UNKNOWN else manager?.audioLinkState() ?: LinkState.UNKNOWN
             if (!ConnectPolicy.autoConnectAllowed(link, virtual)) {
                 statusLog("[SVC] FORCE_CONNECT skipped (the buds have no audio link)")
                 return
@@ -517,6 +518,8 @@ class BudsService : Service(), BudsConnectionManager.Listener {
          * that connect shows the try toasts; an automatic connect is silent.
          */
         const val EXTRA_USER_CONNECT = "user_connect"
+        /** On FORCE_CONNECT from [KeepAliveReceiver]: Android reported the buds' ACL or audio link. */
+        const val EXTRA_FROM_LINK = "from_link"
         const val ACTION_FORCE_DISCONNECT = "com.spizganed.quickbuds.FORCE_DISCONNECT"
         /** Dev tools › Bridge on/off ([RfcommBridge]). */
         const val ACTION_TOGGLE_BRIDGE = "com.spizganed.quickbuds.TOGGLE_BRIDGE"
