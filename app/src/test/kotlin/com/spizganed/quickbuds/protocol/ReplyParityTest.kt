@@ -1,7 +1,7 @@
-package com.spizganed.quickbuds.protocol2
+package com.spizganed.quickbuds.protocol
 
 import com.spizganed.quickbuds.bluetooth.PacketLogger
-import com.spizganed.quickbuds.protocol.Replies
+import com.spizganed.quickbuds.protocol.Wire.Message
 import org.json.JSONObject
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertNull
@@ -12,7 +12,7 @@ import java.io.File
 /**
  * One reply packet from both layers for the same request bytes. The legacy layer wins, so a difference
  * is a defect. The cases come from `testdata/protocol_cases.json` and from the request cases in the
- * protocol2 tests.
+ * protocol tests.
  */
 class ReplyParityTest {
     private val contract = File("../testdata/protocol_cases.json")
@@ -36,7 +36,9 @@ class ReplyParityTest {
     /** Both layers must return the same bytes, or no answer at all. */
     private fun assertParity(what: String, cmd: Int, seq: Int, payload: ByteArray, clock: Long) {
         val old = Replies.answerFor(cmd, seq, payload, clock)
-        val new = NewProtocol.answer(cmd, seq, payload, clock)
+        val new = Decode.answer(Message(cmd, seq, payload), clock)?.let {
+            OpoProtocol.buildPacket(it.cmd, it.seq, it.payload)
+        }
         if (old == null) assertNull("$what 0x%04X: the new layer answered".format(cmd), new)
         else assertArrayEquals("$what 0x%04X: the reply packet differs".format(cmd), old, new)
     }
