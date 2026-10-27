@@ -1,6 +1,7 @@
 package com.spizganed.quickbuds.protocol2
 
 import com.spizganed.quickbuds.protocol.Commands
+import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.Replies
 
@@ -81,7 +82,7 @@ object Cmd {
     fun feature(id: Int, on: Boolean) = Frame(0x0403, Commands.featurePayload(id, on))
 
     /** `0x0406 <id>`: select a built-in preset. */
-    fun eqSelect(id: Int) = f(0x0406, id)
+    fun eqSelect(id: Int) = Frame(0x0406, Commands.builtInEqPayload(id))
 
     /** What `0x0418` does with a preset. */
     enum class EqAction(val code: Int) {
@@ -94,18 +95,10 @@ object Cmd {
     }
 
     /** `0x0418 <action> <min> <max> <id> <nameLen> <name> <bands> [<freq u16 LE> <gain s8>]...` */
-    fun eqPreset(action: EqAction, p: EqPreset): Frame {
-        val name = p.name.toByteArray(Charsets.UTF_8)
-        val out = java.io.ByteArrayOutputStream()
-        out.write(byteArrayOf(action.code.toByte(), p.range.first.toByte(), p.range.second.toByte(), p.id.toByte(), name.size.toByte()))
-        out.write(name)
-        out.write(p.bands.size)
-        for ((hz, db) in p.bands) { out.write(hz and 0xFF); out.write(hz shr 8); out.write(db and 0xFF) }
-        return Frame(0x0418, out.toByteArray())
-    }
+    fun eqPreset(action: EqAction, p: EqCodec.Preset) = Frame(0x0418, Commands.customEqPayload(action.code, p))
 
     /** `0x041B FB 05 <level>`: BassWave level, -5 to 5. The BassWave switch is feature `1D`. */
-    fun bassSet(level: Int) = f(0x041B, 0xFB, 0x05, level and 0xFF)
+    fun bassSet(level: Int) = Frame(0x041B, Commands.bassWaveLevelPayload(level))
 
     // --- Sound and device settings (section 13) ---
 

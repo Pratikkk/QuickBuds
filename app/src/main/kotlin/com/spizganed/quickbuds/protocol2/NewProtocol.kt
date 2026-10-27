@@ -70,12 +70,10 @@ object NewProtocol {
     fun gestureTable(entries: List<KeyFunctionParser.Entry>) =
         pkt(Cmd.gestureTable(entries.map { Binding(it.deviceType, it.button, it.action, it.function) }))
 
-    /** Null when the tag is not two bytes: only the legacy encoder writes that. */
-    fun customEq(action: Int, p: EqCodec.Preset): ByteArray? {
-        if (p.tag.size != 2) return null
+    /** The action code selects [Cmd.EqAction]. The preset keeps its tag bytes. */
+    fun customEq(action: Int, p: EqCodec.Preset): ByteArray {
         val a = Cmd.EqAction.values().first { it.code == action }
-        val e = EqPreset(p.id, p.name, p.selected, p.tag[0].toInt() to p.tag[1].toInt(), p.freqs.zip(p.gains))
-        return pkt(Cmd.eqPreset(a, e))
+        return pkt(Cmd.eqPreset(a, p))
     }
 
     /** The frames that apply a record, in send order: description id, record, ear scan if any, switch on. */

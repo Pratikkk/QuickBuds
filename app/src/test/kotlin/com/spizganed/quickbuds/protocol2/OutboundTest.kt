@@ -113,12 +113,11 @@ class OutboundTest {
 
     @Test fun eq() {
         val p = EqCodec.Preset(5, "Mine", listOf(62, 250, 1000, 4000), listOf(-6, 0, 3, 6), false, EqCodec.DEFAULT_TAG)
-        val typed = EqPreset(5, "Mine", false, -6 to 6, listOf(62 to -6, 250 to 0, 1000 to 3, 4000 to 6))
         for (a in listOf(EqCodec.ACTION_CREATE, EqCodec.ACTION_SAVE, EqCodec.ACTION_DELETE)) {
-            same("eq $a", OpoProtocol.customEq(a, p), Cmd.eqPreset(Cmd.EqAction.values().first { it.code == a }, typed)) { NewProtocol.customEq(a, p)!! }
+            same("eq $a", OpoProtocol.customEq(a, p), Cmd.eqPreset(Cmd.EqAction.values().first { it.code == a }, p)) { NewProtocol.customEq(a, p) }
         }
         val n = EqCodec.newPreset("Ünï", listOf(100, 200, 300))
-        same("new", OpoProtocol.customEq(EqCodec.ACTION_CREATE, n), Cmd.eqPreset(Cmd.EqAction.Create, EqPreset(0, "Ünï", false, -6 to 6, listOf(100 to 0, 200 to 0, 300 to 0)))) { NewProtocol.customEq(EqCodec.ACTION_CREATE, n)!! }
+        same("new", OpoProtocol.customEq(EqCodec.ACTION_CREATE, n), Cmd.eqPreset(Cmd.EqAction.Create, n)) { NewProtocol.customEq(EqCodec.ACTION_CREATE, n) }
         for (l in -5..5) same("bass $l", OpoProtocol.setBassWaveLevel(l), Cmd.bassSet(l)) { NewProtocol.bassLevel(l) }
     }
 

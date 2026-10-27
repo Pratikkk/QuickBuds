@@ -274,4 +274,33 @@ internal object Commands {
     }
 
     internal fun statusPayload(ids: ByteArray): ByteArray = byteArrayOf(ids.size.toByte()) + ids
+
+    // --- Equalizer ---
+
+    /** Current EQ -> `0x810F` `00 <id>` (00-02 built-in, 04+ custom). */
+    fun queryEq(): ByteArray = OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_EQ)
+
+    /** Custom preset list -> `0x8122`, see [EqCodec.parseList]. Empty payload, as HeyMelody sends it. */
+    fun queryEqAll(): ByteArray = OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_EQ_ALL)
+
+    fun setBuiltInEq(id: Int): ByteArray =
+        OpoProtocol.buildPacket(OpoProtocol.CMD_SET_EQ, payload = builtInEqPayload(id))
+
+    internal fun builtInEqPayload(id: Int): ByteArray = byteArrayOf(id.toByte())
+
+    /** `0x0418 <action> <tag> <id> <name> <bands>`. [EqCodec.encode] builds the payload; the tag bytes are the source. */
+    fun customEq(action: Int, p: EqCodec.Preset): ByteArray =
+        OpoProtocol.buildPacket(OpoProtocol.CMD_SAVE_CUSTOM_EQ, payload = customEqPayload(action, p))
+
+    internal fun customEqPayload(action: Int, p: EqCodec.Preset): ByteArray = EqCodec.encode(action, p)
+
+    /** BassWave level, signed -5..+5; `FB 05` is the range (min, max) HeyMelody sends. */
+    fun setBassWaveLevel(level: Int): ByteArray =
+        OpoProtocol.buildPacket(OpoProtocol.CMD_SET_BASSWAVE_LEVEL, payload = bassWaveLevelPayload(level))
+
+    internal fun bassWaveLevelPayload(level: Int): ByteArray =
+        byteArrayOf(0xFB.toByte(), 0x05, level.toByte())
+
+    /** -> `0x8124` `00 FB 05 <level>`. */
+    fun queryBassWaveLevel(): ByteArray = OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_BASSWAVE_LEVEL)
 }
