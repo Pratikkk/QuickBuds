@@ -97,22 +97,25 @@ function page() {
 /**
  * The developer's page: the newest reports first, as plain text, or as JSON with format=json.
  * Only "new" and "working" reports show. after=<id> shows only newer reports; limit=<n> (default 20, at most 100).
+ * CONTRIB_KEY is the helper's key: the same reports without the install ID, and no counts.
  */
 async function list(req, url, env) {
   // The key comes only in the Authorization header (Bearer), so no URL holds it and no log keeps it.
   const given = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
-  if (!env.READ_KEY || given !== env.READ_KEY) return new Response("Not found", { status: 404 });
-  if (url.searchParams.has("stats")) return stats(url, env);
+  const admin = !!env.READ_KEY && given === env.READ_KEY;
+  const helper = !!env.CONTRIB_KEY && given === env.CONTRIB_KEY;
+  if (!admin && !helper) return new Response("Not found", { status: 404 });
+  if (url.searchParams.has("stats")) return admin ? stats(url, env) : new Response("Not found", { status: 404 });
   const after = Number(url.searchParams.get("after") ?? 0) || 0;
   const limit = Math.min(Number(url.searchParams.get("limit") ?? 20) || 20, 100);
   const { results } = await env.DB.prepare(
-    "SELECT id, at, app, app_id, model, categories, description, crash, log, status, note FROM reports WHERE id > ? AND status IN ('new', 'working') ORDER BY id DESC LIMIT ?",
+    `SELECT id, at, app, ${admin ? "app_id, " : ""}model, categories, description, crash, log, status, note FROM reports WHERE id > ? AND status IN ('new', 'working') ORDER BY id DESC LIMIT ?`,
   ).bind(after, limit).all();
 
   if (url.searchParams.get("format") === "json") return Response.json(results);
   const text = results.length === 0 ? "No reports.\n" : results.map((r) => [
     `#${r.id}  ${r.at}  ${r.app}${r.crash ? "  CRASH" : ""}  [${r.status}${r.note ? `: ${r.note}` : ""}]`,
-    `Install: ${r.app_id ?? "-"}`,
+    ...(admin ? [`Install: ${r.app_id ?? "-"}`] : []),
     `Model: ${r.model}`,
     `Categories: ${r.categories || "-"}`,
     `Description:\n${r.description || "-"}`,

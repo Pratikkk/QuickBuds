@@ -40,6 +40,16 @@ key from the URL, so a URL never holds the key.
 
 The key is the only access control. Keep the key private.
 
+## The helper key
+
+`CONTRIB_KEY` is a second read key for a helper. It shows the same reports, with the full log, but without the install ID.
+It gets no counts (`?stats=1`) and no `/__digest`. No key can write: status changes and replies stay in D1.
+
+```bash
+openssl rand -hex 24 | npx wrangler secret put CONTRIB_KEY   # make or replace the key
+npx wrangler secret delete CONTRIB_KEY                        # remove the helper's access
+```
+
 ## Mark a report
 
 Each report has a `status`. The page shows only `new` and `working` reports.
