@@ -46,7 +46,7 @@ Classic Bluetooth **RFCOMM / SPP**, not BLE. One long-lived socket. The buds pus
 
 The connect order is both UUIDs secure first, then both insecure: `079A` secure, `1107` secure, `079A`
 insecure, `1107` insecure. Then RFCOMM channel 15 by reflection. A 12 s watchdog closes a connect that
-blocks. Five retries follow a failed connect, and eight a lost link `[CAPTURE]`. The desktop app tries
+blocks. A connect makes 5 socket tries in total, then stops. A lost link gets 8 reconnect tries `[CAPTURE]`. The desktop app tries
 the two UUIDs in the same order and takes the channel from the buds' SDP record.
 
 A case lid close ends the socket (section 13) `[CAPTURE]`.
@@ -74,6 +74,14 @@ AA  <TotalLen>  <Slice> 00  [<Fsn>]  <Cmd LE>  <Seq>  <PayLen LE>  <Payload...>
 | PayLen | 2 | Payload length, little endian |
 | Payload | PayLen | The message body |
 
+Examples `[CAPTURE]`:
+
+```
+AA 07 00 00 00 01 01 00 00                  handshake 0x0100, PayLen 0
+AA 0A 00 00 04 04 06 03 00 01 01 01         set ANC Off
+AA 0C 00 00 04 02 FF 05 00 03 01 01 08 00   ANC push (Seq FF)
+```
+
 - Whole message: `TotalLen = 7 + PayLen`. Slice: `TotalLen = 3 + slice length` `[CAPTURE]`.
 - **TotalLen is standard LEB128** `[CAPTURE]`: one byte below 128, else 7 bits per byte, low first, high bit = more. A length that subtracts 1 first does not fit. A 124-byte payload goes out as `AA 83 01` (131). A 250-byte reply arrives as `AA 81 02` (257). Golden Sound (section 20) uses frames over 127 bytes.
 - The framer normalises every frame to a one-byte length. After that the header is a fixed 9 bytes: **cmd at 4-5, seq at 6, payload length at 7-8, payload from index 9**. A wrong offset gives garbage, not an error.
@@ -91,7 +99,7 @@ AA  <TotalLen>  <Slice> 00  <Fsn>  <part of Cmd/Seq/PayLen/Payload>
 - `Fsn` (slice counter, from `00`) is present in every slice, never in a whole message. `TotalLen` is then `3 + data`, not `2 + data`.
 - The receiver joins the slice data in order. It parses the message when `Slice` is `03`. A middle or last slice with no first slice before it is dropped. A declared `PayLen` larger than the bytes present cuts the payload to the bytes present `[VENDOR]`.
 - A slice frame has `TotalLen` 4 or more. A whole message has `TotalLen` 7 or more.
-- The receiver reads a byte stream, not separate reads. It discards bytes before `AA`, reads `TotalLen`, and waits for that many bytes. A `TotalLen` below 4 (slice) or 7 (whole message) is noise: the receiver drops the `AA` and searches on. The Kotlin framer drops a frame above 2048 bytes. The core framer drops a `Len` above 4096.
+- The receiver reads a byte stream, not separate reads. It discards bytes before `AA`, reads `TotalLen`, and waits for that many bytes. The Kotlin framer treats a `TotalLen` below 4 (slice) or 7 (whole message) as noise: it drops the `AA` and searches on. It drops a frame above 2048 bytes. The core framer drops a `Len` below 2 or above 4096.
 - A read that starts with `AA` begins a new frame. Any other read continues the frame in progress.
 - The sender splits a message when it exceeds the frame budget. The budget is 660 bytes by default. The reply to `0x0107` (`00 <u16 LE>`) can lower it `[VENDOR]`. Some bulk transfers use a larger budget. QuickBuds sends none.
 - One write at a time. Wait for the write to finish (5 s limit) and pause a model-specific interval between slices.
@@ -754,8 +762,8 @@ The id list is per model `[VENDOR]`. `models.json` `statusQuery` holds the list 
 from HeyMelody 116.9.0's built-in data). Buds 4: `05 04 0B 11 18 06 1B 1D 1C` (matches the capture).
 Enco Buds2: `05 06` `[TESTED]`. Checked against the HeyMelody 117.6.6 id rule, all 85 listed models
 match it. The lists leave out the ids of features the project decided against (`22`-`24`, `3C` neck
-health, `3D` Gemini assistant). The app asks for wear detection `04` for every model with
-`wearDetection` 1 or 2. The Enco X4 and Buds Pro 4 have 2.
+health, `3D` Gemini assistant). A model whose vendor data gives `wearDetection` 1 or 2 has `04` (wear detection) in its
+`statusQuery` id list. The Enco X4 and Buds Pro 4 have 2.
 
 - A model without `statusQuery` (hand-added) gets the 23 ids, plus `1A` where it has `windMode`.
 - **realme models** `[VENDOR]` (realme Link 5.8.811): the per-model screen lists name the rows a model shows. The `statusQuery` for 30 realme models asks only for the ids of those rows: `04` smart play/pause, `06` game mode, `0B` hearing profile, `11` dual connection, `18` Hi-Res, `1B` 3D sound. Only the Air8 Pro, Air7 Pro, Air 5 Pro and Air6 Pro list a hearing profile. The T500 Pro does not (report #21), and its buds do not answer the tones. The Air7 Pro keeps its list: its owner confirmed it `[TESTED]`.
@@ -966,7 +974,7 @@ Every rule in this section names the model id, the byte and the value. A topic s
 - OPPO Enco Buds2 (model entry `064810`, reported product id `060C12`): `statusQuery` `05 06` `[TESTED]`.
 - realme Buds T310 `063C12`: the status reply uses status `01` for ids `04 0B 18 27 35`, so the buds lack them `[CAPTURE]`.
 - A model without `statusQuery` (hand-added): 23 ids `05 04 0B 11 13 18 06 1B 1C 27 28 1D 09 17 30 31 3A 32 35 37 38 3B 0C`, plus `1A` where it has `windMode` `[VENDOR]`.
-- The Enco X4 `06EC10` and Buds Pro 4 `067814`: `wearDetection` 2. The app asks for `04` for every model with `wearDetection` 1 or 2.
+- The Enco X4 `06EC10` and Buds Pro 4 `067814`: `wearDetection` 2. Their `statusQuery` id list starts `05 04`, so the app asks for `04`.
 - The `statusQuery` lists come from 85 HeyMelody models (HeyMelody 116.9.0). All 85 match the HeyMelody 117.6.6 id rule. The lists leave out `22`-`24`, `3C` and `3D` `[VENDOR]`.
 - 30 realme models have a `statusQuery` with only the ids of the rows their realme Link screen shows: `04`, `06`, `0B`, `11`, `18`, `1B` `[VENDOR]`.
 - realme models with `dualDevice` (11 models): bitmap bit 59 `0x0429` / `0x0132`. Buds 4 lacks it `[VENDOR]`.
@@ -979,7 +987,7 @@ Every rule in this section names the model id, the byte and the value. A topic s
 - Buds 4 `065414` tree: `Off 0`, `ANC 1`, `Transparency 2`, `Deep 4`, `Medium 5`, `Light 6`, `Smart 7`, `Adaptive 11` `[CAPTURE]`. Off has a report child at 3. Transparency has one at 8.
 - Tree shape `NC 0, Off 1, Transparency 2` (9 models) `[VENDOR]`: Buds 4's Off bytes turn ANC on there `[VENDOR]`.
 - Tree shape `Off 0, Transparency 1, Light 2, Deep 3` (Enco X `061410`, Buds Z2 `061014`), plus `Smart 4` on Buds Pro `060C14` `[VENDOR]`.
-- A model with no `ancModes` (76 of 140) gets no noise control. Before detection, the app uses the Buds 4 tree `[VENDOR]`.
+- A model with no `ancModes` (79 of 143 in `models.json`) gets no noise control. Before detection, the app uses the Buds 4 tree `[VENDOR]`.
 - The app does not offer voice-transparency modes that need a per-bud support read (4 OPPO models) `[VENDOR]`.
 - realme models `[VENDOR]`: the write and report tables are the same. Off `01`, Transparency `02`, Light `04`, Deep and plain ANC `08`, Medium `10`, Smart `20`. As a tree: Off 0, Transparency 1, ANC 3 with children Light 2, Deep 3, Medium 4, Smart 5. Only the levels a model has. T200 `065452`, T300 `062412`, T500 `067052`, T200x `065852` and Wireless 3 `050812` have plain ANC. N1 `064012` and T310 `063C12` have no Smart. 21 realme models have this tree in `models.json`.
 - realme Buds Air7 Pro `064C12`: the owner confirms the table works (issue #8) `[TESTED]`. The others are unverified. Its `0x810C 01 01` value `02` = Transparency.
@@ -1076,7 +1084,7 @@ Every rule in this section names the model id, the byte and the value. A topic s
 
 ### 21.12 Counts
 
-- `ancModes`: 76 of 140 models have none `[VENDOR]`.
+- `ancModes`: 79 of 143 models in `models.json` have none `[VENDOR]`.
 - `holdMask`: 28 models use a per-bud hold `[VENDOR]`.
 - `eqPresets`: 41 of 143 models have none `[VENDOR]`.
 - `statusQuery`: 85 HeyMelody models, 30 realme models `[VENDOR]`.
