@@ -10,11 +10,16 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
+import android.os.Bundle
 import android.provider.Settings
 import android.view.MotionEvent
 import android.view.View
+import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityNodeProvider
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import com.spizganed.quickbuds.widget.QuickBudsWidget
@@ -53,6 +58,21 @@ internal fun fadeMixes(current: FloatArray, to: Int, fraction: Float): FloatArra
         current[i] + (target - current[i]) * f
     }
 }
+
+/** The tap area of one segment. A tap and a screen reader use the same area. */
+internal data class SegmentBounds(val left: Float, val top: Float, val right: Float, val bottom: Float)
+
+/**
+ * The tap area of segment [index] of [count] equal bins in a [width] x [height] view.
+ * [indexAt] uses the same bins, so a screen-reader click and a tap select the same segment.
+ */
+internal fun segmentBounds(index: Int, count: Int, width: Int, height: Int): SegmentBounds =
+    SegmentBounds(
+        left = width.toFloat() * index / count,
+        top = 0f,
+        right = width.toFloat() * (index + 1) / count,
+        bottom = height.toFloat()
+    )
 
 /** One coordinate of a cubic Bezier curve at parameter [t]. */
 private fun bezier(v1: Float, v2: Float, t: Float): Float {
@@ -105,6 +125,8 @@ class AncSegmentedView(
             if (v == field) return
             val from = field
             field = v
+            notifySegmentChanged(from)
+            notifySegmentChanged(v)
             // A replaced animator must not move pos: the new one starts from the current frame.
             stop(anim)
             stop(appearAnim)
@@ -330,6 +352,86 @@ class AncSegmentedView(
     private val fillMixes = FloatArray(labels.size)
     private val colorMixes = FloatArray(labels.size)
 
+    init {
+        // A plain View with no text is not important by default. The virtual nodes below carry it.
+        importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
+    }
+
+    /**
+     * The view draws the segments, so the system has no node for them. Each labelled segment gets
+     * a virtual node: its visible label, the radio-item role, the selected state and a click.
+     * An icon-only segment (the bud sides) keeps the view's one description: it has no label.
+     */
+    private val nodeProvider = object : AccessibilityNodeProvider() {
+        override fun createAccessibilityNodeInfo(virtualViewId: Int): AccessibilityNodeInfo? = when {
+            virtualViewId == HOST_VIEW_ID -> hostNode()
+            virtualViewId in labels.indices && labels[virtualViewId].isNotEmpty() -> segmentNode(virtualViewId)
+            else -> null
+        }
+
+        override fun performAction(virtualViewId: Int, action: Int, arguments: Bundle?): Boolean {
+            if (action != AccessibilityNodeInfo.ACTION_CLICK) return false
+            if (virtualViewId !in labels.indices || labels[virtualViewId].isEmpty() || !isEnabled) return false
+            performClick()
+            tapSegment(virtualViewId)
+            return true
+        }
+    }
+
+    override fun getAccessibilityNodeProvider(): AccessibilityNodeProvider = nodeProvider
+
+    private fun hostNode(): AccessibilityNodeInfo {
+        val node = AccessibilityNodeInfo.obtain(this)
+        node.packageName = context.packageName
+        node.className = "android.widget.RadioGroup"
+        node.contentDescription = this.contentDescription
+        val bounds = Rect(0, 0, width, height)
+        node.setBoundsInParent(bounds)
+        node.setBoundsInScreen(onScreen(bounds))
+        node.isVisibleToUser = isShown && width > 0 && height > 0
+        for (i in labels.indices) if (labels[i].isNotEmpty()) node.addChild(this, i)
+        return node
+    }
+
+    private fun segmentNode(index: Int): AccessibilityNodeInfo {
+        val node = AccessibilityNodeInfo.obtain()
+        node.setSource(this, index)
+        node.setParent(this)
+        node.packageName = context.packageName
+        node.className = "android.widget.RadioButton"
+        node.contentDescription = labels[index]
+        node.isEnabled = isEnabled
+        node.isClickable = true
+        node.isFocusable = true
+        node.isSelected = index == selected
+        node.addAction(AccessibilityNodeInfo.ACTION_CLICK)
+        val b = segmentBounds(index, labels.size, width, height)
+        val bounds = Rect(b.left.toInt(), b.top.toInt(), kotlin.math.ceil(b.right).toInt(), b.bottom.toInt())
+        node.setBoundsInParent(bounds)
+        node.setBoundsInScreen(onScreen(bounds))
+        node.isVisibleToUser = isShown && width > 0 && height > 0
+        return node
+    }
+
+    private fun onScreen(bounds: Rect): Rect {
+        val location = IntArray(2)
+        getLocationOnScreen(location)
+        return Rect(
+            bounds.left + location[0], bounds.top + location[1],
+            bounds.right + location[0], bounds.bottom + location[1]
+        )
+    }
+
+    /** Tells the screen reader that the label or the selected state of segment [index] changed. */
+    private fun notifySegmentChanged(index: Int) {
+        if (index !in labels.indices || !isShown) return
+        val event = AccessibilityEvent.obtain(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+        event.packageName = context.packageName
+        event.className = "android.widget.RadioButton"
+        event.setSource(this, index)
+        parent?.requestSendAccessibilityEvent(this, event)
+    }
+
     /**
      * Nothing style: the widget's dot-matrix mode icons ([QuickBudsWidget.modeIcon]), white, tinted when drawn.
      * Rendered at a whole-pixel pitch (about 1.15dp) and drawn unscaled: shrunk from the widget's 8 px pitch to
@@ -345,6 +447,7 @@ class AncSegmentedView(
         labels[i] = label
         if (i in icons.indices) icons[i] = ThemeRes.depth(context, context.getDrawable(iconRes)!!.mutate())
         if (i in dots.indices) dots[i] = QuickBudsWidget.modeIcon(WIDGET_ICON[iconRes] ?: iconRes, dotPitch)
+        notifySegmentChanged(i)
         invalidate()
     }
     private val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -633,6 +736,17 @@ class AncSegmentedView(
 
     private fun indexAt(x: Float): Int = ((x / width) * labels.size).toInt().coerceIn(0, labels.size - 1)
 
+    /** Reports segment [index] to [onSegmentTapped] in the same way as a tap, and with the same write. */
+    private fun tapSegment(index: Int) {
+        Haptics.commit(this)
+        tapInFlight = true
+        try {
+            onSegmentTapped?.invoke(index)
+        } finally {
+            tapInFlight = false
+        }
+    }
+
     override fun onTouchEvent(e: MotionEvent): Boolean {
         if (!isEnabled) return false
         // Glass and Pixel art keep their own press behaviour.
@@ -648,15 +762,8 @@ class AncSegmentedView(
             }
             MotionEvent.ACTION_UP -> {
                 if (layer) releasePress()
-                val i = indexAt(e.x)
                 performClick()
-                Haptics.commit(this)
-                tapInFlight = true
-                try {
-                    onSegmentTapped?.invoke(i)
-                } finally {
-                    tapInFlight = false
-                }
+                tapSegment(indexAt(e.x))
             }
             MotionEvent.ACTION_CANCEL -> if (layer) releasePress()
         }
