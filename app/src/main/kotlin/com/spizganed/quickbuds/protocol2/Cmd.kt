@@ -1,9 +1,11 @@
 package com.spizganed.quickbuds.protocol2
 
+import com.spizganed.quickbuds.protocol.Replies
+
 /**
  * Typed messages of docs/PROTOCOL.md: builds what the app sends. Each function returns a [Frame]
  * (command, payload); the link layer adds the sequence number and the frame. [seq] holds the fixed
- * number of the battery and wearing queries. Written from the spec.
+ * number of the battery and wearing queries. The batch frame comes from `protocol/Replies.kt`. Written from the spec.
  */
 data class Frame(val cmd: Int, val payload: ByteArray, val seq: Int? = null) {
     override fun equals(other: Any?) =
@@ -55,16 +57,8 @@ object Cmd {
         parts.filter { it.second == 2 }.map { it.third }.takeIf { it.isNotEmpty() }?.joinToString(".")
 
     /** `0x012F`: `<count>` then `<cmd LE> <len LE> <payload>` per query. */
-    fun batch(queries: List<Frame>): Frame {
-        val out = java.io.ByteArrayOutputStream()
-        out.write(queries.size)
-        for (q in queries) {
-            out.write(q.cmd and 0xFF); out.write(q.cmd shr 8)
-            out.write(q.payload.size and 0xFF); out.write(q.payload.size shr 8)
-            out.write(q.payload)
-        }
-        return Frame(0x012F, out.toByteArray())
-    }
+    fun batch(queries: List<Frame>): Frame =
+        Frame(0x012F, Replies.batchPayload(queries.map { it.cmd to it.payload }))
 
     // --- Reads ---
 

@@ -1,9 +1,9 @@
 package com.spizganed.quickbuds.protocol
 
 /*
- * The legacy protocol: the command builders, replies and the parsers not yet in a topic file.
- * The framer is in Wire.kt; the topic decoders are in Battery.kt, Anc.kt, GameMode.kt, Gestures.kt and Eq.kt.
- * The typed layer (protocol2/NewProtocol.kt) is not in use yet; it calls these decoders.
+ * The legacy protocol: the command builders and the parsers not yet in a topic file.
+ * Replies and batch are in Replies.kt; the framer is in Wire.kt; the topic decoders are in Battery.kt, Anc.kt, GameMode.kt, Gestures.kt and Eq.kt.
+ * The typed layer (protocol2/NewProtocol.kt) is not in use yet; it calls these decoders and Replies.
  * Shared data is not here: Feature.kt, Capabilities.kt, ModelCatalog.kt, AncModes.kt.
  */
 
@@ -177,48 +177,15 @@ object OpoProtocol {
         return head + payload
     }
 
-    /** Time request `0x0500` from the buds (PROTOCOL-LEGACY.md §9). */
-    const val REQ_TIME = 0x0500
-    /** Command groups HeyMelody knows; a request from the buds in any other gets `01`. */
-    private val KNOWN_GROUPS = setOf(0x0100, 0x0200, 0x0300, 0x0400, 0x0500, 0x0F00)
+    /** Time request `0x0500` from the buds (PROTOCOL-LEGACY.md §9). Moved to [Replies]. */
+    const val REQ_TIME = Replies.REQ_TIME
 
     /**
      * HeyMelody's answer to a frame the buds send on their own, or null (PROTOCOL-LEGACY.md §9 "Requests
      * from the buds"). [cmd], [seq], [payload] are the incoming frame's. `[VENDOR]`
      */
-    fun answerFor(cmd: Int, seq: Int, payload: ByteArray, unixSeconds: Long): ByteArray? {
-        if (cmd and 0x8000 != 0) return null
-        val answer = when (cmd) {
-            REQ_TIME -> unixSeconds.toInt().let { t ->
-                byteArrayOf(0, t.toByte(), (t shr 8).toByte(), (t shr 16).toByte(), (t shr 24).toByte())
-            }
-            0x050C -> byteArrayOf(0, 1, 0)
-            0x051C -> byteArrayOf(0, 0, 0)
-            // ponytail: always "invalid"; HeyMelody answers the phone's spatial mode, which we do not have.
-            0x051D -> byteArrayOf(1)
-            CMD_ACTIVE_REPORT -> when (payload.firstOrNull()?.toInt()?.and(0xFF)) {
-                0xF2 -> byteArrayOf(0, 0xF2.toByte())
-                0xF4 -> jsonAck(payload.copyOfRange(1, payload.size))
-                else -> null
-            }
-            else -> if (cmd and 0x7F00 !in KNOWN_GROUPS) byteArrayOf(1) else null
-        } ?: return null
-        return buildPacket(cmd or 0x8000, seq, answer)
-    }
-
-    /** `F4` JSON push: `00 F4 {"cmd":<its cmd>}`, `01 F4` if it does not parse. */
-    private fun jsonAck(json: ByteArray): ByteArray {
-        val head = byteArrayOf(0, 0xF4.toByte())
-        val text = String(json, Charsets.UTF_8)
-        if (text.isEmpty()) return head
-        return try {
-            val cmd = org.json.JSONObject(text).opt("cmd")
-            head + org.json.JSONObject().apply { if (cmd is String) put("cmd", cmd) }.toString().toByteArray()
-        } catch (e: org.json.JSONException) {
-            com.spizganed.quickbuds.bluetooth.PacketLogger.error("JSON push", e)
-            byteArrayOf(1, 0xF4.toByte())
-        }
-    }
+    fun answerFor(cmd: Int, seq: Int, payload: ByteArray, unixSeconds: Long): ByteArray? =
+        Replies.answerFor(cmd, seq, payload, unixSeconds)
 
     fun buildHandshake(): ByteArray = buildPacket(CMD_HANDSHAKE)
     fun buildQueryProductId(): ByteArray = buildPacket(CMD_QUERY_PRODUCT_ID)
@@ -623,30 +590,12 @@ object OpoProtocol {
 
     /**
      * `0x012F` (PROTOCOL-LEGACY.md "Batch query"): built query [packets] in one frame, `<count>` then
-     * `<cmd LE> <len LE> <payload>` each. Each packet's length fits in one byte (short queries).
+     * `<cmd LE> <len LE> <payload>` each. Moved to [Replies].
      */
-    fun batch(packets: List<ByteArray>): ByteArray {
-        val body = packets.flatMap { p -> (p.copyOfRange(4, 6) + p.copyOfRange(7, 9 + u16(p, 7))).toList() }
-        return buildPacket(CMD_BATCH, payload = byteArrayOf(packets.size.toByte()) + body)
-    }
+    fun batch(packets: List<ByteArray>): ByteArray = Replies.batch(packets)
 
-    /**
-     * `0x812F` = `00 <count>`, then `<cmd LE> <len LE> <reply payload>` per answer, `cmd` being the query's:
-     * (reply cmd, payload) pairs, stopping at the first that runs past the end.
-     */
-    fun batchReplies(payload: ByteArray): List<Pair<Int, ByteArray>> {
-        if (payload.size < 2 || payload[0].toInt() != 0) return emptyList()
-        val out = mutableListOf<Pair<Int, ByteArray>>()
-        var o = 2
-        repeat(payload[1].toInt() and 0xFF) {
-            if (o + 4 > payload.size) return out
-            val len = u16(payload, o + 2)
-            if (o + 4 + len > payload.size) return out
-            out += (u16(payload, o) or 0x8000) to payload.copyOfRange(o + 4, o + 4 + len)
-            o += 4 + len
-        }
-        return out
-    }
+    /** `0x812F` = `00 <count>`, then `<cmd LE> <len LE> <reply payload>` per answer. Moved to [Replies]. */
+    fun batchReplies(payload: ByteArray): List<Pair<Int, ByteArray>> = Replies.batchReplies(payload)
 
     /** Little-endian unsigned 16-bit value at [i]. */
     fun u16(b: ByteArray, i: Int) = (b[i].toInt() and 0xFF) or ((b[i + 1].toInt() and 0xFF) shl 8)

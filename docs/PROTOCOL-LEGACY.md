@@ -1,6 +1,6 @@
 # PROTOCOL-LEGACY.md — the earbud wire format (legacy layer)
 
-This describes the shipping protocol layer (`LegacyProtocol.kt` with `Wire.kt` and the topic decoders in `protocol/`, `desktop/src/protocol.rs`). The project merges verified facts from
+This describes the shipping protocol layer (`LegacyProtocol.kt` with `Wire.kt`, `Replies.kt` and the topic decoders in `protocol/`, `desktop/src/protocol.rs`). The project merges verified facts from
 [PROTOCOL.md](./PROTOCOL.md) into it. The layer in PROTOCOL.md replaces it only at full parity with HeyMelody and realme Link.
 
 The OPPO / OnePlus / realme earbud RFCOMM protocol as QuickBuds uses it. Current knowledge only;
@@ -839,7 +839,7 @@ entry: <MAC, 6 bytes reversed> <len> <state> <flags> <nameLen> <name UTF-8>
 Some firmwares wait for these answers and reset the link when none comes. Nord Buds 3 Pro
 (`064414`, issue #2) `[CAPTURE]` sends `0x0500` with a real Seq and `00 00 00 00`. It sends the request again, then stops
 answering queries. It resets the link 3-5 s after connect, every time, if no answer comes. Buds 4
-sends `0x0500` empty and works either way. Both apps answer from one function (`OpoProtocol.answerFor`,
+sends `0x0500` empty and works either way. Both apps answer from one function (`Replies.answerFor`,
 `protocol::answer_for`). Every answer echoes the request's Seq and sets `0x8000` on its cmd.
 
 | From the buds | Answer | Meaning |
