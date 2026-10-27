@@ -309,6 +309,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         ThemeRes.select(this)
 
         super.onCreate(savedInstanceState)
+        UpdateChecker.clearDownload(this)
 
         // First start: the setup runs first and opens this screen when it ends.
         // A refused start (report 67: display 6) keeps this screen instead of crashing.
@@ -643,7 +644,10 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(a2dpReceiver, filter, RECEIVER_EXPORTED) else registerReceiver(a2dpReceiver, filter)
         // The process stays alive in the background service, so onCreate runs only on a cold start.
         // A check on each resume is what the user gets after 6 h, or when an earlier prompt postponed it.
-        UpdateChecker.maybeAutoCheck(this) { claimPrompt() }
+        // Its own gate: the shared once-per-start flag would hold an update back for the life of this screen.
+        UpdateChecker.maybeAutoCheck(this) {
+            (BottomSheetDialog.open == 0 && hasWindowFocus() && !isFinishing).also { if (it) promptShown = true }
+        }
     }
 
     override fun onPause() {

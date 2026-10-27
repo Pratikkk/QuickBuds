@@ -149,14 +149,17 @@ object UpdateChecker {
         }
     }
 
+    /** On a cold start the last update's download (UpdateActivity, ~2.5 MB) is installed or abandoned: delete it. */
+    fun clearDownload(c: Context) {
+        java.io.File(c.cacheDir, "quickbuds-update.apk").delete()
+    }
+
     /**
      * Runs on app open: schedules the background job, and checks at most every [INTERVAL_MS].
      * It is silent on failure and shows one dialog per new version, never again for the same tag.
      * A release that [mayShow] cannot show does not record a check, so the next resume offers it.
      */
     fun maybeAutoCheck(activity: Activity, mayShow: () -> Boolean) {
-        // The last update's download (UpdateActivity), ~2.5 MB, has been installed or abandoned by now.
-        java.io.File(activity.cacheDir, "quickbuds-update.apk").delete()
         val prefs = activity.getSharedPreferences(ThemeRes.PREFS_NAME, Context.MODE_PRIVATE)
         val auto = prefs.getBoolean(KEY_AUTO, true)
         if (!auto) {
@@ -270,6 +273,13 @@ object UpdateChecker {
             return false
         }
         val manager = c.getSystemService(NotificationManager::class.java) ?: return false
+        // A blocked app or channel drops the notification: record nothing, so the in-app check announces it.
+        if (!manager.areNotificationsEnabled() ||
+            manager.getNotificationChannel(CHANNEL_ID)?.importance == NotificationManager.IMPORTANCE_NONE
+        ) {
+            PacketLogger.log("UPDATE: notifications blocked, the in-app check announces ${release.tag}")
+            return false
+        }
         manager.createNotificationChannel(
             NotificationChannel(
                 CHANNEL_ID,
