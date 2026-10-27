@@ -2,7 +2,7 @@ package com.spizganed.quickbuds.protocol
 
 /*
  * The command builders: the shipping layer builds each payload here.
- * OpoProtocol keeps the names and signatures and delegates here. The Golden Sound builders are in
+ * The app calls them directly. The Golden Sound builders are in
  * HearingCommands.kt. PROTOCOL-LEGACY.md documents every command.
  */
 

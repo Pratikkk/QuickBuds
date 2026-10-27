@@ -89,7 +89,7 @@ object KeyFunctionParser {
      * meanings (primary double tap / triple tap). A write that matched on (side, action)
      * alone, ignoring the button group, would silently re-bind the wrong gesture — which is
      * exactly why [BUTTON_PRIMARY]-scoped writes ([writeGestureBinding]) and on-call writes
-     * ([OpoProtocol.setOnCall]) are separate code
+     * ([Commands.setOnCall]) are separate code
      * paths that never share a table diff.
      */
     const val BUTTON_ON_CALL = 0x06
