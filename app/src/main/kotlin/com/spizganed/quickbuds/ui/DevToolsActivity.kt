@@ -320,7 +320,12 @@ class DevToolsActivity : Activity() {
                 if (gen != generation || isDestroyed) return@post
                 // Follow only if the user is already at the bottom.
                 val wasAtBottom = !scroll.canScrollVertically(1)
-                TextViewCompat.setPrecomputedText(logText, text)
+                // Some devices reject the params with IllegalArgumentException (report #92). Set the text without them.
+                try {
+                    TextViewCompat.setPrecomputedText(logText, text)
+                } catch (e: IllegalArgumentException) {
+                    logText.text = text
+                }
                 if (wasAtBottom) scroll.post { scroll.fullScroll(ScrollView.FOCUS_DOWN) }
             }
         }
