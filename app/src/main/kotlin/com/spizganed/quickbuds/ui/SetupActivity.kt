@@ -213,9 +213,12 @@ class SetupActivity : Activity() {
 
     private fun label(res: Int) = body.addView(SettingRowFactory.sectionLabel(this, res))
 
-    private fun switchRow(icon: Int, title: Int, sub: Int, key: String, default: Boolean): View {
+    private fun switchRow(icon: Int, title: Int, sub: Int, key: String, default: Boolean, onChange: (() -> Unit)? = null): View {
         val sw = SettingRowFactory.buildSwitch(this, prefs.getBoolean(key, default))
-        sw.setOnCheckedChangeListener { _, on -> prefs.edit().putBoolean(key, on).apply() }
+        sw.setOnCheckedChangeListener { _, on ->
+            prefs.edit().putBoolean(key, on).apply()
+            onChange?.invoke()
+        }
         return SettingRowFactory.build(this, icon, title, sub, sw) { sw.performClick() }
     }
 
@@ -424,7 +427,9 @@ class SetupActivity : Activity() {
             val ok = batteryExempt()
             addView(SettingRowFactory.build(this@SetupActivity, R.drawable.ic_battery, R.string.setup_battery_title, R.string.setup_battery_sub, null,
                 value = pillButton(if (ok) R.string.setup_allowed else R.string.setup_allow, if (ok) null else ({ requestBatteryExemption() }))))
-            addView(switchRow(R.drawable.ic_update, R.string.update_auto_title, R.string.update_auto_sub, UpdateChecker.KEY_AUTO, true))
+            addView(switchRow(R.drawable.ic_update, R.string.update_auto_title, R.string.update_auto_sub, UpdateChecker.KEY_AUTO, true) {
+                UpdateChecker.syncBackground(this@SetupActivity)
+            })
         })
     }
 
