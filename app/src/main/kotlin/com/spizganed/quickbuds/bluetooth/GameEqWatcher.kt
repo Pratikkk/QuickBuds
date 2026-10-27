@@ -15,7 +15,11 @@ import com.spizganed.quickbuds.protocol.Feature
  * comes to the foreground and when it leaves. Needs "Usage access"; without it, nothing is sent.
  * A game is an app Android marks as one (`ApplicationInfo.CATEGORY_GAME`).
  */
-class GameEqWatcher(private val context: Context, private val manager: () -> BudsConnectionManager?) {
+class GameEqWatcher(
+    private val context: Context,
+    private val manager: () -> BudsConnectionManager?,
+    private val asleep: () -> Boolean = { false },
+) {
     private val handler = Handler(Looper.getMainLooper())
     private var inGame: Boolean? = null   // what the buds were last told
     private var foreground: String? = null
@@ -30,7 +34,12 @@ class GameEqWatcher(private val context: Context, private val manager: () -> Bud
     /** Call when the link or the switch changes. Starts or stops the polling. */
     fun update() {
         val m = manager()
-        val active = m != null && m.isConnected() && m.featureStates[Feature.GAME_EQ] == 1 && hasUsageAccess(context)
+        val active = GameEqPoll.active(
+            connected = m != null && m.isConnected(),
+            gameEqOn = m?.featureStates?.get(Feature.GAME_EQ) == 1,
+            usageAccess = hasUsageAccess(context),
+            asleep = asleep(),
+        )
         handler.removeCallbacks(tick)
         if (active) {
             handler.post(tick)
