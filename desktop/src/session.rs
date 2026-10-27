@@ -107,7 +107,7 @@ pub enum Cmd {
     SpatialType(u8),
     /// `0x041A` codec and Hi-Res; the buds restart and the link comes back by itself.
     Codec(u8, bool),
-    /// The Hi-Res switch: one engine operation; `drop_spatial` writes 3D audio off first (§9).
+    /// The Hi-Res switch: one engine operation; `drop_spatial` writes 3D audio off first (PROTOCOL.md section 18).
     Hires { on: bool, drop_spatial: bool },
     HeadMotion(u8),
     /// `0x0405` start / stop.
@@ -155,7 +155,7 @@ pub struct Snapshot {
     pub name: String,
     /// Left, right, case: (level, charging).
     pub battery: [Option<(u8, bool)>; 3],
-    /// Left, right, case: raw wear status (§8), 0 = unknown.
+    /// Left, right, case: raw wear status (PROTOCOL.md section 13), 0 = unknown.
     pub wear: [u8; 3],
     /// The events the buds offer (`0x8200`), once read.
     pub offered: Option<Vec<u8>>,
@@ -182,13 +182,13 @@ pub struct Snapshot {
     /// (selected, offered types) from `0x812B`.
     pub game_sound: Option<(u8, Vec<u8>)>,
     pub head_motion: Option<u8>,
-    /// The level Smart chose (`ANC-Light` ...), §5.
+    /// The level Smart chose (`ANC-Light` ...), PROTOCOL.md section 14.
     pub smart_level: Option<String>,
-    /// Counts ANC writes refused with no bud in an ear (status 14, §5): each one shows the hint.
+    /// Counts ANC writes refused with no bud in an ear (status 14, PROTOCOL.md section 14): each one shows the hint.
     pub anc_refused: u32,
     /// `0x812A` / push `0x0510`: 0 off, 1 fixed, 2 head tracking.
     pub spatial_type: Option<u8>,
-    /// The current codec (`0x8114`) and the offered ones (`0x8123`), §9 Codec picker.
+    /// The current codec (`0x8114`) and the offered ones (`0x8123`), PROTOCOL.md section 18 Codec picker.
     pub codec: Option<u8>,
     pub codecs: Vec<u8>,
     /// The last fit test result, and a count that changes with each one.
@@ -427,7 +427,7 @@ impl<'a> Conn<'a> {
                 // Some buds drop the link a few seconds after an unanswered request (issue #2: the time request).
                 let now = SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs() as u32);
                 let answer = crate::protocol::answer_for(&p, now).map(|a| (a, crate::types::seq_of(&p)));
-                // A refused ANC write (status 14 with no bud in an ear): read the real mode back (§5).
+                // A refused ANC write (status 14 with no bud in an ear): read the real mode back (PROTOCOL.md section 14).
                 let refused = cmd_of(&p) == CMD_SET_ANC | 0x8000 && payload_of(&p).first().is_some_and(|&st| st != 0);
                 let need_ear = refused && payload_of(&p).first() == Some(&0x0E);
                 log("RX", p.clone(), human);
@@ -593,7 +593,7 @@ impl<'a> Conn<'a> {
             (CMD_REGISTER_NOTIFY, None, cmd::register(&ids).1),
             (CMD_QUERY_STATUS, Some(0x00), status_query(self.s.model)),
             (CMD_QUERY_ANC, None, cmd::anc_read(1, 1).1),
-            // The level Smart chose, §5.
+            // The level Smart chose, PROTOCOL.md section 14.
             (CMD_QUERY_ANC, None, if smart { cmd::anc_read(4, 1).1 } else { vec![] }),
             (CMD_QUERY_BATTERY, Some(0xF0), vec![]),
             (CMD_QUERY_WEARING, Some(0xF2), vec![]),
@@ -738,7 +738,7 @@ impl<'a> Conn<'a> {
                         self.send(CMD_QUERY_STATUS, Some(0x00), &status_query(self.s.model))?;
                     }
                     Cmd::Hires { on, drop_spatial } => {
-                        // One engine operation; the Hi-Res write restarts the link. 3D audio off goes first (§9).
+                        // One engine operation; the Hi-Res write restarts the link. 3D audio off goes first (PROTOCOL.md section 18).
                         let writes = if drop_spatial { vec![(FEATURE_SPATIAL, 0), (FEATURE_HIRES, on as u8)] } else { vec![(FEATURE_HIRES, on as u8)] };
                         let op = Operation { key: FEATURE_HIRES, writes, confirm: Confirm::Read, restarts: true };
                         self.exec(sync.engine.tap(op, now_ms()), sync)?;

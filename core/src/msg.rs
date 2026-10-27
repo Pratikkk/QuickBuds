@@ -22,7 +22,7 @@ fn mac_at(p: &[u8], i: usize) -> Option<[u8; 6]> {
     Some(m)
 }
 
-// --- §5 Command bitmap ---
+// --- Command bitmap (PROTOCOL.md section 5) ---
 
 /// Commands behind each bit of the `0x8100` reply (PROTOCOL.md §5).
 const BITS: [&[u16]; 69] = [
@@ -68,7 +68,7 @@ pub struct Cell { pub part: u8, pub level: u8, pub charging: bool }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Anc {
-    /// The current mode as a bitmask (the report table of §9, not the SET table).
+    /// The current mode as a bitmask (the report table of PROTOCOL.md section 14, not the SET table).
     Mode(u32),
     /// The modes the hold cycles: `kind` `01` shared, `03` left, `04` right; mask in SET bits.
     HoldCycle { kind: u8, mask: u32 },
@@ -86,7 +86,7 @@ pub struct Binding { pub dev: u8, pub button: u8, pub act: u8, pub func: u8 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct Curves { pub rate: u32, pub left: Vec<f32>, pub right: Vec<f32> }
 
-/// A request from the buds, which they expect to be answered (section 15).
+/// A request from the buds, which they expect to be answered (PROTOCOL.md section 11).
 #[derive(Debug, Clone, PartialEq)]
 pub enum Request {
     /// `0x0500`: the phone's clock.
@@ -152,7 +152,7 @@ pub struct Triangle {
 /// A decoded message from the buds.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Inbound {
-    // Replies (§4)
+    // Replies (PROTOCOL.md section 3)
     Bitmap(Bitmap),
     /// 24-bit product id, as the buds send it.
     ProductId(u32),
@@ -190,12 +190,12 @@ pub enum Inbound {
     /// `0x811F`: the ear-scan filters of a record.
     GoldenScanFilter { id: u32, curves: Curves },
     Request(Request),
-    // Pushes (§5); the same facts also arrive as replies to a query
+    // Pushes (PROTOCOL.md section 10); the same facts also arrive as replies to a query
     Battery(Vec<Cell>),
     Wear(Vec<(u8, u8)>),
     Anc(Anc),
     FitTest { left: Option<u8>, right: Option<u8> },
-    /// Both candidates; `game_mode_state` picks one by product id (§5, code `05`).
+    /// Both candidates; `game_mode_state` picks one by product id (PROTOCOL.md section 10, code `05`).
     GameMode { at1: Option<u8>, at3: Option<u8> },
     /// `0x0503`: feature id -> value; bytes after the last pair are ignored.
     FeaturePush(BTreeMap<u8, u8>),
@@ -505,7 +505,7 @@ fn push(p: &[u8]) -> Option<Inbound> {
 
 const NAMED: &[u8] = &[1, 2, 3, 4, 5, 6, 8, 0x0A, 0x0B, 0x0D, 0x0E, 0x0F, 0xF1, 0xF2, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8];
 
-// --- Requests from the buds (section 15) ---
+// --- Requests from the buds (PROTOCOL.md section 11) ---
 
 /// The answer to a message the buds sent on their own, or `None` (no answer is due). `unix`: the phone's clock.
 pub fn answer(m: &Message, unix: u32) -> Option<Message> {
@@ -537,7 +537,7 @@ fn json_ack(json: &[u8]) -> Vec<u8> {
     }
 }
 
-// --- Batch (§7) ---
+// --- Batch (PROTOCOL.md section 12) ---
 
 /// `0x812F`: `00 <count>`, then `<cmd LE> <len LE> <reply payload>` per answer. Each answer is the reply
 /// `cmd | 0x8000` with the batch's `seq`. Stops at an answer that runs past the end.

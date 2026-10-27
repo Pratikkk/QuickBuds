@@ -1,4 +1,4 @@
-//! What the Overview's Hi-Res and 3D audio switches write, from the buds' state and the model (§9). No UI here:
+//! What the Overview's Hi-Res and 3D audio switches write, from the buds' state and the model (PROTOCOL.md section 18). No UI here:
 //! `earbuds` (Slint) and `desktop-egui` both use it.
 
 use crate::icons;
@@ -27,10 +27,10 @@ pub(crate) const ROWS: &[(u8, Option<&str>, &str, &str, &str, Option<&str>, bool
     (FEATURE_POWER_SAVING, None, icons::POWER, "row_power_saving_title", "row_power_saving_sub", Some("power_saving_confirm"), true),
 ];
 
-/// Our `spatialToggle` key (realme): Hi-Res and 3D audio are written alone, never together (§9).
+/// Our `spatialToggle` key (realme): Hi-Res and 3D audio are written alone, never together (PROTOCOL.md section 18).
 pub(crate) fn exclusive(s: &Snapshot) -> bool { !s.model.is_some_and(|m| m["spatialToggle"] == 1) }
 
-/// 3D audio as HeyMelody picks it (§9): buds whose bitmap has `0x012A` (or a hand-picked model with head
+/// 3D audio as HeyMelody picks it (PROTOCOL.md section 18): buds whose bitmap has `0x012A` (or a hand-picked model with head
 /// tracking) take a type through `0x0422`, the rest feature `1B`.
 pub(crate) fn spatial_by_type(s: &Snapshot) -> bool {
     exclusive(s) && (s.caps.supports(CMD_QUERY_SPATIAL_TYPE) || s.manual && head_tracking(s))
@@ -41,7 +41,7 @@ pub(crate) fn head_tracking(s: &Snapshot) -> bool {
     s.model.is_some_and(|m| m["spatialModes"].as_array().is_some_and(|t| t.iter().any(|v| *v == 2)))
 }
 
-/// The codec picker replaces the Hi-Res write on `hiRes` models with the `0x0123` read (§9).
+/// The codec picker replaces the Hi-Res write on `hiRes` models with the `0x0123` read (PROTOCOL.md section 18).
 pub(crate) fn codec_picker(s: &Snapshot) -> bool { s.model.is_some_and(|m| m["hiRes"] == 1) && s.caps.supports(CMD_QUERY_CODEC_LIST) }
 
 pub(crate) fn spatial_on(s: &Snapshot) -> bool {

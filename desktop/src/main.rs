@@ -741,7 +741,7 @@ impl App {
             b.set_left_charging(chg(0));
             b.set_right_charging(chg(1));
             b.set_case_charging(chg(2));
-            // §8: 3/7 in ear, 4 in case, 1/5 out
+            // PROTOCOL.md section 13: 3/7 in ear, 4 in case, 1/5 out
             let blind = !wear_sensor_seen(&s);
             // Without an "in ear" seen, "out" may only mean the model has no sensor: shown as in the ear.
             let wear = |i: usize| match s.wear[i] { 3 | 7 => 2, 4 => 3, 1 | 5 => if blind { 2 } else { 1 }, _ => 0 };

@@ -7,7 +7,7 @@
 use crate::types::*;
 use serde_json::Value;
 
-/// `0x0404 01 01 <bit as LE bitmask>`; the bit is the model's SET `slot`, never a list position (§5).
+/// `0x0404 01 01 <bit as LE bitmask>`; the bit is the model's SET `slot`, never a list position (PROTOCOL.md section 14).
 pub fn anc_payload(bit: u8) -> Vec<u8> {
     let mut p = vec![0; 2 + bit as usize / 8 + 1];
     p[0] = 1;
@@ -186,8 +186,8 @@ fn pairs(b: &[u8]) -> Option<Vec<(u8, u8)>> {
 /// 1-4 bytes little-endian (`NoiseReductionInfo`).
 fn le(b: &[u8]) -> u32 { b[..b.len().min(4)].iter().rev().fold(0, |v, &x| v << 8 | x as u32) }
 
-/// §8: status bits 0 out of the case, 1 in ear, 2 lid open; bit 3 is a flag we drop.
-/// §8: a wearing list has parts and every part is 1 (left), 2 (right) or 3 (case).
+/// PROTOCOL.md section 13: status bits 0 out of the case, 1 in ear, 2 lid open; bit 3 is a flag we drop.
+/// PROTOCOL.md section 13: a wearing list has parts and every part is 1 (left), 2 (right) or 3 (case).
 fn valid_wear(v: &Vec<(u8, u8)>) -> bool { !v.is_empty() && v.iter().all(|x| (1..=3).contains(&x.0)) }
 
 fn wear_bits(v: Vec<(u8, u8)>) -> Vec<(u8, u8)> { v.into_iter().map(|(i, st)| (i, st & 7)).collect() }
@@ -319,7 +319,7 @@ fn json_ack(json: &[u8]) -> Vec<u8> {
 }
 
 /// Splits the RFCOMM byte stream into packets. Bytes before an `AA` are dropped into `discarded` (for the log).
-/// Slices of one message (§2: slice byte 1 first, 2 middle, 3 last) come out as one whole packet.
+/// Slices of one message (PROTOCOL.md section 2: slice byte 1 first, 2 middle, 3 last) come out as one whole packet.
 #[derive(Default)]
 pub struct Framer { buf: Vec<u8>, slices: Option<Vec<u8>>, pub discarded: Vec<u8> }
 
@@ -366,7 +366,7 @@ impl Framer {
     }
 }
 
-/// Battery (§7): `<count>` then `<index> <raw>` pairs, 1 left, 2 right, 3 case; level `raw & 7F`, charging `raw & 80`.
+/// Battery (PROTOCOL.md section 13): `<count>` then `<index> <raw>` pairs, 1 left, 2 right, 3 case; level `raw & 7F`, charging `raw & 80`.
 /// A count of 0, or a list that runs past the end, is no list (None).
 pub fn battery(payload: &[u8]) -> Option<Vec<(u8, u8, bool)>> {
     let (&count, rest) = payload.split_first()?;

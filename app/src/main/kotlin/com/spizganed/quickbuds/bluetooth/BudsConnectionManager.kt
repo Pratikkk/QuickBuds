@@ -1818,7 +1818,7 @@ class BudsConnectionManager(private val context: Context) {
                     log("FEATURE REFUSED: id=0x%02X status=%d codec=%s offered=%s".format(id, status, codec, codecs))
             }
         }
-        // A refused ANC write (status 14 with no bud in an ear): read the real mode back (§5).
+        // A refused ANC write (status 14 with no bud in an ear): read the real mode back (PROTOCOL.md section 14).
         if (cmd == OpoProtocol.CMD_SET_ANC or 0x8000 && payload.isNotEmpty() && payload[0].toInt() != 0) {
             log("ANC write refused (status ${payload[0].toInt() and 0xFF}), re-reading")
             sendRaw(Commands.queryAncMode(), "query anc")
