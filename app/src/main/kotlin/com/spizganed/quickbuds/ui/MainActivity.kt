@@ -1419,7 +1419,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         }
         // App open: an automatic connect starts only with the live audio link. With the buds in
         // the closed case Android reports disconnected, and the tries would only fail.
-        if (!ConnectPolicy.autoConnectAllowed(manager.audioLinkState(), virtual = false)) return
+        if (!ConnectPolicy.autoConnectAllowed(manager.audioLinkState(device), virtual = false)) return
         manager.connect(device, withAudio = true)
     }
 

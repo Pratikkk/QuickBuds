@@ -75,6 +75,7 @@ class BudsConnectionManager(private val context: Context) {
     }
 
     init {
+        openAudioProxies()
         PacketLogger.init(context)
     }
 
@@ -281,21 +282,40 @@ class BudsConnectionManager(private val context: Context) {
         }
     }
 
+    /** The A2DP and HEADSET proxies, kept for the life of the manager, so [audioLinkState] answers at once. */
+    private val audioProxies = java.util.concurrent.ConcurrentHashMap<Int, BluetoothProfile>()
+
+    private fun openAudioProxies() {
+        try {
+            val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter ?: return
+            for (p in listOf(BluetoothProfile.A2DP, BluetoothProfile.HEADSET)) {
+                adapter.getProfileProxy(context, object : BluetoothProfile.ServiceListener {
+                    override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) { audioProxies[profile] = proxy }
+                    override fun onServiceDisconnected(profile: Int) { audioProxies.remove(profile) }
+                }, p)
+            }
+        } catch (e: Exception) {
+            log("Audio proxies: ${e.message}")
+        }
+    }
+
     /**
-     * Whether Android has an A2DP or HEADSET link up: the live audio link of buds that are out of the
-     * case. `BluetoothManager.getConnectedDevices` takes GATT only, so this reads the adapter's
-     * per-profile state. [LinkState.UNKNOWN] means no answer (no adapter, no permission): connect as before.
+     * Whether Android reports [device] connected on A2DP or HEADSET: the live audio link of buds that are
+     * out of the case. `BluetoothManager.getConnectedDevices` takes GATT only, so this asks the profile
+     * proxies for this device. [LinkState.UNKNOWN] means no answer (no proxy yet, Bluetooth off, no
+     * permission): the caller connects as before.
      */
     @SuppressLint("MissingPermission")
-    fun audioLinkState(): LinkState {
-        val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter ?: return LinkState.UNKNOWN
-        if (!adapter.isEnabled) return LinkState.UNKNOWN
-        return try {
-            val states = listOf(BluetoothProfile.A2DP, BluetoothProfile.HEADSET).map { adapter.getProfileConnectionState(it) }
-            if (BluetoothProfile.STATE_CONNECTED in states) LinkState.CONNECTED else LinkState.DISCONNECTED
-        } catch (e: Exception) {
-            LinkState.UNKNOWN
+    fun audioLinkState(device: BluetoothDevice): LinkState = try {
+        val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter
+        val proxies = audioProxies.values.toList()
+        when {
+            adapter == null || !adapter.isEnabled || proxies.isEmpty() -> LinkState.UNKNOWN
+            proxies.any { it.getConnectionState(device) == BluetoothProfile.STATE_CONNECTED } -> LinkState.CONNECTED
+            else -> LinkState.DISCONNECTED
         }
+    } catch (e: Exception) {
+        LinkState.UNKNOWN
     }
 
     /**

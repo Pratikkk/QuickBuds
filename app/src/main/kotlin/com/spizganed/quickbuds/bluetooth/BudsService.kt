@@ -241,7 +241,8 @@ class BudsService : Service(), BudsConnectionManager.Listener {
         // keep their own path, and an unknown state connects as before.
         if (!user && !fromLink) {
             val virtual = VirtualBuds.on(this)
-            val link = if (virtual) LinkState.UNKNOWN else manager?.audioLinkState() ?: LinkState.UNKNOWN
+            val device = if (virtual) null else try { BudsDevice.find(this) } catch (_: Exception) { null }
+            val link = device?.let { manager?.audioLinkState(it) } ?: LinkState.UNKNOWN
             if (!ConnectPolicy.autoConnectAllowed(link, virtual)) {
                 statusLog("[SVC] FORCE_CONNECT skipped (the buds have no audio link)")
                 return
