@@ -7,7 +7,7 @@ import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.Wire
 
 /**
- * The typed protocol layer (docs/PROTOCOL.md): the one entry point of this package. The app does not call it yet; the shipping layer is the `protocol` package (`LegacyProtocol.kt`, `Wire.kt`, `Replies.kt`, the topic decoders).
+ * The typed protocol layer (docs/PROTOCOL.md): the one entry point of this package. The app does not call it yet; the shipping layer is the `protocol` package (`LegacyProtocol.kt`, `Wire.kt`, `Replies.kt`, `Commands.kt`, `HearingCommands.kt`, the topic decoders).
  * OutboundTest and MsgTest hold it byte-identical to the shipping layer, so pieces can move over one at a time.
  * Out: every frame the app sends is built here from a [Cmd] builder. In: [decode], [answer] and [rx] read what the buds send.
  * The frame envelope and the sequence counter come from the legacy builder, so both protocols share one counter.
@@ -46,8 +46,8 @@ object NewProtocol {
     fun holdCycle(mask: Int, kind: Int) = pkt(Cmd.holdCycle(kind, mask))
     fun feature(id: Int, on: Boolean) = pkt(Cmd.feature(id, on))
     fun bassLevel(level: Int) = pkt(Cmd.bassSet(level))
-    /** The legacy builder limits the level to 1..10; so does this. */
-    fun alertVolume(level: Int) = pkt(Cmd.alertVolume(level.coerceIn(1, 10)))
+    /** The builder limits the level to 1..10, as the shipping builder does. */
+    fun alertVolume(level: Int) = pkt(Cmd.alertVolume(level))
     fun tapLevel(level: Int) = pkt(Cmd.tapLevel(level))
     fun headGesture(type: Int) = pkt(Cmd.headGesture(type))
     fun spatial(type: Int) = pkt(Cmd.spatial(type))
@@ -60,8 +60,8 @@ object NewProtocol {
     fun connectDevice(mac: String, on: Boolean) = pkt(Cmd.deviceConnect(parseMac(mac), on))
     fun preferredSet(mac: String?) = pkt(Cmd.preferredSet(mac?.let { parseMac(it) }))
     fun preferredRead() = pkt(Cmd.preferredRead())
-    /** After the dual switch: `0x0413` with the auto-switch flag, the opposite of the switch. */
-    fun dualFollowup(dualOn: Boolean) = pkt(Cmd.phoneState(Cmd.PhoneState(autoSwitch = !dualOn)))
+    /** After the dual switch: `0x0413 08 00 01` after OFF, `08 00 00` after ON. */
+    fun dualFollowup(dualOn: Boolean) = pkt(Cmd.dualFollowup(dualOn))
     fun earScan(on: Boolean, id: Int) = pkt(Cmd.earScan(on, id))
     fun hearingTest(on: Boolean) = pkt(Cmd.hearingTest(on))
     fun tone(side: Int, freq: Int, value: Int) = pkt(Cmd.tone(side, freq, value))
@@ -70,12 +70,10 @@ object NewProtocol {
     fun gestureTable(entries: List<KeyFunctionParser.Entry>) =
         pkt(Cmd.gestureTable(entries.map { Binding(it.deviceType, it.button, it.action, it.function) }))
 
-    /** Null when the tag is not two bytes: only the legacy encoder writes that. */
-    fun customEq(action: Int, p: EqCodec.Preset): ByteArray? {
-        if (p.tag.size != 2) return null
+    /** The action code selects [Cmd.EqAction]. The preset keeps its tag bytes. */
+    fun customEq(action: Int, p: EqCodec.Preset): ByteArray {
         val a = Cmd.EqAction.values().first { it.code == action }
-        val e = EqPreset(p.id, p.name, p.selected, p.tag[0].toInt() to p.tag[1].toInt(), p.freqs.zip(p.gains))
-        return pkt(Cmd.eqPreset(a, e))
+        return pkt(Cmd.eqPreset(a, p))
     }
 
     /** The frames that apply a record, in send order: description id, record, ear scan if any, switch on. */

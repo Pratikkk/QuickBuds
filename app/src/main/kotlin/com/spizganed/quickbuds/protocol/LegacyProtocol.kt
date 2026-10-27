@@ -1,9 +1,10 @@
 package com.spizganed.quickbuds.protocol
 
 /*
- * The legacy protocol: the command builders and the parsers not yet in a topic file.
- * Replies and batch are in Replies.kt; the framer is in Wire.kt; the topic decoders are in Battery.kt, Anc.kt, GameMode.kt, Gestures.kt and Eq.kt.
- * The typed layer (protocol2/NewProtocol.kt) is not in use yet; it calls these decoders and Replies.
+ * The legacy protocol: the command constants, the packet envelope and the delegates to the topic files.
+ * The builders are in Commands.kt and HearingCommands.kt; the replies and batch are in Replies.kt; the framer is in Wire.kt;
+ * the topic decoders are in Battery.kt, Anc.kt, GameMode.kt, Gestures.kt and Eq.kt.
+ * The typed layer (protocol2/NewProtocol.kt) is not in use yet; it calls these builders and decoders.
  * Shared data is not here: Feature.kt, Capabilities.kt, ModelCatalog.kt, AncModes.kt.
  */
 
@@ -22,6 +23,9 @@ package com.spizganed.quickbuds.protocol
  * every known command, the ANC set-vs-notify trap, and the assumptions that were
  * already proven wrong once. Its evidence tags record the source of each area; tag a new
  * constant there when you add it here.
+ *
+ * The builders are in [Commands] and [HearingCommands]. This object keeps their names and
+ * signatures, so the app calls one place.
  *
  * Do not copy code from those projects without checking their licenses first.
  */
@@ -187,60 +191,22 @@ object OpoProtocol {
     fun answerFor(cmd: Int, seq: Int, payload: ByteArray, unixSeconds: Long): ByteArray? =
         Replies.answerFor(cmd, seq, payload, unixSeconds)
 
-    fun buildHandshake(): ByteArray = buildPacket(CMD_HANDSHAKE)
-    fun buildQueryProductId(): ByteArray = buildPacket(CMD_QUERY_PRODUCT_ID)
-    fun buildQueryBroadcastCodes(): ByteArray = buildPacket(CMD_QUERY_BROADCAST)
+    fun buildHandshake(): ByteArray = Commands.handshake()
+    fun buildQueryProductId(): ByteArray = Commands.queryProductId()
+    fun buildQueryBroadcastCodes(): ByteArray = Commands.queryBroadcastCodes()
 
     /** getEarBudsStatus (0x0109) — returns [count][comp,st] pairs, st=4 means in case. */
-    fun queryWearingStatus(): ByteArray = buildPacket(CMD_QUERY_WEARING, seq = 0xF2)
+    fun queryWearingStatus(): ByteArray = Commands.queryWearingStatus()
 
-    /**
-     * Subscribe to spontaneous 0x0204 notifications (battery + wearing + ANC).
-     *
-     * Payload is canonical: a count byte followed by event ids.
-     *
-     * CONFIRMED on device: with count=2 and events battery (0x01) + wearing (0x02),
-     * the ACK lists BOTH and the buds then emit 0x0204 subtype 02 on every wear
-     * change. Wear updates are effectively instant — no polling needed.
-     *
-     * The old legacy literal 01 01 02 02 was a misread: under the count-first
-     * shape it means count=1 (register battery only) with 02 02 left over. The
-     * firmware ACKed that happily and silently never sent wear events, which is
-     * why wear appeared to be poll-only. Do NOT revert to that.
-     *
-     * 0x03 (ANC): the buds advertise their event ids in
-     * the 0x8200 broadcast-codes reply, which lists `01 02 03 04 08 0B F1 F2 F3` —
-     * 03 is offered, and the ANC subType 0x03 push arrived only unreliably while we
-     * had not subscribed to it. Subscribing is the documented way to make a 0x0204
-     * subType arrive, and it is how wear was fixed, so the same reasoning applies.
-     *
-     * CONFIRMED ON DEVICE: the 0x8205 ACK lists `01 02 03`, and a bud-side
-     * gesture now updates the app circles AND the widget, including a gesture REBOUND
-     * to a different mode cycle. If ANC ever stops following gestures, check the ACK
-     * still lists `01 02 03` first — a firmware that rejects the longer list would ACK
-     * a shorter one.
-     *
-     * 0x04 (fit test result) is added when the buds have the fit test (`0x0405`):
-     * HeyMelody registers every id the buds list in 0x8200 (`registerMultiNotification`).
-     * 0x08 (Golden Sound test status) likewise, when the buds have the test (`0x040D`).
-     */
-    /**
-     * The events to subscribe to: ours, kept to those the buds offer in `0x8200` when they sent one,
-     * as HeyMelody subscribes to the offered list only (PROTOCOL-LEGACY.md §4). Some firmwares never ack a
-     * list with others.
-     */
+    /** The events to subscribe to. Built in [Commands.notifyIds]. */
     fun notifyIds(fitTest: Boolean, golden: Boolean, personalNoise: Boolean, offered: Set<Int>?): List<Int> =
-        (listOf(0x01, 0x02, 0x03) + (if (fitTest) listOf(EVT_FIT_TEST) else emptyList()) +
-            (if (golden) listOf(EVT_GOLDEN_STATUS) else emptyList()) +
-            (if (personalNoise) listOf(EVT_PERSONAL_NOISE) else emptyList()))
-            .filter { offered == null || it in offered }
+        Commands.notifyIds(fitTest, golden, personalNoise, offered)
 
-    fun registerNotifications(ids: List<Int>): ByteArray =
-        buildPacket(CMD_REGISTER_NOTIFY, payload = byteArrayOf(ids.size.toByte()) + ids.map { it.toByte() })
+    fun registerNotifications(ids: List<Int>): ByteArray = Commands.registerNotifications(ids)
 
     /** Subscribe one event, for buds without `0x0205` in their bitmap. `[VENDOR]` */
     const val CMD_REGISTER_ONE = 0x0201
-    fun registerOne(id: Int): ByteArray = buildPacket(CMD_REGISTER_ONE, payload = byteArrayOf(id.toByte()))
+    fun registerOne(id: Int): ByteArray = Commands.registerOne(id)
 
     /** `0x8200` = `00 <count> <codes>`, or null. */
     fun offeredEvents(payload: ByteArray): Set<Int>? {
@@ -260,92 +226,55 @@ object OpoProtocol {
     const val CMD_GOLDEN_ACTIVE = 0x0115      // the record on the buds
     const val CMD_GOLDEN_ACTIVE_SCAN = 0x011E // the ear-scan data on the buds
 
-    private fun int32(v: Int) = byteArrayOf((v ushr 24).toByte(), (v ushr 16).toByte(), (v ushr 8).toByte(), v.toByte())
-    private fun le16(v: Int) = byteArrayOf(v.toByte(), (v ushr 8).toByte())
-    /** 12 x `<side> <freq> <value>`: left 1..6 then right 1..6, as HeyMelody sends them. */
-    private fun hearingInfo(values: IntArray) = ByteArray(36) { i ->
-        when (i % 3) { 0 -> (i / 18 + 1).toByte(); 1 -> (i / 3 % 6 + 1).toByte(); else -> values[i / 3].toByte() }
-    }
+    /** Ear scan start / stop, `04 01|00 <uid>`; the result comes as event `0x0E`. Built in [HearingCommands.earScan]. */
+    fun earScan(on: Boolean, uid: Int): ByteArray = HearingCommands.earScan(on, uid)
 
-    /** Ear scan start / stop, `04 01|00 <uid>`; the result comes as event `0x0E`. */
-    fun earScan(on: Boolean, uid: Int): ByteArray =
-        buildPacket(CMD_GOLDEN_DETECT, payload = byteArrayOf(0x04, if (on) 0x01 else 0x00) + int32(uid))
+    /** Hearing test start / stop, `02 01|00`. Built in [HearingCommands.hearingTest]. */
+    fun hearingTest(on: Boolean): ByteArray = HearingCommands.hearingTest(on)
 
-    /** Hearing test start / stop, `02 01|00`. */
-    fun hearingTest(on: Boolean): ByteArray =
-        buildPacket(CMD_GOLDEN_DETECT, payload = byteArrayOf(0x02, if (on) 0x01 else 0x00))
+    /** Plays a tone on one bud: `03 01 <side 1 L / 2 R> <freq 1..6> <value>`. Built in [HearingCommands.hearingTone]. */
+    fun hearingTone(side: Int, freq: Int, value: Int): ByteArray = HearingCommands.hearingTone(side, freq, value)
 
-    /** Plays a tone on one bud: `03 01 <side 1 L / 2 R> <freq 1..6> <value>`. */
-    fun hearingTone(side: Int, freq: Int, value: Int): ByteArray =
-        buildPacket(CMD_GOLDEN_RECORD, payload = byteArrayOf(0x03, 0x01, side.toByte(), freq.toByte(), value.toByte()))
+    /** Stops the tone, `04`; HeyMelody sends it before every new level. Built in [HearingCommands.hearingToneStop]. */
+    fun hearingToneStop(): ByteArray = HearingCommands.hearingToneStop()
 
-    /** Stops the tone, `04`; HeyMelody sends it before every new level. */
-    fun hearingToneStop(): ByteArray = buildPacket(CMD_GOLDEN_RECORD, payload = byteArrayOf(0x04))
+    /** Asks for the filter of a result; the `0x8116` reply's byte 9 is the enhance type. Built in [HearingCommands.hearingFilter]. */
+    fun hearingFilter(uid: Int, values: IntArray): ByteArray = HearingCommands.hearingFilter(uid, values)
 
-    /** Asks for the filter of a result; the `0x8116` reply's byte 9 is the enhance type. */
-    fun hearingFilter(uid: Int, values: IntArray): ByteArray =
-        buildPacket(CMD_GOLDEN_FILTER, payload = byteArrayOf(0x0C) + hearingInfo(values) + int32(uid))
+    /** Asks for the ear-scan filter of a record: `<length little-endian> <data> <uid>`. Built in [HearingCommands.earScanFilter]. */
+    fun earScanFilter(uid: Int, data: ByteArray): ByteArray = HearingCommands.earScanFilter(uid, data)
 
-    /** Asks for the ear-scan filter of a record: `<length little-endian> <data> <uid>`. */
-    fun earScanFilter(uid: Int, data: ByteArray): ByteArray =
-        buildPacket(CMD_GOLDEN_SCAN_FILTER, payload = le16(data.size) + data + int32(uid))
+    /** Applies a record: `03 0c <12 x info> <uid> <name>`. Built in [HearingCommands.hearingRecord]. */
+    fun hearingRecord(uid: Int, name: String, values: IntArray): ByteArray = HearingCommands.hearingRecord(uid, name, values)
 
-    /** Applies a record: `03 0c <12 x info> <uid> <name>`. */
-    fun hearingRecord(uid: Int, name: String, values: IntArray): ByteArray =
-        buildPacket(CMD_GOLDEN_RECORD, payload = byteArrayOf(0x03, 0x0C) + hearingInfo(values) + int32(uid) + name.toByteArray())
+    /** The record's description id, `01 01 01 00 <id>`. Built in [HearingCommands.hearingRestore]. */
+    fun hearingRestore(descId: Int): ByteArray = HearingCommands.hearingRestore(descId)
 
-    /** The record's description id, `01 01 01 00 <id>` (count 1, type 1, length 1 little-endian). */
-    fun hearingRestore(descId: Int): ByteArray =
-        buildPacket(CMD_GOLDEN_RESTORE, payload = byteArrayOf(0x01, 0x01, 0x01, 0x00, descId.toByte()))
+    /** Applies ear-scan data: `03 <length little-endian> <data> <uid>`. Built in [HearingCommands.earScanData]. */
+    fun earScanData(uid: Int, data: ByteArray): ByteArray = HearingCommands.earScanData(uid, data)
 
-    /** Applies ear-scan data: `03 <length little-endian> <data> <uid>`. */
-    fun earScanData(uid: Int, data: ByteArray): ByteArray =
-        buildPacket(CMD_GOLDEN_SCAN_DATA, payload = byteArrayOf(0x03) + le16(data.size) + data + int32(uid))
+    fun queryGoldenActive(): ByteArray = HearingCommands.queryGoldenActive()
+    fun queryGoldenActiveScan(): ByteArray = HearingCommands.queryGoldenActiveScan()
 
-    fun queryGoldenActive(): ByteArray = buildPacket(CMD_GOLDEN_ACTIVE)
-    fun queryGoldenActiveScan(): ByteArray = buildPacket(CMD_GOLDEN_ACTIVE_SCAN)
-
-    fun personalNoise(action: Int): ByteArray = buildPacket(CMD_PERSONAL_NOISE, payload = byteArrayOf(action.toByte()))
-    fun queryPersonalNoise(): ByteArray = buildPacket(CMD_QUERY_PERSONAL_NOISE)
-    fun gameEqState(inGame: Boolean): ByteArray = buildPacket(CMD_GAME_EQ_STATE, payload = byteArrayOf(1, if (inGame) 1 else 0))
-    fun setTapLevel(level: Int): ByteArray = buildPacket(CMD_SET_TAP_LEVEL, payload = byteArrayOf(level.toByte()))
-    fun queryTapLevel(): ByteArray = buildPacket(CMD_QUERY_TAP_LEVEL)
+    fun personalNoise(action: Int): ByteArray = Commands.personalNoise(action)
+    fun queryPersonalNoise(): ByteArray = Commands.queryPersonalNoise()
+    fun gameEqState(inGame: Boolean): ByteArray = Commands.gameEqState(inGame)
+    fun setTapLevel(level: Int): ByteArray = Commands.setTapLevel(level)
+    fun queryTapLevel(): ByteArray = Commands.queryTapLevel()
 
     /** Earbud fit test: `0x0405` `01` start / `00` stop (HeyMelody stops it when its sheet closes). */
-    fun fitTest(on: Boolean): ByteArray =
-        buildPacket(CMD_FIT_TEST, payload = byteArrayOf(if (on) 0x01 else 0x00))
+    fun fitTest(on: Boolean): ByteArray = Commands.fitTest(on)
 
-    /**
-     * SET_ANC (0x0404): `01 01` then a little-endian bit field with bit [bit] set, `index / 8 + 1`
-     * bytes long. The bit is the mode's `protocolIndex` for the connected model ([AncModes],
-     * PROTOCOL-LEGACY.md §5). Buds 4: Off 0 `01 01 01`, Transparency 2 `01 01 04`, Deep 4, Medium 5,
-     * Light 6, Adaptive 11 `01 01 00 08`.
-     *
-     * Reports (`0x810C`, `0x0204` subType 3) name the SAME tree's bits, but a mode's child where it
-     * has one (Buds 4 reports Off as bit 3, Transparency as bit 8). Setting a child bit was tried
-     * once and sent the wrong mode: SET uses the parent. Adaptive's bit is 11, not 8: `8` gives
-     * `01 01 00 01`, a different mode.
-     */
-    fun anc(bit: Int): ByteArray {
-        val arr = ByteArray(2 + bit / 8 + 1)
-        arr[0] = 0x01
-        arr[1] = 0x01
-        arr[2 + bit / 8] = (1 shl (bit % 8)).toByte()
-        return buildPacket(CMD_SET_ANC, payload = arr)
-    }
-
-    private fun featurePayload(featureId: Int, on: Boolean): ByteArray =
-        byteArrayOf(featureId.toByte(), if (on) 0x01 else 0x00)
+    fun anc(bit: Int): ByteArray = Commands.anc(bit)
 
     /** Find my earbuds — `0x0400` `01` start / `00` stop, both buds, no side byte. `[CAPTURE]` 2026-09-23. */
-    fun findTone(on: Boolean): ByteArray =
-        buildPacket(CMD_FIND_BUDS, payload = byteArrayOf(if (on) 0x01 else 0x00))
+    fun findTone(on: Boolean): ByteArray = Commands.findTone(on)
 
     /** Any `0x0403` feature switch. Spatial (`0x1B`) and Hi-Res (`0x18`) are `[CAPTURE]` — PROTOCOL-LEGACY.md §9. */
     fun setFeature(featureId: Int, on: Boolean, seq: Int? = null): ByteArray =
-        buildPacket(CMD_SET_FEATURE, seq = seq, payload = featurePayload(featureId, on))
+        Commands.feature(featureId, on, seq)
 
-    fun queryFirmware(): ByteArray = buildPacket(CMD_QUERY_FIRMWARE)
+    fun queryFirmware(): ByteArray = Commands.queryFirmware()
 
     /**
      * The `0x8105` text as HeyMelody shows it: the `versionType` 2 versions in reply order, joined
@@ -356,39 +285,17 @@ object OpoProtocol {
         .filter { it.size == 3 && it[1].trim() == "2" }
         .joinToString(".") { it[2].trim() }
         .ifEmpty { null }
-    fun queryBattery(): ByteArray = buildPacket(CMD_QUERY_BATTERY, seq = 0xF0)
-    fun queryAncMode(): ByteArray = buildPacket(CMD_QUERY_ANC, payload = byteArrayOf(0x01, 0x01))
+    fun queryBattery(): ByteArray = Commands.queryBattery()
+    fun queryAncMode(): ByteArray = Commands.queryAncMode()
 
     /** The level Smart chose: `00 04 01 <SET bit mask LE>`, also pushed as `03 04 01 <mask>` `[VENDOR]`. */
-    fun querySmartLevel(): ByteArray = buildPacket(CMD_QUERY_ANC, payload = byteArrayOf(0x04, 0x01))
+    fun querySmartLevel(): ByteArray = Commands.querySmartLevel()
+
+    /** getNoiseReductionSwitchMode — which ANC modes the hold cycles through. Built in [Commands.queryNoiseSwitchModes]. */
+    fun queryNoiseSwitchModes(type: Int = HOLD_TYPE_SHARED): ByteArray = Commands.queryNoiseSwitchModes(type)
 
     /**
-     * getNoiseReductionSwitchMode — WHICH ANC modes the hold cycles through.
-     *
-     * `0x010C` is one command number carrying several different questions, selected by the
-     * payload. `[OSS]`, from the Melody-derived tables:
-     *
-     *     01 01   getCurrentNoiseReductionMode   what is active right now  <- queryAncMode()
-     *     02 01   getNoiseReductionSwitchMode    the HOLD's mode list
-     *     02 03   "                              (list may be one of these)
-     *     02 04   "                              (…the source lists all three)
-     *     04 01   getIntelligentNoiseReductionMode
-     *
-     * WHY THIS EXISTS: the hold's ANC cycle has its own write (setHoldAncModes).
-     * Its key-function byte (`0x08`) only *reports* that the hold cycles ANC — measured on
-     * the device, clearing that byte did not stop the cycle, and which modes it stepped
-     * through was decided entirely on the vendor side. The mode list lives HERE instead, and
-     * this read is the cheap, read-only way to see it before anyone writes `0x0404`.
-     *
-     * READ-ONLY, so it cannot change a binding. `[VENDOR]`: `02 01` on
-     * most models, `02 03` (left) and `02 04` (right) on models with a per-bud hold
-     * (`longPressType`), see [HOLD_TYPE_SHARED].
-     */
-    fun queryNoiseSwitchModes(type: Int = HOLD_TYPE_SHARED): ByteArray =
-        buildPacket(CMD_QUERY_ANC, payload = byteArrayOf(0x02, type.toByte()))
-
-    /**
-     * The hold cycle's noise type, the second byte of [setHoldAncModes] and [queryNoiseSwitchModes].
+     * The hold cycle's noise type, the second byte of [Commands.holdAncModes] and [Commands.queryNoiseSwitchModes].
      * `[VENDOR]`: 1 for one cycle shared by both buds, 3 (left) / 4
      * (right) on models whose `longPressType` gives each bud its own hold.
      */
@@ -396,45 +303,9 @@ object OpoProtocol {
     const val HOLD_TYPE_LEFT = 3
     const val HOLD_TYPE_RIGHT = 4
 
-    /**
-     * setSupportNoiseReduction — WRITE which ANC modes the hold cycles through.
-     *
-     * `[CAPTURE]` 2026-09-22, via an HCI capture of HeyMelody itself (Option C,
-     * PACKET-CAPTURE.md): he added Adaptive to a 3-stop hold cycle in HeyMelody, and the
-     * app sent `AA 0A 00 00 04 04 <seq> 04 00 02 01 07 08` — `0x0404` action `02`, noiseType
-     * `01`, then the mask `07 08` (little-endian `0x0807`). Acked (`0x8404` status `00`), and
-     * the immediate `0x010C` `02 01` read-back returned the same `07 08`, up from `07 00`
-     * (`0x0007`) beforehand.
-     *
-     * THIS CONFIRMS THE MASK REUSES [anc]'S OWN BIT NUMBERING, not a separate scheme —
-     * bit 11 (`0x0800`) is exactly Adaptive's bit in the plain SET_ANC table above, and it is
-     * the only bit that moved. PROTOCOL-LEGACY.md §5 previously carried this as `[INFERRED]`; this
-     * capture settles it. Off = bit 0, Transparency = bit 2 (matching [anc]); bit 1 is
-     * some generic "On" that resolves to whichever level was last hand-set, seen set in every
-     * capture so far and never independently isolated.
-     *
-     * A DIFFERENT COMMAND FROM [anc], same command NUMBER. `0x0404`'s first payload
-     * byte selects the question: `01 01 <bits>` sets the CURRENT mode (see [ancOff] etc.),
-     * `02 01 <mask LE>` sets the cycle's MEMBERSHIP. Do not merge these two payload shapes.
-     */
-    fun setHoldAncModes(mask: Int, type: Int = HOLD_TYPE_SHARED): ByteArray {
-        // `[VENDOR]` `NoiseReductionInfo.getData()`: the mask in as few bytes as it needs (1-4), LE.
-        var len = 4
-        while (len > 1 && (mask ushr ((len - 1) * 8)) and 0xFF == 0) len--
-        return buildPacket(
-            CMD_SET_ANC,
-            payload = byteArrayOf(0x02, type.toByte()) + ByteArray(len) { (mask ushr (it * 8)).toByte() }
-        )
-    }
+    /** setSupportNoiseReduction — write which ANC modes the hold cycles through. Built in [Commands.holdAncModes]. */
+    fun setHoldAncModes(mask: Int, type: Int = HOLD_TYPE_SHARED): ByteArray = Commands.holdAncModes(mask, type)
 
-    /**
-     * setKeyFunction write for the on-call group (`btn 0x06`) — `[CAPTURE]`, same capture as
-     * [setHoldAncModes]. HeyMelody writes ONE entry, `deviceType = 0x04`
-     * ([KeyFunctionParser.DEVICE_TYPE_BOTH]), which the buds fan out to both sides: the
-     * following `0x8108` read-back always showed the SAME `fn` on `dev=0x01` AND `dev=0x02`,
-     * never `dev=0x04` itself. See [KeyFunctionParser.BUTTON_ON_CALL] for the full capture and
-     * the confirmed act-to-row mapping.
-     */
     /**
      * `act 0x02`, toggled `[CAPTURE]` between `fn 0x00` and `fn 0x1D` while he switched
      * HeyMelody's on-call **double tap** row between None and Answer/end call, twice. The
@@ -456,14 +327,6 @@ object OpoProtocol {
     const val ON_CALL_ACT_LONG_HOLD = 0x06
     const val ON_CALL_FN_DECLINE = 0x1C
 
-    private fun onCallPayload(act: Int, fn: Int, button: Int) = byteArrayOf(
-        0x01,
-        KeyFunctionParser.DEVICE_TYPE_BOTH.toByte(),
-        button.toByte(),
-        act.toByte(),
-        fn.toByte()
-    )
-
     /**
      * `[VENDOR]`: callControl 28 / 32 are `act 0x01` (single tap),
      * 29 / 33 / 36 `act 0x02`, 30 / 34 `act 0x03`, 31 / 35 `act 0x06`; all `btn 0x06`, `dev 0x04`.
@@ -472,121 +335,54 @@ object OpoProtocol {
 
     /** [button] is [KeyFunctionParser.BUTTON_ON_CALL], or `btn 01` for the realme both-buds hold. */
     fun setOnCall(act: Int, fn: Int, button: Int = KeyFunctionParser.BUTTON_ON_CALL): ByteArray =
-        buildPacket(CMD_SET_KEY_FUNCTION, payload = onCallPayload(act, fn, button))
+        Commands.setOnCall(act, fn, button)
 
     // --- Equalizer, all [CAPTURE] 2026-09-23 (PROTOCOL-LEGACY.md §9) ---
 
     /** Current EQ -> `0x810F` `00 <id>` (00-02 built-in, 04+ custom). */
-    fun queryEq(): ByteArray = buildPacket(CMD_QUERY_EQ)
+    fun queryEq(): ByteArray = Commands.queryEq()
     /** Custom preset list -> `0x8122`, see [EqCodec.parseList]. Empty payload, as HeyMelody sends it. */
-    fun queryEqAll(): ByteArray = buildPacket(CMD_QUERY_EQ_ALL)
-    fun setBuiltInEq(id: Int): ByteArray = buildPacket(CMD_SET_EQ, payload = byteArrayOf(id.toByte()))
-    fun customEq(action: Int, p: EqCodec.Preset): ByteArray =
-        buildPacket(CMD_SAVE_CUSTOM_EQ, payload = EqCodec.encode(action, p))
+    fun queryEqAll(): ByteArray = Commands.queryEqAll()
+    fun setBuiltInEq(id: Int): ByteArray = Commands.setBuiltInEq(id)
+    fun customEq(action: Int, p: EqCodec.Preset): ByteArray = Commands.customEq(action, p)
     /** BassWave level, signed -5..+5; `FB 05` is the range (min, max) HeyMelody sends. */
-    fun setBassWaveLevel(level: Int): ByteArray =
-        buildPacket(CMD_SET_BASSWAVE_LEVEL, payload = byteArrayOf(0xFB.toByte(), 0x05, level.toByte()))
+    fun setBassWaveLevel(level: Int): ByteArray = Commands.setBassWaveLevel(level)
     /** -> `0x8124` `00 FB 05 <level>`. */
-    fun queryBassWaveLevel(): ByteArray = buildPacket(CMD_QUERY_BASSWAVE_LEVEL)
+    fun queryBassWaveLevel(): ByteArray = Commands.queryBassWaveLevel()
 
-    fun setAlertVolume(level: Int): ByteArray =
-        buildPacket(CMD_SET_ALERT_VOLUME, payload = byteArrayOf(level.coerceIn(1, 10).toByte()))
-    fun queryAlertVolume(): ByteArray = buildPacket(CMD_QUERY_ALERT_VOLUME)
+    fun setAlertVolume(level: Int): ByteArray = Commands.alertVolume(level)
+    fun queryAlertVolume(): ByteArray = Commands.queryAlertVolume()
 
-    fun setSpatialType(type: Int): ByteArray = buildPacket(CMD_SET_SPATIAL_TYPE, payload = byteArrayOf(type.toByte()))
-    fun querySpatialType(): ByteArray = buildPacket(CMD_QUERY_SPATIAL_TYPE)
-    fun spatialOnBuds(): ByteArray = buildPacket(CMD_SPATIAL_SOURCE, payload = byteArrayOf(0))
-    fun queryCodec(): ByteArray = buildPacket(CMD_QUERY_CODEC)
-    fun queryCodecList(): ByteArray = buildPacket(CMD_QUERY_CODEC_LIST)
+    fun setSpatialType(type: Int): ByteArray = Commands.spatialType(type)
+    fun querySpatialType(): ByteArray = Commands.querySpatialType()
+    fun spatialOnBuds(): ByteArray = Commands.spatialOnBuds()
+    fun queryCodec(): ByteArray = Commands.queryCodec()
+    fun queryCodecList(): ByteArray = Commands.queryCodecList()
     /** HeyMelody sends Hi-Res only with LDAC (`3`) or LHDC V5 (`8`), else `0`; the last byte is always `0`. */
-    fun setCodec(codec: Int, hiRes: Boolean): ByteArray = buildPacket(CMD_SET_CODEC,
-        payload = byteArrayOf(codec.toByte(), if (hiRes && (codec == 3 || codec == 8)) 1 else 0, 0))
+    fun setCodec(codec: Int, hiRes: Boolean): ByteArray = Commands.codec(codec, hiRes)
     /** HeyMelody sends every pick, Off (`0`) included, with enable `01`. */
-    fun setGameSoundType(type: Int): ByteArray = buildPacket(CMD_GAME_SOUND, payload = byteArrayOf(type.toByte(), 0x01))
-    fun queryGameSound(): ByteArray = buildPacket(CMD_QUERY_GAME_SOUND)
-    fun setHeadMotionType(type: Int): ByteArray = buildPacket(CMD_SET_HEAD_MOTION_TYPE, payload = byteArrayOf(type.toByte()))
-    fun queryHeadMotionType(): ByteArray = buildPacket(CMD_QUERY_HEAD_MOTION_TYPE)
+    fun setGameSoundType(type: Int): ByteArray = Commands.gameSoundType(type)
+    fun queryGameSound(): ByteArray = Commands.queryGameSound()
+    fun setHeadMotionType(type: Int): ByteArray = Commands.headMotionType(type)
+    fun queryHeadMotionType(): ByteArray = Commands.queryHeadMotionType()
 
-    fun queryDevices(): ByteArray = buildPacket(CMD_QUERY_DEVICES)
-    private fun macBytes(mac: String) = mac.split(":").map { it.toInt(16).toByte() }.toByteArray()
-    fun connectDevice(mac: String, on: Boolean): ByteArray =
-        buildPacket(CMD_MULTI_CONNECT, payload = byteArrayOf(if (on) 0x01 else 0x02) + macBytes(mac))
+    fun queryDevices(): ByteArray = Commands.queryDevices()
+    fun connectDevice(mac: String, on: Boolean): ByteArray = Commands.connectDevice(mac, on)
     /** [mac] null = automatic. */
-    fun setPreferred(mac: String?): ByteArray = buildPacket(CMD_MULTI_CONNECT,
-        payload = if (mac == null) byteArrayOf(0x04, 0x00) else byteArrayOf(0x04, 0x01) + macBytes(mac))
-    fun queryPreferred(): ByteArray = buildPacket(CMD_QUERY_PREFERRED, payload = byteArrayOf(0x02))
+    fun setPreferred(mac: String?): ByteArray = Commands.setPreferred(mac)
+    fun queryPreferred(): ByteArray = Commands.queryPreferred()
     /** `08 00 01` after dual OFF, `08 00 00` after ON — copied from HeyMelody, not understood. */
-    fun dualFollowup(dualOn: Boolean): ByteArray =
-        buildPacket(CMD_DUAL_FOLLOWUP, payload = byteArrayOf(0x08, 0x00, if (dualOn) 0x00 else 0x01))
+    fun dualFollowup(dualOn: Boolean): ByteArray = Commands.dualFollowup(dualOn)
 
-    /**
-     * getKeyFunction (0x0108) — read the CURRENT gesture bindings.
-     *
-     * READ-ONLY, and deliberately so: it reports what the buds are already doing,
-     * so it cannot change state or break a binding. The 0x8108 reply carries the function
-     * enum; PROTOCOL-LEGACY.md §6 lists the measured values.
-     *
-     * Payload is a bare query (no payload), matching the other 0x01xx reads. The buds
-     * DO answer it: the reply is `<status> <count> <4-byte entries>...` and its layout
-     * is `[CAPTURE]`-confirmed — see PROTOCOL-LEGACY.md §6 and `KeyFunctionParser`, which
-     * logs it RAW and grouped so two readings can be diffed.
-     *
-     * The `function` VALUES are no longer a mystery either: they were MEASURED by
-     * diffing two of these replies around a change made in the vendor app. See
-     * `GestureAction.functionByte`.
-     */
-    fun queryKeyFunction(): ByteArray = buildPacket(CMD_QUERY_KEY_FUNCTION)
+    /** getKeyFunction (0x0108) — read the CURRENT gesture bindings. Built in [Commands.queryKeyFunction]. */
+    fun queryKeyFunction(): ByteArray = Commands.queryKeyFunction()
 
-    /**
-     * setKeyFunction (0x0401) — write gesture bindings back.
-     *
-     * Payload is `<count>` then 4 bytes per entry, and the entries are the SAME
-     * [KeyFunctionParser.Entry] type the read reply decodes into, deliberately: using
-     * one type for both directions is what stops the two from drifting, and it means a
-     * table read back from the buds can be written out again unmodified.
-     *
-     * NO LEADING STATUS BYTE, unlike the reply. The reply is `<status> <count> ...`
-     * (`[CAPTURE]`), but a status byte is something the device REPORTS; a write supplies
-     * only the count and its entries.
-     *
-     * WHY THE CALLER STILL RE-READS: the payload layout above is `[OSS]`, and the ONE
-     * thing the device has taught us about this command is that it ignores a wrong
-     * command number in total silence (see CMD_SET_KEY_FUNCTION). A silent ignore looks
-     * exactly like success unless the table is read back, so the read-back is not
-     * belt-and-braces — it is the only evidence there is.
-     *
-     * LEB128 is safe here: the largest realistic payload is an 18-entry table,
-     * `1 + 18*4 = 73` bytes, so `TotalLen = 80` fits in one LEB128 byte. `buildPacket()`
-     * would only need real LEB128 above ~30 entries, which this device does not have.
-     */
-    fun setKeyFunction(entries: List<KeyFunctionParser.Entry>): ByteArray {
-        val payload = ByteArray(1 + entries.size * KeyFunctionParser.ENTRY_SIZE)
-        payload[0] = entries.size.toByte()
-        for ((i, e) in entries.withIndex()) {
-            val o = 1 + i * KeyFunctionParser.ENTRY_SIZE
-            payload[o] = e.deviceType.toByte()
-            payload[o + 1] = e.button.toByte()
-            payload[o + 2] = e.action.toByte()
-            payload[o + 3] = e.function.toByte()
-        }
-        return buildPacket(CMD_SET_KEY_FUNCTION, payload = payload)
-    }
+    /** setKeyFunction (0x0401) — write gesture bindings back. Built in [Commands.setKeyFunction]. */
+    fun setKeyFunction(entries: List<KeyFunctionParser.Entry>): ByteArray = Commands.setKeyFunction(entries)
 
-    /**
-     * [statusQuery]: the model's `statusQuery` (hex ids, HeyMelody's per-model list, PROTOCOL-LEGACY.md §9); a model
-     * without one gets the full list below. [windNoise]: the model's `windMode` flag adds [Feature.WIND_NOISE].
-     */
-    fun queryStatus(statusQuery: String? = null, windNoise: Boolean = false, seq: Int = 0x00): ByteArray {
-        val ids = (statusQuery?.split(' ')?.map { it.toInt(16).toByte() }?.toByteArray() ?: byteArrayOf(
-            // Feature ids. 0x1D (BassWave): HeyMelody asks for it too.
-            // Second line: the Earbud settings Features switches.
-            // Third line: the rest of HeyMelody's list; 0x0C personalized ANC.
-            0x05, 0x04, 0x0B, 0x11, 0x13, 0x18, 0x06, 0x1B, 0x1C, 0x27, 0x28, 0x1D,
-            0x09, 0x17, 0x30, 0x31, 0x3A,
-            0x32, 0x35, 0x37, 0x38, 0x3B, 0x0C
-        )) + if (windNoise) byteArrayOf(Feature.WIND_NOISE.toByte()) else byteArrayOf()
-        return buildPacket(CMD_QUERY_STATUS, seq = seq, payload = byteArrayOf(ids.size.toByte()) + ids)
-    }
+    /** [statusQuery] and [windNoise] select the ids. The default list is [RowRules.DEFAULT_IDS]. */
+    fun queryStatus(statusQuery: String? = null, windNoise: Boolean = false, seq: Int = 0x00): ByteArray =
+        Commands.queryStatus(statusQuery, windNoise, seq)
 
     /**
      * `0x012F` (PROTOCOL-LEGACY.md "Batch query"): built query [packets] in one frame, `<count>` then

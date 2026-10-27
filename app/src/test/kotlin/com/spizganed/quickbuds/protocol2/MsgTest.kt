@@ -233,10 +233,9 @@ class MsgTest {
         assertEquals(Frame(0x041B, b(0xFB, 5, 0xFD)), Cmd.bassSet(-3))
         assertTrue(payloadOf(OpoProtocol.setBassWaveLevel(-3)).contentEquals(Cmd.bassSet(-3).payload))
         assertEquals(Frame(0x010C, b(1, 1)), Cmd.ancRead(1, 1))
-        val p = EqPreset(5, "Mine", false, -6 to 6, listOf(62 to -2, 250 to 0, 1000 to 3))
         val o = com.spizganed.quickbuds.protocol.EqCodec.Preset(5, "Mine", listOf(62, 250, 1000), listOf(-2, 0, 3), false, byteArrayOf(0xFA.toByte(), 6))
         for ((a, code) in listOf(Cmd.EqAction.Create to 1, Cmd.EqAction.Save to 2, Cmd.EqAction.Delete to 3))
-            assertTrue(payloadOf(OpoProtocol.customEq(code, o)).contentEquals(Cmd.eqPreset(a, p).payload))
+            assertTrue(payloadOf(OpoProtocol.customEq(code, o)).contentEquals(Cmd.eqPreset(a, o).payload))
     }
 
     private fun at(n: Int, vararg tail: Int) = IntArray(n) + tail
@@ -309,9 +308,10 @@ class MsgTest {
         assertTrue(payloadOf(OpoProtocol.setPreferred(null)).contentEquals(Cmd.preferredSet(null).payload))
         assertTrue(payloadOf(OpoProtocol.setPreferred("01:02:03:04:05:06")).contentEquals(Cmd.preferredSet(listOf(1, 2, 3, 4, 5, 6)).payload))
         // Phone state: `08 00 01` after dual off, `08 00 00` after on.
-        assertEquals(Frame(0x0413, b(8, 0, 1)), Cmd.phoneState(Cmd.PhoneState(autoSwitch = true)))
-        assertTrue(payloadOf(OpoProtocol.dualFollowup(false)).contentEquals(Cmd.phoneState(Cmd.PhoneState(autoSwitch = true)).payload))
-        assertTrue(payloadOf(OpoProtocol.dualFollowup(true)).contentEquals(Cmd.phoneState(Cmd.PhoneState(autoSwitch = false)).payload))
+        assertEquals(Frame(0x0413, b(8, 0, 1)), Cmd.dualFollowup(false))
+        assertEquals(Frame(0x0413, b(8, 0, 0)), Cmd.dualFollowup(true))
+        assertTrue(payloadOf(OpoProtocol.dualFollowup(false)).contentEquals(Cmd.dualFollowup(false).payload))
+        assertTrue(payloadOf(OpoProtocol.dualFollowup(true)).contentEquals(Cmd.dualFollowup(true).payload))
         assertEquals(Frame(0x0413, b(0x1F, 0, 1, 1, 0, 1, 1)), Cmd.phoneState(Cmd.PhoneState(1, true, false, true, true)))
         assertEquals(Frame(0x0413, b(0, 0)), Cmd.phoneState(Cmd.PhoneState()))
     }

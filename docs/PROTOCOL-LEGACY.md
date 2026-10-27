@@ -1,6 +1,6 @@
 # PROTOCOL-LEGACY.md — the earbud wire format (legacy layer)
 
-This describes the shipping protocol layer (`LegacyProtocol.kt` with `Wire.kt`, `Replies.kt` and the topic decoders in `protocol/`, `desktop/src/protocol.rs`). The project merges verified facts from
+This describes the shipping protocol layer (`LegacyProtocol.kt` with `Wire.kt`, `Replies.kt`, `Commands.kt`, `HearingCommands.kt` and the topic decoders in `protocol/`, `desktop/src/protocol.rs`). The project merges verified facts from
 [PROTOCOL.md](./PROTOCOL.md) into it. The layer in PROTOCOL.md replaces it only at full parity with HeyMelody and realme Link.
 
 The OPPO / OnePlus / realme earbud RFCOMM protocol as QuickBuds uses it. Current knowledge only;

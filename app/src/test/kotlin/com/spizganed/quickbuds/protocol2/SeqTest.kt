@@ -14,14 +14,14 @@ class SeqTest {
     @Test fun batteryUsesSeqF0() {
         val f = Cmd.battery()
         assertEquals("battery seq", 0xF0, f.seq)
-        // Legacy queryBattery, LegacyProtocol.kt 391: AA 07 00 00 06 01 F0 00 00.
+        // Legacy queryBattery: AA 07 00 00 06 01 F0 00 00.
         assertEquals("AA 07 00 00 06 01 F0 00 00", hex(packet(f)))
     }
 
     @Test fun wearingUsesSeqF2() {
         val f = Cmd.wearing()
         assertEquals("wearing seq", 0xF2, f.seq)
-        // Legacy queryWearingStatus, LegacyProtocol.kt 227: AA 07 00 00 09 01 F2 00 00.
+        // Legacy queryWearingStatus: AA 07 00 00 09 01 F2 00 00.
         assertEquals("AA 07 00 00 09 01 F2 00 00", hex(packet(f)))
     }
 }
