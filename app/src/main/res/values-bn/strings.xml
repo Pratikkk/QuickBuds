@@ -190,10 +190,10 @@
     <string name="update_permission_title">আপডেট ইনস্টলের অনুমতি দিন</string>
     <string name="update_permission_body">QuickBuds থেকে আপডেট ইনস্টল করতে Android-এর আপনার অনুমতি প্রয়োজন।</string>
     <string name="update_permission_action">সেটিংস খুলুন</string>
-    <string name="update_auto_title">শুরুতে দেখুন</string>
-    <string name="update_auto_sub">অ্যাপ খুললে নতুন সংস্করণ খুঁজুন</string>
+    <string name="update_auto_title">আপডেট দেখুন</string>
+    <string name="update_auto_sub">প্রতি ৬ ঘণ্টায় এবং অ্যাপ খুললে</string>
     <string name="update_found_title">QuickBuds %1$s উপলব্ধ</string>
-    <string name="update_found_body">আপনার কাছে %1$s আছে। নতুন কী আছে দেখতে আপডেট স্ক্রিন খুলুন।</string>
+    <string name="update_found_body">আপনার কাছে %1$s আছে। এখন ডাউনলোড করবেন?</string>
     <string name="update_found_view">দেখুন</string>
     <string name="update_later">পরে</string>
     <string name="row_gesture_title">ইয়ারবাড জেসচার</string>

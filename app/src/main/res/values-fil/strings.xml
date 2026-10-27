@@ -190,10 +190,10 @@
     <string name="update_permission_title">Payagan ang pag-install ng mga update</string>
     <string name="update_permission_body">Kailangan ng Android ang iyong pahintulot para mag-install ng mga update mula sa QuickBuds.</string>
     <string name="update_permission_action">Buksan ang mga setting</string>
-    <string name="update_auto_title">Suriin sa pagbukas</string>
-    <string name="update_auto_sub">Maghanap ng bagong bersyon kapag binuksan ang app</string>
+    <string name="update_auto_title">Tingnan ang mga update</string>
+    <string name="update_auto_sub">Bawat 6 na oras, at kapag binuksan ang app</string>
     <string name="update_found_title">Available ang QuickBuds %1$s</string>
-    <string name="update_found_body">Mayroon kang %1$s. Buksan ang screen ng update para makita kung ano ang bago.</string>
+    <string name="update_found_body">Mayroon kang %1$s. I-download ito ngayon?</string>
     <string name="update_found_view">Tingnan</string>
     <string name="update_later">Mamaya</string>
     <string name="row_gesture_title">Mga gesture ng earbuds</string>

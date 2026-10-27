@@ -190,10 +190,10 @@
     <string name="update_permission_title">Επιτρέψτε την εγκατάσταση ενημερώσεων</string>
     <string name="update_permission_body">Το Android χρειάζεται την άδειά σας για να εγκαθιστά ενημερώσεις από το QuickBuds.</string>
     <string name="update_permission_action">Άνοιγμα ρυθμίσεων</string>
-    <string name="update_auto_title">Έλεγχος κατά την εκκίνηση</string>
-    <string name="update_auto_sub">Αναζήτηση νέας έκδοσης όταν ανοίγει η εφαρμογή</string>
+    <string name="update_auto_title">Έλεγχος για ενημερώσεις</string>
+    <string name="update_auto_sub">Κάθε 6 ώρες και όταν ανοίγει η εφαρμογή</string>
     <string name="update_found_title">Το QuickBuds %1$s είναι διαθέσιμο</string>
-    <string name="update_found_body">Έχετε την έκδοση %1$s. Ανοίξτε την οθόνη ενημέρωσης για να δείτε τι νέο υπάρχει.</string>
+    <string name="update_found_body">Έχετε την έκδοση %1$s. Να γίνει λήψη τώρα;</string>
     <string name="update_found_view">Προβολή</string>
     <string name="update_later">Αργότερα</string>
     <string name="row_gesture_title">Χειρονομίες ακουστικών</string>

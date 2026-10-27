@@ -384,7 +384,6 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         WidgetStateStore.addListener(storeListener)
 
         checkPermissions()
-        UpdateChecker.maybeAutoCheck(this) { claimPrompt() }
     }
 
     /**
@@ -642,6 +641,9 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         val filter = IntentFilter(android.bluetooth.BluetoothA2dp.ACTION_PLAYING_STATE_CHANGED)
         // The Bluetooth stack sends ACTION_PLAYING_STATE_CHANGED from its own process, so a not-exported receiver never gets it. The action is protected.
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(a2dpReceiver, filter, RECEIVER_EXPORTED) else registerReceiver(a2dpReceiver, filter)
+        // The process stays alive in the background service, so onCreate runs only on a cold start.
+        // A check on each resume is what the user gets after 6 h, or when an earlier prompt postponed it.
+        UpdateChecker.maybeAutoCheck(this) { claimPrompt() }
     }
 
     override fun onPause() {

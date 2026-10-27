@@ -41,11 +41,16 @@ class UpdateActivity : Activity() {
     private var release: UpdateChecker.Release? = null
     private var downloadedApk: File? = null
 
+    /** Set when the update dialog sent the extra: start the download at once, then hand it to Android. */
+    private var autoDownload = false
+    private var installAfterDownload = false
+
     private val installed by lazy { UpdateChecker.installed(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeRes.select(this)
         super.onCreate(savedInstanceState)
+        autoDownload = intent.getBooleanExtra(EXTRA_DOWNLOAD, false)
         val p = ThemeRes.palette(this)
         val dp = { v: Float -> ThemeRes.dp(this, v) }
         val root = SettingRowFactory.screen(this)
@@ -117,7 +122,10 @@ class UpdateActivity : Activity() {
 
         val prefs = getSharedPreferences(ThemeRes.PREFS_NAME, MODE_PRIVATE)
         val autoSwitch = SettingRowFactory.buildSwitch(this, prefs.getBoolean(UpdateChecker.KEY_AUTO, true))
-        autoSwitch.setOnCheckedChangeListener { _, on -> prefs.edit().putBoolean(UpdateChecker.KEY_AUTO, on).apply() }
+        autoSwitch.setOnCheckedChangeListener { _, on ->
+            prefs.edit().putBoolean(UpdateChecker.KEY_AUTO, on).apply()
+            UpdateChecker.syncBackground(this)
+        }
         root.addView(SettingRowFactory.card(this).apply {
             (layoutParams as LinearLayout.LayoutParams).topMargin = dp(14f)
             addView(SettingRowFactory.build(this@UpdateActivity, R.drawable.ic_update, R.string.update_auto_title, R.string.update_auto_sub, autoSwitch) { autoSwitch.performClick() })
@@ -162,6 +170,9 @@ class UpdateActivity : Activity() {
 
     private fun check() {
         busy = true
+        // The extra applies to this first check only.
+        val startDownload = autoDownload
+        autoDownload = false
         statusText.setText(R.string.update_checking)
         setAction(R.string.update_check, enabled = false)
         Thread {
@@ -184,6 +195,10 @@ class UpdateActivity : Activity() {
                     UpdateChecker.isNewer(r.tag, installed) -> {
                         statusText.text = getString(R.string.update_available, r.tag.removePrefix("v"))
                         setAction(R.string.update_download)
+                        if (startDownload) {
+                            installAfterDownload = true
+                            download(r.apkUrl)
+                        }
                     }
                     else -> {
                         statusText.setText(R.string.update_up_to_date)
@@ -225,6 +240,7 @@ class UpdateActivity : Activity() {
             handler.post {
                 busy = false
                 if (result.isFailure) {
+                    installAfterDownload = false
                     progress.visibility = View.GONE
                     statusText.text = getString(R.string.update_failed, result.exceptionOrNull()?.message ?: "download error")
                     setAction(R.string.update_download)
@@ -236,6 +252,10 @@ class UpdateActivity : Activity() {
                 statusText.setText(R.string.update_downloaded)
                 setAction(R.string.update_install)
                 Haptics.commit(action)
+                if (installAfterDownload) {
+                    installAfterDownload = false
+                    install()
+                }
             }
         }.apply { isDaemon = true }.start()
     }
@@ -263,5 +283,10 @@ class UpdateActivity : Activity() {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         })
+    }
+
+    companion object {
+        /** The update dialog sets this: download at once, then hand the APK to Android's installer. */
+        const val EXTRA_DOWNLOAD = "downloadNow"
     }
 }

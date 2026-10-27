@@ -207,6 +207,16 @@
             android:stopWithTask="false"
             android:exported="false" />
 
+        <!--
+          The 6 h update check. BIND_JOB_SERVICE is the platform permission that only JobScheduler
+          holds, so no other app can start this service. The job is not persisted across reboots:
+          that needs RECEIVE_BOOT_COMPLETED, and the app schedules the job again on each open.
+        -->
+        <service
+            android:name=".ui.UpdateJobService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
         <receiver
             android:name=".bluetooth.KeepAliveReceiver"
             android:exported="true">

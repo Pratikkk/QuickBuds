@@ -190,10 +190,10 @@
     <string name="update_permission_title">更新のインストールを許可</string>
     <string name="update_permission_body">QuickBuds から更新をインストールするには、Android での許可が必要です。</string>
     <string name="update_permission_action">設定を開く</string>
-    <string name="update_auto_title">起動時に確認</string>
-    <string name="update_auto_sub">アプリを開いたときに新しいバージョンを探す</string>
+    <string name="update_auto_title">アップデートを確認</string>
+    <string name="update_auto_sub">6時間ごととアプリを開いたとき</string>
     <string name="update_found_title">QuickBuds %1$s が利用可能です</string>
-    <string name="update_found_body">現在のバージョンは %1$s です。更新画面を開いて新機能を確認してください。</string>
+    <string name="update_found_body">%1$s をお使いです。今すぐダウンロードしますか？</string>
     <string name="update_found_view">表示</string>
     <string name="update_later">後で</string>
     <string name="row_gesture_title">イヤホンのジェスチャー</string>
