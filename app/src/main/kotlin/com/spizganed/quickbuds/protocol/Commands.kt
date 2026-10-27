@@ -3,7 +3,7 @@ package com.spizganed.quickbuds.protocol
 /*
  * The command builders: the shipping layer builds each payload here.
  * The app calls them directly. The Golden Sound builders are in
- * HearingCommands.kt. PROTOCOL-LEGACY.md documents every command.
+ * HearingCommands.kt. PROTOCOL.md documents every command.
  */
 
 internal object Commands {
@@ -17,7 +17,7 @@ internal object Commands {
 
     /**
      * The events to subscribe to: ours, kept to those the buds offer in `0x8200` when they sent one,
-     * as HeyMelody subscribes to the offered list only (PROTOCOL-LEGACY.md §4). Some firmwares never ack a
+     * as HeyMelody subscribes to the offered list only (PROTOCOL.md §6). Some firmwares never ack a
      * list with others.
      */
     fun notifyIds(fitTest: Boolean, golden: Boolean, personalNoise: Boolean, offered: Set<Int>?): List<Int> =
@@ -76,7 +76,7 @@ internal object Commands {
     /**
      * SET_ANC (0x0404): `01 01` then a little-endian bit field with bit [bit] set, `index / 8 + 1`
      * bytes long. The bit is the mode's `protocolIndex` for the connected model ([AncModes],
-     * PROTOCOL-LEGACY.md §5). Buds 4: Off 0 `01 01 01`, Transparency 2 `01 01 04`, Deep 4, Medium 5,
+     * PROTOCOL.md §14). Buds 4: Off 0 `01 01 01`, Transparency 2 `01 01 04`, Deep 4, Medium 5,
      * Light 6, Adaptive 11 `01 01 00 08`.
      *
      * Reports (`0x810C`, `0x0204` subType 3) name the SAME tree's bits, but a mode's child where it
@@ -106,7 +106,7 @@ internal object Commands {
      *
      * THIS CONFIRMS THE MASK REUSES [anc]'S OWN BIT NUMBERING, not a separate scheme —
      * bit 11 (`0x0800`) is exactly Adaptive's bit in the plain SET_ANC table above, and it is
-     * the only bit that moved. PROTOCOL-LEGACY.md §5 previously carried this as `[INFERRED]`; this
+     * the only bit that moved. PROTOCOL.md §14 previously carried this as `[INFERRED]`; this
      * capture settles it. Off = bit 0, Transparency = bit 2 (matching [anc]); bit 1 is
      * some generic "On" that resolves to whichever level was last hand-set, seen set in every
      * capture so far and never independently isolated.
@@ -160,7 +160,7 @@ internal object Commands {
 
     internal fun ancReadPayload(what: Int, arg: Int): ByteArray = byteArrayOf(what.toByte(), arg.toByte())
 
-    /** Any `0x0403` feature switch. Spatial (`0x1B`) and Hi-Res (`0x18`) are `[CAPTURE]` — PROTOCOL-LEGACY.md §9. */
+    /** Any `0x0403` feature switch. Spatial (`0x1B`) and Hi-Res (`0x18`) are `[CAPTURE]` — PROTOCOL.md §16. */
     fun feature(featureId: Int, on: Boolean, seq: Int? = null): ByteArray =
         OpoProtocol.buildPacket(OpoProtocol.CMD_SET_FEATURE, seq = seq, payload = featurePayload(featureId, on))
 
@@ -260,7 +260,7 @@ internal object Commands {
 
     /**
      * `0x010D <count> <ids>`. [statusQuery]: the model's `statusQuery` (hex ids, HeyMelody's per-model list,
-     * PROTOCOL-LEGACY.md §9); a model without one gets [RowRules.DEFAULT_IDS]. [windNoise]: the model's
+     * PROTOCOL.md §16); a model without one gets [RowRules.DEFAULT_IDS]. [windNoise]: the model's
      * `windMode` flag adds [Feature.WIND_NOISE].
      */
     fun queryStatus(statusQuery: String? = null, windNoise: Boolean = false, seq: Int = 0x00): ByteArray {
@@ -311,11 +311,11 @@ internal object Commands {
      *
      * READ-ONLY, and deliberately so: it reports what the buds are already doing,
      * so it cannot change state or break a binding. The 0x8108 reply carries the function
-     * enum; PROTOCOL-LEGACY.md §6 lists the measured values.
+     * enum; PROTOCOL.md §15 lists the measured values.
      *
      * Payload is a bare query (no payload), matching the other 0x01xx reads. The buds
      * DO answer it: the reply is `<status> <count> <4-byte entries>...` and its layout
-     * is `[CAPTURE]`-confirmed — see PROTOCOL-LEGACY.md §6 and `KeyFunctionParser`, which
+     * is `[CAPTURE]`-confirmed — see PROTOCOL.md §15 and `KeyFunctionParser`, which
      * logs it RAW and grouped so two readings can be diffed.
      *
      * The `function` VALUES are no longer a mystery either: they were MEASURED by

@@ -96,7 +96,7 @@ class ProtocolCasesGenerateTest {
     private fun seeds(): List<Seed> = listOf(
         // --- frame: whole, split, noise, bad length, slices, over 127 bytes ---
         frame("frame-battery-01", "battery", one(BATTERY_01), "CAPTURE", LOG_14 + ":37"),
-        frame("frame-handshake-01", "handshake", one(HANDSHAKE_09), "CAPTURE", "docs/PROTOCOL-LEGACY.md:74"),
+        frame("frame-handshake-01", "handshake", one(HANDSHAKE_09), "CAPTURE", "docs/PROTOCOL.md"),
         frame("frame-split-01", "battery", split(BATTERY_01, 5), "TEST-LITERAL", LEGACY + ":674"),
         frame("frame-multi-01", "wire", concat(BATTERY_01, WEARING_01), "TEST-LITERAL", LEGACY + ":674"),
         frame("frame-noise-01", "wire", concat("13 37", BATTERY_01), "TEST-LITERAL", LEGACY + ":680"),

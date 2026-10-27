@@ -11,15 +11,15 @@ object Feature {
     const val HIRES_CODEC = 0x18
     /** BassWave on/off. Level is its own command, the BassWave level command. `[CAPTURE]` 2026-09-23. */
     const val BASSWAVE = 0x1D
-    /** Golden Sound (hearing enhancement) on/off. `[VENDOR]` `setSwitchFeature(11)` (PROTOCOL-LEGACY.md §9). */
+    /** Golden Sound (hearing enhancement) on/off. `[VENDOR]` `setSwitchFeature(11)` (PROTOCOL.md §16). */
     const val GOLDEN_SOUND = 0x0B
     /**
      * Game mode's switch on buds whose `0x8100` bitmap has the game sound command `0x0423`: HeyMelody writes and reads
-     * `0x28` there instead of [GAME_MODE], and `0x27` is its game sound effects. `[VENDOR]` (PROTOCOL-LEGACY.md §9).
+     * `0x28` there instead of [GAME_MODE], and `0x27` is its game sound effects. `[VENDOR]` (PROTOCOL.md §16).
      */
     const val GAME_MODE_MAIN = 0x28
     const val GAME_SOUND = 0x27
-    /** Plain on/off switches from HeyMelody, `[VENDOR]`, unverified on buds (PROTOCOL-LEGACY.md §9). */
+    /** Plain on/off switches from HeyMelody, `[VENDOR]`, unverified on buds (PROTOCOL.md §16). */
     const val VOCAL_ENHANCE = 0x09
     /** realme Link's wind noise switch; asked only for models with the `windMode` flag. */
     const val WIND_NOISE = 0x1A
@@ -36,12 +36,12 @@ object Feature {
     const val HEARING_OPTIMIZE = 0x38
     const val HEAD_MOTION = 0x3B
     /**
-     * Game equalizer (PROTOCOL-LEGACY.md §9), `[VENDOR]`: switch [GAME_EQ] turns it on, and `0x0420 01 <1|0>` tells the buds
+     * Game equalizer (PROTOCOL.md §16), `[VENDOR]`: switch [GAME_EQ] turns it on, and `0x0420 01 <1|0>` tells the buds
      * a game app came to the foreground or left. No read command for the second one.
      */
     const val GAME_EQ = 0x21
     /**
-     * Personalized noise cancellation (PROTOCOL-LEGACY.md §9), `[VENDOR]`: switch [PERSONAL_NOISE] (off only;
+     * Personalized noise cancellation (PROTOCOL.md §16), `[VENDOR]`: switch [PERSONAL_NOISE] (off only;
      * the buds turn it on themselves), `0x0412 <action>`, a stored result read with `0x011A` -> `00 <exist>`,
      * the test's result pushed as the `0x0204` event `0B` `<result>` (0 done, 1-5 a reason it failed).
      */

@@ -51,7 +51,7 @@ object AncEventParser {
      * True if this 0x0204 payload is a GENUINE ANC-changed event.
      *
      * `setHoldAncModes()`'s write also raises
-     * a `subType 0x03` frame (PROTOCOL-LEGACY.md §5's `[CAPTURE]` note on this), but its payload is
+     * a `subType 0x03` frame (PROTOCOL.md §14's `[CAPTURE]` note on this), but its payload is
      * `03 02 01 <mask LE>` — the `0x010C` switch-list QUERY's own echo shape, not this event's.
      * The real event is always `03 01 01 <value LE>` (see the class doc). Before this fix,
      * `isAncEvent` only checked `payload[0] == 0x03`, so the mask-write's echo passed as a real

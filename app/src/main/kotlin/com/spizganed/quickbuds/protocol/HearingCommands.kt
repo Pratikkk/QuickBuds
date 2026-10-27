@@ -2,7 +2,7 @@ package com.spizganed.quickbuds.protocol
 
 /*
  * The Golden Sound builders: ear scan, hearing test, tone, filter, record and restore.
- * The app calls them directly. PROTOCOL-LEGACY.md section 9 documents every frame.
+ * The app calls them directly. PROTOCOL.md section 16 documents every frame.
  */
 
 internal object HearingCommands {

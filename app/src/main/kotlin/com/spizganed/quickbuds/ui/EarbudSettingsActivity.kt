@@ -141,7 +141,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
     }
 
     /**
-     * `0x0403` on/off switches HeyMelody has and Buds 4 lacks (PROTOCOL-LEGACY.md §9), each shown only where
+     * `0x0403` on/off switches HeyMelody has and Buds 4 lacks (PROTOCOL.md §16), each shown only where
      * [Capabilities.offered]. Unverified on buds until an owner reads a write back.
      */
     private fun features(root: LinearLayout) {
@@ -184,7 +184,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
             }
             addSwitch(id, icon, title, sub, sw)
         }
-        // Personalized ANC: off is a plain switch write, on runs HeyMelody's test flow (PROTOCOL-LEGACY.md §9).
+        // Personalized ANC: off is a plain switch write, on runs HeyMelody's test flow (PROTOCOL.md §16).
         // The model's flag too: HeyMelody gates on it alone, and Buds 4 list 0x0C without having the feature.
         if ((ModelCatalog.current(this)?.json?.optInt("personalAnc") ?: 1) == 1 &&
             Capabilities.offered(this, Feature.PERSONAL_NOISE, "personalAnc") &&
@@ -206,7 +206,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
             R.string.row_vocal_title, R.string.row_vocal_sub)
         syncSwitch(Feature.GAME_SOUND, "gameSoundFx", R.drawable.ic_low_latency,
             R.string.row_game_sound_title, R.string.row_game_sound_sub)
-        // Which effect it applies: `0x0423 <type> 01`, HeyMelody's radio list (PROTOCOL-LEGACY.md §9).
+        // Which effect it applies: `0x0423 <type> 01`, HeyMelody's radio list (PROTOCOL.md §16).
         if (featureSwitches.containsKey(Feature.GAME_SOUND) &&
             (Capabilities.supports(this, OpoProtocol.CMD_GAME_SOUND) || ModelCatalog.manual(this) != null)) {
             card.addView(SettingRowFactory.buildDivider(this))
@@ -216,7 +216,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
             paintGameSound()
             card.addView(row)
         }
-        // Game equalizer: the switch, and the Usage access it needs to see which app is open (PROTOCOL-LEGACY.md §9).
+        // Game equalizer: the switch, and the Usage access it needs to see which app is open (PROTOCOL.md §16).
         if (Capabilities.supports(this, OpoProtocol.CMD_GAME_EQ_STATE)) {
             syncSwitch(Feature.GAME_EQ, null, R.drawable.ic_low_latency,
                 R.string.row_game_eq_title, R.string.row_game_eq_sub)
@@ -246,7 +246,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
             R.string.row_long_press_volume_title, R.string.row_long_press_volume_sub)
         syncSwitch(Feature.HEAD_MOTION, null, R.drawable.ic_gesture,
             R.string.row_head_motion_title, R.string.row_head_motion_sub)
-        // Which gesture answers: `0x0431 <type>`, HeyMelody's nod / shake choice (PROTOCOL-LEGACY.md §9).
+        // Which gesture answers: `0x0431 <type>`, HeyMelody's nod / shake choice (PROTOCOL.md §16).
         if (featureSwitches.containsKey(Feature.HEAD_MOTION) &&
             Capabilities.supports(this, OpoProtocol.CMD_SET_HEAD_MOTION_TYPE)) {
             card.addView(SettingRowFactory.buildDivider(this))
@@ -381,7 +381,7 @@ class EarbudSettingsActivity : Activity(), BudsConnectionManager.Listener {
 
     /**
      * Tap sensitivity 1..5 (`0x042D`, read `0x0133`), where HeyMelody's model list has `tapLevelSetting`;
-     * the warning shows below the buds' default, as in HeyMelody (PROTOCOL-LEGACY.md §9).
+     * the warning shows below the buds' default, as in HeyMelody (PROTOCOL.md §16).
      */
     private fun tapSensitivity(root: LinearLayout) {
         if (ModelCatalog.current(this)?.json?.optInt("tapLevel") != 1) return

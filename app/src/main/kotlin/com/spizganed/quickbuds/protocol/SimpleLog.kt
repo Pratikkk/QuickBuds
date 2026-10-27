@@ -12,7 +12,7 @@ object SimpleLog {
 
     class Entry(val text: String, val kind: Kind)
 
-    /** `0x0403` feature ids (PROTOCOL-LEGACY.md §9) by the name the app shows. */
+    /** `0x0403` feature ids (PROTOCOL.md §16) by the name the app shows. */
     private val FEATURES = mapOf(
         0x04 to "Auto play/pause", 0x06 to "Low latency mode", 0x09 to "Vocal enhancement", 0x0B to "Hearing profile",
         0x0C to "Personalised noise cancelling", 0x11 to "Dual connection", 0x17 to "Power saving",
@@ -146,7 +146,7 @@ object SimpleLog {
         return "$side: ${action ?: "gesture"}"
     }
 
-    /** `FIT: left=1 right=6`: 1 good, 0 average, 6 poor (PROTOCOL-LEGACY.md §9). */
+    /** `FIT: left=1 right=6`: 1 good, 0 average, 6 poor (PROTOCOL.md §16). */
     private fun fit(s: String): String {
         fun word(v: String?) = when (v) { "1" -> "good fit"; "0" -> "average fit"; "6" -> "poor fit"; else -> "no result" }
         val l = Regex("left=(-?\\d+)").find(s)?.groupValues?.get(1)

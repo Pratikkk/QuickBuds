@@ -20,10 +20,10 @@ import org.json.JSONObject
  *
  * The `function` enum: it was unknown for a long time, and [GestureAction] deliberately
  * carried no protocol byte while that was true — filling in a guessed byte is exactly
- * what produced the SET-vs-NOTIFY regression this project had to revert (PROTOCOL-LEGACY.md
+ * what produced the SET-vs-NOTIFY regression this project had to revert (PROTOCOL.md
  * §5). It was filled in the honest way instead: he rebound slots in the vendor app, the
  * app diffed two `0x8108` readings, and he reported what he had bound. Every value
- * agreed, two of them across two separate slots. See PROTOCOL-LEGACY.md §6.
+ * agreed, two of them across two separate slots. See PROTOCOL.md §15.
  *
  * THE ONE THING THAT IS NOT WHAT IT LOOKS: tap-and-hold. All four ANC actions share ONE
  * key-function byte, because the device models the hold as a single "ANC cycle" function.
@@ -31,7 +31,7 @@ import org.json.JSONObject
  *
  * WHICH MODES THE CYCLE CONTAINS is settable through a DIFFERENT command —
  * `setSupportNoiseReduction` (`0x0404` action `02`, payload `[02][01][modeMask LE]`,
- * `[CAPTURE]` 2026-09-22 — see [GestureModel.holdMask] and PROTOCOL-LEGACY.md §5), with `0x010C`
+ * `[CAPTURE]` 2026-09-22 — see [GestureModel.holdMask] and PROTOCOL.md §14), with `0x010C`
  * `02 01` reading the mask back. `GestureActivity.writeToBuds()` sends this as a SEPARATE
  * write from the key-function bind, deliberately: two commands, so a failure in either is
  * attributable, never merged into one "save".
@@ -138,7 +138,7 @@ enum class Gesture(
  * `function` enum was unknown, and a guessed byte is the error that already cost this
  * project one regression. The bytes below are not guesses — they come from the
  * `0x8108` diff experiment, cross-checked against what he had actually bound. See the
- * class comment for the evidence, or PROTOCOL-LEGACY.md §6.
+ * class comment for the evidence, or PROTOCOL.md §15.
  *
  * TWO LABELS, ON PURPOSE. [labelRes] is the full name and is what the dialog sheet
  * shows, where there is a whole row per option and room to be unambiguous.
@@ -160,7 +160,7 @@ enum class GestureAction(
      * EVERY VALUE HERE IS MEASURED, NOT GUESSED. The enum was filled in from a
      * `0x8108` diff: he rebound slots in the vendor app and reported what he set each
      * one to, and every value matched the reply with no contradictions (two of them
-     * twice, on two different slots). See PROTOCOL-LEGACY.md §6. HeyMelody's own label -> byte map
+     * twice, on two different slots). See PROTOCOL.md §15. HeyMelody's own label -> byte map
      * agrees on every one, and is the
      * `[VENDOR]` source for volume up / down and switch devices.
      */
@@ -196,7 +196,7 @@ enum class GestureAction(
     // 0x08; another time, same byte, the same gesture cycled FOUR modes. So the cycle's
     // MEMBERSHIP was never stored in this byte — it lives in a DIFFERENT command,
     // `setSupportNoiseReduction` (`0x0404` action `02`), confirmed `[CAPTURE]` 2026-09-22
-    // (PROTOCOL-LEGACY.md §5). `GestureActivity.writeToBuds()` sends BOTH writes for the hold: the
+    // (PROTOCOL.md §14). `GestureActivity.writeToBuds()` sends BOTH writes for the hold: the
     // key-function bind (`functionByte`, bind/unbind the gesture to "cycles ANC" at all) and the
     // mask ([GestureModel.holdMask], which modes it cycles through) — two separate commands on
     // purpose, so a failure in either is attributable, never merged into one "save".
@@ -230,7 +230,7 @@ enum class GestureAction(
 /**
  * Which gesture rows the current model has and what each may be bound to — `[VENDOR]`, from
  * HeyMelody's per-model `control` / `callControl` lists (copied into `assets/models.json`,
- * PROTOCOL-LEGACY.md §6). A row is a `control` entry; its options are the [GestureAction.supportBit]s in
+ * PROTOCOL.md §15). A row is a `control` entry; its options are the [GestureAction.supportBit]s in
  * its `support` mask, in HeyMelody's own order. For Buds 4
  * this gives exactly the rows and options the screen had when they were hand-written from
  * HeyMelody's UI.
@@ -265,11 +265,11 @@ class GestureModel private constructor(
      */
     private val ancLevelBits: List<Int> = emptyList(),
     /**
-     * Our own key `sharedHoldMask` (realme Link data, PROTOCOL-LEGACY.md §6): a per-bud hold whose noise
+     * Our own key `sharedHoldMask` (realme Link data, PROTOCOL.md §15): a per-bud hold whose noise
      * cycle is one mask for both buds, written and read as [OpoProtocol.HOLD_TYPE_SHARED].
      */
     private val sharedHoldMask: Boolean = false,
-    /** Our own key `oneButton` (realme Link data, PROTOCOL-LEGACY.md §6): a neckband, one button on `dev 01`. */
+    /** Our own key `oneButton` (realme Link data, PROTOCOL.md §15): a neckband, one button on `dev 01`. */
     val oneButton: Boolean = false,
     /** Our own key `bothHold` (realme Link data): the [OnCallGesture.BOTH_HOLD] row. */
     val bothHold: Boolean = false
@@ -440,7 +440,7 @@ object GestureConfigStore {
     /**
      * TAP_HOLD IS DELIBERATELY SIDE-INDEPENDENT, unlike every other gesture,
      * confirmed by a captured HeyMelody write with no `deviceType` field at all in the hold-mask
-     * command (PROTOCOL-LEGACY.md §5, "The hold's ANC cycle"): the ANC cycle's membership is ONE setting for both buds, not two.
+     * command (PROTOCOL.md §14, "The hold's ANC cycle"): the ANC cycle's membership is ONE setting for both buds, not two.
      * Keying its storage by `side` — as this function did until now — meant switching the Left/Right
      * tab showed a SEPARATE, likely stale selection for Hold that had nothing to do with either bud's
      * actual state. Every other gesture genuinely can differ per bud (their key-function bind is a
@@ -502,7 +502,7 @@ object GestureConfigStore {
      * [KeyFunctionParser.BUTTON_PRIMARY]. Mirrors `BudsConnectionManager.writeGestureBinding()`'s
      * own matching rule on purpose: a gesture's button GROUP is not fixed (slide has been seen
      * split across `btn 0x02`/`0x03` on one bud and inside `btn 0x01` on the other, in the same
-     * capture — PROTOCOL-LEGACY.md §6), so reading has to use the same "any group but on-call" rule the
+     * capture — PROTOCOL.md §15), so reading has to use the same "any group but on-call" rule the
      * write does, or the two could disagree about where a binding lives.
      */
     private fun deviceEntryFor(
@@ -546,13 +546,13 @@ object GestureConfigStore {
     /**
      * Hold's local record needs BOTH signals together: whether it is bound at all (the
      * key-function `fn`, `0x08` vs `0x00`) and, if bound, which modes (the separate cycle mask —
-     * see [GestureModel.holdMask] and PROTOCOL-LEGACY.md §5). Called whenever either one arrives
+     * see [GestureModel.holdMask] and PROTOCOL.md §14). Called whenever either one arrives
      * with the other already cached, from either `0x8108` or `0x010C` `02 01` handling in
      * `BudsConnectionManager`.
      *
      * An unbound hold (`fn` not `0x08` on either side) syncs to the empty selection, same as
      * [defaultFor]. A bound hold with a mask of `0` is left ALONE rather than synced to empty —
-     * that value has never been observed or tested (PROTOCOL-LEGACY.md §5 says so explicitly), so
+     * that value has never been observed or tested (PROTOCOL.md §14 says so explicitly), so
      * treating it as "no modes" would be a guess, not a reading.
      *
      * A per-bud hold ([GestureModel.perBudHold]) syncs each side from its own entry: the noise
@@ -584,7 +584,7 @@ object GestureConfigStore {
 /**
  * On-call gestures — `btn 0x06`, `[CAPTURE]` 2026-09-22 (see
  * [com.spizganed.quickbuds.protocol.KeyFunctionParser.BUTTON_ON_CALL] for the full capture
- * evidence and PROTOCOL-LEGACY.md §6).
+ * evidence and PROTOCOL.md §15).
  *
  * DELIBERATELY NOT A [Gesture]/[GestureAction] PAIR. Those model a per-bud choice from a
  * list, written as a full-table diff — neither fits here: on-call is SHARED between both
@@ -656,7 +656,7 @@ object OnCallConfigStore {
     /**
      * Overwrites the LOCAL record from the buds' own table, same reasoning
      * and call sites as [GestureConfigStore.syncFromDevice]. Both on-call rows mirror to
-     * `dev=0x01` AND `dev=0x02` identically (PROTOCOL-LEGACY.md §6), so either side's entry is enough;
+     * `dev=0x01` AND `dev=0x02` identically (PROTOCOL.md §15), so either side's entry is enough;
      * this reads `dev=0x01`.
      *
      * Skips a row rather than guessing when the device's `fn` is neither `0x00` nor this row's

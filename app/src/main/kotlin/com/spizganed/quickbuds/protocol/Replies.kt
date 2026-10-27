@@ -6,11 +6,11 @@ import org.json.JSONObject
 
 /*
  * The replies to the buds' requests and the batch layer: one layer for the legacy and typed protocols.
- * The legacy behaviour is the contract. PROTOCOL-LEGACY.md section 9 documents the request answers.
+ * The legacy behaviour is the contract. PROTOCOL.md section 16 documents the request answers.
  */
 
 object Replies {
-    /** Time request `0x0500` from the buds (PROTOCOL-LEGACY.md §9). */
+    /** Time request `0x0500` from the buds (PROTOCOL.md §16). */
     const val REQ_TIME = 0x0500
 
     /** Command groups HeyMelody knows, as the command's high byte. A request from any other group gets `01`. */

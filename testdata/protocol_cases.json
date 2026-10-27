@@ -19,7 +19,7 @@
    "model": null,
    "expect": ["AA 07 00 00 00 01 01 00 00"],
    "evidence": "CAPTURE",
-   "source": "docs/PROTOCOL-LEGACY.md:74"
+   "source": "docs/PROTOCOL.md"
   },
   {
    "id": "frame-split-01",

@@ -6,7 +6,7 @@ import com.spizganed.quickbuds.widget.WidgetStateStore
 
 /**
  * Find my earbuds, a bottom sheet like the fit test: the buds' OWN locator tone, `0x0400` `01` start /
- * `00` stop (`[CAPTURE]` 2026-09-23, PROTOCOL-LEGACY.md §9). It rings BOTH buds at once (no side byte; HeyMelody
+ * `00` stop (`[CAPTURE]` 2026-09-23, PROTOCOL.md §16). It rings BOTH buds at once (no side byte; HeyMelody
  * offers no per-bud choice). Like HeyMelody, starting it while a bud reports being in an ear (wear status
  * 3/7) asks first. Closing the sheet sends the stop, so the tone cannot outlive it.
  */

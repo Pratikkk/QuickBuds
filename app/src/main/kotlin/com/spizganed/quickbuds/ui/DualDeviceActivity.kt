@@ -21,11 +21,11 @@ import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.Feature
 
 /**
- * Dual connection, as HeyMelody has it (`[CAPTURE]` 2026-09-25, PROTOCOL-LEGACY.md §9): one switch
+ * Dual connection, as HeyMelody has it (`[CAPTURE]` 2026-09-25, PROTOCOL.md §16): one switch
  * (`0x0403` feature `0x11`) and the devices the buds are connected to (`0x0112`, pushed as
  * `0x0204` subType `06`). "Add device" is only pairing instructions, as in HeyMelody.
  * On models whose HeyMelody entry has the device manager (`multiConnect`), every paired device is
- * listed, a tap connects or disconnects it and a preferred device can be set (`0x0429`, PROTOCOL-LEGACY.md §9).
+ * listed, a tap connects or disconnects it and a preferred device can be set (`0x0429`, PROTOCOL.md §16).
  */
 class DualDeviceActivity : Activity(), BudsConnectionManager.Listener {
 
