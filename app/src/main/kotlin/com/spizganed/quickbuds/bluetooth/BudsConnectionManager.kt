@@ -74,6 +74,12 @@ class BudsConnectionManager(private val context: Context) {
         private const val VIRTUAL_CONNECT_TIMEOUT_MS = 5_000
     }
 
+    /**
+     * The A2DP and HEADSET proxies, kept for the life of the manager, so [audioLinkState] answers at once.
+     * Declared before `init`: the proxy callbacks run on a Binder thread and can come before the constructor ends.
+     */
+    private val audioProxies = java.util.concurrent.ConcurrentHashMap<Int, BluetoothProfile>()
+
     init {
         openAudioProxies()
         PacketLogger.init(context)
@@ -282,9 +288,6 @@ class BudsConnectionManager(private val context: Context) {
         }
     }
 
-    /** The A2DP and HEADSET proxies, kept for the life of the manager, so [audioLinkState] answers at once. */
-    private val audioProxies = java.util.concurrent.ConcurrentHashMap<Int, BluetoothProfile>()
-
     private fun openAudioProxies() {
         try {
             val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter ?: return
@@ -310,8 +313,10 @@ class BudsConnectionManager(private val context: Context) {
         val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter
         val proxies = audioProxies.values.toList()
         when {
-            adapter == null || !adapter.isEnabled || proxies.isEmpty() -> LinkState.UNKNOWN
+            adapter == null || !adapter.isEnabled -> LinkState.UNKNOWN
             proxies.any { it.getConnectionState(device) == BluetoothProfile.STATE_CONNECTED } -> LinkState.CONNECTED
+            // "Disconnected" needs both answers: a missing proxy can hide a live HFP or A2DP link.
+            proxies.size < 2 -> LinkState.UNKNOWN
             else -> LinkState.DISCONNECTED
         }
     } catch (e: Exception) {
