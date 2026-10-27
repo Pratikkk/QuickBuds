@@ -9,7 +9,7 @@ import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.widget.WidgetStateStore
 
 /**
- * Turning personalized noise cancellation on, in HeyMelody's order (`[VENDOR]`, PROTOCOL.md §16):
+ * Turning personalized noise cancellation on, in HeyMelody's order (`[VENDOR]`, PROTOCOL.md §20):
  * both buds worn, then the stored result is offered if the buds hold one, else the ear canal test
  * (`0x0412 01`, a result within 15 s, closing the sheet cancels it). The buds switch `0x0C` on
  * themselves; [onApplied] re-reads it.

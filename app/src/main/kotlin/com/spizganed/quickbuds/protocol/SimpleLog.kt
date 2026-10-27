@@ -146,7 +146,7 @@ object SimpleLog {
         return "$side: ${action ?: "gesture"}"
     }
 
-    /** `FIT: left=1 right=6`: 1 good, 0 average, 6 poor (PROTOCOL.md §16). */
+    /** `FIT: left=1 right=6`: 1 good, 0 average, 6 poor (PROTOCOL.md §20). */
     private fun fit(s: String): String {
         fun word(v: String?) = when (v) { "1" -> "good fit"; "0" -> "average fit"; "6" -> "poor fit"; else -> "no result" }
         val l = Regex("left=(-?\\d+)").find(s)?.groupValues?.get(1)

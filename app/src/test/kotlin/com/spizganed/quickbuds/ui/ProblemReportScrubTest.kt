@@ -8,7 +8,7 @@ import org.junit.Test
 
 /**
  * The report scrub: a frame that carries device addresses and names keeps only its header
- * (PROTOCOL.md §16). The header comes from [OpoProtocol.buildPacket], so the test uses the bytes the
+ * (PROTOCOL.md §19). The header comes from [OpoProtocol.buildPacket], so the test uses the bytes the
  * logger writes: `AA <len LEB128> ... 00 <cmd LE> <seq> <payload len LE>`. The payload starts after the header,
  * at byte 9 for a one-byte length and byte 10 for a two-byte length.
  */

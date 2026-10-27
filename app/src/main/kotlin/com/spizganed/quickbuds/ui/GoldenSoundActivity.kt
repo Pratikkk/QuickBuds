@@ -24,7 +24,7 @@ import com.spizganed.quickbuds.protocol.Commands
 import com.spizganed.quickbuds.protocol.HearingCommands
 
 /**
- * Golden Sound (PROTOCOL.md §16): the on/off switch, the profiles kept on this phone (a tap applies
+ * Golden Sound (PROTOCOL.md §20): the on/off switch, the profiles kept on this phone (a tap applies
  * one; the one on the buds is checked) and the hearing test. The buds' own profile is read on open
  * (`0x0115` / `0x011E`) and added to the list, so one made in HeyMelody shows up too.
  */
@@ -151,7 +151,7 @@ class GoldenSoundActivity : Activity(), BudsConnectionManager.Listener {
         ?.drop(1)?.map { e -> e.split(",").map { it.toFloat() }.toFloatArray() }
 
     private fun startTest() {
-        // Ear scan only where HeyMelody's model list has it (`earScan`, PROTOCOL.md §16).
+        // Ear scan only where HeyMelody's model list has it (`earScan`, PROTOCOL.md §20).
         val scan = ModelCatalog.current(this)?.json?.optInt("hearingScan") == 1 &&
             Capabilities.supports(this, OpoProtocol.CMD_GOLDEN_SCAN_DATA)
         testSheet = GoldenTestSheet(this, scan, { manager?.golden(*it) }) { r ->

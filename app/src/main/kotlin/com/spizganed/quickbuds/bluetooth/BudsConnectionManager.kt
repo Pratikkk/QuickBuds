@@ -751,7 +751,7 @@ class BudsConnectionManager(private val context: Context) {
     /**
      * `[count]` then per device `[MAC, 6 bytes reversed][entry length][state][flags][nameLen][name UTF-8]`.
      * State `02` = connected, `00` = not. Flags `[VENDOR]`: bit 0 this phone, bit 2 audio playing
-     * (bit 1 the main audio device, bits 3-5 the device type). PROTOCOL.md §16.
+     * (bit 1 the main audio device, bits 3-5 the device type). PROTOCOL.md §19.
      */
     private fun parseDevices(p: ByteArray, start: Int): List<PairedDevice>? {
         if (p.size <= start) return null
@@ -771,7 +771,7 @@ class BudsConnectionManager(private val context: Context) {
         return out
     }
 
-    // --- Equalizer (PROTOCOL.md §16). Read on demand by the EQ screen, re-read after every write. ---
+    // --- Equalizer (PROTOCOL.md §17). Read on demand by the EQ screen, re-read after every write. ---
     /** The events these buds offer (`0x8200`), once read; reset on each connect. */
     @Volatile private var offeredEvents: Set<Int>? = null
     @Volatile var eqCurrent: Int? = null
@@ -862,7 +862,7 @@ class BudsConnectionManager(private val context: Context) {
         }
     }
 
-    /** Find my earbuds: both buds' own locator tone. `[CAPTURE]` 2026-09-23, PROTOCOL.md §16. */
+    /** Find my earbuds: both buds' own locator tone. `[CAPTURE]` 2026-09-23, PROTOCOL.md §18. */
     fun setFindTone(on: Boolean) = sendRaw(Commands.findTone(on),"Find tone -> $on")
 
     private val FEATURES_KEY = Capabilities.KEY_FEATURES
@@ -1053,7 +1053,7 @@ class BudsConnectionManager(private val context: Context) {
             .getOrNull(codec - 1) ?: "#$codec"
 
     /**
-     * Golden Sound test frames, sent in order on one thread (PROTOCOL.md §16): a tone is a stop then
+     * Golden Sound test frames, sent in order on one thread (PROTOCOL.md §20): a tone is a stop then
      * the tone, a record is applied in four writes. A `0x0403` among them is followed by a status read.
      */
     fun golden(vararg packets: ByteArray) {
@@ -1072,7 +1072,7 @@ class BudsConnectionManager(private val context: Context) {
 
     /**
      * Spatial type on buds with `0x0422` (0 off, 1 fixed, 2 head tracking), null until read. Changes
-     * repaint through [Listener.onFeatureStates]. `[VENDOR]`, unverified on buds (PROTOCOL.md §16).
+     * repaint through [Listener.onFeatureStates]. `[VENDOR]`, unverified on buds (PROTOCOL.md §18).
      */
     @Volatile var spatialType: Int? = null
         private set
@@ -1144,7 +1144,7 @@ class BudsConnectionManager(private val context: Context) {
     /** The default from the last `0x8133` reply; the push carries the level only. */
     private var tapLevelDefault = 0
 
-    /** `0x0420 01 <1|0>`: a game app is in the foreground (PROTOCOL.md §16). */
+    /** `0x0420 01 <1|0>`: a game app is in the foreground (PROTOCOL.md §18). */
     fun setGameEqState(inGame: Boolean) = sendRaw(Commands.gameEqState(inGame),"Game equalizer in game=$inGame")
 
     fun refreshTapLevel() = sendRaw(Commands.queryTapLevel(), "query tap level")
@@ -1922,7 +1922,7 @@ class BudsConnectionManager(private val context: Context) {
             return
         }
 
-        // --- Golden Sound (PROTOCOL.md §16) ---
+        // --- Golden Sound (PROTOCOL.md §20) ---
         if (cmd == OpoProtocol.CMD_ACTIVE_REPORT && payload.size >= 3 && payload[0].toInt() == OpoProtocol.EVT_GOLDEN_STATUS) {
             val kind = payload[1].toInt() and 0xFF
             val status = payload[2].toInt() and 0xFF
@@ -1970,7 +1970,7 @@ class BudsConnectionManager(private val context: Context) {
             return
         }
 
-        // --- Personalized ANC, [VENDOR] (PROTOCOL.md §16) ---
+        // --- Personalized ANC, [VENDOR] (PROTOCOL.md §20) ---
         if (cmd == 0x811A && payload.size >= 2 && payload[0].toInt() == 0) {
             log("PERSONAL ANC stored=${payload[1]}")
             handler.post { listeners.forEach { it.onPersonalNoiseStored(payload[1].toInt() != 0) } }

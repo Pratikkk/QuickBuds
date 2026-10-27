@@ -10,7 +10,7 @@ import org.json.JSONObject
  */
 
 object Replies {
-    /** Time request `0x0500` from the buds (PROTOCOL.md §16). */
+    /** Time request `0x0500` from the buds (PROTOCOL.md §11). */
     const val REQ_TIME = 0x0500
 
     /** Command groups HeyMelody knows, as the command's high byte. A request from any other group gets `01`. */

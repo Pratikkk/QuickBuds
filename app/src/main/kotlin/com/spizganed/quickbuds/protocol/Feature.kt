@@ -36,12 +36,12 @@ object Feature {
     const val HEARING_OPTIMIZE = 0x38
     const val HEAD_MOTION = 0x3B
     /**
-     * Game equalizer (PROTOCOL.md §16), `[VENDOR]`: switch [GAME_EQ] turns it on, and `0x0420 01 <1|0>` tells the buds
+     * Game equalizer (PROTOCOL.md §18), `[VENDOR]`: switch [GAME_EQ] turns it on, and `0x0420 01 <1|0>` tells the buds
      * a game app came to the foreground or left. No read command for the second one.
      */
     const val GAME_EQ = 0x21
     /**
-     * Personalized noise cancellation (PROTOCOL.md §16), `[VENDOR]`: switch [PERSONAL_NOISE] (off only;
+     * Personalized noise cancellation (PROTOCOL.md §20), `[VENDOR]`: switch [PERSONAL_NOISE] (off only;
      * the buds turn it on themselves), `0x0412 <action>`, a stored result read with `0x011A` -> `00 <exist>`,
      * the test's result pushed as the `0x0204` event `0B` `<result>` (0 done, 1-5 a reason it failed).
      */

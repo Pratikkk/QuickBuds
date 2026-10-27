@@ -1053,7 +1053,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         spatialSubtitle = spatialRow.findViewWithTag<TextView>(SettingRowFactory.SUBTITLE_TAG)
         addRow("spatial", spatialRow)
 
-        // --- Golden Sound: the hearing profile on the buds, feature 0x0B [VENDOR] (PROTOCOL.md §16) ---
+        // --- Golden Sound: the hearing profile on the buds, feature 0x0B [VENDOR] (PROTOCOL.md §20) ---
         // The row opens the Golden Sound screen (profiles, hearing test); the switch toggles it.
         val golden = SettingRowFactory.buildSwitch(this, false)
         goldenSwitch = golden
@@ -1492,14 +1492,14 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
         )
 
         /**
-         * Spatial audio as HeyMelody picks it (PROTOCOL.md §16): buds whose bitmap has `0x012A` (or a
+         * Spatial audio as HeyMelody picks it (PROTOCOL.md §18): buds whose bitmap has `0x012A` (or a
          * model with head tracking) take a type through `0x0422`, the rest feature `0x1B`.
          */
         fun spatialByType(c: Context) =
             RowRules.spatialByType(ModelCatalog.current(c)?.json, Capabilities.commands(c))
 
         /**
-         * Our own key `spatialToggle` (realme Link data, PROTOCOL.md §16): spatial is feature `1B` alone and
+         * Our own key `spatialToggle` (realme Link data, PROTOCOL.md §18): spatial is feature `1B` alone and
          * Hi-Res `18` alone, never written together, whatever the bitmap says.
          */
         fun spatialSwitchOnly(c: Context) = ModelCatalog.current(c)?.json?.optInt("spatialToggle") == 1
@@ -1509,7 +1509,7 @@ class MainActivity : Activity(), BudsConnectionManager.Listener {
             RowRules.spatialHeadTracking(ModelCatalog.current(c)?.json)
 
         /**
-         * `[VENDOR]` HeyMelody's "High-quality audio" screen on `hiRes` models (PROTOCOL.md §16): the row
+         * `[VENDOR]` HeyMelody's "High-quality audio" screen on `hiRes` models (PROTOCOL.md §18): the row
          * picks the codec, and the switch (Hi-Res) is live only with LDAC or LHDC V5, as there.
          */
         fun codecPicker(c: Context) =

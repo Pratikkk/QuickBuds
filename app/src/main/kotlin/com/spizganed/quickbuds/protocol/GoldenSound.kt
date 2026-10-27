@@ -6,7 +6,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Golden Sound records (PROTOCOL.md §16). The buds hold only the active one; the list lives on the
+ * Golden Sound records (PROTOCOL.md §20). The buds hold only the active one; the list lives on the
  * phone, as in HeyMelody, which keeps up to 10 per buds.
  */
 object GoldenSound {

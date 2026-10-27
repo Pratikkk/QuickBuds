@@ -89,7 +89,7 @@ object Wire {
  * Handles partial frames, multiple frames in one read, and garbage before headers.
  *
  * `TotalLen` (byte 1) is LEB128, so a frame over 127 bytes has a longer header (Golden Sound's
- * ear-scan data, PROTOCOL.md §16). Every frame comes out [normalise]d, so the rest of the app
+ * ear-scan data, PROTOCOL.md §20). Every frame comes out [normalise]d, so the rest of the app
  * keeps its fixed layout: cmd at 4-5, seq at 6, payload length at 7-8, payload from 9.
  * Slices of one message (PROTOCOL.md §2) are joined into one such frame.
  */
