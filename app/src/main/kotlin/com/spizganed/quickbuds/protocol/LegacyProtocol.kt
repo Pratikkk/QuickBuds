@@ -271,45 +271,23 @@ object OpoProtocol {
     fun queryGoldenActive(): ByteArray = buildPacket(CMD_GOLDEN_ACTIVE)
     fun queryGoldenActiveScan(): ByteArray = buildPacket(CMD_GOLDEN_ACTIVE_SCAN)
 
-    fun personalNoise(action: Int): ByteArray = buildPacket(CMD_PERSONAL_NOISE, payload = byteArrayOf(action.toByte()))
-    fun queryPersonalNoise(): ByteArray = buildPacket(CMD_QUERY_PERSONAL_NOISE)
-    fun gameEqState(inGame: Boolean): ByteArray = buildPacket(CMD_GAME_EQ_STATE, payload = byteArrayOf(1, if (inGame) 1 else 0))
-    fun setTapLevel(level: Int): ByteArray = buildPacket(CMD_SET_TAP_LEVEL, payload = byteArrayOf(level.toByte()))
-    fun queryTapLevel(): ByteArray = buildPacket(CMD_QUERY_TAP_LEVEL)
+    fun personalNoise(action: Int): ByteArray = Commands.personalNoise(action)
+    fun queryPersonalNoise(): ByteArray = Commands.queryPersonalNoise()
+    fun gameEqState(inGame: Boolean): ByteArray = Commands.gameEqState(inGame)
+    fun setTapLevel(level: Int): ByteArray = Commands.setTapLevel(level)
+    fun queryTapLevel(): ByteArray = Commands.queryTapLevel()
 
     /** Earbud fit test: `0x0405` `01` start / `00` stop (HeyMelody stops it when its sheet closes). */
-    fun fitTest(on: Boolean): ByteArray =
-        buildPacket(CMD_FIT_TEST, payload = byteArrayOf(if (on) 0x01 else 0x00))
+    fun fitTest(on: Boolean): ByteArray = Commands.fitTest(on)
 
-    /**
-     * SET_ANC (0x0404): `01 01` then a little-endian bit field with bit [bit] set, `index / 8 + 1`
-     * bytes long. The bit is the mode's `protocolIndex` for the connected model ([AncModes],
-     * PROTOCOL-LEGACY.md §5). Buds 4: Off 0 `01 01 01`, Transparency 2 `01 01 04`, Deep 4, Medium 5,
-     * Light 6, Adaptive 11 `01 01 00 08`.
-     *
-     * Reports (`0x810C`, `0x0204` subType 3) name the SAME tree's bits, but a mode's child where it
-     * has one (Buds 4 reports Off as bit 3, Transparency as bit 8). Setting a child bit was tried
-     * once and sent the wrong mode: SET uses the parent. Adaptive's bit is 11, not 8: `8` gives
-     * `01 01 00 01`, a different mode.
-     */
-    fun anc(bit: Int): ByteArray {
-        val arr = ByteArray(2 + bit / 8 + 1)
-        arr[0] = 0x01
-        arr[1] = 0x01
-        arr[2 + bit / 8] = (1 shl (bit % 8)).toByte()
-        return buildPacket(CMD_SET_ANC, payload = arr)
-    }
-
-    private fun featurePayload(featureId: Int, on: Boolean): ByteArray =
-        byteArrayOf(featureId.toByte(), if (on) 0x01 else 0x00)
+    fun anc(bit: Int): ByteArray = Commands.anc(bit)
 
     /** Find my earbuds — `0x0400` `01` start / `00` stop, both buds, no side byte. `[CAPTURE]` 2026-09-23. */
-    fun findTone(on: Boolean): ByteArray =
-        buildPacket(CMD_FIND_BUDS, payload = byteArrayOf(if (on) 0x01 else 0x00))
+    fun findTone(on: Boolean): ByteArray = Commands.findTone(on)
 
     /** Any `0x0403` feature switch. Spatial (`0x1B`) and Hi-Res (`0x18`) are `[CAPTURE]` — PROTOCOL-LEGACY.md §9. */
     fun setFeature(featureId: Int, on: Boolean, seq: Int? = null): ByteArray =
-        buildPacket(CMD_SET_FEATURE, seq = seq, payload = featurePayload(featureId, on))
+        Commands.feature(featureId, on, seq)
 
     fun queryFirmware(): ByteArray = Commands.queryFirmware()
 
@@ -323,38 +301,16 @@ object OpoProtocol {
         .joinToString(".") { it[2].trim() }
         .ifEmpty { null }
     fun queryBattery(): ByteArray = buildPacket(CMD_QUERY_BATTERY, seq = 0xF0)
-    fun queryAncMode(): ByteArray = buildPacket(CMD_QUERY_ANC, payload = byteArrayOf(0x01, 0x01))
+    fun queryAncMode(): ByteArray = Commands.queryAncMode()
 
     /** The level Smart chose: `00 04 01 <SET bit mask LE>`, also pushed as `03 04 01 <mask>` `[VENDOR]`. */
-    fun querySmartLevel(): ByteArray = buildPacket(CMD_QUERY_ANC, payload = byteArrayOf(0x04, 0x01))
+    fun querySmartLevel(): ByteArray = Commands.querySmartLevel()
+
+    /** getNoiseReductionSwitchMode — which ANC modes the hold cycles through. Built in [Commands.queryNoiseSwitchModes]. */
+    fun queryNoiseSwitchModes(type: Int = HOLD_TYPE_SHARED): ByteArray = Commands.queryNoiseSwitchModes(type)
 
     /**
-     * getNoiseReductionSwitchMode — WHICH ANC modes the hold cycles through.
-     *
-     * `0x010C` is one command number carrying several different questions, selected by the
-     * payload. `[OSS]`, from the Melody-derived tables:
-     *
-     *     01 01   getCurrentNoiseReductionMode   what is active right now  <- queryAncMode()
-     *     02 01   getNoiseReductionSwitchMode    the HOLD's mode list
-     *     02 03   "                              (list may be one of these)
-     *     02 04   "                              (…the source lists all three)
-     *     04 01   getIntelligentNoiseReductionMode
-     *
-     * WHY THIS EXISTS: the hold's ANC cycle has its own write (setHoldAncModes).
-     * Its key-function byte (`0x08`) only *reports* that the hold cycles ANC — measured on
-     * the device, clearing that byte did not stop the cycle, and which modes it stepped
-     * through was decided entirely on the vendor side. The mode list lives HERE instead, and
-     * this read is the cheap, read-only way to see it before anyone writes `0x0404`.
-     *
-     * READ-ONLY, so it cannot change a binding. `[VENDOR]`: `02 01` on
-     * most models, `02 03` (left) and `02 04` (right) on models with a per-bud hold
-     * (`longPressType`), see [HOLD_TYPE_SHARED].
-     */
-    fun queryNoiseSwitchModes(type: Int = HOLD_TYPE_SHARED): ByteArray =
-        buildPacket(CMD_QUERY_ANC, payload = byteArrayOf(0x02, type.toByte()))
-
-    /**
-     * The hold cycle's noise type, the second byte of [setHoldAncModes] and [queryNoiseSwitchModes].
+     * The hold cycle's noise type, the second byte of [Commands.holdAncModes] and [Commands.queryNoiseSwitchModes].
      * `[VENDOR]`: 1 for one cycle shared by both buds, 3 (left) / 4
      * (right) on models whose `longPressType` gives each bud its own hold.
      */
@@ -362,36 +318,8 @@ object OpoProtocol {
     const val HOLD_TYPE_LEFT = 3
     const val HOLD_TYPE_RIGHT = 4
 
-    /**
-     * setSupportNoiseReduction — WRITE which ANC modes the hold cycles through.
-     *
-     * `[CAPTURE]` 2026-09-22, via an HCI capture of HeyMelody itself (Option C,
-     * PACKET-CAPTURE.md): he added Adaptive to a 3-stop hold cycle in HeyMelody, and the
-     * app sent `AA 0A 00 00 04 04 <seq> 04 00 02 01 07 08` — `0x0404` action `02`, noiseType
-     * `01`, then the mask `07 08` (little-endian `0x0807`). Acked (`0x8404` status `00`), and
-     * the immediate `0x010C` `02 01` read-back returned the same `07 08`, up from `07 00`
-     * (`0x0007`) beforehand.
-     *
-     * THIS CONFIRMS THE MASK REUSES [anc]'S OWN BIT NUMBERING, not a separate scheme —
-     * bit 11 (`0x0800`) is exactly Adaptive's bit in the plain SET_ANC table above, and it is
-     * the only bit that moved. PROTOCOL-LEGACY.md §5 previously carried this as `[INFERRED]`; this
-     * capture settles it. Off = bit 0, Transparency = bit 2 (matching [anc]); bit 1 is
-     * some generic "On" that resolves to whichever level was last hand-set, seen set in every
-     * capture so far and never independently isolated.
-     *
-     * A DIFFERENT COMMAND FROM [anc], same command NUMBER. `0x0404`'s first payload
-     * byte selects the question: `01 01 <bits>` sets the CURRENT mode (see [ancOff] etc.),
-     * `02 01 <mask LE>` sets the cycle's MEMBERSHIP. Do not merge these two payload shapes.
-     */
-    fun setHoldAncModes(mask: Int, type: Int = HOLD_TYPE_SHARED): ByteArray {
-        // `[VENDOR]` `NoiseReductionInfo.getData()`: the mask in as few bytes as it needs (1-4), LE.
-        var len = 4
-        while (len > 1 && (mask ushr ((len - 1) * 8)) and 0xFF == 0) len--
-        return buildPacket(
-            CMD_SET_ANC,
-            payload = byteArrayOf(0x02, type.toByte()) + ByteArray(len) { (mask ushr (it * 8)).toByte() }
-        )
-    }
+    /** setSupportNoiseReduction — write which ANC modes the hold cycles through. Built in [Commands.holdAncModes]. */
+    fun setHoldAncModes(mask: Int, type: Int = HOLD_TYPE_SHARED): ByteArray = Commands.holdAncModes(mask, type)
 
     /**
      * setKeyFunction write for the on-call group (`btn 0x06`) — `[CAPTURE]`, same capture as
@@ -455,23 +383,21 @@ object OpoProtocol {
     /** -> `0x8124` `00 FB 05 <level>`. */
     fun queryBassWaveLevel(): ByteArray = buildPacket(CMD_QUERY_BASSWAVE_LEVEL)
 
-    fun setAlertVolume(level: Int): ByteArray =
-        buildPacket(CMD_SET_ALERT_VOLUME, payload = byteArrayOf(level.coerceIn(1, 10).toByte()))
-    fun queryAlertVolume(): ByteArray = buildPacket(CMD_QUERY_ALERT_VOLUME)
+    fun setAlertVolume(level: Int): ByteArray = Commands.alertVolume(level)
+    fun queryAlertVolume(): ByteArray = Commands.queryAlertVolume()
 
-    fun setSpatialType(type: Int): ByteArray = buildPacket(CMD_SET_SPATIAL_TYPE, payload = byteArrayOf(type.toByte()))
-    fun querySpatialType(): ByteArray = buildPacket(CMD_QUERY_SPATIAL_TYPE)
-    fun spatialOnBuds(): ByteArray = buildPacket(CMD_SPATIAL_SOURCE, payload = byteArrayOf(0))
-    fun queryCodec(): ByteArray = buildPacket(CMD_QUERY_CODEC)
-    fun queryCodecList(): ByteArray = buildPacket(CMD_QUERY_CODEC_LIST)
+    fun setSpatialType(type: Int): ByteArray = Commands.spatialType(type)
+    fun querySpatialType(): ByteArray = Commands.querySpatialType()
+    fun spatialOnBuds(): ByteArray = Commands.spatialOnBuds()
+    fun queryCodec(): ByteArray = Commands.queryCodec()
+    fun queryCodecList(): ByteArray = Commands.queryCodecList()
     /** HeyMelody sends Hi-Res only with LDAC (`3`) or LHDC V5 (`8`), else `0`; the last byte is always `0`. */
-    fun setCodec(codec: Int, hiRes: Boolean): ByteArray = buildPacket(CMD_SET_CODEC,
-        payload = byteArrayOf(codec.toByte(), if (hiRes && (codec == 3 || codec == 8)) 1 else 0, 0))
+    fun setCodec(codec: Int, hiRes: Boolean): ByteArray = Commands.codec(codec, hiRes)
     /** HeyMelody sends every pick, Off (`0`) included, with enable `01`. */
-    fun setGameSoundType(type: Int): ByteArray = buildPacket(CMD_GAME_SOUND, payload = byteArrayOf(type.toByte(), 0x01))
-    fun queryGameSound(): ByteArray = buildPacket(CMD_QUERY_GAME_SOUND)
-    fun setHeadMotionType(type: Int): ByteArray = buildPacket(CMD_SET_HEAD_MOTION_TYPE, payload = byteArrayOf(type.toByte()))
-    fun queryHeadMotionType(): ByteArray = buildPacket(CMD_QUERY_HEAD_MOTION_TYPE)
+    fun setGameSoundType(type: Int): ByteArray = Commands.gameSoundType(type)
+    fun queryGameSound(): ByteArray = Commands.queryGameSound()
+    fun setHeadMotionType(type: Int): ByteArray = Commands.headMotionType(type)
+    fun queryHeadMotionType(): ByteArray = Commands.queryHeadMotionType()
 
     fun queryDevices(): ByteArray = buildPacket(CMD_QUERY_DEVICES)
     private fun macBytes(mac: String) = mac.split(":").map { it.toInt(16).toByte() }.toByteArray()

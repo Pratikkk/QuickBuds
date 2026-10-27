@@ -57,7 +57,7 @@ object Cmd {
     fun wearing() = Frame(0x0109, ByteArray(0), seq = 0xF2)
     fun firmware() = f(0x0105)
     /** `0x010C <what> <arg>`: `01 01` current mode, `02 01` shared hold cycle (`02 03` left, `02 04` right), `04 01` the level Smart chose. */
-    fun ancRead(what: Int, arg: Int) = f(0x010C, what, arg)
+    fun ancRead(what: Int, arg: Int) = Frame(0x010C, Commands.ancReadPayload(what, arg))
     fun gestures() = f(0x0108)
     /** `0x010D <count> <ids>`. */
     fun features(ids: List<Int>) = f(0x010D, ids.size, *ids.toIntArray())
@@ -68,25 +68,17 @@ object Cmd {
     // --- Writes ---
 
     /** `0x0404 01 01 <mask LE>`: one bit set, `bit / 8 + 1` mask bytes. [bit] is the model's SET slot. */
-    fun ancSet(bit: Int): Frame {
-        val p = ByteArray(2 + bit / 8 + 1)
-        p[0] = 1; p[1] = 1
-        p[2 + bit / 8] = (1 shl (bit % 8)).toByte()
-        return Frame(0x0404, p)
-    }
+    fun ancSet(bit: Int) = Frame(0x0404, Commands.ancPayload(bit))
 
     /** `0x0404 02 <kind> <mask LE>`: the modes the hold cycles. The mask takes the fewest bytes, 1 to 4. */
-    fun holdCycle(kind: Int, mask: Int): Frame {
-        val n = (4 downTo 1).first { it == 1 || (mask ushr ((it - 1) * 8)) and 0xFF != 0 }
-        return Frame(0x0404, byteArrayOf(2, kind.toByte()) + ByteArray(n) { (mask ushr (it * 8)).toByte() })
-    }
+    fun holdCycle(kind: Int, mask: Int) = Frame(0x0404, Commands.holdAncModesPayload(mask, kind))
 
     /** `0x0401 <count> <entries>`: the whole table, every time. */
     fun gestureTable(table: List<Binding>): Frame =
         f(0x0401, table.size, *table.flatMap { listOf(it.dev, it.button, it.act, it.func) }.toIntArray())
 
     /** `0x0403 <id> <01|00>`. */
-    fun feature(id: Int, on: Boolean) = f(0x0403, id, if (on) 1 else 0)
+    fun feature(id: Int, on: Boolean) = Frame(0x0403, Commands.featurePayload(id, on))
 
     /** `0x0406 <id>`: select a built-in preset. */
     fun eqSelect(id: Int) = f(0x0406, id)
@@ -118,28 +110,28 @@ object Cmd {
     // --- Sound and device settings (section 13) ---
 
     fun alertVolumeRead() = f(0x0130)
-    /** `0x0427 <level>`, clamped to 1..10, as the shipping builder does. Each write plays a prompt: send on slider release only. */
-    fun alertVolume(level: Int) = f(0x0427, level.coerceIn(1, 10))
+    /** `0x0427 <level>`, clamped to 1..10. Each write plays a prompt: send on slider release only. */
+    fun alertVolume(level: Int) = Frame(0x0427, Commands.alertVolumePayload(level))
     fun tapLevelRead() = f(0x0133)
     /** `0x042D <level>`, 1..5. A lower level triggers more easily. */
-    fun tapLevel(level: Int) = f(0x042D, level)
+    fun tapLevel(level: Int) = Frame(0x042D, Commands.tapLevelPayload(level))
     fun headGestureRead() = f(0x0134)
     /** `0x0431 <type>`: 0 nod answers and shake declines, 1 the reverse. */
-    fun headGesture(type: Int) = f(0x0431, type)
+    fun headGesture(type: Int) = Frame(0x0431, Commands.headMotionPayload(type))
     fun spatialRead() = f(0x012A)
     /** `0x0422 <type>`: 0 off, 1 fixed, 2 head tracking. */
-    fun spatial(type: Int) = f(0x0422, type)
+    fun spatial(type: Int) = Frame(0x0422, Commands.spatialTypePayload(type))
     /** `0x041E <source>`: 0 the buds render 3D audio, 1 the phone does. */
-    fun spatialSource(source: Int) = f(0x041E, source)
+    fun spatialSource(source: Int) = Frame(0x041E, Commands.spatialSourcePayload(source))
     fun codecRead() = f(0x0114)
     fun codecListRead() = f(0x0123)
     /** `0x041A <codec> <hiRes> 00`. The Hi-Res byte is set only with LDAC (3) or LHDC V5 (8). */
-    fun codec(codec: Int, hiRes: Boolean) = f(0x041A, codec, if (hiRes && (codec == 3 || codec == 8)) 1 else 0, 0)
+    fun codec(codec: Int, hiRes: Boolean) = Frame(0x041A, Commands.codecPayload(codec, hiRes))
     fun gameSoundRead() = f(0x012B)
     /** `0x0423 <type> 01`; type 0 is off. */
-    fun gameSound(type: Int) = f(0x0423, type, 1)
+    fun gameSound(type: Int) = Frame(0x0423, Commands.gameSoundPayload(type))
     /** `0x0420 01 <state>`: a game app is in the foreground. Applies only while feature `21` is on. */
-    fun gameEq(inGame: Boolean) = f(0x0420, 1, if (inGame) 1 else 0)
+    fun gameEq(inGame: Boolean) = Frame(0x0420, Commands.gameEqStatePayload(inGame))
 
     /** The codecs in a mask, as the app offers them: LHDC (7) is dropped when LHDC V5 (8) is offered too. */
     fun codecsOf(mask: Int): List<Int> {
@@ -148,11 +140,11 @@ object Cmd {
     }
 
     /** `0x0400 <01|00>`: ring both buds. */
-    fun find(on: Boolean) = f(0x0400, if (on) 1 else 0)
+    fun find(on: Boolean) = Frame(0x0400, Commands.findTonePayload(on))
     /** `0x0405 <01|00>`: fit test. The result is push `04`. */
-    fun fitTest(on: Boolean) = f(0x0405, if (on) 1 else 0)
+    fun fitTest(on: Boolean) = Frame(0x0405, Commands.fitTestPayload(on))
     /** `0x0412 <action>`: 1 test, 2 use the stored result, 3 cancel. */
-    fun personalAnc(action: Int) = f(0x0412, action)
+    fun personalAnc(action: Int) = Frame(0x0412, Commands.personalNoisePayload(action))
     fun personalAncStored() = f(0x011A)
 
     // --- Dual connection (section 14) ---
