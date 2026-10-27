@@ -245,6 +245,8 @@ object UpdateChecker {
             PacketLogger.error("update job fetch", it)
             return
         }
+        // The switch can turn off while the fetch runs.
+        if (!prefs.getBoolean(KEY_AUTO, true)) return
         val fetchedAt = System.currentTimeMillis()
         val installed = installed(c)
         val announced = prefs.getString(KEY_ANNOUNCED, null)
