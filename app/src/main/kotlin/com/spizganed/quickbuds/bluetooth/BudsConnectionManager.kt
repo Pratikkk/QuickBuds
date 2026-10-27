@@ -281,8 +281,29 @@ class BudsConnectionManager(private val context: Context) {
         }
     }
 
+    /**
+     * Whether Android reports [device] connected on A2DP or HEADSET. This is the live audio link
+     * of buds that are out of the case. [LinkState.UNKNOWN] means the answer is not available
+     * (no adapter, no permission), so the caller connects as before.
+     */
+    fun audioLinkState(device: BluetoothDevice): LinkState {
+        val manager = context.getSystemService(BluetoothManager::class.java) ?: return LinkState.UNKNOWN
+        if (manager.adapter?.isEnabled != true) return LinkState.UNKNOWN
+        return try {
+            val profiles = listOf(BluetoothProfile.A2DP, BluetoothProfile.HEADSET)
+            val connected = profiles.any { p -> manager.getConnectedDevices(p).any { it.address == device.address } }
+            if (connected) LinkState.CONNECTED else LinkState.DISCONNECTED
+        } catch (e: Exception) {
+            LinkState.UNKNOWN
+        }
+    }
 
-    fun connect(device: BluetoothDevice, withAudio: Boolean = false) {
+    /**
+     * Starts the socket tries. [withAudio] brings the phone audio up (a user connect only).
+     * [user] is true for the Connect button, the widget tap and Dev tools: only then the tries
+     * show toasts. An automatic connect stays silent.
+     */
+    fun connect(device: BluetoothDevice, withAudio: Boolean = false, user: Boolean = false) {
         if (isConnecting || isConnected()) {
             log("Already connecting/connected, ignoring.")
             return
@@ -329,7 +350,8 @@ class BudsConnectionManager(private val context: Context) {
                 var failedTries = 0
                 fun tryFailed() {
                     failedTries++
-                    if (generation == connectGeneration) toast(context.getString(R.string.connect_try_failed, failedTries, totalTries))
+                    if (generation == connectGeneration && ConnectPolicy.showTryToast(user))
+                        toast(context.getString(R.string.connect_try_failed, failedTries, totalTries))
                 }
 
                 // socket.connect() has no timeout. A close after 12 s makes a stuck call throw.
@@ -398,7 +420,8 @@ class BudsConnectionManager(private val context: Context) {
                     // Disconnect or a new connect raised the generation, so that attempt ends quietly.
                     if (generation == connectGeneration) {
                         log("Giving up after $totalTries connect tries. Tap CONNECT to retry manually.")
-                        toast(context.getString(R.string.connect_gave_up, totalTries))
+                        if (ConnectPolicy.showTryToast(user))
+                            toast(context.getString(R.string.connect_gave_up, totalTries))
                     }
                     reconnectAttempts = 0
                     return@Thread
