@@ -81,7 +81,6 @@ Read before changing anything:
 
 - [PROTOCOL.md](./PROTOCOL.md): the wire format. Every claim is tagged with its source.
 - [FEATURE-SYNC.md](./FEATURE-SYNC.md): one rule for every setting that writes to the buds and reads from them.
-- [PROTOCOL-LEGACY.md](./PROTOCOL-LEGACY.md): the shipping layer. Verified facts from PROTOCOL.md merge into it.
 - [ROADMAP.md](./ROADMAP.md): the plan, and the list of features decided against. Please check that
   list before proposing a feature.
 
