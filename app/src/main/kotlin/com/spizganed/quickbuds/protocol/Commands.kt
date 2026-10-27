@@ -1,7 +1,7 @@
 package com.spizganed.quickbuds.protocol
 
 /*
- * The command builders: one place builds each payload the app sends.
+ * The command builders: the shipping layer builds each payload here.
  * OpoProtocol keeps the names and signatures and delegates here. The Golden Sound builders are in
  * HearingCommands.kt. PROTOCOL-LEGACY.md documents every command.
  */
@@ -148,15 +148,15 @@ internal object Commands {
      * (`longPressType`), see [OpoProtocol.HOLD_TYPE_SHARED].
      */
     fun queryNoiseSwitchModes(type: Int = OpoProtocol.HOLD_TYPE_SHARED): ByteArray =
-        queryAnc(OpoProtocol.CMD_QUERY_ANC, 0x02, type)
+        queryAnc(0x02, type)
 
-    fun queryAncMode(): ByteArray = queryAnc(OpoProtocol.CMD_QUERY_ANC, 0x01, 0x01)
+    fun queryAncMode(): ByteArray = queryAnc(0x01, 0x01)
 
     /** The level Smart chose: `00 04 01 <SET bit mask LE>`, also pushed as `03 04 01 <mask>` `[VENDOR]`. */
-    fun querySmartLevel(): ByteArray = queryAnc(OpoProtocol.CMD_QUERY_ANC, 0x04, 0x01)
+    fun querySmartLevel(): ByteArray = queryAnc(0x04, 0x01)
 
-    private fun queryAnc(cmd: Int, what: Int, arg: Int): ByteArray =
-        OpoProtocol.buildPacket(cmd, payload = ancReadPayload(what, arg))
+    private fun queryAnc(what: Int, arg: Int): ByteArray =
+        OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_ANC, payload = ancReadPayload(what, arg))
 
     internal fun ancReadPayload(what: Int, arg: Int): ByteArray = byteArrayOf(what.toByte(), arg.toByte())
 
@@ -386,7 +386,7 @@ internal object Commands {
     fun queryDevices(): ByteArray = OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_DEVICES)
 
     /** The MAC in written order, as the connect and preferred writes send it. */
-    internal fun macBytes(mac: String): ByteArray = mac.split(":").map { it.toInt(16).toByte() }.toByteArray()
+    private fun macBytes(mac: String): ByteArray = mac.split(":").map { it.toInt(16).toByte() }.toByteArray()
 
     /** `0x0429 01|02 <MAC>`: connect or disconnect a device. */
     fun connectDevice(mac: String, on: Boolean): ByteArray =

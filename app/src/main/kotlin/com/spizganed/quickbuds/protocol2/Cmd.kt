@@ -9,8 +9,9 @@ import com.spizganed.quickbuds.protocol.Replies
 /**
  * Typed messages of docs/PROTOCOL.md: builds what the app sends. Each function returns a [Frame]
  * (command, payload); the link layer adds the sequence number and the frame. The payload comes from
- * `protocol/Commands.kt` and `protocol/HearingCommands.kt`, so both layers build it in one place. [seq] holds the fixed number of the
- * battery and wearing queries. The batch frame comes from `protocol/Replies.kt`. Written from the spec.
+ * `protocol/Commands.kt` and `protocol/HearingCommands.kt`, so both layers build it in one place.
+ * [seq] holds the fixed number of the battery and wearing queries. The batch frame comes from
+ * `protocol/Replies.kt`. Written from the spec.
  */
 data class Frame(val cmd: Int, val payload: ByteArray, val seq: Int? = null) {
     override fun equals(other: Any?) =
@@ -95,7 +96,7 @@ object Cmd {
         Delete(3),
     }
 
-    /** `0x0418 <action> <min> <max> <id> <nameLen> <name> <bands> [<freq u16 LE> <gain s8>]...` */
+    /** `0x0418 <action> <tag> <id> <nameLen> <name> <bands> [<freq u16 LE> <gain s8>]...`. The tag bytes stay verbatim. */
     fun eqPreset(action: EqAction, p: EqCodec.Preset) = Frame(0x0418, Commands.customEqPayload(action.code, p))
 
     /** `0x041B FB 05 <level>`: BassWave level, -5 to 5. The BassWave switch is feature `1D`. */
