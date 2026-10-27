@@ -121,4 +121,11 @@ class EqSnapshotTest {
         assertEquals(listOf(3), state.custom.map { it.id })
         assertTrue("no snapshot paints an empty state", EqState.paint(null, null).custom.isEmpty())
     }
+
+    @Test fun beforeAnyLinkTheStateIsTheSnapshot() {
+        val snap = EqSnapshot("AA:BB:CC:DD:EE:FF", 4, 2, listOf(preset(1, "Mine", listOf(1, 2, 3))))
+        assertEquals(EqState(4, 2, snap.custom), EqState.beforeLink(snap))
+        assertEquals(EqState(), EqState.beforeLink(null))
+        assertEquals(EqState(), EqState.forLink(snap, "11:22:33:44:55:66"))
+    }
 }

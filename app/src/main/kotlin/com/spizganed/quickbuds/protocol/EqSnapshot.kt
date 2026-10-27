@@ -83,6 +83,10 @@ data class EqState(
                 EqState(snapshot.current, snapshot.bassWave, snapshot.custom)
             else EqState()
 
+        /** The state before any link: the last snapshot, whatever its MAC. The link up then applies [forLink]. */
+        fun beforeLink(snapshot: EqSnapshot?): EqState =
+            if (snapshot == null) EqState() else EqState(snapshot.current, snapshot.bassWave, snapshot.custom)
+
         /** The state the screen paints: the manager's state after a bind, else the snapshot. */
         fun paint(manager: EqState?, snapshot: EqSnapshot?): EqState =
             manager ?: EqState(snapshot?.current, snapshot?.bassWave, snapshot?.custom.orEmpty())

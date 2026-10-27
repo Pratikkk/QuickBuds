@@ -782,20 +782,20 @@ class BudsConnectionManager(private val context: Context) {
     /** The events these buds offer (`0x8200`), once read; reset on each connect. */
     @Volatile private var offeredEvents: Set<Int>? = null
 
-    /** The EQ values the screen reads. See [EqState]. */
-    @Volatile private var eqState = EqState()
-    /** The whole state, so one render paints one version of it. */
-    val eq: EqState get() = eqState
-    val eqCurrent: Int? get() = eqState.current
-    val eqCustom: List<EqCodec.Preset> get() = eqState.custom
-    val bassWaveLevel: Int? get() = eqState.bassWave
-
     /**
      * The saved snapshot, read at construction. It paints the screen before the bind.
      * It is used for a link only when its MAC matches the device ([EqState.forLink]).
      */
     @Volatile private var eqSnapshot: EqSnapshot? =
         EqSnapshot.decode(featurePrefs().getString(EqSnapshot.KEY, null))
+    /** The EQ values the screen reads. Before a link: the snapshot, so a bind repaints no blank. See [EqState]. */
+    @Volatile private var eqState = EqState.beforeLink(eqSnapshot)
+    /** The whole state, so one render paints one version of it. */
+    val eq: EqState get() = eqState
+    val eqCurrent: Int? get() = eqState.current
+    val eqCustom: List<EqCodec.Preset> get() = eqState.custom
+    val bassWaveLevel: Int? get() = eqState.bassWave
+
     /** The MAC of the linked buds; null while no link is up, and in virtual mode. */
     @Volatile private var eqMac: String? = null
     private val eqReadGate = EqReadGate()
