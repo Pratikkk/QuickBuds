@@ -5,7 +5,7 @@ import com.spizganed.quickbuds.protocol.Wire.Message
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** The legacy parser keeps the tag bytes; the typed preset derives the range from them. */
+/** The preset keeps the tag bytes; the range comes from them. */
 class EqParityTest {
     private fun b(vararg v: Int) = ByteArray(v.size) { v[it].toByte() }
     private fun reply(vararg p: Int) = Message(0x8122, 1, b(*p))
@@ -14,7 +14,7 @@ class EqParityTest {
         p.id, p.name, p.selected, p.tag[0].toInt() to p.tag[1].toInt(), p.freqs.zip(p.gains),
     )
 
-    @Test fun listMatchesTheLegacyDecoderAndKeepsTheTag() {
+    @Test fun listMatchesTheDecoderAndKeepsTheTag() {
         val body = intArrayOf(
             0, 2,
             1, 0xFB, 5, 4, 4, 'R'.code, 'o'.code, 'c'.code, 'k'.code, 2, 62, 0, 3, 0xFA, 0, 0xFF,

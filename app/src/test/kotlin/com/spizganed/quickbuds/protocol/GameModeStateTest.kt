@@ -42,7 +42,7 @@ class GameModeStateTest {
         assertNull(gameMode(null, 1).state("065414"))
     }
 
-    /** A value other than 0 or 1 still reads as ON, as the shipping parser does. */
+    /** A value other than 0 or 1 still reads as ON. */
     @Test fun nonZeroIsOn() {
         assertEquals(true, gameMode(0, 2).state("062410"))
         assertEquals(true, gameMode(2, 0).state("065414"))

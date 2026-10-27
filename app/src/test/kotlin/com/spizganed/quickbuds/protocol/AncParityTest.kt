@@ -5,12 +5,12 @@ import com.spizganed.quickbuds.protocol.Wire.Message
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** The legacy ANC event gate is the source of truth for push 03. */
+/** The ANC event gate is the source of truth for push 03. */
 class AncParityTest {
     private fun b(vararg v: Int) = ByteArray(v.size) { v[it].toByte() }
     private fun push(vararg p: Int) = Message(0x0204, 0xFF, b(*p))
 
-    @Test fun pushMatchesTheLegacyEventGate() {
+    @Test fun pushMatchesTheEventGate() {
         for (p in listOf(
             intArrayOf(3, 1, 1, 0x20, 0),
             intArrayOf(3, 1, 1, 0x00, 1),

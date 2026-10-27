@@ -1,7 +1,7 @@
 package com.spizganed.quickbuds.protocol
 
 /*
- * The command builders: the shipping layer builds each payload here.
+ * The command builders: each payload is built here.
  * The app calls them directly. The Golden Sound builders are in
  * HearingCommands.kt. PROTOCOL.md documents every command.
  */
@@ -35,7 +35,7 @@ internal object Commands {
      * the ACK lists BOTH and the buds then emit 0x0204 subtype 02 on every wear
      * change. Wear updates are effectively instant — no polling needed.
      *
-     * The old legacy literal 01 01 02 02 was a misread: under the count-first
+     * The earlier literal 01 01 02 02 was a misread: under the count-first
      * shape it means count=1 (register battery only) with 02 02 left over. The
      * firmware ACKed that happily and silently never sent wear events, which is
      * why wear appeared to be poll-only. Do NOT revert to that.

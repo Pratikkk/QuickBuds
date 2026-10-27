@@ -5,8 +5,8 @@ import org.json.JSONException
 import org.json.JSONObject
 
 /*
- * The replies to the buds' requests and the batch layer: one layer for the legacy and typed protocols.
- * The legacy behaviour is the contract. PROTOCOL.md section 16 documents the request answers.
+ * The replies to the buds' requests and the batch layer: the one reply layer.
+ * The app behaviour is the contract. PROTOCOL.md section 11 documents the request answers.
  */
 
 object Replies {
@@ -26,7 +26,7 @@ object Replies {
     fun answerFor(cmd: Int, seq: Int, payload: ByteArray, unixSeconds: Long): ByteArray? =
         answerBody(cmd, payload, unixSeconds)?.let { OpoProtocol.buildPacket(cmd or 0x8000, seq, it) }
 
-    /** The reply payload, or null. Shared by [answerFor] and the typed layer. */
+    /** The reply payload, or null. Shared by [answerFor] and [Decode.answer]. */
     internal fun answerBody(cmd: Int, payload: ByteArray, unixSeconds: Long): ByteArray? {
         if (cmd and 0x8000 != 0) return null
         return when (cmd) {

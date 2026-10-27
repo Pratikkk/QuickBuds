@@ -7,7 +7,7 @@ import org.junit.Test
 import java.io.File
 
 /**
- * Writes `testdata/protocol_cases.json` from the legacy layer. It is skipped unless
+ * Writes `testdata/protocol_cases.json` from the protocol layer. It is skipped unless
  * `-Dqb.generate=true` is set, so a normal test run only reads the frozen file.
  */
 class ProtocolCasesGenerateTest {
@@ -97,9 +97,9 @@ class ProtocolCasesGenerateTest {
         // --- frame: whole, split, noise, bad length, slices, over 127 bytes ---
         frame("frame-battery-01", "battery", one(BATTERY_01), "CAPTURE", LOG_14 + ":37"),
         frame("frame-handshake-01", "handshake", one(HANDSHAKE_09), "CAPTURE", "docs/PROTOCOL.md"),
-        frame("frame-split-01", "battery", split(BATTERY_01, 5), "TEST-LITERAL", LEGACY + ":674"),
-        frame("frame-multi-01", "wire", concat(BATTERY_01, WEARING_01), "TEST-LITERAL", LEGACY + ":674"),
-        frame("frame-noise-01", "wire", concat("13 37", BATTERY_01), "TEST-LITERAL", LEGACY + ":680"),
+        frame("frame-split-01", "battery", split(BATTERY_01, 5), "TEST-LITERAL", PROTOCOL),
+        frame("frame-multi-01", "wire", concat(BATTERY_01, WEARING_01), "TEST-LITERAL", PROTOCOL),
+        frame("frame-noise-01", "wire", concat("13 37", BATTERY_01), "TEST-LITERAL", PROTOCOL),
         frame("frame-badlen-01", "wire", concat("AA 80 80 80", BATTERY_01), "TEST-LITERAL", FRAMER_TEST + ":36"),
         frame("frame-badlen-02", "wire", one(WIRE_02), "TEST-LITERAL", WIRE_TEST + ":52"),
         frame("frame-badlen-03", "wire", one(WIRE_07), "TEST-LITERAL", MODEL_TEST + ":74"),
@@ -112,43 +112,43 @@ class ProtocolCasesGenerateTest {
         // --- decode: battery 0x8106 and push 01 ---
         decode("decode-battery-01", "battery", BATTERY_01, "CAPTURE", LOG_14 + ":37"),
         decode("decode-battery-02", "battery", BATTERY_03, "CAPTURE", LOG_14 + ":62"),
-        decode("decode-battery-03", "battery", packetHex(0x8106, 0xF0, ProtocolCases.bytes("00 03 01 64 02 64 03 D0")), "TEST-LITERAL", LEGACY + ":870"),
-        decode("decode-battery-04", "battery", packetHex(0x0204, 0xFF, ProtocolCases.bytes("01 03 01 5A 02 5A 03 00")), "TEST-LITERAL", LEGACY + ":885"),
+        decode("decode-battery-03", "battery", packetHex(0x8106, 0xF0, ProtocolCases.bytes("00 03 01 64 02 64 03 D0")), "TEST-LITERAL", PROTOCOL),
+        decode("decode-battery-04", "battery", packetHex(0x0204, 0xFF, ProtocolCases.bytes("01 03 01 5A 02 5A 03 00")), "TEST-LITERAL", PROTOCOL),
         decode("decode-battery-05", "battery", WIRE_03, "TEST-LITERAL", WIRE_TEST + ":53"),
-        decode("decode-battery-06", "battery", packetHex(0x8106, 0xF0, ProtocolCases.bytes("00 00")), "TEST-LITERAL", LEGACY + ":877"),
+        decode("decode-battery-06", "battery", packetHex(0x8106, 0xF0, ProtocolCases.bytes("00 00")), "TEST-LITERAL", PROTOCOL),
         decode("decode-battery-07", "battery", WIRE_06, "TEST-LITERAL", "desktop/src/protocol.rs:553"),
 
         // --- decode: wearing 0x8109 and push 02 ---
         decode("decode-wearing-01", "wearing", WEARING_01, "CAPTURE", LOG_14 + ":15"),
         decode("decode-wearing-02", "wearing", WEARING_03, "CAPTURE", LOG_14 + ":67"),
         decode("decode-wearing-03", "wearing", WEARING_04, "CAPTURE", LOG_14 + ":226"),
-        decode("decode-wearing-04", "wearing", packetHex(0x8109, 0x11, ProtocolCases.bytes("00 03 01 07 02 07 03 04")), "TEST-LITERAL", LEGACY + ":1594"),
+        decode("decode-wearing-04", "wearing", packetHex(0x8109, 0x11, ProtocolCases.bytes("00 03 01 07 02 07 03 04")), "TEST-LITERAL", PROTOCOL),
 
         // --- decode: ANC push 03 ---
         decode("decode-anc-01", "anc", ANC_02, "CAPTURE", LOG_14 + ":40"),
         decode("decode-anc-02", "anc", ANC_04, "CAPTURE", LOG_14 + ":44"),
         decode("decode-anc-03", "anc", ANC_06, "CAPTURE", LOG_14 + ":60"),
-        decode("decode-anc-04", "anc", packetHex(0x0204, 0xFF, ProtocolCases.bytes("03 02 01 07 08")), "TEST-LITERAL", LEGACY + ":823"),
+        decode("decode-anc-04", "anc", packetHex(0x0204, 0xFF, ProtocolCases.bytes("03 02 01 07 08")), "TEST-LITERAL", PROTOCOL),
 
         // --- decode: game mode push 05, with the per-model byte-3 rule ---
         decode("decode-gamemode-01", "gamemode", GAMEMODE_02, "CAPTURE", LOG_14 + ":505"),
-        decode("decode-gamemode-02", "gamemode", packetHex(0x0204, 0xFF, ProtocolCases.bytes("05 01 00 00")), "TEST-LITERAL", LEGACY + ":1064", "062410"),
-        decode("decode-gamemode-03", "gamemode", packetHex(0x0204, 0xFF, ProtocolCases.bytes("05 01 00 00")), "TEST-LITERAL", LEGACY + ":1064", "065414"),
-        decode("decode-gamemode-04", "gamemode", packetHex(0x0204, 0xFF, ProtocolCases.bytes("05 00 00 01")), "TEST-LITERAL", LEGACY + ":1072", "062410"),
+        decode("decode-gamemode-02", "gamemode", packetHex(0x0204, 0xFF, ProtocolCases.bytes("05 01 00 00")), "TEST-LITERAL", PROTOCOL, "062410"),
+        decode("decode-gamemode-03", "gamemode", packetHex(0x0204, 0xFF, ProtocolCases.bytes("05 01 00 00")), "TEST-LITERAL", PROTOCOL, "065414"),
+        decode("decode-gamemode-04", "gamemode", packetHex(0x0204, 0xFF, ProtocolCases.bytes("05 00 00 01")), "TEST-LITERAL", PROTOCOL, "062410"),
 
         // --- decode: gesture table 0x8108 and F1 push ---
         decode("decode-gesture-01", "gesture", GESTURE_09, "CAPTURE", LOG_20 + ":801"),
         decode("decode-gesture-02", "gesture", GESTURE_11, "CAPTURE", LOG_20 + ":810"),
-        decode("decode-gesture-03", "gesture", packetHex(0x8108, 0x12, ProtocolCases.bytes("00 02 01 01 01")), "TEST-LITERAL", LEGACY + ":1215"),
+        decode("decode-gesture-03", "gesture", packetHex(0x8108, 0x12, ProtocolCases.bytes("00 02 01 01 01")), "TEST-LITERAL", PROTOCOL),
         decode("decode-gesture-04", "gesture", GESTURE_01, "CAPTURE", LOG_14 + ":52"),
         decode("decode-gesture-05", "gesture", GESTURE_04, "CAPTURE", LOG_14 + ":63"),
         decode("decode-gesture-06", "gesture", GESTURE_06, "CAPTURE", LOG_14 + ":449"),
-        decode("decode-gesture-07", "gesture", packetHex(0x8108, 0x14, ByteArray(0)), "TEST-LITERAL", LEGACY + ":1215"),
+        decode("decode-gesture-07", "gesture", packetHex(0x8108, 0x14, ByteArray(0)), "TEST-LITERAL", PROTOCOL),
 
         // --- decode: custom EQ list 0x8122 and batch reply 0x812F ---
         decode("decode-eq-01", "eq", EQ_04, "CAPTURE", LOG_14 + ":132"),
-        decode("decode-eq-02", "eq", packetHex(0x8122, 0x13, ProtocolCases.bytes("00 01 01")), "TEST-LITERAL", LEGACY + ":958"),
-        decode("decode-eq-03", "eq", packetHex(0x8122, 0x13, ByteArray(0)), "TEST-LITERAL", LEGACY + ":958"),
+        decode("decode-eq-02", "eq", packetHex(0x8122, 0x13, ProtocolCases.bytes("00 01 01")), "TEST-LITERAL", PROTOCOL),
+        decode("decode-eq-03", "eq", packetHex(0x8122, 0x13, ByteArray(0)), "TEST-LITERAL", PROTOCOL),
         decode("decode-batch-01", "reply", REPLY_11, "CAPTURE", LOG_14 + ":17"),
 
         // --- decode: feature push 0x0503 ---
@@ -159,14 +159,14 @@ class ProtocolCasesGenerateTest {
 
         // --- reply: requests from the buds ---
         reply("reply-time-01", OTHER_03, "CAPTURE", LOG_14 + ":75", 1750000000L),
-        reply("reply-applist-01", APPLIST_REQ, "TEST-LITERAL", LEGACY + ":194"),
-        reply("reply-capabilities-01", CAPABILITIES_REQ, "TEST-LITERAL", LEGACY + ":195"),
-        reply("reply-spatial-01", SPATIAL_REQ, "TEST-LITERAL", LEGACY + ":197"),
-        reply("reply-f2-01", F2_REQ, "TEST-LITERAL", LEGACY + ":199"),
-        reply("reply-f4-01", F4_REQ, "TEST-LITERAL", LEGACY + ":200"),
-        reply("reply-unknown-01", UNKNOWN_REQ, "TEST-LITERAL", LEGACY + ":203"),
-        reply("reply-known-01", KNOWN_REQ, "TEST-LITERAL", LEGACY + ":203"),
-        reply("reply-already-01", ALREADY_REPLY_REQ, "TEST-LITERAL", LEGACY + ":189"),
+        reply("reply-applist-01", APPLIST_REQ, "TEST-LITERAL", PROTOCOL),
+        reply("reply-capabilities-01", CAPABILITIES_REQ, "TEST-LITERAL", PROTOCOL),
+        reply("reply-spatial-01", SPATIAL_REQ, "TEST-LITERAL", PROTOCOL),
+        reply("reply-f2-01", F2_REQ, "TEST-LITERAL", PROTOCOL),
+        reply("reply-f4-01", F4_REQ, "TEST-LITERAL", PROTOCOL),
+        reply("reply-unknown-01", UNKNOWN_REQ, "TEST-LITERAL", PROTOCOL),
+        reply("reply-known-01", KNOWN_REQ, "TEST-LITERAL", PROTOCOL),
+        reply("reply-already-01", ALREADY_REPLY_REQ, "TEST-LITERAL", PROTOCOL),
 
         // --- build: connection and subscriptions ---
         build("build-handshake-01", "handshake", "handshake", args()),
@@ -230,7 +230,7 @@ class ProtocolCasesGenerateTest {
         Seed(id, "reply", "reply", hex, evidence, source, clock = clock)
 
     private fun build(id: String, topic: String, builder: String, input: JSONObject) =
-        Seed(id, topic, "build", JSONObject().put("builder", builder).put("args", input), "TEST-LITERAL", LEGACY + ":27")
+        Seed(id, topic, "build", JSONObject().put("builder", builder).put("args", input), "TEST-LITERAL", PROTOCOL)
 
     private fun args(vararg pairs: Pair<String, Any?>): JSONObject = JSONObject().apply {
         for ((key, value) in pairs) put(key, value ?: JSONObject.NULL)
@@ -282,7 +282,7 @@ class ProtocolCasesGenerateTest {
     }
 
     private companion object {
-        private const val LEGACY = "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt"
+        private const val PROTOCOL = "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt"
         private const val FEATURE_PUSH = "app/src/main/kotlin/com/spizganed/quickbuds/protocol/FeaturePush.kt"
         private const val FEATURE_PUSH_TEST = "app/src/test/kotlin/com/spizganed/quickbuds/protocol/FeaturePushTest.kt"
         private const val FRAMER_TEST = "app/src/test/kotlin/com/spizganed/quickbuds/protocol/FramerTest.kt"

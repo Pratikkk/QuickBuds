@@ -142,7 +142,7 @@ object Decode {
         }
     }
 
-    /** The legacy preset keeps the tag bytes; the typed range comes from them. */
+    /** The preset keeps the tag bytes; the range comes from them. */
     private fun preset(p: EqCodec.Preset) = EqPreset(
         p.id, p.name, p.selected, p.tag[0].toInt() to p.tag[1].toInt(), p.freqs.zip(p.gains),
     )
@@ -166,7 +166,7 @@ object Decode {
         return (0 until count).associate { u(p, 1 + it * 2) to u(p, 2 + it * 2) }
     }
 
-    /** `0x810D`: `<count>` then `<id> <value>` pairs. A count of 0 is an empty map; a short list keeps the whole pairs, as the legacy layer does. */
+    /** `0x810D`: `<count>` then `<id> <value>` pairs. A count of 0 is an empty map; a short list keeps the whole pairs. */
     private fun features(p: ByteArray): List<Pair<Int, Int>>? {
         if (p.isEmpty()) return null
         val n = u(p, 0)
@@ -176,17 +176,17 @@ object Decode {
         }
     }
 
-    /** The legacy decoder reads a whole packet, so rebuild one from the message. */
+    /** The battery decoder reads a whole packet, so rebuild one from the message. */
     private fun frame(m: Message) = OpoProtocol.buildPacket(m.cmd, m.seq, m.payload)
 
-    /** Map the legacy battery result to cells: left, right, case, with level 0 left out. */
+    /** Map the battery result to cells: left, right, case, with level 0 left out. */
     private fun cells(r: BatteryParser.Result) = listOfNotNull(
         r.left?.let { Cell(1, it.level, it.isCharging) },
         r.right?.let { Cell(2, it.level, it.isCharging) },
         r.case?.let { Cell(3, it.level, it.isCharging) },
     )
 
-    /** Map the legacy wearing result to (part, state) pairs in part order. */
+    /** Map the wearing result to (part, state) pairs in part order. */
     private fun wear(r: WearingStatusParser.Result) = listOfNotNull(
         if (r.leftValid) 1 to r.leftStatus else null,
         if (r.rightValid) 2 to r.rightStatus else null,

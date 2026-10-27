@@ -15,7 +15,7 @@ class MsgTest {
     private fun push(vararg v: Int) = Message(0x0204, 0xFF, b(*v))
     private fun dec(msg: Message) = Decode.decode(msg)
 
-    @Test fun bitmapMatchesTheShippingTable() {
+    @Test fun bitmapMatchesTheCapabilitiesTable() {
         val maps = mutableListOf(
             b(0, 0xFF, 0x77, 0x5A, 0xEA, 0x67, 0x0E, 0x20, 0x07), b(0, 0x9B, 0x2C, 0x50, 0x80),
         )
@@ -42,7 +42,7 @@ class MsgTest {
         assertEquals(Msg.Registered, dec(m(0x8205, 1, 2, 1, 0, 2, 0)))
     }
 
-    @Test fun batchMatchesTheShippingSplit() {
+    @Test fun batchMatchesTheReplySplit() {
         val replies = listOf(0x0106 to b(0, 1, 1, 0x5A), 0x010C to b(0, 1, 1, 8, 0), 0x010F to b(0, 2))
         var pl = b(0, replies.size)
         for ((c, p) in replies) pl += b(c and 0xFF, c shr 8, p.size, 0) + p
@@ -54,7 +54,7 @@ class MsgTest {
         assertEquals(2, Decode.unbatch(Message(0x812F, 7, pl.copyOf(pl.size - 1))).size)
     }
 
-    @Test fun pushesMatchTheShippingDecoders() {
+    @Test fun pushesMatchTheDecoders() {
         // Battery, from PROTOCOL.md section 13: level 0 left out, charging bit.
         val p = intArrayOf(1, 3, 1, 0x64, 2, 0xE4, 3, 0)
         val new = dec(push(*p)) as Msg.Battery
@@ -62,7 +62,7 @@ class MsgTest {
         assertEquals(listOf(Cell(1, 100, false), Cell(2, 100, true)), new.cells)
         assertEquals(old.left!!.level, 100); assertEquals(old.right!!.isCharging, true); assertNull(old.case)
         assertEquals(Msg.AncMsg(Anc.Mode(8)), dec(push(3, 1, 1, 0x08, 0x00)))
-        // The legacy event gate accepts only `03 01 01`; the hold-cycle echo and the smart form are replies, not events.
+        // The event gate accepts only `03 01 01`; the hold-cycle echo and the smart form are replies, not events.
         assertNull(dec(push(3, 4, 1, 0x20, 0)))
         assertEquals(8, AncEventParser.rawValue(b(3, 1, 1, 8, 0)))
         // The hold cycle reply: `0x810C` names it.
@@ -99,7 +99,7 @@ class MsgTest {
         assertNull(dec(push(0x0E, 3, 0, 0)))
     }
 
-    @Test fun pushesTheShippingDecoderIgnores() {
+    @Test fun pushesTheDecoderIgnores() {
         assertEquals(Msg.Gesture(2, 1, 4, 8, 3, emptyList()), dec(push(0xF1, 2, 1, 4, 8, 3)))
         assertNull(dec(push(0xF1, 1, 1)))
         assertEquals(
@@ -142,7 +142,7 @@ class MsgTest {
         assertEquals(Msg.Wear(listOf(1 to 7, 2 to 7, 3 to 4)), dec(m(0x8109, 3, 1, 7, 2, 7, 3, 4)))
         assertEquals(Msg.Wear(listOf(1 to 3, 2 to 3, 3 to 4)), dec(m(0x8109, 0, 3, 1, 3, 2, 3, 3, 4)))
         assertNull(dec(m(0x8109, 3, 9, 7, 2, 7, 3, 4)))
-        // Same facts through the shipping parser.
+        // Same facts through the parser.
         val old = com.spizganed.quickbuds.protocol.WearingStatusParser.parseQueryResponse(b(3, 1, 7, 2, 7, 3, 4))!!
         assertEquals(7 and 7, old.leftStatus and 7)
     }
@@ -195,7 +195,7 @@ class MsgTest {
 
     private fun at(n: Int, vararg tail: Int) = IntArray(n) + tail
 
-    @Test fun settingRepliesMatchTheShippingDecoder() {
+    @Test fun settingRepliesMatchTheDecoder() {
         assertEquals(Msg.AlertVolume(6), dec(m(0x8130, 0, 6)))
         assertNull(dec(m(0x8130, 1, 6)))
         assertEquals(Msg.TapLevel(2, 3), dec(m(0x8133, 0, 2, 3)))
@@ -236,7 +236,7 @@ class MsgTest {
         assertNull(dec(m(0x811F, 0, 0, 0, 0, 9, 3, 0, 0, 0, 0, 0)))
     }
 
-    @Test fun requestsFromTheBudsAreAnsweredLikeTheShippingCode() {
+    @Test fun requestsFromTheBudsAreAnswered() {
         val unix = 0x67001234L
         val cases = listOf(
             0x0500 to b(0, 0, 0, 0), 0x0500 to b(), 0x050C to b(), 0x051C to b(), 0x051D to b(),
@@ -249,12 +249,12 @@ class MsgTest {
             if (old == null) assertNull("$cmd", new)
             else {
                 assertTrue("$cmd", new != null)
-                // The shipping answer is a whole packet: its cmd at 4, payload from 9.
+                // The answer is a whole packet: its cmd at 4, payload from 9.
                 assertEquals(OpoProtocol.u16(old, 4), new!!.cmd)
                 assertTrue("$cmd ${p.toList()}", payloadOf(old).contentEquals(new.payload))
             }
         }
-        // The JSON echo. Both layers use org.json; the legacy error path logs through android.util.Log,
+        // The JSON echo uses org.json; the error path logs through android.util.Log,
         // which a JVM test does not mock, so the log is off for the bad JSON case.
         val ack = Decode.answer(Message(0x0204, 0xFF, byteArrayOf(0xF4.toByte()) + "{\"cmd\":\"a2dp_caton\",\"ver\":\"1\"}".toByteArray()), 0)!!
         assertEquals(0x8204, ack.cmd)

@@ -121,9 +121,9 @@ sealed class Msg {
     data class Ack(val cmd: Int, val status: Int, val data: List<Int>) : Msg()
     data class Gestures(
         val table: List<Binding>,
-        /** The legacy status byte: 0 in a normal reply, -1 when the payload is too short. */
+        /** The status byte: 0 in a normal reply, -1 when the payload is too short. */
         val status: Int = 0,
-        /** Bytes left after the whole entries; the legacy parser keeps them. */
+        /** Bytes left after the whole entries; the parser keeps them. */
         val trailing: List<Int> = emptyList(),
     ) : Msg()
     /** `0x810D`: (feature id, value). */

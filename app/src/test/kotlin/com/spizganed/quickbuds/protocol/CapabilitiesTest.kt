@@ -5,7 +5,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The shipping bitmap table holds all 69 bits of PROTOCOL.md section 4. */
+/** The bitmap table holds all 69 bits of PROTOCOL.md section 4. */
 class CapabilitiesTest {
     private fun bytes(vararg v: Int) = ByteArray(v.size) { v[it].toByte() }
     private fun onlyBit(bit: Int) = ByteArray(10).also { it[1 + bit / 8] = (1 shl (bit % 8)).toByte() }

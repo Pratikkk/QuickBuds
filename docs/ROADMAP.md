@@ -6,9 +6,9 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
 
 ## Planned
 
-- **Protocol: merge the new findings into the legacy layer.** The legacy layer has many fixes. `protocol2` replaces it only
-  when it does everything HeyMelody and realme Link do, on every model. Until then, build a facts ledger. It lists every
-  command, push and feature against every model, with the gaps marked. Then port the verified facts into the legacy layer.
+- **Protocol: merge each verified finding into the one layer.** The layer is `protocol/`. Build a facts ledger. It lists
+  every command, push and feature against every model, with the gaps marked. Then add each verified fact to the layer and
+  to `docs/PROTOCOL.md`.
 
 - **Material style on the desktop, next passes.** The main window has the style choice: QuickBuds, Pixel art,
   Material. Material is the default for everyone without a saved style. The window also has the system accent and M3 cards. Tested on Xvfb only: check the tray panel (Windows), Windows and a real Linux accent.
@@ -24,7 +24,7 @@ The parked and unverified work. Finished work leaves this file. Protocol finding
     realme Link command.
 - **Desktop UI rewrite (egui).** The code is in desktop-egui/ on main: layout with a sidebar, the four styles
   including Glass with real blur, a frameless rounded window. Missing there: the Feedback, Model test and Update pages, the
-  tray and quick panel, and a bundled UI font. The shipping desktop stays on Slint until then.
+  tray and quick panel, and a bundled UI font. The released desktop stays on Slint until then.
 - **Desktop setup guide and Known issues page.** The phone has a ten-page guide. The desktop has the Known issues dialog and
   the reply dialog only.
 - **Captures wanted.** Buds push `0x050E` and answer `0x012C` (realme Air6, Air7 Pro and Air8 owners): the layouts are
