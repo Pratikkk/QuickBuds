@@ -25,6 +25,7 @@ import com.spizganed.quickbuds.protocol.AncModes
 import com.spizganed.quickbuds.protocol.BatteryParser
 import com.spizganed.quickbuds.protocol.LogDecoder
 import com.spizganed.quickbuds.protocol.Capabilities
+import com.spizganed.quickbuds.protocol.Decode
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.GameModeParser
@@ -1891,7 +1892,7 @@ class BudsConnectionManager(private val context: Context) {
         if (cmd == 0x8123 && payload.size >= 3 && payload[0].toInt() == 0) {
             val mask = OpoProtocol.u16(payload, 1)
             // HeyMelody drops LHDC (7) when LHDC V5 (8) is offered too.
-            codecs = (1..8).filter { mask and (1 shl (it - 1)) != 0 }.let { if (8 in it) it - 7 else it }
+            codecs = Decode.codecsOf(mask)
             log("CODECS: $codecs RAW=[${OpoProtocol.bytesToHex(payload)}]")
             handler.post { listeners.forEach { it.onFeatureStates(featureStates) } }
             return

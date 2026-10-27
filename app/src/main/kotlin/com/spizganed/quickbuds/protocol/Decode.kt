@@ -77,6 +77,10 @@ object Decode {
         }
     }
 
+    /** The codecs in a `0x8123` mask (bit k = codec k + 1); LHDC (7) is dropped when LHDC V5 (8) is offered too. */
+    fun codecsOf(mask: Int): List<Int> =
+        (1..8).filter { mask and (1 shl (it - 1)) != 0 }.let { if (8 in it) it - 7 else it }
+
     /** What a request from the buds is. null: the command is in a known group and not a request. */
     private fun request(cmd: Int): Request? = when (cmd) {
         0x0500 -> Request.Time
