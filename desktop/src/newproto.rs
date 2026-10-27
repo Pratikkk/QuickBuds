@@ -8,7 +8,7 @@ use buds_core::wire::{encode, Message, Reassembler, BUDGET};
 /// The message inside a log-format frame (`types::build_packet`).
 fn message(p: &[u8]) -> Message { Message { cmd: cmd_of(p), seq: seq_of(p), payload: payload_of(p).to_vec() } }
 
-/// The wire frames of one message; a message above the frame budget goes out in slices (§2).
+/// The wire frames of one message; a message above the frame budget goes out in slices (PROTOCOL.md section 2).
 pub fn frames_out(cmd: u16, seq: u8, payload: &[u8]) -> Vec<Vec<u8>> {
     encode(&Message { cmd, seq, payload: payload.to_vec() }, BUDGET)
 }

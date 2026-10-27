@@ -325,7 +325,7 @@ object OpoProtocol {
  *
  * Four independent slots, four DIFFERENT function values, all matching — that is not a
  * coincidence, and byte2 == the key-function `act` in every one of them. The F1 numbering
- * is therefore NOT the key-function numbering (as §6 already warned); byte2 here is
+ * is therefore NOT the key-function numbering (as PROTOCOL.md section 15 already warned); byte2 here is
  * already a key-function `act`, not an F1 action id.
  *
  * AN EARLIER REVISION OF THIS COMMENT CLAIMED THE OPPOSITE, using this frame as its

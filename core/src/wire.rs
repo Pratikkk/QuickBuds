@@ -4,7 +4,7 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Message { pub cmd: u16, pub seq: u8, pub payload: Vec<u8> }
 
-/// The largest frame the sender writes unless the buds report a smaller one (§2).
+/// The largest frame the sender writes unless the buds report a smaller one (PROTOCOL.md section 2).
 pub const BUDGET: usize = 660;
 /// A longer `Len` is noise, not a frame.
 const MAX_LEN: usize = 4096;

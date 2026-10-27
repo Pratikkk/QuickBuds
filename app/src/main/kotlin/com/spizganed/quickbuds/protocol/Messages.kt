@@ -52,7 +52,7 @@ data class Triangle(
 /** Both ears' biquad filters of a Golden Sound result: sample rate, left, right. */
 data class Curves(val rate: Int, val left: List<Float>, val right: List<Float>)
 
-/** A request from the buds, which they expect to be answered (section 15). */
+/** A request from the buds, which they expect to be answered (PROTOCOL.md section 11). */
 sealed class Request {
     /** `0x0500`: the phone's clock. */
     object Time : Request()
@@ -108,7 +108,7 @@ class Bitmap private constructor(private val cmds: Set<Int>?) {
 
 /** A decoded message from the buds. */
 sealed class Msg {
-    // Replies (section 6)
+    // Replies (PROTOCOL.md section 3)
     data class BitmapReply(val bitmap: Bitmap) : Msg()
     /** 24-bit product id, as the buds send it. */
     data class ProductId(val id: Int) : Msg()
@@ -153,7 +153,7 @@ sealed class Msg {
     data class GoldenScanFilter(val id: Int, val curves: Curves) : Msg()
     data class Ask(val request: Request) : Msg()
 
-    // Pushes (section 5); the same facts also arrive as replies to a query
+    // Pushes (PROTOCOL.md section 10); the same facts also arrive as replies to a query
     data class Battery(val cells: List<Cell>) : Msg()
     data class Wear(val parts: List<Pair<Int, Int>>) : Msg()
     data class AncMsg(val anc: Anc) : Msg()

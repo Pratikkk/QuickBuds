@@ -34,15 +34,15 @@ pub const CMD_SET_FEATURE: u16 = 0x0403;
 
 pub const CMD_SET_ANC: u16 = 0x0404;
 
-/// `01` start / `00` stop, both buds (§9 Find my earbuds).
+/// `01` start / `00` stop, both buds (PROTOCOL.md section 18 Find my earbuds).
 pub const CMD_FIND_BUDS: u16 = 0x0400;
 
-/// `<level>` 1..10, ack `8427 00 <level>`; read `0x0130` -> `00 <level>` (§9).
+/// `<level>` 1..10, ack `8427 00 <level>`; read `0x0130` -> `00 <level>` (PROTOCOL.md section 18).
 pub const CMD_SET_ALERT_VOLUME: u16 = 0x0427;
 
 pub const CMD_QUERY_ALERT_VOLUME: u16 = 0x0130;
 
-/// `<level>` 1..5; read `0x0133` -> `00 <level> <default>` (§9, unverified).
+/// `<level>` 1..5; read `0x0133` -> `00 <level> <default>` (PROTOCOL.md section 18, unverified).
 pub const CMD_SET_TAP_LEVEL: u16 = 0x042D;
 
 pub const CMD_QUERY_TAP_LEVEL: u16 = 0x0133;
@@ -51,7 +51,7 @@ pub const CMD_FIT_TEST: u16 = 0x0405;
 
 pub const CMD_GOLDEN_DETECT: u16 = 0x040D;
 
-/// Personalized ANC (§9, unverified): `<action>` 1 test / 2 use the stored result / 3 cancel, ack `8412 <status>`;
+/// Personalized ANC (PROTOCOL.md section 20, unverified): `<action>` 1 test / 2 use the stored result / 3 cancel, ack `8412 <status>`;
 /// `0x011A` -> `00 <exist>`; the test's result is push `0B <r>` (0 applied, 1-5 a reason it failed).
 pub const CMD_PERSONAL_NOISE: u16 = 0x0412;
 
@@ -59,7 +59,7 @@ pub const CMD_QUERY_PERSONAL_NOISE: u16 = 0x011A;
 
 pub const FEATURE_PERSONAL_NOISE: u8 = 0x0C;
 
-/// Game sound type `<type> 01`; read `0x012B` -> `00 <selected> <count> <types>` (§9).
+/// Game sound type `<type> 01`; read `0x012B` -> `00 <selected> <count> <types>` (PROTOCOL.md section 18).
 pub const CMD_GAME_SOUND: u16 = 0x0423;
 
 pub const CMD_QUERY_GAME_SOUND: u16 = 0x012B;
@@ -85,7 +85,7 @@ pub const CMD_SET_BASSWAVE: u16 = 0x041B;
 
 pub const EVT_EQ_CHANGED: u16 = 0x0504;
 
-/// Time request (§9): answered `8500 <its seq> 00 <unix seconds u32 LE>`, as HeyMelody does.
+/// Time request (PROTOCOL.md section 11): answered `8500 <its seq> 00 <unix seconds u32 LE>`, as HeyMelody does.
 pub const REQ_TIME: u16 = 0x0500;
 
 pub const FEATURE_BASSWAVE: u8 = 0x1D;
@@ -96,7 +96,7 @@ pub const FEATURE_HEARING_OPTIMIZE: u8 = 0x38;
 
 pub const EVT_PUSH: u16 = 0x0204;
 
-/// Dual connection (§9): switch `0x11`; the device list `0x0112` -> `8112 00 <list>`, push `0204 06 <list>`.
+/// Dual connection (PROTOCOL.md section 19): switch `0x11`; the device list `0x0112` -> `8112 00 <list>`, push `0204 06 <list>`.
 /// Each toggle is followed by `0x0413 08 00 <00 after on | 01 after off>` (HeyMelody's, meaning unknown).
 pub const FEATURE_DUAL: u8 = 0x11;
 
@@ -104,20 +104,20 @@ pub const CMD_QUERY_DEVICES: u16 = 0x0112;
 
 pub const CMD_DUAL_FOLLOWUP: u16 = 0x0413;
 
-/// Device manager (§9, unverified): `01|02 <MAC>` connect / disconnect, `04 00` preferred device automatic,
+/// Device manager (PROTOCOL.md section 19, unverified): `01|02 <MAC>` connect / disconnect, `04 00` preferred device automatic,
 /// `04 01 <MAC>`; read `0x0132 02` -> `00 02 <00 | 01 <MAC>>`. MACs in written order (the list's reversed).
 pub const CMD_MULTI_CONNECT: u16 = 0x0429;
 
 pub const CMD_QUERY_PREFERRED: u16 = 0x0132;
 
-/// Game mode's `0x0403` switch: `0x28` on buds with game sound (`0x0423`), `0x06` elsewhere (§9).
+/// Game mode's `0x0403` switch: `0x28` on buds with game sound (`0x0423`), `0x06` elsewhere (PROTOCOL.md section 16).
 pub const FEATURE_GAME_MODE: u8 = 0x06;
 
 pub const FEATURE_GAME_MODE_MAIN: u8 = 0x28;
 
-/// `0x0205`, count first; never shorter than `03 01 02 03` (§4).
+/// `0x0205`, count first; never shorter than `03 01 02 03` (PROTOCOL.md section 8).
 /// The events to subscribe to: ours, kept to those the buds offer in `0x8200` when they sent one, as
-/// HeyMelody subscribes to the offered list only (§4). Some firmwares never ack a list with others.
+/// HeyMelody subscribes to the offered list only (PROTOCOL.md section 8). Some firmwares never ack a list with others.
 pub fn notify_ids(caps: &Caps, offered: Option<&[u8]>) -> Vec<u8> {
     let mut ids = vec![1, 2, 3];
     if caps.supports(CMD_FIT_TEST) { ids.push(0x04); }
@@ -130,7 +130,7 @@ pub fn notify_ids(caps: &Caps, offered: Option<&[u8]>) -> Vec<u8> {
 /// realme Link's wind noise switch; asked only for models with the `windMode` flag.
 pub const FEATURE_WIND_NOISE: u8 = 0x1A;
 
-/// High-quality audio (Hi-Res) and 3D audio: exclusive `0x0403` switches, §9 Spatial sound and Hi-Res.
+/// High-quality audio (Hi-Res) and 3D audio: exclusive `0x0403` switches, PROTOCOL.md section 18 Spatial sound and Hi-Res.
 pub const FEATURE_HIRES: u8 = 0x18;
 
 pub const FEATURE_SPATIAL: u8 = 0x1B;
@@ -550,7 +550,7 @@ pub fn hearing_radar(hearing: &[f32], scan: Option<(&[f32], u32)>) -> [f32; 6] {
     })
 }
 
-// --- Gestures (PROTOCOL.md section 14, section 15) ---
+// --- Gestures (PROTOCOL.md sections 14 and 15) ---
 
 /// The gesture table: read `0x0108` -> `<status> <count>` then `<dev> <btn> <act> <fn>` entries; write `0x0401`
 /// `<count> <entries>`, always the whole table (the entries we do not change come from the last read).
@@ -595,7 +595,7 @@ pub enum Event {
     ProductId(String),
     /// (index 1 left / 2 right / 3 case, level, charging)
     Battery(Vec<(u8, u8, bool)>),
-    /// (component 1 left / 2 right / 3 case, status), §8
+    /// (component 1 left / 2 right / 3 case, status), PROTOCOL.md section 13
     Wear(Vec<(u8, u8)>),
     AncRaw(u32),
     /// The level Smart chose, as a SET bit mask: `0x810C` `00 04 01 <mask>`, push `03 04 01 <mask>`.
@@ -611,7 +611,7 @@ pub enum Event {
     SpatialType(u8),
     Codec(u8),
     Codecs(Vec<u8>),
-    /// Fit test result, left and right status (§9: 1 good, 0 average, 6 poor, else an error; 0xFF missing).
+    /// Fit test result, left and right status (PROTOCOL.md section 20: 1 good, 0 average, 6 poor, else an error; 0xFF missing).
     FitResult(u8, u8),
     PncStored(bool),
     PncAck(u8),
@@ -630,7 +630,7 @@ pub enum Event {
     Preferred(Option<[u8; 6]>),
 }
 
-/// These models put the game state at payload[3], not payload[1] (§3 push `05`) `[VENDOR]`, unverified.
+/// These models put the game state at payload[3], not payload[1] (PROTOCOL.md section 10 push `05`) `[VENDOR]`, unverified.
 const GAME_STATE_AT_3: [&str; 4] = ["062410", "062810", "063010", "063410"];
 
 /// Push `05 <state>`, or `05 .. .. <state>` on [GAME_STATE_AT_3]. Non-zero = on.
