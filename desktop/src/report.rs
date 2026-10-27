@@ -64,7 +64,7 @@ fn host() -> Option<String> {
     name.filter(|n| n.len() >= 3)
 }
 
-/// Device list and device manager packets (PROTOCOL-LEGACY.md §9) hold addresses and names: only the header stays.
+/// Device list and device manager packets (PROTOCOL.md section 16) hold addresses and names: only the header stays.
 /// The `0x0204` push carries them in sub `06` (device list) and sub `F2` (connected-devices info).
 fn device_bytes(l: &Line) -> bool {
     if l.bytes.len() < 10 || l.bytes[0] != 0xAA { return false; }
@@ -420,7 +420,7 @@ mod tests {
         Line { at: "12:00:00.000".into(), dir: "RX".into(), bytes: build_packet(cmd, 0x11, pl), human: None }
     }
 
-    /// The `0x0204` push `F2` (PROTOCOL-LEGACY.md §9): `<count>`, then per device the MAC (6 bytes, reversed),
+    /// The `0x0204` push `F2` (PROTOCOL.md section 16): `<count>`, then per device the MAC (6 bytes, reversed),
     /// connect count (u16 LE), name length, name.
     fn f2_payload() -> Vec<u8> {
         let mut pl = vec![0xF2, 1];

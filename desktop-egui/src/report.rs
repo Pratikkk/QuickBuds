@@ -219,7 +219,7 @@ mod tests {
         Line { at: "12:00:00.000".into(), dir: "RX".into(), bytes: build_packet(cmd, 0x11, pl), human: None }
     }
 
-    /// The `0x0204` push `F2` (PROTOCOL-LEGACY.md §9): `<count>`, then per device the MAC (6 bytes, reversed),
+    /// The `0x0204` push `F2` (PROTOCOL.md section 16): `<count>`, then per device the MAC (6 bytes, reversed),
     /// connect count (u16 LE), name length, name.
     fn f2_payload() -> Vec<u8> {
         let mut pl = vec![0xF2, 1];
