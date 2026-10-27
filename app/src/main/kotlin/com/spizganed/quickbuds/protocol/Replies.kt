@@ -16,7 +16,7 @@ object Replies {
     /** Command groups HeyMelody knows, as the command's high byte. A request from any other group gets `01`. */
     private val KNOWN_GROUPS = setOf(0x01, 0x02, 0x03, 0x04, 0x05, 0x0F)
 
-    /** True when [cmd] is in a group the buds may use without an answer. The test uses the high byte. */
+    /** True when [cmd] is in a group the buds may use without an answer. The check uses the command's high byte. */
     fun knownGroup(cmd: Int): Boolean = (cmd shr 8) in KNOWN_GROUPS
 
     /**
