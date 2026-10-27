@@ -1,5 +1,8 @@
 package com.spizganed.quickbuds.protocol2
 
+import com.spizganed.quickbuds.protocol.Binding
+import com.spizganed.quickbuds.protocol.Mac
+
 import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.Feature
 import com.spizganed.quickbuds.protocol.KeyFunctionParser

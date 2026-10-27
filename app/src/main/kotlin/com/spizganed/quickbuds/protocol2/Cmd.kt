@@ -1,8 +1,11 @@
 package com.spizganed.quickbuds.protocol2
 
+import com.spizganed.quickbuds.protocol.Binding
+import com.spizganed.quickbuds.protocol.Bitmap
 import com.spizganed.quickbuds.protocol.Commands
 import com.spizganed.quickbuds.protocol.EqCodec
 import com.spizganed.quickbuds.protocol.HearingCommands
+import com.spizganed.quickbuds.protocol.Mac
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.Replies
 

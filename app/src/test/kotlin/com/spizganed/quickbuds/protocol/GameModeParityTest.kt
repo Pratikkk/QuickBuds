@@ -1,7 +1,7 @@
-package com.spizganed.quickbuds.protocol2
+package com.spizganed.quickbuds.protocol
 
-import com.spizganed.quickbuds.protocol.GameModeParser
 import com.spizganed.quickbuds.protocol.Wire.Message
+
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

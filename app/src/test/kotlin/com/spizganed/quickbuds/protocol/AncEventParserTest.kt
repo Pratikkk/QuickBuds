@@ -1,6 +1,5 @@
-package com.spizganed.quickbuds.protocol2
+package com.spizganed.quickbuds.protocol
 
-import com.spizganed.quickbuds.protocol.AncEventParser
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

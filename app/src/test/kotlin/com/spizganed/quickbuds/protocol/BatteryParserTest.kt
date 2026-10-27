@@ -1,7 +1,5 @@
-package com.spizganed.quickbuds.protocol2
+package com.spizganed.quickbuds.protocol
 
-import com.spizganed.quickbuds.protocol.BatteryParser
-import com.spizganed.quickbuds.protocol.OpoProtocol
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
