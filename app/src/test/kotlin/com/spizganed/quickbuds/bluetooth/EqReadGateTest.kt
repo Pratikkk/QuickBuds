@@ -19,4 +19,23 @@ class EqReadGateTest {
         gate.onLinkUp()
         assertTrue("the next link sends again", gate.take())
     }
+
+    @Test fun downClosesTheGate() {
+        val gate = EqReadGate()
+        gate.onLinkUp()
+        gate.take()
+        gate.onLinkDown()
+        assertFalse("a bind ask with no link sends nothing", gate.take())
+        gate.onLinkUp()
+        assertTrue("the next link sends once", gate.take())
+        assertFalse(gate.take())
+    }
+
+    /** The old gate stayed open after a link that never read, so a bind before the next link sent. */
+    @Test fun aLinkThatNeverReadDoesNotLeak() {
+        val gate = EqReadGate()
+        gate.onLinkUp()
+        gate.onLinkDown()
+        assertFalse("a bind ask after the link ended sends nothing", gate.take())
+    }
 }

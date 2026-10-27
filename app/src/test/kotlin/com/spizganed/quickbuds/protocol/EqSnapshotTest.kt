@@ -102,4 +102,23 @@ class EqSnapshotTest {
         val state = EqState.forLink(null, "AA:BB:CC:DD:EE:FF")
         assertTrue(state.custom.isEmpty())
     }
+
+    /** After the bind the manager holds the latest state, also while the link is down. */
+    @Test fun paintUsesTheManagerStateAfterTheBind() {
+        val snapshot = EqSnapshot("AA:BB:CC:DD:EE:FF", 3, 2, listOf(preset(3, "Rock", listOf(0, 0, 0))))
+        val manager = EqState(9, -4, listOf(preset(9, "Pop", listOf(1, 1, 1))))
+        val state = EqState.paint(manager, snapshot)
+        assertEquals(9, state.current)
+        assertEquals(-4, state.bassWave)
+        assertEquals(listOf(9), state.custom.map { it.id })
+    }
+
+    @Test fun paintUsesTheSnapshotBeforeTheBind() {
+        val snapshot = EqSnapshot("AA:BB:CC:DD:EE:FF", 3, 2, listOf(preset(3, "Rock", listOf(0, 0, 0))))
+        val state = EqState.paint(null, snapshot)
+        assertEquals(3, state.current)
+        assertEquals(2, state.bassWave)
+        assertEquals(listOf(3), state.custom.map { it.id })
+        assertTrue("no snapshot paints an empty state", EqState.paint(null, null).custom.isEmpty())
+    }
 }

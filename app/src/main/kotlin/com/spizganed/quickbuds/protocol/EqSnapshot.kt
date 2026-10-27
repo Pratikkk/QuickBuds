@@ -82,5 +82,9 @@ data class EqState(
             if (snapshot != null && snapshot.matches(mac))
                 EqState(snapshot.current, snapshot.bassWave, snapshot.custom)
             else EqState()
+
+        /** The state the screen paints: the manager's state after a bind, else the snapshot. */
+        fun paint(manager: EqState?, snapshot: EqSnapshot?): EqState =
+            manager ?: EqState(snapshot?.current, snapshot?.bassWave, snapshot?.custom.orEmpty())
     }
 }

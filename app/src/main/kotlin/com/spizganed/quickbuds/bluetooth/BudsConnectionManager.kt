@@ -654,6 +654,7 @@ class BudsConnectionManager(private val context: Context) {
         isReady = false
         isConnecting = false
         eqMac = null
+        eqReadGate.onLinkDown()
         connectedThread?.cancel()
         connectedThread = null
         bluetoothSocket = null
@@ -783,6 +784,8 @@ class BudsConnectionManager(private val context: Context) {
 
     /** The EQ values the screen reads. See [EqState]. */
     @Volatile private var eqState = EqState()
+    /** The whole state, so one render paints one version of it. */
+    val eq: EqState get() = eqState
     val eqCurrent: Int? get() = eqState.current
     val eqCustom: List<EqCodec.Preset> get() = eqState.custom
     val bassWaveLevel: Int? get() = eqState.bassWave
