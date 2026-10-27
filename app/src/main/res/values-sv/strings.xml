@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Klar och skarp</string>
     <string name="eq_basswave">Basförstärkning</string>
     <string name="eq_basswave_sub">Djupare bas som anpassar sig efter musiken</string>
+    <string name="eq_bass_low">Låga frekvenser</string>
+    <string name="eq_bass_mid">Mellanfrekvenser</string>
+    <string name="eq_bass_high">Höga frekvenser</string>
     <string name="eq_custom">Anpassade</string>
     <string name="eq_rename">Byt namn</string>
     <string name="eq_edit">Redigera förinställning</string>

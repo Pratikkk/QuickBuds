@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Malinaw at matalas</string>
     <string name="eq_basswave">Bass boost</string>
     <string name="eq_basswave_sub">Mas malalim na bass na umaangkop sa musika</string>
+    <string name="eq_bass_low">Mababang frequency</string>
+    <string name="eq_bass_mid">Katamtamang frequency</string>
+    <string name="eq_bass_high">Mataas na frequency</string>
     <string name="eq_custom">Custom</string>
     <string name="eq_rename">Palitan ang pangalan</string>
     <string name="eq_edit">I-edit ang preset</string>

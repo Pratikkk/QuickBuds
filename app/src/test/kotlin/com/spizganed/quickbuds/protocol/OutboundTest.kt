@@ -92,6 +92,7 @@ class OutboundTest {
         val n = EqCodec.newPreset("Ünï", listOf(100, 200, 300))
         check("new", Commands.customEq(EqCodec.ACTION_CREATE, n))
         for (l in -5..5) check("bass $l", Commands.setBassWaveLevel(l))
+        for (b in 1..3) check("bass band $b", Commands.setBassWaveLevel(4, b))
         check("eq select 2", Commands.setBuiltInEq(2))
     }
 
@@ -221,6 +222,9 @@ class OutboundTest {
         "bass 3" to (0x041B to "FB 05 03"),
         "bass 4" to (0x041B to "FB 05 04"),
         "bass 5" to (0x041B to "FB 05 05"),
+        "bass band 1" to (0x041B to "FB 05 04 01"),
+        "bass band 2" to (0x041B to "FB 05 04 02"),
+        "bass band 3" to (0x041B to "FB 05 04 03"),
         "eq select 2" to (0x0406 to "02"),
         "alert -1" to (0x0427 to "01"),
         "alert 0" to (0x0427 to "01"),

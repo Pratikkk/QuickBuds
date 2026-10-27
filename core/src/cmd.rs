@@ -128,8 +128,13 @@ pub fn eq_preset(action: EqAction, p: &EqPreset) -> Frame {
     (0x0418, out)
 }
 
-/// `0x041B FB 05 <level>`: BassWave level, -5..+5. The BassWave switch is feature `1D`.
-pub fn bass_set(level: i8) -> Frame { (0x041B, vec![0xFB, 0x05, level as u8]) }
+/// `0x041B FB 05 <level> [<band>]`: BassWave level, -5..+5. The BassWave switch is feature `1D`.
+/// `band` 0 sends no band byte. realme dynamic sound (`bassBands` 3) sends 1 low, 2 medium, 3 high.
+pub fn bass_set(level: i8, band: u8) -> Frame {
+    let mut p = vec![0xFB, 0x05, level as u8];
+    if band > 0 { p.push(band); }
+    (0x041B, p)
+}
 
 // --- Sound and device settings (PROTOCOL.md section 18) ---
 

@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">清晰通透</string>
     <string name="eq_basswave">低音增强</string>
     <string name="eq_basswave_sub">随音乐自适应的更深沉低音</string>
+    <string name="eq_bass_low">低频</string>
+    <string name="eq_bass_mid">中频</string>
+    <string name="eq_bass_high">高频</string>
     <string name="eq_custom">自定义</string>
     <string name="eq_rename">重命名</string>
     <string name="eq_edit">编辑预设</string>

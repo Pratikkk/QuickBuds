@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Bersih &amp; jernih</string>
     <string name="eq_basswave">Penguat bass</string>
     <string name="eq_basswave_sub">Bass lebih dalam yang menyesuaikan musik</string>
+    <string name="eq_bass_low">Frekuensi rendah</string>
+    <string name="eq_bass_mid">Frekuensi sedang</string>
+    <string name="eq_bass_high">Frekuensi tinggi</string>
     <string name="eq_custom">Kustom</string>
     <string name="eq_rename">Ganti nama</string>
     <string name="eq_edit">Edit preset</string>

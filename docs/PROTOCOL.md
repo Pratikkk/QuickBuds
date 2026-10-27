@@ -813,8 +813,10 @@ push 0x0504 <id>                              the EQ changed
 0x0122 → 8122 00 <count> <presets>            custom list
 0x0418 <action> <min> <max> <id> <nameLen> <name> <bands> [<freq u16 LE> <gain s8>]...     reply 8418 00 <id>
 0x0403 1D <01|00>                             BassWave on, off
-0x041B FB 05 <level>                          BassWave level, -5..+5; read 0x0124 → 00 FB 05 <level>
+0x041B FB 05 <level> [<band>]                 BassWave level, -5..+5; read 0x0124 → 00 FB 05 <level> [<band>]
 ```
+
+- realme dynamic sound `[VENDOR]`: a switch (`1D`) and three sliders. Each slider write adds a band byte: `01` low, `02` medium, `03` high frequency. A model without the band byte ignores the write and still answers `00`. `models.json` marks these models with `bassBands` 3. T310 does not answer `0x0124`, so the app shows the last values it wrote.
 
 - A preset in the list: `<selected> <min> <max> <id> <nameLen> <name> <bands> <bands...>` `[VENDOR]`. `FA 06` is gain -6..+6. `FB 05` is -5..+5. The tag bytes are `FA 06` in every frame seen `[VENDOR]`.
 - `0x0418` actions:

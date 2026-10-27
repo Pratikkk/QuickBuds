@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">คมชัด</string>
     <string name="eq_basswave">เพิ่มเบส</string>
     <string name="eq_basswave_sub">เบสลึกขึ้นที่ปรับตามเพลง</string>
+    <string name="eq_bass_low">ความถี่ต่ำ</string>
+    <string name="eq_bass_mid">ความถี่กลาง</string>
+    <string name="eq_bass_high">ความถี่สูง</string>
     <string name="eq_custom">กำหนดเอง</string>
     <string name="eq_rename">เปลี่ยนชื่อ</string>
     <string name="eq_edit">แก้ไขพรีเซ็ต</string>

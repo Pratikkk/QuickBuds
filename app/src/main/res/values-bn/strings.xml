@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">স্পষ্ট ও তীক্ষ্ণ</string>
     <string name="eq_basswave">বেস বুস্ট</string>
     <string name="eq_basswave_sub">গানের সাথে মানিয়ে নেওয়া গভীর বেস</string>
+    <string name="eq_bass_low">নিম্ন কম্পাঙ্ক</string>
+    <string name="eq_bass_mid">মাঝারি কম্পাঙ্ক</string>
+    <string name="eq_bass_high">উচ্চ কম্পাঙ্ক</string>
     <string name="eq_custom">কাস্টম</string>
     <string name="eq_rename">নাম বদলান</string>
     <string name="eq_edit">প্রিসেট সম্পাদনা</string>

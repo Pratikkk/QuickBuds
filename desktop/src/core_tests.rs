@@ -445,7 +445,9 @@ mod cmd {
         assert_eq!(gesture_table(&table[1..]), (0x0401, vec![1, 4, 6, 6, 0x1C]));
         assert_eq!(feature(0x1D, true), (0x0403, vec![0x1D, 1]));
         assert_eq!(eq_select(2), (0x0406, vec![2]));
-        assert_eq!(bass_set(-3), (0x041B, vec![0xFB, 5, 0xFD]));
+        assert_eq!(bass_set(-3, 0), (0x041B, vec![0xFB, 5, 0xFD]));
+        // realme dynamic sound: the band byte follows the level.
+        assert_eq!(bass_set(4, 2), (0x041B, vec![0xFB, 5, 4, 2]));
         assert_eq!(features(&[5, 4, 0x0B]).1, [3, 5, 4, 0x0B]);
         assert_eq!(anc_read(1, 1), (0x010C, vec![1, 1]));
     }
@@ -520,7 +522,7 @@ mod cmd {
         assert_eq!(anc_read(2, 3), (old::CMD_QUERY_ANC, vec![2, 3]));
         assert_eq!(feature(0x1D, false), (old::CMD_SET_FEATURE, vec![0x1D, 0]));
         assert_eq!(eq_select(4), (old::CMD_SET_EQ, vec![4]));
-        assert_eq!(bass_set(5), (old::CMD_SET_BASSWAVE, vec![0xFB, 5, 5]));
+        assert_eq!(bass_set(5, 0), (old::CMD_SET_BASSWAVE, vec![0xFB, 5, 5]));
         assert_eq!(find(true).0, old::CMD_FIND_BUDS);
         assert_eq!(fit_test(true).0, old::CMD_FIT_TEST);
         assert_eq!(personal_anc_stored(), (old::CMD_QUERY_PERSONAL_NOISE, vec![]));

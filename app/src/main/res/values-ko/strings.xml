@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">맑고 선명함</string>
     <string name="eq_basswave">베이스 강화</string>
     <string name="eq_basswave_sub">음악에 맞춰 변하는 더 깊은 베이스</string>
+    <string name="eq_bass_low">저주파</string>
+    <string name="eq_bass_mid">중주파</string>
+    <string name="eq_bass_high">고주파</string>
     <string name="eq_custom">사용자 지정</string>
     <string name="eq_rename">이름 바꾸기</string>
     <string name="eq_edit">프리셋 편집</string>

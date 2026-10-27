@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Clair et net</string>
     <string name="eq_basswave">Basses renforcées</string>
     <string name="eq_basswave_sub">Des basses plus profondes qui s\'adaptent à la musique</string>
+    <string name="eq_bass_low">Fréquences basses</string>
+    <string name="eq_bass_mid">Fréquences moyennes</string>
+    <string name="eq_bass_high">Fréquences hautes</string>
     <string name="eq_custom">Personnalisé</string>
     <string name="eq_rename">Renommer</string>
     <string name="eq_edit">Modifier le préréglage</string>

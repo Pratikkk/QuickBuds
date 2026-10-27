@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Clar și precis</string>
     <string name="eq_basswave">Bas amplificat</string>
     <string name="eq_basswave_sub">Bas mai profund care se adaptează muzicii</string>
+    <string name="eq_bass_low">Frecvențe joase</string>
+    <string name="eq_bass_mid">Frecvențe medii</string>
+    <string name="eq_bass_high">Frecvențe înalte</string>
     <string name="eq_custom">Personalizat</string>
     <string name="eq_rename">Redenumește</string>
     <string name="eq_edit">Editează presetarea</string>

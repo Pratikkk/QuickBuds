@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Καθαρό &amp; ευκρινές</string>
     <string name="eq_basswave">Ενίσχυση μπάσων</string>
     <string name="eq_basswave_sub">Βαθύτερα μπάσα που προσαρμόζονται στη μουσική</string>
+    <string name="eq_bass_low">Χαμηλές συχνότητες</string>
+    <string name="eq_bass_mid">Μεσαίες συχνότητες</string>
+    <string name="eq_bass_high">Υψηλές συχνότητες</string>
     <string name="eq_custom">Προσαρμοσμένα</string>
     <string name="eq_rename">Μετονομασία</string>
     <string name="eq_edit">Επεξεργασία προεπιλογής</string>

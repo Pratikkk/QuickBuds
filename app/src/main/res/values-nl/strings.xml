@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Helder en scherp</string>
     <string name="eq_basswave">Basversterking</string>
     <string name="eq_basswave_sub">Diepere bas die zich aanpast aan de muziek</string>
+    <string name="eq_bass_low">Lage frequenties</string>
+    <string name="eq_bass_mid">Middenfrequenties</string>
+    <string name="eq_bass_high">Hoge frequenties</string>
     <string name="eq_custom">Aangepast</string>
     <string name="eq_rename">Naam wijzigen</string>
     <string name="eq_edit">Preset bewerken</string>

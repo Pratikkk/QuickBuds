@@ -166,6 +166,9 @@
     <string name="eq_clear_crisp">Чіткий і чистий</string>
     <string name="eq_basswave">Підсилення басу</string>
     <string name="eq_basswave_sub">Глибший бас, що підлаштовується під музику</string>
+    <string name="eq_bass_low">Низькі частоти</string>
+    <string name="eq_bass_mid">Середні частоти</string>
+    <string name="eq_bass_high">Високі частоти</string>
     <string name="eq_custom">Власні</string>
     <string name="eq_rename">Перейменувати</string>
     <string name="eq_edit">Змінити пресет</string>
