@@ -7,7 +7,7 @@ import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.Wire
 
 /**
- * The typed protocol layer (docs/PROTOCOL.md): the one entry point of this package. The app does not call it yet; the shipping layer is the `protocol` package (`LegacyProtocol.kt`, `Wire.kt`, `Replies.kt`, the topic decoders).
+ * The typed protocol layer (docs/PROTOCOL.md): the one entry point of this package. The app does not call it yet; the shipping layer is the `protocol` package (`LegacyProtocol.kt`, `Wire.kt`, `Replies.kt`, `Commands.kt`, `HearingCommands.kt`, the topic decoders).
  * OutboundTest and MsgTest hold it byte-identical to the shipping layer, so pieces can move over one at a time.
  * Out: every frame the app sends is built here from a [Cmd] builder. In: [decode], [answer] and [rx] read what the buds send.
  * The frame envelope and the sequence counter come from the legacy builder, so both protocols share one counter.

@@ -29,6 +29,8 @@ class OutboundTest {
      */
     private fun same(label: String, legacy: ByteArray, frame: Frame) {
         val legacySeq = seqOf(legacy)
+        // The counter stops at 0xBF: a higher legacy sequence is fixed, and the frame must carry it.
+        if (legacySeq > 0xBF) assertEquals("$label fixed seq", legacySeq, frame.seq)
         if (frame.seq != null) assertEquals("$label seq", legacySeq, frame.seq)
         val seq = frame.seq ?: legacySeq
         assertEquals(label, hex(legacy), hex(OpoProtocol.buildPacket(frame.cmd, seq, frame.payload)))
@@ -119,6 +121,12 @@ class OutboundTest {
         val n = EqCodec.newPreset("Ünï", listOf(100, 200, 300))
         same("new", OpoProtocol.customEq(EqCodec.ACTION_CREATE, n), Cmd.eqPreset(Cmd.EqAction.Create, n)) { NewProtocol.customEq(EqCodec.ACTION_CREATE, n) }
         for (l in -5..5) same("bass $l", OpoProtocol.setBassWaveLevel(l), Cmd.bassSet(l)) { NewProtocol.bassLevel(l) }
+    }
+
+    @Test fun alertVolumeClampsTo1To10() {
+        for ((l, b) in listOf(-1 to 1, 0 to 1, 1 to 1, 10 to 10, 11 to 10, 255 to 10)) {
+            assertEquals("alert $l", listOf(b.toByte()), msg(OpoProtocol.setAlertVolume(l)).second)
+        }
     }
 
     @Test fun settings() {
