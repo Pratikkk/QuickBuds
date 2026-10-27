@@ -28,6 +28,7 @@ import com.spizganed.quickbuds.bluetooth.BudsConnectionManager
 import com.spizganed.quickbuds.bluetooth.BudsService
 import com.spizganed.quickbuds.protocol.Capabilities
 import com.spizganed.quickbuds.protocol.EqCodec
+import com.spizganed.quickbuds.protocol.EqSnapshot
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.OpoProtocol
 import com.spizganed.quickbuds.protocol.RowRules
@@ -178,6 +179,12 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
     /** What the preset lists last showed; see [render]. */
     private var shownSignature: String? = null
 
+    /** The saved EQ state, painted in [onCreate] before the service binds. */
+    private var snapshot: EqSnapshot? = null
+
+    /** True until the first [render] with a link: the first fill does not slide. */
+    private var firstLinkedRender = true
+
     /** The rows, kept between renders and updated in place: recommended by buds id, custom by buds id, and the just-created ones by name. */
     private val builtInChoices = LinkedHashMap<Int, Choice>()
     private val customChoices = LinkedHashMap<Int, Choice>()
@@ -208,6 +215,8 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             manager = (service as BudsService.LocalBinder).getService().manager
             manager?.addListener(this@EqActivity)
+            // The first paint after this bind is the saved state, not a change the user made.
+            firstLinkedRender = true
             manager?.refreshEq()
             manager?.requestFullStatus()   // BassWave on/off lives in the 0x810D reply
             render()
@@ -222,6 +231,9 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         // Before super.onCreate — see ThemeRes.select.
         ThemeRes.select(this)
         super.onCreate(savedInstanceState)
+        snapshot = EqSnapshot.decode(
+            getSharedPreferences(ThemeRes.PREFS_NAME, MODE_PRIVATE).getString(EqSnapshot.KEY, null)
+        )
 
         val dp = { v: Float -> ThemeRes.dp(this, v) }
         val root = SettingRowFactory.screen(this)
@@ -307,22 +319,32 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         if (bassSlider.dragging) return
         val m = manager
         val connected = m?.isConnected() == true
-        notConnected.visibility = if (connected) View.GONE else View.VISIBLE
-        val current = m?.eqCurrent
+        // Before the bind the screen does not know the link state, so it hides the label.
+        notConnected.visibility = when {
+            m == null -> View.GONE
+            connected -> View.GONE
+            else -> View.VISIBLE
+        }
+        val firstLinked = connected && firstLinkedRender
+        if (connected) firstLinkedRender = false
+        val snap = snapshot
+        // The snapshot paints while no link is up. On a link the manager holds the values,
+        // and it applied the snapshot only when the MAC matched.
+        val current = if (connected) m.eqCurrent else snap?.current
 
-        val bassOn = m?.featureStates?.get(Feature.BASSWAVE) == 1
+        val bassOn = (m?.featureStates ?: Capabilities.reply(this).orEmpty())[Feature.BASSWAVE] == 1
         bassSwitch.setFromBuds(bassOn)
-        m?.bassWaveLevel?.let { bassSlider.value = it }
+        if (connected) m.bassWaveLevel?.let { bassSlider.value = it } else snap?.bassWave?.let { bassSlider.value = it }
         // The buds move the switch; the slider follows it, animated only after the first paint.
         if (bassOn != (bassSlider.visibility == View.VISIBLE)) {
-            if (bassPainted) slide(bassSlider, bassOn, if (bassOn) 450 else 320)
+            if (bassPainted && !firstLinked) slide(bassSlider, bassOn, if (bassOn) 450 else 320)
             else bassSlider.visibility = if (bassOn) View.VISIBLE else View.GONE
         }
         bassPainted = true
 
         // A row folded shut by a delete stays hidden until the re-read drops it; without this,
         // a read landing first (the selection one) flashed it back for a frame.
-        val all = m?.eqCustom.orEmpty()
+        val all = if (connected) m.eqCustom else snap?.custom.orEmpty()
         deleting.retainAll(all.map { key(it) }.toSet())
         val custom = all.filter { key(it) !in deleting }
 
@@ -330,8 +352,8 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         val waiting = createdNames().filter { n -> custom.none { it.name == n } }
         val signature = "$connected|$current|$waiting|" + custom.joinToString { "${it.id}:${it.name}:${it.gains}" }
         if (signature == shownSignature) return
-        // Animate only a real change on screen, never the first fill.
-        val animate = shownSignature != null
+        // Animate only a real change on screen, never the first fill or the first paint after a bind.
+        val animate = shownSignature != null && !firstLinked
         shownSignature = signature
 
         val builtIns = builtInPresets()
@@ -353,7 +375,7 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         // Custom: rows no longer listed fold away, listed ones update in place, new ones grow in before any
         // placeholders (a placeholder for the same name is adopted, so its row does not blink).
         val wanted = custom.map { it.id }.toSet()
-        customChoices.keys.filter { it !in wanted }.forEach { id -> customChoices.remove(id)?.let { fold(it) } }
+        customChoices.keys.filter { it !in wanted }.forEach { id -> customChoices.remove(id)?.let { fold(it, animate) } }
         for (p in custom) {
             val c = customChoices.getOrPut(p.id) {
                 waitingChoices.remove(p.name)?.also { it.row.alpha = 1f }
@@ -371,7 +393,7 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
             if (current == p.id) selectedRow = c.card
         }
         // A preset just sent to create shows at once, dimmed, until the buds' re-read brings the real one (about a second).
-        waitingChoices.keys.filter { it !in waiting }.forEach { n -> waitingChoices.remove(n)?.let { fold(it) } }
+        waitingChoices.keys.filter { it !in waiting }.forEach { n -> waitingChoices.remove(n)?.let { fold(it, animate) } }
         for (name in waiting) waitingChoices.getOrPut(name) {
             Choice(name, { c -> c.preset?.let { showEditor(it) } }) {}.also { n ->
                 n.row.alpha = 0.5f
@@ -393,8 +415,13 @@ class EqActivity : Activity(), BudsConnectionManager.Listener {
         selection.moveTo(selectedRow, ThemeRes.color(this, R.attr.appColorAccent))
     }
 
-    /** Folds [c]'s card shut and removes it. */
-    private fun fold(c: Choice) {
+    /** Folds [c]'s card shut and removes it. Without [animate] it goes at once: the first fill does not slide. */
+    private fun fold(c: Choice, animate: Boolean = true) {
+        if (!animate) {
+            (c.card.parent as? ViewGroup)?.removeView(c.card)
+            selection.snap()
+            return
+        }
         if (c.folding) return
         c.folding = true
         slide(c.card, open = false) { (c.card.parent as? ViewGroup)?.removeView(c.card); selection.snap() }
