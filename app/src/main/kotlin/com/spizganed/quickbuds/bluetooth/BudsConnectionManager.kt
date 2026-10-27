@@ -946,7 +946,7 @@ class BudsConnectionManager(private val context: Context) {
         }
     }
 
-    /** Engine seqs travel as 0xC0..0xDF; the generic counter in LegacyProtocol never uses that range. */
+    /** Engine seqs travel as 0xC0..0xDF; the generic counter in OpoProtocol never uses that range. */
     private fun wireSeq(seq: Int) = 0xC0 + (seq % 0x20)
 
     /** Runs an engine output list on the sync thread. */

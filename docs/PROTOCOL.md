@@ -51,7 +51,7 @@ the two UUIDs in the same order and takes the channel from the buds' SDP record.
 
 A case lid close ends the socket (section 13) `[CAPTURE]`.
 
-**Code:** `protocol/LegacyProtocol.kt` holds the UUID constants. The socket code is in `bluetooth/`.
+**Code:** `protocol/Protocol.kt` holds the UUID constants. The socket code is in `bluetooth/`.
 The core crate has no transport code.
 
 ---
@@ -118,7 +118,7 @@ The sender picks `Seq`. The reply repeats it `[CAPTURE]`. QuickBuds uses these r
 - A refused `0x0403` write carries a non-zero status. `01` means the buds lack the id. `02` or any other value means they refuse it now (section 16). The buds refuse a `0x0404` write with `0E` when no bud is in an ear (section 14).
 - The app matches a reply on `(Seq, Cmd & 0x7FFF)` `[VENDOR]`.
 
-**Code:** `protocol/LegacyProtocol.kt` (the sequence counter and the envelope), `protocol/Replies.kt`; `core/src/wire.rs`.
+**Code:** `protocol/Protocol.kt` (the sequence counter and the envelope), `protocol/Replies.kt`; `core/src/wire.rs`.
 
 ---
 
@@ -136,7 +136,7 @@ The sender picks `Seq`. The reply repeats it `[CAPTURE]`. QuickBuds uses these r
 `0x01F0` and `0x01F2` are not commands. Each is a command byte welded to its Seq. Battery is `0x0106`;
 wearing is `0x0109`.
 
-**Code:** `protocol/LegacyProtocol.kt`; `core/src/msg.rs`.
+**Code:** `protocol/Protocol.kt`; `core/src/msg.rs`.
 
 ---
 
@@ -338,7 +338,7 @@ Details in the sections cited. `—` = empty payload.
 - The app asks for `01 02 03`. It adds `04` when the bitmap has `0x0405`, `08` when it has `0x040D`, and `0B` when it has `0x0412`. It keeps only the codes the buds offered `[VENDOR]`.
 - The `0x8205` ack is `01 <count>` then `<code> 00` per code `[GUESS]`. The vendor app reads none of it. The reply ends the setup.
 
-**Code:** `protocol/Commands.kt`, `protocol/LegacyProtocol.kt`; `core/src/cmd.rs`.
+**Code:** `protocol/Commands.kt`, `protocol/Protocol.kt`; `core/src/cmd.rs`.
 
 ---
 
@@ -1158,7 +1158,7 @@ The writes are `0x0408`, `0x0414`, `0x0419`, `0x041D`, `0x041F`, `0x042B`, `0x04
 - The vendor app does not send `0x042B`, `0x042C`, `0x0430` or `0x0434` behind a bitmap bit. They are not gated by the handshake.
 - The `0x03xx` group is the firmware upgrade. QuickBuds does not use it.
 
-**Code:** `protocol/LegacyProtocol.kt` (command ids), `protocol/Capabilities.kt`; `core/src/msg.rs`.
+**Code:** `protocol/Protocol.kt` (command ids), `protocol/Capabilities.kt`; `core/src/msg.rs`.
 
 ---
 

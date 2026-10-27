@@ -32,7 +32,7 @@
    "model": null,
    "expect": ["AA 0D 00 00 04 02 FF 06 00 01 02 01 64 02 64"],
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:674"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:674"
   },
   {
    "id": "frame-multi-01",
@@ -45,7 +45,7 @@
     "AA 0F 00 00 04 02 0C 08 00 02 03 01 07 02 07 03 04"
    ],
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:674"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:674"
   },
   {
    "id": "frame-noise-01",
@@ -55,7 +55,7 @@
    "model": null,
    "expect": ["AA 0D 00 00 04 02 FF 06 00 01 02 01 64 02 64"],
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:680"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:680"
   },
   {
    "id": "frame-badlen-01",
@@ -205,7 +205,7 @@
     }
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:870"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:870"
   },
   {
    "id": "decode-battery-04",
@@ -225,7 +225,7 @@
     "case": null
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:885"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:885"
   },
   {
    "id": "decode-battery-05",
@@ -245,7 +245,7 @@
    "model": null,
    "expect": null,
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:877"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:877"
   },
   {
    "id": "decode-battery-07",
@@ -319,7 +319,7 @@
     "leftValid": true
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:1594"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:1594"
   },
   {
    "id": "decode-anc-01",
@@ -371,7 +371,7 @@
    "model": null,
    "expect": {"isEvent": false},
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:823"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:823"
   },
   {
    "id": "decode-gamemode-01",
@@ -391,7 +391,7 @@
    "model": "062410",
    "expect": false,
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:1064"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:1064"
   },
   {
    "id": "decode-gamemode-03",
@@ -401,7 +401,7 @@
    "model": "065414",
    "expect": true,
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:1064"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:1064"
   },
   {
    "id": "decode-gamemode-04",
@@ -411,7 +411,7 @@
    "model": "062410",
    "expect": true,
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:1072"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:1072"
   },
   {
    "id": "decode-gesture-01",
@@ -677,7 +677,7 @@
     "status": 0
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:1215"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:1215"
   },
   {
    "id": "decode-gesture-04",
@@ -723,7 +723,7 @@
     "status": -1
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:1215"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:1215"
   },
   {
    "id": "decode-eq-01",
@@ -788,7 +788,7 @@
    "model": null,
    "expect": null,
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:958"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:958"
   },
   {
    "id": "decode-eq-03",
@@ -798,7 +798,7 @@
    "model": null,
    "expect": null,
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:958"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:958"
   },
   {
    "id": "decode-batch-01",
@@ -890,7 +890,7 @@
    "model": null,
    "expect": "AA 0A 00 00 0C 85 07 03 00 00 01 00",
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:194"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:194"
   },
   {
    "id": "reply-capabilities-01",
@@ -900,7 +900,7 @@
    "model": null,
    "expect": "AA 0A 00 00 1C 85 08 03 00 00 00 00",
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:195"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:195"
   },
   {
    "id": "reply-spatial-01",
@@ -910,7 +910,7 @@
    "model": null,
    "expect": "AA 08 00 00 1D 85 09 01 00 01",
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:197"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:197"
   },
   {
    "id": "reply-f2-01",
@@ -920,7 +920,7 @@
    "model": null,
    "expect": "AA 09 00 00 04 82 FF 02 00 00 F2",
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:199"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:199"
   },
   {
    "id": "reply-f4-01",
@@ -930,7 +930,7 @@
    "model": null,
    "expect": "AA 1D 00 00 04 82 FF 16 00 00 F4 7B 22 63 6D 64 22 3A 22 61 32 64 70 5F 63 61 74 6F 6E 22 7D",
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:200"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:200"
   },
   {
    "id": "reply-unknown-01",
@@ -940,7 +940,7 @@
    "model": null,
    "expect": "AA 08 00 00 00 86 03 01 00 01",
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:203"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:203"
   },
   {
    "id": "reply-known-01",
@@ -950,7 +950,7 @@
    "model": null,
    "expect": null,
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:203"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:203"
   },
   {
    "id": "reply-already-01",
@@ -960,7 +960,7 @@
    "model": null,
    "expect": null,
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:189"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:189"
   },
   {
    "id": "build-handshake-01",
@@ -976,7 +976,7 @@
     "cmd": 256
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-product-01",
@@ -992,7 +992,7 @@
     "cmd": 259
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-broadcast-01",
@@ -1008,7 +1008,7 @@
     "cmd": 512
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-register-01",
@@ -1028,7 +1028,7 @@
     "cmd": 517
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-register-one-01",
@@ -1044,7 +1044,7 @@
     "cmd": 513
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-battery-01",
@@ -1061,7 +1061,7 @@
     "seq": 240
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-wearing-01",
@@ -1078,7 +1078,7 @@
     "seq": 242
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-status-01",
@@ -1099,7 +1099,7 @@
     "seq": 0
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-status-02",
@@ -1120,7 +1120,7 @@
     "seq": 0
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-feature-01",
@@ -1141,7 +1141,7 @@
     "seq": 105
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-feature-game-01",
@@ -1162,7 +1162,7 @@
     "seq": 69
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-anc-01",
@@ -1178,7 +1178,7 @@
     "cmd": 1028
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-anc-02",
@@ -1194,7 +1194,7 @@
     "cmd": 1028
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-hold-01",
@@ -1213,7 +1213,7 @@
     "cmd": 1028
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-find-01",
@@ -1229,7 +1229,7 @@
     "cmd": 1024
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-fit-01",
@@ -1245,7 +1245,7 @@
     "cmd": 1029
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-alert-01",
@@ -1261,7 +1261,7 @@
     "cmd": 1063
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-eq-builtin-01",
@@ -1277,7 +1277,7 @@
     "cmd": 1030
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-bass-01",
@@ -1293,7 +1293,7 @@
     "cmd": 1051
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-eq-custom-01",
@@ -1333,7 +1333,7 @@
     "cmd": 1048
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-oncall-01",
@@ -1352,7 +1352,7 @@
     "cmd": 1025
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-keyfunction-01",
@@ -1477,7 +1477,7 @@
     "cmd": 1025
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-preferred-01",
@@ -1493,7 +1493,7 @@
     "cmd": 1065
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-dual-01",
@@ -1509,7 +1509,7 @@
     "cmd": 1043
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-earscan-01",
@@ -1528,7 +1528,7 @@
     "cmd": 1037
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-tone-01",
@@ -1548,7 +1548,7 @@
     "cmd": 1038
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-hearingtest-01",
@@ -1564,7 +1564,7 @@
     "cmd": 1037
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-gamesound-01",
@@ -1580,7 +1580,7 @@
     "cmd": 1059
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-spatial-01",
@@ -1596,7 +1596,7 @@
     "cmd": 1058
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-codec-01",
@@ -1615,7 +1615,7 @@
     "cmd": 1050
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-tap-01",
@@ -1631,7 +1631,7 @@
     "cmd": 1069
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-head-01",
@@ -1647,7 +1647,7 @@
     "cmd": 1073
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-personal-01",
@@ -1663,7 +1663,7 @@
     "cmd": 1042
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-gameeq-01",
@@ -1679,7 +1679,7 @@
     "cmd": 1056
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-query-key-01",
@@ -1695,7 +1695,7 @@
     "cmd": 264
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-query-anc-01",
@@ -1711,7 +1711,7 @@
     "cmd": 268
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   },
   {
    "id": "build-query-smart-01",
@@ -1727,7 +1727,7 @@
     "cmd": 268
    },
    "evidence": "TEST-LITERAL",
-   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt:27"
+   "source": "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt:27"
   }
  ]
 }

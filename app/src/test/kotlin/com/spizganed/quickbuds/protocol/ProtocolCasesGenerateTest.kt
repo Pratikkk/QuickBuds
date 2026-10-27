@@ -282,7 +282,7 @@ class ProtocolCasesGenerateTest {
     }
 
     private companion object {
-        private const val LEGACY = "app/src/main/kotlin/com/spizganed/quickbuds/protocol/LegacyProtocol.kt"
+        private const val LEGACY = "app/src/main/kotlin/com/spizganed/quickbuds/protocol/Protocol.kt"
         private const val FEATURE_PUSH = "app/src/main/kotlin/com/spizganed/quickbuds/protocol/FeaturePush.kt"
         private const val FEATURE_PUSH_TEST = "app/src/test/kotlin/com/spizganed/quickbuds/protocol/FeaturePushTest.kt"
         private const val FRAMER_TEST = "app/src/test/kotlin/com/spizganed/quickbuds/protocol2/LegacyFramerTest.kt"

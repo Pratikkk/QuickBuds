@@ -63,9 +63,9 @@ pub fn batch(queries: &[Frame]) -> Frame {
 
 // --- Reads ---
 
-/// `0x0106` with the fixed sequence `0xF0`, as legacy `queryBattery` (`LegacyProtocol.kt` 391).
+/// `0x0106` with the fixed sequence `0xF0`, as legacy `queryBattery` (`Protocol.kt` 391).
 pub fn battery() -> Message { Message { cmd: 0x0106, seq: 0xF0, payload: vec![] } }
-/// `0x0109` with the fixed sequence `0xF2`, as legacy `queryWearingStatus` (`LegacyProtocol.kt` 227).
+/// `0x0109` with the fixed sequence `0xF2`, as legacy `queryWearingStatus` (`Protocol.kt` 227).
 pub fn wearing() -> Message { Message { cmd: 0x0109, seq: 0xF2, payload: vec![] } }
 pub fn firmware() -> Frame { (0x0105, vec![]) }
 /// `0x010C <what> <arg>`: `01 01` current mode, `02 01` shared hold cycle (`02 03` left, `02 04` right), `04 01` the level Smart chose.
@@ -238,14 +238,14 @@ mod tests {
 
     fn packet(m: &Message) -> Vec<u8> { encode(m, BUDGET).remove(0) }
 
-    /// The legacy builders fix the sequence: `LegacyProtocol.kt` 391 (battery) and 227 (wearing).
+    /// The legacy builders fix the sequence: `Protocol.kt` 391 (battery) and 227 (wearing).
     #[test]
     fn fixed_sequences_match_legacy_packets() {
         assert_eq!(battery(), Message { cmd: 0x0106, seq: 0xF0, payload: vec![] });
-        // Legacy queryBattery, LegacyProtocol.kt 391: AA 07 00 00 06 01 F0 00 00.
+        // Legacy queryBattery, Protocol.kt 391: AA 07 00 00 06 01 F0 00 00.
         assert_eq!(packet(&battery()), [0xAA, 0x07, 0x00, 0x00, 0x06, 0x01, 0xF0, 0x00, 0x00]);
         assert_eq!(wearing(), Message { cmd: 0x0109, seq: 0xF2, payload: vec![] });
-        // Legacy queryWearingStatus, LegacyProtocol.kt 227: AA 07 00 00 09 01 F2 00 00.
+        // Legacy queryWearingStatus, Protocol.kt 227: AA 07 00 00 09 01 F2 00 00.
         assert_eq!(packet(&wearing()), [0xAA, 0x07, 0x00, 0x00, 0x09, 0x01, 0xF2, 0x00, 0x00]);
     }
 }

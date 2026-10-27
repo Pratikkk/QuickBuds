@@ -1,11 +1,10 @@
 package com.spizganed.quickbuds.protocol
 
 /*
- * The legacy protocol: the command constants, the packet envelope and the parsers that have no
+ * The protocol: the command constants, the packet envelope and the parsers that have no
  * topic file yet. The builders are in Commands.kt and HearingCommands.kt; the replies and batch
  * are in Replies.kt; the framer is in Wire.kt; the topic decoders are in Battery.kt, Anc.kt,
- * GameMode.kt, Gestures.kt and Eq.kt.
- * The typed layer (protocol2/NewProtocol.kt) is not in use yet; it calls these builders and decoders.
+ * GameMode.kt, Gestures.kt and Eq.kt. The typed reading is in Messages.kt and Decode.kt.
  * Shared data is not here: Feature.kt, Capabilities.kt, ModelCatalog.kt, AncModes.kt.
  */
 
