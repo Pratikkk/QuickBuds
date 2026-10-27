@@ -196,7 +196,7 @@ object OpoProtocol {
     fun buildQueryBroadcastCodes(): ByteArray = Commands.queryBroadcastCodes()
 
     /** getEarBudsStatus (0x0109) — returns [count][comp,st] pairs, st=4 means in case. */
-    fun queryWearingStatus(): ByteArray = buildPacket(CMD_QUERY_WEARING, seq = 0xF2)
+    fun queryWearingStatus(): ByteArray = Commands.queryWearingStatus()
 
     /** The events to subscribe to. Built in [Commands.notifyIds]. */
     fun notifyIds(fitTest: Boolean, golden: Boolean, personalNoise: Boolean, offered: Set<Int>?): List<Int> =
@@ -300,7 +300,7 @@ object OpoProtocol {
         .filter { it.size == 3 && it[1].trim() == "2" }
         .joinToString(".") { it[2].trim() }
         .ifEmpty { null }
-    fun queryBattery(): ByteArray = buildPacket(CMD_QUERY_BATTERY, seq = 0xF0)
+    fun queryBattery(): ByteArray = Commands.queryBattery()
     fun queryAncMode(): ByteArray = Commands.queryAncMode()
 
     /** The level Smart chose: `00 04 01 <SET bit mask LE>`, also pushed as `03 04 01 <mask>` `[VENDOR]`. */
@@ -464,21 +464,9 @@ object OpoProtocol {
         return buildPacket(CMD_SET_KEY_FUNCTION, payload = payload)
     }
 
-    /**
-     * [statusQuery]: the model's `statusQuery` (hex ids, HeyMelody's per-model list, PROTOCOL-LEGACY.md §9); a model
-     * without one gets the full list below. [windNoise]: the model's `windMode` flag adds [Feature.WIND_NOISE].
-     */
-    fun queryStatus(statusQuery: String? = null, windNoise: Boolean = false, seq: Int = 0x00): ByteArray {
-        val ids = (statusQuery?.split(' ')?.map { it.toInt(16).toByte() }?.toByteArray() ?: byteArrayOf(
-            // Feature ids. 0x1D (BassWave): HeyMelody asks for it too.
-            // Second line: the Earbud settings Features switches.
-            // Third line: the rest of HeyMelody's list; 0x0C personalized ANC.
-            0x05, 0x04, 0x0B, 0x11, 0x13, 0x18, 0x06, 0x1B, 0x1C, 0x27, 0x28, 0x1D,
-            0x09, 0x17, 0x30, 0x31, 0x3A,
-            0x32, 0x35, 0x37, 0x38, 0x3B, 0x0C
-        )) + if (windNoise) byteArrayOf(Feature.WIND_NOISE.toByte()) else byteArrayOf()
-        return buildPacket(CMD_QUERY_STATUS, seq = seq, payload = byteArrayOf(ids.size.toByte()) + ids)
-    }
+    /** [statusQuery] and [windNoise] select the ids. The default list is [RowRules.DEFAULT_IDS]. */
+    fun queryStatus(statusQuery: String? = null, windNoise: Boolean = false, seq: Int = 0x00): ByteArray =
+        Commands.queryStatus(statusQuery, windNoise, seq)
 
     /**
      * `0x012F` (PROTOCOL-LEGACY.md "Batch query"): built query [packets] in one frame, `<count>` then

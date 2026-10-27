@@ -51,16 +51,16 @@ object Cmd {
 
     // --- Reads ---
 
-    /** `0x0106` with the fixed sequence `0xF0`, as legacy `queryBattery` (`LegacyProtocol.kt` 391). */
-    fun battery() = Frame(0x0106, ByteArray(0), seq = 0xF0)
-    /** `0x0109` with the fixed sequence `0xF2`, as legacy `queryWearingStatus` (`LegacyProtocol.kt` 227). */
-    fun wearing() = Frame(0x0109, ByteArray(0), seq = 0xF2)
+    /** `0x0106` with the fixed sequence `0xF0`, as legacy `queryBattery`. */
+    fun battery() = Frame(0x0106, ByteArray(0), seq = Commands.SEQ_BATTERY)
+    /** `0x0109` with the fixed sequence `0xF2`, as legacy `queryWearingStatus`. */
+    fun wearing() = Frame(0x0109, ByteArray(0), seq = Commands.SEQ_WEARING)
     fun firmware() = f(0x0105)
     /** `0x010C <what> <arg>`: `01 01` current mode, `02 01` shared hold cycle (`02 03` left, `02 04` right), `04 01` the level Smart chose. */
     fun ancRead(what: Int, arg: Int) = Frame(0x010C, Commands.ancReadPayload(what, arg))
     fun gestures() = f(0x0108)
     /** `0x010D <count> <ids>`. */
-    fun features(ids: List<Int>) = f(0x010D, ids.size, *ids.toIntArray())
+    fun features(ids: List<Int>) = Frame(0x010D, Commands.statusPayload(ByteArray(ids.size) { ids[it].toByte() }))
     fun eqCurrent() = f(0x010F)
     fun eqCustom() = f(0x0122)
     fun bassLevel() = f(0x0124)

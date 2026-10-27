@@ -243,4 +243,35 @@ internal object Commands {
     internal fun headMotionPayload(type: Int): ByteArray = byteArrayOf(type.toByte())
 
     fun queryHeadMotionType(): ByteArray = OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_HEAD_MOTION_TYPE)
+
+    // --- Battery and status ---
+
+    /** Battery query `0x0106` with the fixed sequence `0xF0`. */
+    fun queryBattery(): ByteArray =
+        OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_BATTERY, seq = SEQ_BATTERY)
+
+    /** getEarBudsStatus `0x0109` with the fixed sequence `0xF2` — returns `[count][comp,st]` pairs, st=4 means in case. */
+    fun queryWearingStatus(): ByteArray =
+        OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_WEARING, seq = SEQ_WEARING)
+
+    /** The fixed sequences. The counter stops at `0xBF`, so these never collide with it. */
+    internal const val SEQ_BATTERY = 0xF0
+    internal const val SEQ_WEARING = 0xF2
+
+    /**
+     * `0x010D <count> <ids>`. [statusQuery]: the model's `statusQuery` (hex ids, HeyMelody's per-model list,
+     * PROTOCOL-LEGACY.md §9); a model without one gets [RowRules.DEFAULT_IDS]. [windNoise]: the model's
+     * `windMode` flag adds [Feature.WIND_NOISE].
+     */
+    fun queryStatus(statusQuery: String? = null, windNoise: Boolean = false, seq: Int = 0x00): ByteArray {
+        val ids = if (statusQuery != null) {
+            statusQuery.split(' ').map { it.toInt(16).toByte() }.toByteArray()
+        } else {
+            RowRules.DEFAULT_IDS.map { it.toByte() }.toByteArray()
+        }
+        val all = ids + if (windNoise) byteArrayOf(Feature.WIND_NOISE.toByte()) else byteArrayOf()
+        return OpoProtocol.buildPacket(OpoProtocol.CMD_QUERY_STATUS, seq = seq, payload = statusPayload(all))
+    }
+
+    internal fun statusPayload(ids: ByteArray): ByteArray = byteArrayOf(ids.size.toByte()) + ids
 }
