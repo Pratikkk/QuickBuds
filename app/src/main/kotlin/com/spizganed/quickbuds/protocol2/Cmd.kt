@@ -2,13 +2,14 @@ package com.spizganed.quickbuds.protocol2
 
 import com.spizganed.quickbuds.protocol.Commands
 import com.spizganed.quickbuds.protocol.EqCodec
+import com.spizganed.quickbuds.protocol.HearingCommands
 import com.spizganed.quickbuds.protocol.ModelCatalog
 import com.spizganed.quickbuds.protocol.Replies
 
 /**
  * Typed messages of docs/PROTOCOL.md: builds what the app sends. Each function returns a [Frame]
  * (command, payload); the link layer adds the sequence number and the frame. The payload comes from
- * `protocol/Commands.kt`, so both layers build it in one place. [seq] holds the fixed number of the
+ * `protocol/Commands.kt` and `protocol/HearingCommands.kt`, so both layers build it in one place. [seq] holds the fixed number of the
  * battery and wearing queries. The batch frame comes from `protocol/Replies.kt`. Written from the spec.
  */
 data class Frame(val cmd: Int, val payload: ByteArray, val seq: Int? = null) {
@@ -166,34 +167,26 @@ object Cmd {
 
     // --- Golden Sound (section 16) ---
 
-    private fun be32(v: Int) = byteArrayOf((v ushr 24).toByte(), (v ushr 16).toByte(), (v ushr 8).toByte(), v.toByte())
-    private fun le16(v: Int) = byteArrayOf(v.toByte(), (v ushr 8).toByte())
-    /** 12 hearing values, left ears 1-6 then right ears 1-6, as `<side> <freq> <value>`. */
-    private fun hearingInfo(values: List<Int>) = ByteArray(36) { i ->
-        val n = i / 3
-        when (i % 3) { 0 -> (n / 6 + 1).toByte(); 1 -> (n % 6 + 1).toByte(); else -> values[n].toByte() }
-    }
-
     fun goldenRecordRead() = f(0x0115)
     fun goldenScanRead() = f(0x011E)
     /** `0x040D 04 <01|00> <id u32 BE>`: ear scan. The result is push `0E`. */
-    fun earScan(on: Boolean, id: Int) = Frame(0x040D, byteArrayOf(4, if (on) 1 else 0) + be32(id))
+    fun earScan(on: Boolean, id: Int) = Frame(0x040D, HearingCommands.earScanPayload(on, id))
     /** `0x040D 02 <01|00>`: hearing test. */
-    fun hearingTest(on: Boolean) = f(0x040D, 2, if (on) 1 else 0)
+    fun hearingTest(on: Boolean) = Frame(0x040D, HearingCommands.hearingTestPayload(on))
     /** `0x040E 03 01 <side> <freq> <value>`: a tone on one bud. Send [toneStop] before each new level. */
-    fun tone(side: Int, freq: Int, value: Int) = f(0x040E, 3, 1, side, freq, value and 0xFF)
-    fun toneStop() = f(0x040E, 4)
+    fun tone(side: Int, freq: Int, value: Int) = Frame(0x040E, HearingCommands.hearingTonePayload(side, freq, value))
+    fun toneStop() = Frame(0x040E, HearingCommands.hearingToneStopPayload())
     /** `0x0116 0C <12 values> <id>`: the hearing filters of a result. */
-    fun goldenFilter(id: Int, values: List<Int>) = Frame(0x0116, byteArrayOf(0x0C) + hearingInfo(values) + be32(id))
+    fun goldenFilter(id: Int, values: List<Int>) = Frame(0x0116, HearingCommands.hearingFilterPayload(id, values.toIntArray()))
     /** `0x011F <len u16 LE> <scan> <id>`: the ear-scan filters. */
-    fun goldenScanFilter(id: Int, scan: ByteArray) = Frame(0x011F, le16(scan.size) + scan + be32(id))
+    fun goldenScanFilter(id: Int, scan: ByteArray) = Frame(0x011F, HearingCommands.earScanFilterPayload(id, scan))
 
     /** Applies a record: the description id, the record, the ear scan when there is one, then the switch on. [desc]: 0 for none. */
     fun goldenApply(id: Int, name: String, values: List<Int>, scan: ByteArray, desc: Int): List<Frame> {
         val out = ArrayList<Frame>()
-        if (desc > 0) out += f(0x0411, 1, 1, 1, 0, desc)
-        out += Frame(0x040E, byteArrayOf(3, 0x0C) + hearingInfo(values) + be32(id) + name.toByteArray(Charsets.UTF_8))
-        if (scan.isNotEmpty()) out += Frame(0x0415, byteArrayOf(3) + le16(scan.size) + scan + be32(id))
+        if (desc > 0) out += Frame(0x0411, HearingCommands.hearingRestorePayload(desc))
+        out += Frame(0x040E, HearingCommands.hearingRecordPayload(id, name, values.toIntArray()))
+        if (scan.isNotEmpty()) out += Frame(0x0415, HearingCommands.earScanDataPayload(id, scan))
         out += feature(0x0B, true)
         return out
     }

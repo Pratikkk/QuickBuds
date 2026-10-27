@@ -2,7 +2,7 @@ package com.spizganed.quickbuds.protocol
 
 /*
  * The legacy protocol: the command constants, the packet envelope and the delegates to the topic files.
- * The builders are in Commands.kt; the replies and batch are in Replies.kt; the framer is in Wire.kt;
+ * The builders are in Commands.kt and HearingCommands.kt; the replies and batch are in Replies.kt; the framer is in Wire.kt;
  * the topic decoders are in Battery.kt, Anc.kt, GameMode.kt, Gestures.kt and Eq.kt.
  * The typed layer (protocol2/NewProtocol.kt) is not in use yet; it calls these builders and decoders.
  * Shared data is not here: Feature.kt, Capabilities.kt, ModelCatalog.kt, AncModes.kt.
@@ -24,7 +24,7 @@ package com.spizganed.quickbuds.protocol
  * already proven wrong once. Its evidence tags record the source of each area; tag a new
  * constant there when you add it here.
  *
- * The builders are in [Commands]. This object keeps their names and
+ * The builders are in [Commands] and [HearingCommands]. This object keeps their names and
  * signatures, so the app calls one place.
  *
  * Do not copy code from those projects without checking their licenses first.
@@ -226,50 +226,35 @@ object OpoProtocol {
     const val CMD_GOLDEN_ACTIVE = 0x0115      // the record on the buds
     const val CMD_GOLDEN_ACTIVE_SCAN = 0x011E // the ear-scan data on the buds
 
-    private fun int32(v: Int) = byteArrayOf((v ushr 24).toByte(), (v ushr 16).toByte(), (v ushr 8).toByte(), v.toByte())
-    private fun le16(v: Int) = byteArrayOf(v.toByte(), (v ushr 8).toByte())
-    /** 12 x `<side> <freq> <value>`: left 1..6 then right 1..6, as HeyMelody sends them. */
-    private fun hearingInfo(values: IntArray) = ByteArray(36) { i ->
-        when (i % 3) { 0 -> (i / 18 + 1).toByte(); 1 -> (i / 3 % 6 + 1).toByte(); else -> values[i / 3].toByte() }
-    }
+    /** Ear scan start / stop, `04 01|00 <uid>`; the result comes as event `0x0E`. Built in [HearingCommands.earScan]. */
+    fun earScan(on: Boolean, uid: Int): ByteArray = HearingCommands.earScan(on, uid)
 
-    /** Ear scan start / stop, `04 01|00 <uid>`; the result comes as event `0x0E`. */
-    fun earScan(on: Boolean, uid: Int): ByteArray =
-        buildPacket(CMD_GOLDEN_DETECT, payload = byteArrayOf(0x04, if (on) 0x01 else 0x00) + int32(uid))
+    /** Hearing test start / stop, `02 01|00`. Built in [HearingCommands.hearingTest]. */
+    fun hearingTest(on: Boolean): ByteArray = HearingCommands.hearingTest(on)
 
-    /** Hearing test start / stop, `02 01|00`. */
-    fun hearingTest(on: Boolean): ByteArray =
-        buildPacket(CMD_GOLDEN_DETECT, payload = byteArrayOf(0x02, if (on) 0x01 else 0x00))
+    /** Plays a tone on one bud: `03 01 <side 1 L / 2 R> <freq 1..6> <value>`. Built in [HearingCommands.hearingTone]. */
+    fun hearingTone(side: Int, freq: Int, value: Int): ByteArray = HearingCommands.hearingTone(side, freq, value)
 
-    /** Plays a tone on one bud: `03 01 <side 1 L / 2 R> <freq 1..6> <value>`. */
-    fun hearingTone(side: Int, freq: Int, value: Int): ByteArray =
-        buildPacket(CMD_GOLDEN_RECORD, payload = byteArrayOf(0x03, 0x01, side.toByte(), freq.toByte(), value.toByte()))
+    /** Stops the tone, `04`; HeyMelody sends it before every new level. Built in [HearingCommands.hearingToneStop]. */
+    fun hearingToneStop(): ByteArray = HearingCommands.hearingToneStop()
 
-    /** Stops the tone, `04`; HeyMelody sends it before every new level. */
-    fun hearingToneStop(): ByteArray = buildPacket(CMD_GOLDEN_RECORD, payload = byteArrayOf(0x04))
+    /** Asks for the filter of a result; the `0x8116` reply's byte 9 is the enhance type. Built in [HearingCommands.hearingFilter]. */
+    fun hearingFilter(uid: Int, values: IntArray): ByteArray = HearingCommands.hearingFilter(uid, values)
 
-    /** Asks for the filter of a result; the `0x8116` reply's byte 9 is the enhance type. */
-    fun hearingFilter(uid: Int, values: IntArray): ByteArray =
-        buildPacket(CMD_GOLDEN_FILTER, payload = byteArrayOf(0x0C) + hearingInfo(values) + int32(uid))
+    /** Asks for the ear-scan filter of a record: `<length little-endian> <data> <uid>`. Built in [HearingCommands.earScanFilter]. */
+    fun earScanFilter(uid: Int, data: ByteArray): ByteArray = HearingCommands.earScanFilter(uid, data)
 
-    /** Asks for the ear-scan filter of a record: `<length little-endian> <data> <uid>`. */
-    fun earScanFilter(uid: Int, data: ByteArray): ByteArray =
-        buildPacket(CMD_GOLDEN_SCAN_FILTER, payload = le16(data.size) + data + int32(uid))
+    /** Applies a record: `03 0c <12 x info> <uid> <name>`. Built in [HearingCommands.hearingRecord]. */
+    fun hearingRecord(uid: Int, name: String, values: IntArray): ByteArray = HearingCommands.hearingRecord(uid, name, values)
 
-    /** Applies a record: `03 0c <12 x info> <uid> <name>`. */
-    fun hearingRecord(uid: Int, name: String, values: IntArray): ByteArray =
-        buildPacket(CMD_GOLDEN_RECORD, payload = byteArrayOf(0x03, 0x0C) + hearingInfo(values) + int32(uid) + name.toByteArray())
+    /** The record's description id, `01 01 01 00 <id>`. Built in [HearingCommands.hearingRestore]. */
+    fun hearingRestore(descId: Int): ByteArray = HearingCommands.hearingRestore(descId)
 
-    /** The record's description id, `01 01 01 00 <id>` (count 1, type 1, length 1 little-endian). */
-    fun hearingRestore(descId: Int): ByteArray =
-        buildPacket(CMD_GOLDEN_RESTORE, payload = byteArrayOf(0x01, 0x01, 0x01, 0x00, descId.toByte()))
+    /** Applies ear-scan data: `03 <length little-endian> <data> <uid>`. Built in [HearingCommands.earScanData]. */
+    fun earScanData(uid: Int, data: ByteArray): ByteArray = HearingCommands.earScanData(uid, data)
 
-    /** Applies ear-scan data: `03 <length little-endian> <data> <uid>`. */
-    fun earScanData(uid: Int, data: ByteArray): ByteArray =
-        buildPacket(CMD_GOLDEN_SCAN_DATA, payload = byteArrayOf(0x03) + le16(data.size) + data + int32(uid))
-
-    fun queryGoldenActive(): ByteArray = buildPacket(CMD_GOLDEN_ACTIVE)
-    fun queryGoldenActiveScan(): ByteArray = buildPacket(CMD_GOLDEN_ACTIVE_SCAN)
+    fun queryGoldenActive(): ByteArray = HearingCommands.queryGoldenActive()
+    fun queryGoldenActiveScan(): ByteArray = HearingCommands.queryGoldenActiveScan()
 
     fun personalNoise(action: Int): ByteArray = Commands.personalNoise(action)
     fun queryPersonalNoise(): ByteArray = Commands.queryPersonalNoise()

@@ -3,7 +3,7 @@
 Matches QuickBuds 5.3.1 (version code 43).
 
 This is the wire format of the OPPO / OnePlus / realme earbud RFCOMM link. The owned protocol layer
-implements it: `core/` in Rust and `protocol2/` in Kotlin. Both Kotlin layers use one framer, `protocol/Wire.kt`, one reply and batch layer, `protocol/Replies.kt`, and one command builder layer, `protocol/Commands.kt`. The shipping layer is the legacy one, described in
+implements it: `core/` in Rust and `protocol2/` in Kotlin. Both Kotlin layers use one framer, `protocol/Wire.kt`, one reply and batch layer, `protocol/Replies.kt`, and one command builder layer, `protocol/Commands.kt` and `protocol/HearingCommands.kt`. The shipping layer is the legacy one, described in
 [PROTOCOL-LEGACY.md](./PROTOCOL-LEGACY.md). It carries many fixes. Verified facts from this file move into it.
 This layer replaces it only when it does everything HeyMelody and realme Link do, on every model.
 Each fact comes from a capture, from our own buds, or from the vendor apps' behaviour (studied for
@@ -18,7 +18,7 @@ interoperability only). This file is the source of the code, not the vendor apps
 Never promote a claim without evidence.
 
 **Status:** complete for every feature the apps build. Section 17 lists every unused command and its layout;
-some ids there remain unread. The code is `core/src/{wire,msg,cmd}.rs`, the `protocol2` package, `protocol/Wire.kt`, `protocol/Replies.kt` and `protocol/Commands.kt`.
+some ids there remain unread. The code is `core/src/{wire,msg,cmd}.rs`, the `protocol2` package, `protocol/Wire.kt`, `protocol/Replies.kt`, `protocol/Commands.kt` and `protocol/HearingCommands.kt`.
 
 ---
 
