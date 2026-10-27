@@ -218,7 +218,7 @@ impl Caps {
     }
 }
 
-// --- Models and ANC modes (`ModelCatalog.kt`, `AncModes.kt`, PROTOCOL.md section 14) ---
+// --- Models and ANC modes (`ModelCatalog.kt`, `AncModes.kt`, PROTOCOL.md sections 6 and 14) ---
 
 pub const OFF: &str = "Off";
 

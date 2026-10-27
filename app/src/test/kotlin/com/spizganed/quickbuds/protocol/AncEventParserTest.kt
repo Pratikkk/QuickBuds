@@ -5,7 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** PROTOCOL.md section 9: the ANC push carries the mode as 1-4 bytes, little endian. */
+/** PROTOCOL.md section 14: the ANC push carries the mode as 1-4 bytes, little endian. */
 class AncEventParserTest {
     private fun bytes(vararg v: Int) = ByteArray(v.size) { v[it].toByte() }
 

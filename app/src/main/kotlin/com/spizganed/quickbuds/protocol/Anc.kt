@@ -69,7 +69,7 @@ object AncEventParser {
     }
 
     /**
-     * Raw value from the event, little endian, 1-4 bytes (PROTOCOL.md section 9), or -1 if too short.
+     * Raw value from the event, little endian, 1-4 bytes (PROTOCOL.md section 14), or -1 if too short.
      * Kept separate from the name lookup so a capture can always be read back as
      * numbers, even when the name table is incomplete.
      */

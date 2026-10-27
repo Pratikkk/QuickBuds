@@ -1982,7 +1982,7 @@ class BudsConnectionManager(private val context: Context) {
             handler.post { listeners.forEach { it.onTapLevel(payload[1].toInt(), payload[2].toInt()) } }
             return
         }
-        // Public event `0F <flags u16 LE> <data>` (PROTOCOL.md section 5): the first flag that matches wins. Bit 0: the alert-sound
+        // Public event `0F <flags u16 LE> <data>` (PROTOCOL.md section 10): the first flag that matches wins. Bit 0: the alert-sound
         // volume changed on the buds; bit 1: nothing; bit 2: handheld-device info (not used here); bit 4: a tap level change.
         if (cmd == OpoProtocol.CMD_ACTIVE_REPORT && payload.size >= 4 && payload[0].toInt() == OpoProtocol.EVT_PUBLIC) {
             val flags = (payload[1].toInt() and 0xFF) or ((payload[2].toInt() and 0xFF) shl 8)

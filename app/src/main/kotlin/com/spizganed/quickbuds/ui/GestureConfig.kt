@@ -21,7 +21,7 @@ import org.json.JSONObject
  * The `function` enum: it was unknown for a long time, and [GestureAction] deliberately
  * carried no protocol byte while that was true — filling in a guessed byte is exactly
  * what produced the SET-vs-NOTIFY regression this project had to revert (PROTOCOL.md
- * §5). It was filled in the honest way instead: he rebound slots in the vendor app, the
+ * §15). It was filled in the honest way instead: he rebound slots in the vendor app, the
  * app diffed two `0x8108` readings, and he reported what he had bound. Every value
  * agreed, two of them across two separate slots. See PROTOCOL.md §15.
  *

@@ -243,7 +243,7 @@ pub fn decode(p: &[u8]) -> Option<Event> {
         EVT_PUSH => match sub? {
             0x01 => Event::Battery(battery(&pl[1..])?),
             0x02 => Event::Wear(wear_bits(pairs(&pl[1..]).filter(valid_wear)?)),
-            // `03 01 01 <mode LE, 1-4 bytes>` (PROTOCOL.md §9)
+            // `03 01 01 <mode LE, 1-4 bytes>` (PROTOCOL.md §14)
             0x03 if pl.len() >= 4 && pl[1] == 1 && pl[2] == 1 => Event::AncRaw(le(&pl[3..])),
             0x03 if pl.len() >= 4 && pl[1] == 4 && pl[2] == 1 => Event::SmartLevel(le(&pl[3..])),
             0x05 if pl.len() >= 2 => Event::GameMode(pl.to_vec()),
@@ -254,7 +254,7 @@ pub fn decode(p: &[u8]) -> Option<Event> {
                 Event::FitResult(of(1), of(2))
             }
             0xF5 if pl.len() >= 2 => Event::HeadMotion(pl[1]),
-            // `0F <flags u16 LE> <data>` (PROTOCOL.md §5): the first flag wins. Bit 0 alert-sound volume; bits 1 and 2 are not used here; bit 4 tap level.
+            // `0F <flags u16 LE> <data>` (PROTOCOL.md §10): the first flag wins. Bit 0 alert-sound volume; bits 1 and 2 are not used here; bit 4 tap level.
             0x0F if pl.len() >= 4 => {
                 let flags = pl[1] as u16 | (pl[2] as u16) << 8;
                 if flags & 1 != 0 { Event::AlertVolume(pl[3]) }

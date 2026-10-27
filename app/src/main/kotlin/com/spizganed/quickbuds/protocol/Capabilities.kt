@@ -4,7 +4,7 @@ import android.content.Context
 import com.spizganed.quickbuds.ui.ThemeRes
 
 /**
- * What the connected buds can do, from their own replies (PROTOCOL.md §6):
+ * What the connected buds can do, from their own replies (PROTOCOL.md §5 and §16):
  *
  *  - the `0x8100` handshake reply is a bitmap of the commands the firmware accepts. HeyMelody
  *    refuses to send a command outside it (apart from [ALWAYS]), so a row whose command
