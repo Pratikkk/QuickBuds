@@ -1969,7 +1969,7 @@ dependencies = [
 
 [[package]]
 name = "quickbuds-egui"
-version = "5.3.1"
+version = "5.3.2"
 dependencies = [
  "buds-core",
  "dbus",
