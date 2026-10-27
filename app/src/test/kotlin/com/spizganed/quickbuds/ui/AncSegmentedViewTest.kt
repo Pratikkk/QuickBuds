@@ -112,6 +112,23 @@ class AncSegmentedViewTest {
         )
     }
 
+    @Test fun everySegmentGetsItsOwnBounds() {
+        assertEquals(SegmentBounds(0f, 0f, 25f, 44f), segmentBounds(0, 4, 100, 44))
+        assertEquals(SegmentBounds(25f, 0f, 50f, 44f), segmentBounds(1, 4, 100, 44))
+        assertEquals(SegmentBounds(75f, 0f, 100f, 44f), segmentBounds(3, 4, 100, 44))
+    }
+
+    @Test fun segmentBoundsCoverTheWholeWidthWithoutAGap() {
+        var left = 0f
+        for (i in 0 until 3) {
+            val bounds = segmentBounds(i, 3, 101, 40)
+            assertEquals(left, bounds.left, 0.0001f)
+            assertTrue(bounds.right > bounds.left)
+            left = bounds.right
+        }
+        assertEquals(101f, left, 0.0001f)
+    }
+
     @Test fun aDisconnectFadesEveryFillToZero() {
         val current = floatArrayOf(0.2f, 0.8f, 0f)
         assertArrayEquals(current, fadeMixes(current, to = -1, fraction = 0f), 0.0001f)
