@@ -1429,6 +1429,7 @@ open class QuickBudsWidget(private val kind: Kind) : AppWidgetProvider() {
             val intent = Intent(context, BudsService::class.java)
                 .setAction(BudsService.ACTION_FORCE_CONNECT)
                 .putExtra(BudsService.EXTRA_WITH_AUDIO, true)
+                .putExtra(BudsService.EXTRA_USER_CONNECT, true)
             return PendingIntent.getForegroundService(context, 401, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         }
 

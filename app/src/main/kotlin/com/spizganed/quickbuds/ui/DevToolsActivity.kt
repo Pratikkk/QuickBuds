@@ -120,6 +120,7 @@ class DevToolsActivity : Activity() {
                 Intent(this, BudsService::class.java)
                     .setAction(BudsService.ACTION_FORCE_CONNECT)
                     .putExtra(BudsService.EXTRA_WITH_AUDIO, true)
+                    .putExtra(BudsService.EXTRA_USER_CONNECT, true)
             )
             showInLog("reconnect requested (FORCE_CONNECT)")
         })

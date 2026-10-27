@@ -74,7 +74,14 @@ class BudsConnectionManager(private val context: Context) {
         private const val VIRTUAL_CONNECT_TIMEOUT_MS = 5_000
     }
 
+    /**
+     * The A2DP and HEADSET proxies, kept for the life of the manager, so [audioLinkState] answers at once.
+     * Declared before `init`: the proxy callbacks run on a Binder thread and can come before the constructor ends.
+     */
+    private val audioProxies = java.util.concurrent.ConcurrentHashMap<Int, BluetoothProfile>()
+
     init {
+        openAudioProxies()
         PacketLogger.init(context)
     }
 
@@ -281,8 +288,47 @@ class BudsConnectionManager(private val context: Context) {
         }
     }
 
+    private fun openAudioProxies() {
+        try {
+            val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter ?: return
+            for (p in listOf(BluetoothProfile.A2DP, BluetoothProfile.HEADSET)) {
+                adapter.getProfileProxy(context, object : BluetoothProfile.ServiceListener {
+                    override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) { audioProxies[profile] = proxy }
+                    override fun onServiceDisconnected(profile: Int) { audioProxies.remove(profile) }
+                }, p)
+            }
+        } catch (e: Exception) {
+            log("Audio proxies: ${e.message}")
+        }
+    }
 
-    fun connect(device: BluetoothDevice, withAudio: Boolean = false) {
+    /**
+     * Whether Android reports [device] connected on A2DP or HEADSET: the live audio link of buds that are
+     * out of the case. `BluetoothManager.getConnectedDevices` takes GATT only, so this asks the profile
+     * proxies for this device. [LinkState.UNKNOWN] means no answer (no proxy yet, Bluetooth off, no
+     * permission): the caller connects as before.
+     */
+    @SuppressLint("MissingPermission")
+    fun audioLinkState(device: BluetoothDevice): LinkState = try {
+        val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter
+        val proxies = audioProxies.values.toList()
+        when {
+            adapter == null || !adapter.isEnabled -> LinkState.UNKNOWN
+            proxies.any { it.getConnectionState(device) == BluetoothProfile.STATE_CONNECTED } -> LinkState.CONNECTED
+            // "Disconnected" needs both answers: a missing proxy can hide a live HFP or A2DP link.
+            proxies.size < 2 -> LinkState.UNKNOWN
+            else -> LinkState.DISCONNECTED
+        }
+    } catch (e: Exception) {
+        LinkState.UNKNOWN
+    }
+
+    /**
+     * Starts the socket tries. [withAudio] brings the phone audio up (a user connect only).
+     * [user] is true for the Connect button, the widget tap and Dev tools: only then the tries
+     * show toasts. An automatic connect stays silent.
+     */
+    fun connect(device: BluetoothDevice, withAudio: Boolean = false, user: Boolean = false) {
         if (isConnecting || isConnected()) {
             log("Already connecting/connected, ignoring.")
             return
@@ -329,7 +375,8 @@ class BudsConnectionManager(private val context: Context) {
                 var failedTries = 0
                 fun tryFailed() {
                     failedTries++
-                    if (generation == connectGeneration) toast(context.getString(R.string.connect_try_failed, failedTries, totalTries))
+                    if (generation == connectGeneration && ConnectPolicy.showTryToast(user))
+                        toast(context.getString(R.string.connect_try_failed, failedTries, totalTries))
                 }
 
                 // socket.connect() has no timeout. A close after 12 s makes a stuck call throw.
@@ -398,7 +445,8 @@ class BudsConnectionManager(private val context: Context) {
                     // Disconnect or a new connect raised the generation, so that attempt ends quietly.
                     if (generation == connectGeneration) {
                         log("Giving up after $totalTries connect tries. Tap CONNECT to retry manually.")
-                        toast(context.getString(R.string.connect_gave_up, totalTries))
+                        if (ConnectPolicy.showTryToast(user))
+                            toast(context.getString(R.string.connect_gave_up, totalTries))
                     }
                     reconnectAttempts = 0
                     return@Thread
