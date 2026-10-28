@@ -115,12 +115,6 @@ private struct OverviewView: View {
                 .frame(maxWidth: .infinity)
             }
             .navigationTitle(text("desktop_nav_overview"))
-            .toolbar {
-                ToolbarItem {
-                    Button { store.openBluetoothSettings() } label: { Image(systemName: "gearshape") }
-                        .help(text("setup_earbuds_pair"))
-                }
-            }
         }
         .onAppear { if selectedDevice == nil { selectedDevice = store.devices.first?.id } }
         .onChange(of: store.devices.map(\.id)) { _, ids in
