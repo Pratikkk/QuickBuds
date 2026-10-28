@@ -13,6 +13,7 @@ final class BudsStore: ObservableObject {
     @Published var error: String?
     @Published var applying = false
     @Published var firmware = "—"
+    @Published var batteryDiagnostic = "No battery response received yet."
     private let transport = BluetoothTransport()
     private var framer = Framer()
     private var sequence: UInt8 = 0
@@ -95,7 +96,7 @@ final class BudsStore: ObservableObject {
                     try await Task.sleep(nanoseconds: 200_000_000)
                 }
                 // Only subscribe to codes actually offered by the device.
-                let codes: [UInt8] = [1, 3].filter { self.offered?.contains($0) ?? true }
+                let codes: [UInt8] = [1, 2, 3].filter { self.offered?.contains($0) ?? true }
                 if self.supports(bit: 22) { self.send(0x0205, [UInt8(codes.count)] + codes) }
                 else {
                     for code in codes {
@@ -183,6 +184,7 @@ final class BudsStore: ObservableObject {
         case 0x8200 where p.count >= 2 && p[0] == 0 && p.count >= 2 + Int(p[1]):
             offered = Array(p.dropFirst(2).prefix(Int(p[1])))
         case 0x8106 where p.first == 0:
+            batteryDiagnostic = "Battery reply: " + p.map { String(format: "%02X", $0) }.joined(separator: " ")
             if let cells = Decode.battery(Array(p.dropFirst())) { mergeBattery(cells) }
         case 0x810C where p.first == 0:
             reportNoise(Array(p.dropFirst()), isPush: false)
@@ -199,7 +201,10 @@ final class BudsStore: ObservableObject {
             }
         case 0x0204 where !p.isEmpty:
             switch p[0] {
-            case 1: if let cells = Decode.battery(Array(p.dropFirst())) { mergeBattery(cells) }
+            case 1:
+                batteryDiagnostic = "Battery event: " + p.map { String(format: "%02X", $0) }.joined(separator: " ")
+                if let cells = Decode.battery(Array(p.dropFirst())) { mergeBattery(cells) }
+            case 2: refreshBattery()
             case 3: reportNoise(Array(p.dropFirst()), isPush: true)
             case 0xF2: reply(message, [0, 0xF2])
             case 0xF4:

@@ -140,6 +140,9 @@ private struct OverviewView: View {
                      : "Open the case lid near your earbuds, then refresh to read the case battery.")
                     .font(.caption).foregroundStyle(.secondary)
                 Button("Refresh battery", systemImage: "arrow.clockwise") { store.refreshBattery() }
+                DisclosureGroup("Battery diagnostics") {
+                    Text(store.batteryDiagnostic).font(.caption.monospaced()).textSelection(.enabled)
+                }.font(.caption)
             }.frame(maxWidth: .infinity, alignment: .leading).padding(8)
         } label: { Text(text("problem_cat_battery")) }
     }
