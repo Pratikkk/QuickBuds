@@ -257,13 +257,35 @@ private struct MenuBarView: View {
                 }
             }
             Divider()
-            Button(text("desktop_nav_overview")) {
-                openWindow(id: "main")
-                NSApp.activate(ignoringOtherApps: true)
+            VStack(spacing: 2) {
+                Button {
+                    openWindow(id: "main")
+                    NSApp.activate(ignoringOtherApps: true)
+                } label: {
+                    trayFooterLabel(text("desktop_nav_overview"), symbol: "square.grid.2x2")
+                }
+                Button { NSApp.terminate(nil) } label: {
+                    trayFooterLabel("Quit QuickBuds", symbol: "power", shortcut: "⌘Q")
+                }.keyboardShortcut("q")
             }
-            Button("Quit QuickBuds") { NSApp.terminate(nil) }.keyboardShortcut("q")
+            .buttonStyle(.plain)
         }
-        .padding(10).frame(width: 280).background(.ultraThinMaterial)
+        .padding(10).frame(width: 280, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: true)
+        .background(.ultraThinMaterial)
+    }
+
+    private func trayFooterLabel(_ title: String, symbol: String, shortcut: String? = nil) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: symbol).frame(width: 18).foregroundStyle(.secondary)
+            Text(title)
+            Spacer(minLength: 8)
+            if let shortcut { Text(shortcut).font(.caption).foregroundStyle(.secondary) }
+        }
+        .font(.callout)
+        .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
+        .padding(.horizontal, 8)
+        .contentShape(Rectangle())
     }
 }
 
