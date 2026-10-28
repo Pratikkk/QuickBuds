@@ -47,3 +47,9 @@ firmware/
 
 # Local experiment folder. Its own README says: never push it.
 /EXPERIMENT.md
+
+# Native macOS app and generated shared resources
+macOS/.build/
+macOS/.swiftpm/
+macOS/dist/
+macOS/Sources/QuickBuds/Resources/

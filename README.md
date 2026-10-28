@@ -170,6 +170,7 @@ If the earbuds do not connect, follow [Send a snoop log for a connect problem](.
 
 - [CONTRIBUTING.md](./docs/CONTRIBUTING.md): build, tests, translations, where things are, and the rules.
 - [build-android.md](./docs/build-android.md) and [build-desktop.md](./docs/build-desktop.md): the build steps for each app.
+- [Native macOS preview](./docs/build-macos.md): build the SwiftUI app from source (macOS 14+). Battery, firmware, and noise control are implemented; feature parity and hardware validation are pending.
 - [report-worker/](./report-worker): the Cloudflare Worker behind Feedback, the daily count and the replies.
 - [PACKET-CAPTURE.md](./docs/PACKET-CAPTURE.md): capturing the earbuds' traffic, HeyMelody's included.
 - [PROTOCOL.md](./docs/PROTOCOL.md): the wire format, every claim tagged with its source.

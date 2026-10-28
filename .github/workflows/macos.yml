@@ -1,0 +1,26 @@
+name: Native macOS preview
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Shared resources
+        run: python3 scripts/macos-resources.py
+      - name: Protocol tests
+        run: swift test --package-path macOS
+      - name: Build app
+        run: scripts/macos-build.sh
+      - name: Check packaged resources and signature
+        run: |
+          macOS/dist/QuickBuds.app/Contents/MacOS/QuickBuds --check-resources
+          codesign --verify --deep --strict macOS/dist/QuickBuds.app
+          ditto -c -k --sequesterRsrc --keepParent macOS/dist/QuickBuds.app macOS/dist/QuickBuds-macos.zip
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: quickbuds-macos-preview
+          path: macOS/dist/QuickBuds-macos.zip
+          retention-days: 14

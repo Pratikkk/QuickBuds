@@ -26,6 +26,7 @@ capture the Bluetooth traffic. It also shows what HeyMelody sends.
 
 - [Android app](./build-android.md)
 - [Desktop app, Linux and Windows](./build-desktop.md)
+- [Native macOS preview](./build-macos.md)
 
 ## Tests
 

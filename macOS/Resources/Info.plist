@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleName</key><string>QuickBuds</string>
+<key>CFBundleDisplayName</key><string>QuickBuds</string>
+<key>CFBundleIdentifier</key><string>com.spizganed.quickbuds.macos</string>
+<key>CFBundleIconFile</key><string>QuickBuds</string>
+<key>CFBundleExecutable</key><string>QuickBuds</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleShortVersionString</key><string>5.3.4</string>
+<key>CFBundleVersion</key><string>1</string>
+<key>LSMinimumSystemVersion</key><string>14.0</string>
+<key>NSHighResolutionCapable</key><true/>
+<key>NSBluetoothAlwaysUsageDescription</key><string>QuickBuds connects to your paired earbuds to show battery levels and change earbud settings.</string>
+<key>NSBluetoothPeripheralUsageDescription</key><string>QuickBuds connects to your paired earbuds to show battery levels and change earbud settings.</string>
+<key>NSPrincipalClass</key><string>NSApplication</string>
+</dict></plist>
