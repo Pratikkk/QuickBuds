@@ -230,5 +230,8 @@ Sidebar layout uses the native balanced split-view style, a stable 220-point sid
 and a 420-point minimum detail width. The detail content is anchored to its leading
 edge instead of re-centering at the content-width cap. The sidebar's contents are
 clipped during collapse so its labels do not reflow while the native column contracts.
-No custom animation or motion override is added. Expanded and collapsed states were
-visually checked at the narrow window width; the main section positions stayed stable.
+The native toolbar toggle drives a bound `NavigationSplitViewVisibility`. Visibility
+changes and detail layout share an explicit 250 ms ease-in/out transaction; Reduce
+Motion disables that extra animation. Expanded and collapsed states were checked in
+the running app, including repeated native-toggle use. Endpoint screenshots alone do
+not establish animation frame pacing; user verification of the motion is still useful.

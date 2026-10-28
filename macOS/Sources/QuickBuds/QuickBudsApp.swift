@@ -36,9 +36,19 @@ private struct OverviewView: View {
     @ObservedObject var store: BudsStore
     @State private var selectedDevice: String?
     @State private var section = OverviewSection.sound
+    @State private var sidebarVisibility = NavigationSplitViewVisibility.automatic
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var animatedSidebarVisibility: Binding<NavigationSplitViewVisibility> {
+        Binding(get: { sidebarVisibility }, set: { visibility in
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
+                sidebarVisibility = visibility
+            }
+        })
+    }
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: animatedSidebarVisibility) {
             List(selection: $selectedDevice) {
                 Section(text("model_title")) {
                     ForEach(store.devices) { device in
@@ -125,6 +135,7 @@ private struct OverviewView: View {
                 .padding(20)
                 .frame(maxWidth: 800, alignment: .leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: sidebarVisibility)
             }
             .frame(minWidth: 420)
             .navigationTitle(text("desktop_nav_overview"))
