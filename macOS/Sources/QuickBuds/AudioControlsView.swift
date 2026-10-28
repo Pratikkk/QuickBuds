@@ -22,7 +22,7 @@ struct AudioControlsView: View {
                     if store.linkedDevices.isEmpty {
                         Text("No devices reported yet.").foregroundStyle(.secondary)
                     }
-                    Text("Connect requires an existing pairing. If the earbuds are no longer paired with your phone, pair them again in the phone’s Bluetooth settings first.")
+                    Text("Disconnect and Connect are separate firmware actions. If Connect from the Mac does not work, reconnect from your phone’s Bluetooth settings. A disconnected device may still be paired.")
                         .font(.caption).foregroundStyle(.secondary)
                     ForEach(store.linkedDevices) { device in
                         HStack(spacing: 12) {

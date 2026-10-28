@@ -198,7 +198,12 @@ A bounded on-screen diagnostic records request/acknowledgment/read/push events w
 Bluetooth addresses; it is not uploaded or written to disk.
 
 The phone must already be paired with the earbuds. QuickBuds cannot establish that
-pairing on the phone. The user reported the NARZO 70 was no longer paired after a
-Disconnect action. The implementation sends the repo's documented disconnect action
-`02`, never its unused unpair action `03`; the observed pairing behavior requires
-verification after re-pairing. Do not treat this firmware behavior as confirmed.
+pairing on the phone. The user clarified that Disconnect works but Connect from the Mac does not reconnect
+NARZO 70. Live diagnostics showed repeated device-list replies and state pushes, with
+only one connected device during the 15-second observation window. The phone appeared
+connected later. This does not establish that pairing was removed. The implementation
+sends documented disconnect action `02`, never unused unpair action `03`. Remote
+reconnect on this firmware remains unverified; use the phone's Bluetooth settings as
+a fallback. Late device-state confirmation clears only the corresponding timeout
+warning, preserving unrelated errors. The timeout diagnostic retains whether a write
+acknowledgment was received.
