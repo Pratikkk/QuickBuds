@@ -213,3 +213,15 @@ arriving at the deadline. Both retain the acknowledgment diagnostic, produce a
 device-specific warning, and register that warning for later state reconciliation.
 This avoids a generic audio-change warning winning the race with the device timeout.
 The unsuccessful remote reconnect itself is still unresolved on Air5 firmware.
+
+## Compact overview layout
+
+The main window keeps a compact device header with Disconnect beside its status.
+The battery card uses smaller rings and horizontal part summaries, with a single
+refresh action. Each received part shows its localized last-received time, with a
+full timestamp in its tooltip; cached parts retain their Last known label.
+
+A native segmented control separates Sound (ANC and Sound Master EQ) from Devices
+(dual-device management). Firmware and battery diagnostics sit in a collapsed Details
+section. Device help is also collapsed by default. Existing colors, materials, tray
+controls, Bluetooth operations, and remote reconnect limitations are unchanged.

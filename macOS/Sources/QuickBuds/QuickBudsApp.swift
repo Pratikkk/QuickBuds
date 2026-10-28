@@ -35,6 +35,7 @@ struct QuickBudsApp: App {
 private struct OverviewView: View {
     @ObservedObject var store: BudsStore
     @State private var selectedDevice: String?
+    @State private var section = OverviewSection.sound
 
     var body: some View {
         NavigationSplitView {
@@ -63,20 +64,22 @@ private struct OverviewView: View {
             .navigationSplitViewColumnWidth(min: 210, ideal: 240)
         } detail: {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 16) {
                     HStack(spacing: 16) {
                         Image(systemName: "earbuds")
-                            .font(.system(size: 38)).foregroundStyle(.tint)
-                            .frame(width: 72, height: 72)
+                            .font(.system(size: 28)).foregroundStyle(.tint)
+                            .frame(width: 48, height: 48)
                             .background(.tint.opacity(0.1), in: RoundedRectangle(cornerRadius: 18))
                         VStack(alignment: .leading, spacing: 6) {
                             Text(store.model?.name ?? store.deviceName).font(.title2.bold())
-                            if store.model?.id == "06D810" { Text("Your Enco Air5").font(.caption).foregroundStyle(.secondary) }
                             Label(store.status, systemImage: store.connection == .connected ? "checkmark.circle.fill" : "circle")
                                 .foregroundStyle(store.connection == .connected ? .green : .secondary)
                                 .font(.callout)
                         }
-                        Spacer()
+                        Spacer(minLength: 8)
+                        if store.connection != .disconnected {
+                            Button(text("conn_action_disconnect")) { store.disconnect() }.controlSize(.small)
+                        }
                     }
                     if let error = store.error {
                         HStack(alignment: .top) {
@@ -90,29 +93,34 @@ private struct OverviewView: View {
                     }
                     if store.connection == .connected {
                         batterySection
-                        if store.canControlNoise, let model = store.model, !model.selectableModes.isEmpty {
+                        if store.hasAir5Audio {
+                            Picker("Overview section", selection: $section) {
+                                ForEach(OverviewSection.allCases) { item in Text(item.rawValue).tag(item) }
+                            }.pickerStyle(.segmented).labelsHidden()
+                        }
+                        if section == .sound, store.canControlNoise, let model = store.model, !model.selectableModes.isEmpty {
                             OrganizedNoiseControls(store: store)
                         }
-                        if store.hasAir5Audio { AudioControlsView(store: store) }
-                        GroupBox {
-                            LabeledContent(text("row_firmware_title"), value: store.firmware).padding(8)
-                        }
+                        if store.hasAir5Audio { AudioControlsView(store: store, section: section) }
+                        DisclosureGroup("Details") {
+                            VStack(alignment: .leading, spacing: 10) {
+                                LabeledContent(text("row_firmware_title"), value: store.firmware)
+                                DisclosureGroup("Battery diagnostics") {
+                                    Text(store.batteryDiagnostic).font(.caption.monospaced()).textSelection(.enabled)
+                                }
+                            }.font(.caption).padding(.top, 8)
+                        }.font(.callout).foregroundStyle(.secondary)
                     } else {
                         Text(store.devices.isEmpty ? text("no_buds_paired") : store.nextReconnect != nil
                              ? "Waiting to reconnect to your earbuds…" : "Select your earbuds and choose Connect.")
                             .foregroundStyle(.secondary)
                     }
-                    HStack {
-                        if store.connection != .disconnected {
-                            Button(text("conn_action_disconnect")) { store.disconnect() }
-                        } else if let device = store.devices.first(where: { $0.id == selectedDevice }) {
-                            Button(text("conn_action_connect")) { store.connect(device) }
-                                .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
-                        }
+                    if store.connection == .disconnected, let device = store.devices.first(where: { $0.id == selectedDevice }) {
+                        Button(text("conn_action_connect")) { store.connect(device) }
+                            .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
                     }
-                    Spacer(minLength: 0)
                 }
-                .padding(28)
+                .padding(20)
                 .frame(maxWidth: 800, alignment: .leading)
                 .frame(maxWidth: .infinity)
             }
@@ -126,55 +134,59 @@ private struct OverviewView: View {
 
     private var batterySection: some View {
         GroupBox {
-            HStack(spacing: 16) {
-                batteryCell(1, "status_left", "l.circle")
-                batteryCell(3, "status_case", "earbuds.case")
-                batteryCell(2, "status_right", "r.circle")
-            }.padding(12)
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text(text("problem_cat_battery")).font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Button("Refresh battery", systemImage: "arrow.clockwise") { store.refreshBattery() }
+                        .labelStyle(.iconOnly).buttonStyle(.borderless).help("Refresh battery")
+                }
+                HStack(spacing: 12) {
+                    batteryCell(1, "status_left", "earbuds")
+                    batteryCell(3, "status_case", "earbuds.case")
+                    batteryCell(2, "status_right", "earbuds")
+                }
                 Text(store.battery.contains(where: { $0.part == 3 })
-                     ? "Case: last reported level. Open the lid and refresh for a new reading."
-                     : "Open the case lid near your earbuds, then refresh to read the case battery.")
+                     ? "Case battery shows its last reported level."
+                     : "Open the case lid and refresh to request its battery level.")
                     .font(.caption).foregroundStyle(.secondary)
-                Button("Refresh battery", systemImage: "arrow.clockwise") { store.refreshBattery() }
-                DisclosureGroup("Battery diagnostics") {
-                    Text(store.batteryDiagnostic).font(.caption.monospaced()).textSelection(.enabled)
-                }.font(.caption)
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(8)
-        } label: { Text(text("problem_cat_battery")) }
+            }.padding(8)
+        }
     }
 
     private func batteryCell(_ part: UInt8, _ key: String, _ symbol: String) -> some View {
         let cell = store.battery.first { $0.part == part }
-        return VStack(spacing: 9) {
+        return HStack(spacing: 8) {
             ZStack {
-                Circle().stroke(Color.secondary.opacity(0.18), lineWidth: 5)
+                Circle().stroke(Color.secondary.opacity(0.18), lineWidth: 4)
                 if let cell {
                     Circle().trim(from: 0, to: CGFloat(cell.level) / 100)
-                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                 }
-                Image(systemName: part == 3 ? "earbuds.case" : "earbuds")
-                    .font(.system(size: 30)).foregroundStyle(.primary)
-            }.frame(width: 80, height: 80).padding(.bottom, 5)
-            Text(cell.map { "\($0.level)%" } ?? "—").font(.title2.monospacedDigit().weight(.semibold))
-            HStack(spacing: 5) {
-                BatteryIcon(cell: cell)
-                Text(text(key)).foregroundStyle(.secondary)
-            }.font(.caption)
-            if let updated = store.batteryUpdated[part] {
-                VStack(spacing: 2) {
-                    if store.cachedBattery.contains(part) { Text("Last known").font(.caption2) }
-                    TimelineView(.periodic(from: .now, by: 30)) { context in
-                        Text(RelativeDateTimeFormatter().localizedString(for: updated, relativeTo: context.date))
-                            .font(.caption2)
-                    }
-                }.foregroundStyle(.secondary)
+                Image(systemName: symbol).font(.system(size: 21)).foregroundStyle(.primary)
+            }.frame(width: 46, height: 46)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(text(key)).font(.caption).foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    Text(cell.map { "\($0.level)%" } ?? "—").font(.body.monospacedDigit().weight(.semibold))
+                    BatteryIcon(cell: cell).font(.caption2)
+                }
+                if store.cachedBattery.contains(part) {
+                    Text("Last known").font(.caption2).foregroundStyle(.secondary)
+                }
+                if let updated = store.batteryUpdated[part] {
+                    Text(updated.formatted(date: .omitted, time: .shortened))
+                        .font(.caption2).foregroundStyle(.secondary)
+                        .help("Last received: " + updated.formatted(date: .abbreviated, time: .standard))
+                }
             }
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
+
 }
 
 private struct MenuBarView: View {

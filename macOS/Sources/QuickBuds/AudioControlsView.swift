@@ -1,54 +1,65 @@
 import SwiftUI
 import BudsProtocol
 
+enum OverviewSection: String, CaseIterable, Identifiable {
+    case sound = "Sound"
+    case devices = "Devices"
+    var id: String { rawValue }
+}
+
 struct AudioControlsView: View {
     @ObservedObject var store: BudsStore
+    var section: OverviewSection = .sound
     @State private var editor: EQEditorItem?
     @State private var deleteCandidate: CustomEQ?
     @State private var deviceCandidate: LinkedDevice?
 
     var body: some View {
-        VStack(spacing: 20) {
-            GroupBox {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Label(text("dual_title"), systemImage: "laptopcomputer.and.iphone").font(.headline)
-                        Spacer()
-                        if store.canDualToggle {
-                            Toggle(text("dual_title"), isOn: Binding(get: { store.dualEnabled == true }, set: { store.setDualEnabled($0) }))
-                                .labelsHidden().toggleStyle(.switch).disabled(store.audioBusy)
-                        }
-                    }
-                    if store.linkedDevices.isEmpty {
-                        Text("No devices reported yet.").foregroundStyle(.secondary)
-                    }
-                    Text("Disconnect and Connect are separate firmware actions. If Connect from the Mac does not work, reconnect from your phone’s Bluetooth settings. A disconnected device may still be paired.")
-                        .font(.caption).foregroundStyle(.secondary)
-                    ForEach(store.linkedDevices) { device in
-                        HStack(spacing: 12) {
-                            Image(systemName: device.isThisDevice ? "desktopcomputer" : "iphone").font(.title2).foregroundStyle(.secondary)
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(device.name.isEmpty ? "Bluetooth device" : device.name)
-                                Text(text(device.isThisDevice ? "dual_connected_this" : device.connected ? "dual_connected" : "dual_not_connected"))
-                                    .font(.caption).foregroundStyle(.secondary)
-                            }
+        VStack(spacing: 16) {
+            if section == .devices {
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Label(text("dual_title"), systemImage: "laptopcomputer.and.iphone").font(.headline)
                             Spacer()
-                            if store.canManageDevices && !device.isThisDevice {
-                                Button(text(device.connected ? "conn_action_disconnect" : "conn_action_connect")) { deviceCandidate = device }
-                                    .disabled(store.audioBusy)
+                            if store.canDualToggle {
+                                Toggle(text("dual_title"), isOn: Binding(get: { store.dualEnabled == true }, set: { store.setDualEnabled($0) }))
+                                    .labelsHidden().toggleStyle(.switch).disabled(store.audioBusy)
                             }
-                        }.padding(.vertical, 4)
-                    }
-                    HStack {
-                        Button("Refresh devices", systemImage: "arrow.clockwise") { store.refreshAudioControls() }.disabled(store.audioBusy)
-                        if store.audioBusy { ProgressView().controlSize(.small) }
-                    }
-                    DisclosureGroup("Device connection diagnostics") {
-                        Text(store.deviceDiagnostic).font(.caption.monospaced()).textSelection(.enabled)
-                    }.font(.caption)
-                }.padding(8)
+                        }
+                        if store.linkedDevices.isEmpty {
+                            Text("No devices reported yet.").foregroundStyle(.secondary)
+                        }
+                        DisclosureGroup("Connection help") {
+                            Text("Disconnect and Connect are separate firmware actions. If Connect from the Mac does not work, reconnect from your phone’s Bluetooth settings. A disconnected device may still be paired.")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }.font(.caption)
+                        ForEach(store.linkedDevices) { device in
+                            HStack(spacing: 12) {
+                                Image(systemName: device.isThisDevice ? "desktopcomputer" : "iphone").font(.title2).foregroundStyle(.secondary)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(device.name.isEmpty ? "Bluetooth device" : device.name)
+                                    Text(text(device.isThisDevice ? "dual_connected_this" : device.connected ? "dual_connected" : "dual_not_connected"))
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                if store.canManageDevices && !device.isThisDevice {
+                                    Button(text(device.connected ? "conn_action_disconnect" : "conn_action_connect")) { deviceCandidate = device }
+                                        .disabled(store.audioBusy)
+                                }
+                            }.padding(.vertical, 4)
+                        }
+                        HStack {
+                            Button("Refresh devices", systemImage: "arrow.clockwise") { store.refreshAudioControls() }.disabled(store.audioBusy)
+                            if store.audioBusy { ProgressView().controlSize(.small) }
+                        }
+                        DisclosureGroup("Device connection diagnostics") {
+                            Text(store.deviceDiagnostic).font(.caption.monospaced()).textSelection(.enabled)
+                        }.font(.caption)
+                    }.padding(8)
+                }
             }
-            if store.canEQ || store.canCustomEQ {
+            if section == .sound && (store.canEQ || store.canCustomEQ) {
                 GroupBox {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
