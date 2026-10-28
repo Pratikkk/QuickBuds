@@ -91,29 +91,7 @@ private struct OverviewView: View {
                     if store.connection == .connected {
                         batterySection
                         if store.canControlNoise, let model = store.model, !model.selectableModes.isEmpty {
-                            GroupBox {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    HStack {
-                                        Text(text("anc_section")).font(.headline)
-                                        Spacer()
-                                        if store.applying { Text(text("feature_applying")).font(.caption).foregroundStyle(.secondary) }
-                                    }
-                                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 110))], spacing: 10) {
-                                        ForEach(model.selectableModes) { mode in
-                                            Button { store.setNoise(mode) } label: {
-                                                HStack(spacing: 5) {
-                                                    if store.noiseMode == mode.mode { Image(systemName: "checkmark") }
-                                                    Text(text(mode.titleKey))
-                                                }.frame(maxWidth: .infinity).padding(.vertical, 7)
-                                            }
-                                            .buttonStyle(.bordered)
-                                            .background(store.noiseMode == mode.mode ? Color.accentColor.opacity(0.16) : .clear, in: RoundedRectangle(cornerRadius: 6))
-                                            .disabled(store.applying)
-                                            .accessibilityAddTraits(store.noiseMode == mode.mode ? .isSelected : [])
-                                        }
-                                    }
-                                }.padding(8)
-                            }
+                            NoiseControlPanel(store: store)
                         }
                         GroupBox {
                             LabeledContent(text("row_firmware_title"), value: store.firmware).padding(8)
@@ -171,8 +149,10 @@ private struct OverviewView: View {
         return VStack(spacing: 9) {
             Image(systemName: symbol).font(.title2).foregroundStyle(.secondary)
             Text(cell.map { "\($0.level)%" } ?? "—").font(.title2.monospacedDigit().weight(.semibold))
-            Label(text(key), systemImage: cell?.charging == true ? "bolt.fill" : "battery.100percent")
-                .font(.caption).foregroundStyle(.secondary)
+            HStack(spacing: 5) {
+                BatteryIcon(cell: cell)
+                Text(text(key)).foregroundStyle(.secondary)
+            }.font(.caption)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
@@ -184,24 +164,32 @@ private struct MenuBarView: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(store.model?.name ?? "QuickBuds").font(.headline)
-            Text(store.status).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(store.model?.name ?? "QuickBuds").font(.headline)
+                Spacer(minLength: 6)
+                Circle().fill(store.connection == .connected ? Color.green : Color.secondary)
+                    .frame(width: 7, height: 7).accessibilityLabel(store.status)
+            }
             if store.connection == .connected {
+                HStack(spacing: 8) {
                 ForEach([UInt8(1), 2, 3], id: \.self) { part in
                     let key = part == 1 ? "status_left" : part == 2 ? "status_right" : "status_case"
-                    LabeledContent(text(key), value: store.battery.first(where: { $0.part == part }).map { "\($0.level)%" } ?? "—")
+                    VStack(spacing: 2) {
+                        Text(text(key)).font(.caption2).foregroundStyle(.secondary)
+                        let cell = store.battery.first(where: { $0.part == part })
+                        HStack(spacing: 4) {
+                            BatteryIcon(cell: cell)
+                            Text(cell.map { "\($0.level)%" } ?? "—")
+                                .font(.callout.monospacedDigit())
+                        }
+
+                    }.frame(maxWidth: .infinity)
+                }
                 }
                 if store.canControlNoise {
-                    ForEach(store.model?.selectableModes ?? []) { mode in
-                        Button { store.setNoise(mode) } label: {
-                            HStack {
-                                Text(text(mode.titleKey))
-                                Spacer()
-                                if store.noiseMode == mode.mode { Image(systemName: "checkmark") }
-                            }
-                        }.disabled(store.applying)
-                    }
+                    Divider()
+                    NoiseControlPanel(store: store, compact: true)
                 }
             }
             if let error = store.error { Text(error).font(.caption).foregroundStyle(.orange) }
@@ -212,6 +200,85 @@ private struct MenuBarView: View {
             }
             Button("Quit QuickBuds") { NSApp.terminate(nil) }.keyboardShortcut("q")
         }
-        .padding(18).frame(width: 280)
+        .padding(10).frame(width: 280).background(.ultraThinMaterial)
+    }
+}
+
+
+/// Shared Control Center style rows keep the window and menu bar behavior identical.
+private struct NoiseControlPanel: View {
+    @ObservedObject var store: BudsStore
+    var compact = false
+
+    private func symbol(_ mode: Int) -> String {
+        switch mode {
+        case 1: return "speaker.slash"
+        case 2: return "person.wave.2"
+        case 7: return "sparkles"
+        default: return "headphones"
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: compact ? 2 : 6) {
+            HStack {
+                Text(text("anc_section")).font(.headline).foregroundStyle(.secondary)
+                Spacer()
+                if store.applying { ProgressView().controlSize(.small).accessibilityLabel(text("feature_applying")) }
+            }.padding(.horizontal, compact ? 6 : 10).padding(.bottom, compact ? 3 : 8)
+            ForEach(store.model?.selectableModes ?? []) { mode in
+                Button { store.setNoise(mode) } label: {
+                    HStack(spacing: compact ? 8 : 12) {
+                        Image(systemName: "checkmark")
+                            .font(.body.weight(.semibold))
+                            .opacity(store.noiseMode == mode.mode ? 1 : 0)
+                            .frame(width: 18)
+                        Image(systemName: symbol(mode.mode))
+                            .font(.title3).foregroundStyle(.secondary).frame(width: 26)
+                        Text(text(mode.titleKey)).font(.body)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, compact ? 6 : 10).padding(.vertical, compact ? 5 : 10)
+                    .contentShape(RoundedRectangle(cornerRadius: 9))
+                    .background(store.noiseMode == mode.mode ? Color.accentColor.opacity(0.12) : .clear,
+                                in: RoundedRectangle(cornerRadius: 9))
+                }
+                .buttonStyle(.plain)
+                .disabled(store.applying)
+                .accessibilityAddTraits(store.noiseMode == mode.mode ? .isSelected : [])
+            }
+        }
+        .padding(compact ? 6 : 12)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(0.12)))
+    }
+}
+
+
+private struct BatteryIcon: View {
+    let cell: BatteryCell?
+
+    private var symbol: String {
+        guard let cell else { return "battery.0percent" }
+        if cell.charging { return "battery.100percent.bolt" }
+        switch cell.level {
+        case 0...10: return "battery.0percent"
+        case 11...37: return "battery.25percent"
+        case 38...62: return "battery.50percent"
+        case 63...87: return "battery.75percent"
+        default: return "battery.100percent"
+        }
+    }
+
+    private var color: Color {
+        guard let cell else { return .secondary }
+        if cell.charging { return .green }
+        return cell.level <= 20 ? .red : .secondary
+    }
+
+    var body: some View {
+        Image(systemName: symbol)
+            .foregroundStyle(color)
+            .accessibilityHidden(true) // The adjacent percentage supplies the value.
     }
 }
