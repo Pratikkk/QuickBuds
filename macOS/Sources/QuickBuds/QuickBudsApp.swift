@@ -93,6 +93,7 @@ private struct OverviewView: View {
                         if store.canControlNoise, let model = store.model, !model.selectableModes.isEmpty {
                             OrganizedNoiseControls(store: store)
                         }
+                        if store.hasAir5Audio { AudioControlsView(store: store) }
                         GroupBox {
                             LabeledContent(text("row_firmware_title"), value: store.firmware).padding(8)
                         }

@@ -19,6 +19,17 @@ final class BudsStore: ObservableObject {
     @Published var applying = false
     @Published var firmware = "—"
     @Published var batteryDiagnostic = "No battery response received yet."
+    @Published var linkedDevices: [LinkedDevice] = []
+    @Published var eqSelection: UInt8?
+    @Published var customPresets: [CustomEQ] = []
+    @Published var dualEnabled: Bool?
+    @Published var audioBusy = false
+    private var audioTransaction: (command: UInt16, sequence: UInt8, read: UInt16, payload: [UInt8], verify: () -> Bool)?
+    private var audioRefresh: Task<Void, Never>?
+    private var requestedDual: Bool?
+    private var createdEQID: UInt8?
+    private var audioReadSequence: UInt8?
+    private var audioTimeout: Task<Void, Never>?
     private let transport = BluetoothTransport()
     private var framer = Framer()
     private var sequence: UInt8 = 0
@@ -67,6 +78,10 @@ final class BudsStore: ObservableObject {
         error = nil
         deviceName = device.name
         model = Catalog.models.first { $0.name == device.name }
+        linkedDevices = []
+        eqSelection = nil
+        customPresets = []
+        dualEnabled = nil
         noiseMode = nil
         firmware = "—"
         bitmap = []
@@ -99,6 +114,13 @@ final class BudsStore: ObservableObject {
     }
 
     private func closeConnection() {
+        audioRefresh?.cancel()
+        audioRefresh = nil
+        audioTimeout?.cancel()
+        if audioBusy { error = "The connection ended before the setting was confirmed." }
+        audioTransaction = nil
+        audioReadSequence = nil
+        audioBusy = false
         cachedBattery = Set(battery.map(\.part))
         initialization?.cancel()
         initialization = nil
@@ -135,7 +157,7 @@ final class BudsStore: ObservableObject {
                     try await Task.sleep(nanoseconds: 200_000_000)
                 }
                 // Only subscribe to codes actually offered by the device.
-                let codes: [UInt8] = [1, 2, 3].filter { self.offered?.contains($0) ?? true }
+                let codes: [UInt8] = [1, 2, 3, 6].filter { self.offered?.contains($0) ?? true }
                 if self.supports(bit: 22) { self.send(0x0205, [UInt8(codes.count)] + codes) }
                 else {
                     for code in codes {
@@ -153,6 +175,8 @@ final class BudsStore: ObservableObject {
                     try await Task.sleep(nanoseconds: 200_000_000)
                     self.send(0x0105)
                 }
+                try await Task.sleep(nanoseconds: 200_000_000)
+                self.refreshAudioControls()
             } catch { /* Cancellation belongs to disconnect. */ }
         }
     }
@@ -218,7 +242,29 @@ final class BudsStore: ObservableObject {
 
     private func handle(_ message: Message) {
         let p = message.payload
+        var validAudioReport = false
+        if let transaction = audioTransaction, message.command == transaction.command | 0x8000,
+           message.sequence == transaction.sequence, let status = p.first {
+            guard status == 0 else { finishAudio("The earbuds refused the change (status \(status))."); return }
+            if transaction.command == 0x0403, supports(bit: 27) {
+                send(0x0413, [8, 0, requestedDual == true ? 0 : 1])
+            }
+            if transaction.command == 0x0418 && p.count >= 2 { createdEQID = p[1] }
+            audioReadSequence = send(transaction.read, transaction.payload)
+        }
         switch message.command {
+        case 0x810F where p.count >= 2 && p[0] == 0: eqSelection = p[1]; validAudioReport = true
+        case 0x0504 where !p.isEmpty: eqSelection = p[0]
+        case 0x0503 where !p.isEmpty && p.count >= 1 + Int(p[0]) * 2:
+            for i in stride(from: 1, to: 1 + Int(p[0]) * 2, by: 2) where p[i] == 0x11 { dualEnabled = p[i + 1] != 0 }
+        case 0x8122 where p.first == 0:
+            if let presets = CustomEQ.decode(Array(p.dropFirst())) { customPresets = presets; validAudioReport = true }
+        case 0x8112 where p.first == 0:
+            if let devices = LinkedDevice.decode(Array(p.dropFirst())) { linkedDevices = devices; validAudioReport = true }
+        case 0x810D where p.count >= 2 && p[0] == 0:
+            if p.count >= 2 + Int(p[1]) * 2 {
+                for i in stride(from: 2, to: 2 + Int(p[1]) * 2, by: 2) where p[i] == 0x11 { dualEnabled = p[i + 1] != 0; validAudioReport = true }
+            }
         case 0x8100 where p.count > 1 && p[0] == 0:
             bitmap = Array(p.dropFirst())
         case 0x8103:
@@ -246,6 +292,7 @@ final class BudsStore: ObservableObject {
             case 1:
                 batteryDiagnostic = "Battery event: " + p.map { String(format: "%02X", $0) }.joined(separator: " ")
                 if let cells = Decode.battery(Array(p.dropFirst())) { mergeBattery(cells) }
+            case 6: if let devices = LinkedDevice.decode(Array(p.dropFirst())) { linkedDevices = devices }
             case 2: refreshBattery()
             case 3: reportNoise(Array(p.dropFirst()), isPush: true)
             case 0xF2: reply(message, [0, 0xF2])
@@ -265,6 +312,95 @@ final class BudsStore: ObservableObject {
         case 0x051D: reply(message, [1])
         default: break
         }
+        if let transaction = audioTransaction, message.command == transaction.read | 0x8000,
+           message.sequence == audioReadSequence {
+            finishAudio(validAudioReport && transaction.verify() ? nil : "The earbuds did not apply the requested change.")
+            refreshAudioControls()
+        }
+    }
+
+    var hasAir5Audio: Bool { model?.id == "06D810" && connection == .connected }
+    var canEQ: Bool { hasAir5Audio && supports(bit: 10) }
+    var canCustomEQ: Bool { hasAir5Audio && model?.customEq == 1 && supports(bit: 34) }
+    var canManageDevices: Bool { hasAir5Audio && supports(bit: 59) && model?.dualDevice?.contains("connectDisconnectDevice") == true }
+    var canDualToggle: Bool { hasAir5Audio && supports(bit: 7) && dualEnabled != nil }
+
+    func refreshAudioControls() {
+        guard connection == .connected else { return }
+        audioRefresh?.cancel()
+        var queries: [(UInt16, [UInt8])] = []
+        if canEQ { queries.append((0x010F, [])) }
+        if canCustomEQ { queries.append((0x0122, [])) }
+        if hasAir5Audio && supports(bit: 29) { queries.append((0x0112, [])) }
+        if hasAir5Audio { queries.append((0x010D, [1, 0x11])) }
+        audioRefresh = Task { @MainActor [weak self] in
+            do {
+                for (command, payload) in queries {
+                    try Task.checkCancellation()
+                    guard let self, self.connection == .connected else { return }
+                    self.send(command, payload)
+                    try await Task.sleep(nanoseconds: 200_000_000)
+                }
+            } catch { }
+        }
+    }
+
+    private func changeAudio(_ command: UInt16, payload: [UInt8], read: UInt16, query: [UInt8] = [], verify: @escaping () -> Bool) {
+        guard connection == .connected, !audioBusy else { return }
+        audioBusy = true
+        createdEQID = nil
+        audioRefresh?.cancel()
+        error = nil
+        let seq = send(command, payload)
+        audioTransaction = (command, seq, read, query, verify)
+        audioReadSequence = nil
+        audioTimeout = Task { @MainActor [weak self] in
+            do { try await Task.sleep(nanoseconds: 6_000_000_000) } catch { return }
+            self?.finishAudio("The earbuds did not confirm the change. Refresh and try again.")
+        }
+    }
+
+    private func finishAudio(_ message: String? = nil) {
+        if let message { error = message }
+        audioTimeout?.cancel()
+        audioTimeout = nil
+        audioTransaction = nil
+        audioReadSequence = nil
+        audioBusy = false
+    }
+
+    func selectEQ(_ slot: UInt8) {
+        guard canEQ, model?.eqPresets?.contains(where: { $0.slot == slot }) == true else { return }
+        changeAudio(0x0406, payload: [slot], read: 0x010F) { [weak self] in self?.eqSelection == slot }
+    }
+
+    func setLinkedDevice(_ device: LinkedDevice) {
+        guard canManageDevices, !device.isThisDevice else { return }
+        changeAudio(0x0429, payload: device.command.payload, read: 0x0112) { [weak self] in
+            self?.linkedDevices.first(where: { $0.id == device.id })?.connected == !device.connected
+        }
+    }
+
+    func setDualEnabled(_ enabled: Bool) {
+        guard canDualToggle else { return }
+        requestedDual = enabled
+        changeAudio(0x0403, payload: [0x11, enabled ? 1 : 0], read: 0x010D, query: [1, 0x11]) { [weak self] in self?.dualEnabled == enabled }
+    }
+
+    func saveCustomEQ(_ preset: CustomEQ, create: Bool) {
+        guard canCustomEQ, let payload = preset.payload(action: create ? 1 : 2) else { return }
+        if create && customPresets.count >= (model?.customEqLimit ?? 3) {
+            error = "The earbuds have reached their custom EQ limit."; return
+        }
+        changeAudio(0x0418, payload: payload, read: 0x0122) { [weak self] in
+            self?.customPresets.contains(where: { (create ? $0.id == self?.createdEQID : ($0.id == preset.id && $0.selected)) && $0.name == preset.name && $0.frequencies == preset.frequencies && $0.gains == preset.gains }) == true
+        }
+    }
+
+    func deleteCustomEQ(_ preset: CustomEQ) {
+        guard canCustomEQ, let payload = preset.payload(action: 3) else { return }
+        let count = customPresets.count
+        changeAudio(0x0418, payload: payload, read: 0x0122) { [weak self] in self?.customPresets.count == count - 1 }
     }
 
     private func reply(_ request: Message, _ payload: [UInt8]) {

@@ -52,7 +52,7 @@ UUIDs, RFCOMM transport, handshake, event subscriptions, product identification,
 live battery reporting, firmware version, model-specific noise-control writes,
 confirmation failures, system appearance, menu bar controls, and shared translations.
 
-Still to port: equalizer, feature switches, gestures, dual-device management, fit and
+Still to port: remaining feature switches, gestures, fit and
 hearing tests, feedback, app updates, and custom themes.
 Generic noise-cancelling reports may not identify a particular intensity; this preview
 does not infer an unreported level. Platform transport diagnostics are currently English.
@@ -101,3 +101,34 @@ again or the app restarts. Battery timestamps track each part separately. Omitte
 parts retain their value with a cached label, and disconnect marks all readings cached.
 The overview shows elapsed time; tray battery tooltips show the last-received time.
 Physical case-close/reopen and sleep/wake reconnect behavior still need verification.
+
+
+## Air5 Sound Master EQ and device management
+
+For detected Air5 (`06D810`) the overview now reads the device list, dual-connection
+status, selected EQ, and custom EQ table. Controls are gated by the reported command
+bitmap. The three built-in presets use catalog slots 0 Ultimate sound, 1 Pure vocals,
+and 2 Thundering bass. Custom presets support ten catalog bands, creation, editing,
+apply, and deletion, up to the catalog limit (default three). Names are limited to
+64 UTF-8 bytes; writes preserve the gain range read from each preset. New presets
+start at -6..+6 dB. Draft slider edits are sent only on Save.
+
+Dual connection has a switch where its status is reported. The device list exposes
+Connect/Disconnect where `0x0429` is supported. The current host is protected from
+Disconnect, and other device actions use a confirmation dialog. Air5 has no preferred
+device function in its catalog, so that control is not offered.
+
+Every operation waits for a matching write acknowledgment and then requests a read
+with a separate sequence. Displayed selections come from device reports. Refusals,
+missing replies, malformed confirmation replies, and unchanged values report an
+error. Disconnection cancels pending operations. Custom-table reads after create or
+delete account for firmware-assigned and renumbered IDs.
+
+The test suite verifies Air5 slots/bands against the shared catalog, signed custom-EQ
+payloads and UTF-8 name lengths, malformed tables, and device-address byte order.
+Live verification on Air5 firmware `116.116.101`: both NARZO 70 and the current Mac
+appear in the device list; Pure vocals selection is read back correctly, and Ultimate
+sound is restored. A temporary flat ten-band custom preset was created, confirmed
+in the returned table, then deleted; Ultimate sound was selected afterward. Editing
+nonzero gains, dual toggling, and remote-device connect/disconnect still need physical
+verification. Protocol tests and compilation alone do not establish those behaviors.

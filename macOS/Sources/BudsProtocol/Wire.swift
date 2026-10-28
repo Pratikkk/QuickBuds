@@ -110,6 +110,11 @@ public struct EarbudModel: Decodable {
     public let id: String
     public let name: String
     public let ancModes: [NoiseMode]?
+    public let eqPresets: [EQChoice]?
+    public let customEq: Int?
+    public let customEqBands: [UInt16]?
+    public let customEqLimit: Int?
+    public let dualDevice: [String]?
 }
 
 public struct NoiseMode: Decodable, Identifiable {
@@ -159,5 +164,20 @@ extension EarbudModel {
             }
         }
         return nil
+    }
+}
+
+
+public struct EQChoice: Decodable, Identifiable {
+    public let mode: Int
+    public let slot: UInt8
+    public var id: UInt8 { slot }
+    public var titleKey: String {
+        switch mode {
+        case 26: return "eq_ultimate"
+        case 28: return "eq_pure_vocals"
+        case 29: return "eq_thundering_bass"
+        default: return "eq_default"
+        }
     }
 }
