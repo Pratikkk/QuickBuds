@@ -91,7 +91,7 @@ private struct OverviewView: View {
                     if store.connection == .connected {
                         batterySection
                         if store.canControlNoise, let model = store.model, !model.selectableModes.isEmpty {
-                            NoiseControlPanel(store: store)
+                            OrganizedNoiseControls(store: store)
                         }
                         GroupBox {
                             LabeledContent(text("row_firmware_title"), value: store.firmware).padding(8)
@@ -131,8 +131,8 @@ private struct OverviewView: View {
         GroupBox {
             HStack(spacing: 16) {
                 batteryCell(1, "status_left", "l.circle")
-                batteryCell(2, "status_right", "r.circle")
                 batteryCell(3, "status_case", "earbuds.case")
+                batteryCell(2, "status_right", "r.circle")
             }.padding(12)
             VStack(alignment: .leading, spacing: 8) {
                 Text(store.battery.contains(where: { $0.part == 3 })
@@ -150,7 +150,16 @@ private struct OverviewView: View {
     private func batteryCell(_ part: UInt8, _ key: String, _ symbol: String) -> some View {
         let cell = store.battery.first { $0.part == part }
         return VStack(spacing: 9) {
-            Image(systemName: symbol).font(.title2).foregroundStyle(.secondary)
+            ZStack {
+                Circle().stroke(Color.secondary.opacity(0.18), lineWidth: 5)
+                if let cell {
+                    Circle().trim(from: 0, to: CGFloat(cell.level) / 100)
+                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                }
+                Image(systemName: part == 3 ? "earbuds.case" : "earbuds")
+                    .font(.system(size: 30)).foregroundStyle(.primary)
+            }.frame(width: 80, height: 80).padding(.bottom, 5)
             Text(cell.map { "\($0.level)%" } ?? "—").font(.title2.monospacedDigit().weight(.semibold))
             HStack(spacing: 5) {
                 BatteryIcon(cell: cell)
@@ -283,5 +292,66 @@ private struct BatteryIcon: View {
         Image(systemName: symbol)
             .foregroundStyle(color)
             .accessibilityHidden(true) // The adjacent percentage supplies the value.
+    }
+}
+
+
+private struct OrganizedNoiseControls: View {
+    @ObservedObject var store: BudsStore
+    private var modes: [NoiseMode] { store.model?.selectableModes ?? [] }
+    private var levels: [NoiseMode] { modes.filter { [3, 4, 5, 7, 8].contains($0.mode) } }
+    private var ancSelected: Bool { [3, 4, 5, 7, 8].contains(store.noiseMode ?? -1) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(text("anc_section")).font(.headline)
+                Spacer()
+                if store.applying { Text(text("feature_applying")).font(.caption).foregroundStyle(.secondary) }
+            }
+            HStack(spacing: 4) {
+                if let off = modes.first(where: { $0.mode == 1 }) {
+                    modeButton(off, title: text(off.titleKey), icon: "speaker.slash", selected: store.noiseMode == 1)
+                }
+                if let anc = levels.first(where: { $0.mode == 7 }) ?? levels.first {
+                    modeButton(anc, title: text("anc_seg_anc"), icon: "headphones", selected: ancSelected)
+                }
+                if let transparency = modes.first(where: { $0.mode == 2 }) {
+                    modeButton(transparency, title: text(transparency.titleKey), icon: "person.wave.2", selected: store.noiseMode == 2)
+                }
+            }
+            if !levels.isEmpty {
+                Divider()
+                HStack(spacing: 6) {
+                    ForEach(levels) { mode in
+                        Button { store.setNoise(mode) } label: {
+                            HStack(spacing: 4) {
+                                if store.noiseMode == mode.mode { Image(systemName: "checkmark") }
+                                Text(text(mode.titleKey))
+                            }.frame(maxWidth: .infinity).padding(.vertical, 7)
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(store.applying)
+                        .accessibilityAddTraits(store.noiseMode == mode.mode ? .isSelected : [])
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func modeButton(_ mode: NoiseMode, title: String, icon: String, selected: Bool) -> some View {
+        Button { store.setNoise(mode) } label: {
+            VStack(spacing: 6) {
+                Image(systemName: icon).font(.title3)
+                Text(title).font(.callout)
+            }
+            .frame(maxWidth: .infinity).padding(.vertical, 12)
+            .background(selected ? Color.accentColor.opacity(0.16) : .clear, in: Capsule())
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain).disabled(store.applying)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
