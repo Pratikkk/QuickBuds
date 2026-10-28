@@ -9,6 +9,11 @@ final class BudsStore: ObservableObject {
     @Published var deviceName = "QuickBuds"
     @Published var model: EarbudModel?
     @Published var battery: [BatteryCell] = []
+    @Published var batteryUpdated: [UInt8: Date] = [:]
+    @Published var cachedBattery: Set<UInt8> = []
+    private var preferredDeviceID: String? = UserDefaults.standard.string(forKey: "preferredDeviceID")
+    private var reconnectTask: Task<Void, Never>?
+    private var reconnectEnabled = true
     @Published var noiseMode: Int?
     @Published var error: String?
     @Published var applying = false
@@ -28,10 +33,12 @@ final class BudsStore: ObservableObject {
         transport.onData = { [weak self] in self?.receive($0) }
         transport.onClose = { [weak self] reason in
             guard let self else { return }
-            self.disconnect()
+            self.closeConnection()
             self.error = reason
+            self.scheduleReconnect()
         }
         refreshDevices()
+        scheduleReconnect()
     }
 
     var status: String {
@@ -46,11 +53,20 @@ final class BudsStore: ObservableObject {
     func refreshDevices() { devices = BluetoothTransport.paired().sorted { ($0.name == "OPPO Enco Air5" ? 0 : 1) < ($1.name == "OPPO Enco Air5" ? 0 : 1) } }
 
     func connect(_ device: PairedDevice) {
-        disconnect()
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        reconnectEnabled = true
+        if preferredDeviceID != device.id {
+            battery = []
+            batteryUpdated = [:]
+            cachedBattery = []
+        }
+        preferredDeviceID = device.id
+        UserDefaults.standard.set(device.id, forKey: "preferredDeviceID")
+        closeConnection()
         error = nil
         deviceName = device.name
         model = Catalog.models.first { $0.name == device.name }
-        battery = []
         noiseMode = nil
         firmware = "—"
         bitmap = []
@@ -61,6 +77,29 @@ final class BudsStore: ObservableObject {
     }
 
     func disconnect() {
+        reconnectEnabled = false
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        closeConnection()
+    }
+
+    private func scheduleReconnect() {
+        guard reconnectEnabled, preferredDeviceID != nil, reconnectTask == nil else { return }
+        reconnectTask = Task { @MainActor [weak self] in
+            do {
+                try await Task.sleep(nanoseconds: 5_000_000_000)
+                guard let self, self.reconnectEnabled, self.connection == .disconnected else { return }
+                self.reconnectTask = nil
+                self.refreshDevices()
+                if let device = self.devices.first(where: { $0.id == self.preferredDeviceID && $0.audioConnected }) {
+                    self.connect(device)
+                } else { self.scheduleReconnect() }
+            } catch { }
+        }
+    }
+
+    private func closeConnection() {
+        cachedBattery = Set(battery.map(\.part))
         initialization?.cancel()
         initialization = nil
         failureTimer?.cancel()
@@ -164,7 +203,10 @@ final class BudsStore: ObservableObject {
 
     private func mergeBattery(_ cells: [BatteryCell]) {
         // Missing parts and zero levels mean unknown, not an empty battery.
+        cachedBattery.formUnion(battery.map(\.part))
         for cell in cells {
+            batteryUpdated[cell.part] = Date()
+            cachedBattery.remove(cell.part)
             battery.removeAll { $0.part == cell.part }
             battery.append(cell)
         }

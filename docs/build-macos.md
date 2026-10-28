@@ -36,8 +36,7 @@ When working inside a sandbox that disallows SwiftPM's nested sandbox, set
 
 The menu bar item shows batteries and noise controls. Closing the main window keeps
 the app running; choose Quit QuickBuds to end its Bluetooth control link. Disconnect
-closes only the control channel, leaving the system's audio connection alone. If the
-case closes or the link drops, select the earbuds and connect again.
+closes only the control channel, leaving the system's audio connection alone. After a link drop, QuickBuds retries the remembered device when macOS reports its audio connection available. Disconnect stops retries for the current app session.
 
 An unknown device can connect for battery reads, but gets no guessed noise-control
 writes. Model selection comes from the reported product ID, with a device-name fallback.
@@ -54,7 +53,7 @@ live battery reporting, firmware version, model-specific noise-control writes,
 confirmation failures, system appearance, menu bar controls, and shared translations.
 
 Still to port: equalizer, feature switches, gestures, dual-device management, fit and
-hearing tests, feedback, automatic reconnect, app updates, and custom themes.
+hearing tests, feedback, app updates, and custom themes.
 Generic noise-cancelling reports may not identify a particular intensity; this preview
 does not infer an unreported level. Platform transport diagnostics are currently English.
 Live reads were verified on the development Mac with OPPO Enco Air5, firmware
@@ -90,6 +89,15 @@ The home screen prioritizes OPPO Enco Air5 in the paired-device list. Battery re
 merge per part during a connection, preserving the case's last reported percentage
 when subsequent reports omit it. Case readings are labeled as last reported; opening
 the lid and using Refresh battery requests a new reading with the existing battery
-query. A new connection clears the previous connection's battery readings. Case
+query. Switching devices clears battery readings; reconnecting the same device retains them as last known until refreshed. Case
 availability on Air5 still depends on what its firmware reports; no percentage is
 estimated when the device has not supplied one.
+
+
+Automatic reconnect remembers the selected paired-device ID locally and checks every
+five seconds while disconnected. It attempts a control link only when macOS reports
+that device connected. Explicit Disconnect disables retries until Connect is selected
+again or the app restarts. Battery timestamps track each part separately. Omitted
+parts retain their value with a cached label, and disconnect marks all readings cached.
+The overview shows elapsed time; tray battery tooltips show the last-received time.
+Physical case-close/reopen and sleep/wake reconnect behavior still need verification.

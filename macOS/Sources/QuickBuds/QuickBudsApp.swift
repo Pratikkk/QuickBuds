@@ -165,6 +165,12 @@ private struct OverviewView: View {
                 BatteryIcon(cell: cell)
                 Text(text(key)).foregroundStyle(.secondary)
             }.font(.caption)
+            if let updated = store.batteryUpdated[part] {
+                VStack(spacing: 2) {
+                    if store.cachedBattery.contains(part) { Text("Last known").font(.caption2) }
+                    Text(updated, style: .relative).font(.caption2)
+                }.foregroundStyle(.secondary)
+            }
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
@@ -196,7 +202,11 @@ private struct MenuBarView: View {
                                 .font(.callout.monospacedDigit())
                         }
 
+                        if store.cachedBattery.contains(part) {
+                            Text("Cached").font(.caption2).foregroundStyle(.secondary)
+                        }
                     }.frame(maxWidth: .infinity)
+                    .help(store.batteryUpdated[part].map { "Last received: " + $0.formatted(date: .omitted, time: .standard) } ?? "Not reported")
                 }
                 }
                 if store.canControlNoise {
