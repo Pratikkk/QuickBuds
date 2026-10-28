@@ -181,9 +181,8 @@ private struct OverviewView: View {
                         .help("Last received: " + updated.formatted(date: .abbreviated, time: .standard))
                 }
             }
-            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
         .accessibilityElement(children: .combine)
     }
 
