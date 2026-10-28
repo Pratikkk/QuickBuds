@@ -207,3 +207,9 @@ reconnect on this firmware remains unverified; use the phone's Bluetooth setting
 a fallback. Late device-state confirmation clears only the corresponding timeout
 warning, preserving unrelated errors. The timeout diagnostic retains whether a write
 acknowledgment was received.
+
+Device-action failure handling is shared by the deadline timer and a status reply
+arriving at the deadline. Both retain the acknowledgment diagnostic, produce a
+device-specific warning, and register that warning for later state reconciliation.
+This avoids a generic audio-change warning winning the race with the device timeout.
+The unsuccessful remote reconnect itself is still unresolved on Air5 firmware.

@@ -438,7 +438,11 @@ final class BudsStore: ObservableObject {
                 finishAudio()
                 refreshAudioControls()
             case .failed:
-                finishAudio("The earbuds did not apply the requested change.")
+                if transaction.command == 0x0429 {
+                    finishDeviceActionFailure(validAudioReport ? "Device state remained unchanged at the deadline." : "Device status response was invalid or refused.")
+                } else {
+                    finishAudio("The earbuds did not apply the requested change.")
+                }
                 refreshAudioControls()
             case .retry:
                 if transaction.command == 0x0429 { return } // The bounded device poll owns these reads.
@@ -508,14 +512,19 @@ final class BudsStore: ObservableObject {
             do { try await Task.sleep(nanoseconds: UInt64(timeout) * 1_000_000_000) } catch { return }
             if command == 0x0429 {
                 guard let self else { return }
-                self.recordDeviceDiagnostic("No confirmation within 15 seconds. Acknowledgment: " + (self.deviceAck.map { String($0) } ?? "not received") + ".")
-                let message = "The earbuds did not confirm this device action from the Mac. Try connecting from the phone’s Bluetooth settings; this does not mean the pairing was removed."
-                self.deviceActionError = message
-                self.finishAudio(message)
+                self.finishDeviceActionFailure("No confirmation within 15 seconds.")
             } else {
                 self?.finishAudio("The earbuds did not confirm the change. Refresh and try again.")
             }
         }
+    }
+
+    private func finishDeviceActionFailure(_ reason: String) {
+        recordDeviceDiagnostic(reason + " Acknowledgment: " + (deviceAck.map { String($0) } ?? "not received") + ".")
+        let action = lastDeviceExpectation?.connected == false ? "disconnect" : "connect"
+        let message = "Could not confirm the device’s \(action) request from this Mac. The device list shows the last reported state. For reconnecting, use the phone’s Bluetooth settings."
+        deviceActionError = message
+        finishAudio(message)
     }
 
     private func applyLinkedDevices(_ devices: [LinkedDevice]) {
