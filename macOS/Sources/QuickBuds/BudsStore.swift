@@ -14,6 +14,11 @@ final class BudsStore: ObservableObject {
     private var preferredDeviceID: String? = UserDefaults.standard.string(forKey: "preferredDeviceID")
     private var reconnectTask: Task<Void, Never>?
     private var reconnectEnabled = true
+    private var reconnectPolicy = ReconnectPolicy()
+    private var sleeping = false
+    private var workspaceObservers: [NSObjectProtocol] = []
+    private var handshakeWatchdog: Task<Void, Never>?
+    @Published var nextReconnect: Date?
     @Published var noiseMode: Int?
     @Published var error: String?
     @Published var applying = false
@@ -45,11 +50,34 @@ final class BudsStore: ObservableObject {
         transport.onClose = { [weak self] reason in
             guard let self else { return }
             self.closeConnection()
-            self.error = reason
+            self.error = reason ?? self.error
+            self.reconnectPolicy.failed()
             self.scheduleReconnect()
         }
+        let center = NSWorkspace.shared.notificationCenter
+        workspaceObservers.append(center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in
+            guard let self else { return }
+            self.sleeping = true
+            self.reconnectTask?.cancel()
+            self.reconnectTask = nil
+            self.nextReconnect = nil
+            self.closeConnection()
+        })
+        workspaceObservers.append(center.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
+            guard let self else { return }
+            self.sleeping = false
+            self.reconnectPolicy.reset()
+            self.refreshDevices()
+            self.scheduleReconnect()
+        })
         refreshDevices()
         scheduleReconnect()
+    }
+
+    deinit {
+        for observer in workspaceObservers { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
+        reconnectTask?.cancel()
+        handshakeWatchdog?.cancel()
     }
 
     var status: String {
@@ -64,6 +92,23 @@ final class BudsStore: ObservableObject {
     func refreshDevices() { devices = BluetoothTransport.paired().sorted { ($0.name == "OPPO Enco Air5" ? 0 : 1) < ($1.name == "OPPO Enco Air5" ? 0 : 1) } }
 
     func connect(_ device: PairedDevice) {
+        reconnectPolicy.reset()
+        beginConnection(device)
+    }
+
+    func connectPreferred() {
+        refreshDevices()
+        if let device = devices.first(where: { $0.id == preferredDeviceID })
+            ?? devices.first(where: { $0.name == "OPPO Enco Air5" }) {
+            connect(device)
+        } else {
+            error = text("no_buds_paired")
+        }
+    }
+
+    private func beginConnection(_ device: PairedDevice) {
+        guard !sleeping else { return }
+        nextReconnect = nil
         reconnectTask?.cancel()
         reconnectTask = nil
         reconnectEnabled = true
@@ -93,27 +138,37 @@ final class BudsStore: ObservableObject {
 
     func disconnect() {
         reconnectEnabled = false
+        nextReconnect = nil
         reconnectTask?.cancel()
         reconnectTask = nil
         closeConnection()
     }
 
     private func scheduleReconnect() {
-        guard reconnectEnabled, preferredDeviceID != nil, reconnectTask == nil else { return }
+        guard reconnectEnabled, !sleeping, connection == .disconnected, preferredDeviceID != nil, reconnectTask == nil else { return }
+        let delay = reconnectPolicy.delay
+        nextReconnect = Date().addingTimeInterval(TimeInterval(delay))
         reconnectTask = Task { @MainActor [weak self] in
             do {
-                try await Task.sleep(nanoseconds: 5_000_000_000)
-                guard let self, self.reconnectEnabled, self.connection == .disconnected else { return }
+                try await Task.sleep(nanoseconds: UInt64(delay) * 1_000_000_000)
+                guard let self else { return }
                 self.reconnectTask = nil
+                self.nextReconnect = nil
+                guard self.reconnectEnabled, !self.sleeping, self.connection == .disconnected else { return }
                 self.refreshDevices()
                 if let device = self.devices.first(where: { $0.id == self.preferredDeviceID && $0.audioConnected }) {
-                    self.connect(device)
-                } else { self.scheduleReconnect() }
+                    self.beginConnection(device)
+                } else {
+                    self.reconnectPolicy.failed()
+                    self.scheduleReconnect()
+                }
             } catch { }
         }
     }
 
     private func closeConnection() {
+        handshakeWatchdog?.cancel()
+        handshakeWatchdog = nil
         audioRefresh?.cancel()
         audioRefresh = nil
         audioTimeout?.cancel()
@@ -147,6 +202,14 @@ final class BudsStore: ObservableObject {
 
     private func opened() {
         connection = .connected
+        handshakeWatchdog = Task { @MainActor [weak self] in
+            do { try await Task.sleep(nanoseconds: 8_000_000_000) } catch { return }
+            guard let self, self.bitmap.isEmpty, self.connection == .connected else { return }
+            self.closeConnection()
+            self.error = "The earbuds opened a connection but did not finish setup. Retrying automatically."
+            self.reconnectPolicy.failed()
+            self.scheduleReconnect()
+        }
         initialization = Task { @MainActor [weak self] in
             guard let self else { return }
             do {
@@ -267,6 +330,9 @@ final class BudsStore: ObservableObject {
             }
         case 0x8100 where p.count > 1 && p[0] == 0:
             bitmap = Array(p.dropFirst())
+            handshakeWatchdog?.cancel()
+            handshakeWatchdog = nil
+            reconnectPolicy.reset()
         case 0x8103:
             if let id = Decode.product(p) { model = Catalog.models.first { $0.id == id && $0.name == deviceName } ?? Catalog.models.first { $0.id == id } }
         case 0x8200 where p.count >= 2 && p[0] == 0 && p.count >= 2 + Int(p[1]):

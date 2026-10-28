@@ -190,6 +190,21 @@ private struct MenuBarView: View {
                 Circle().fill(store.connection == .connected ? Color.green : Color.secondary)
                     .frame(width: 7, height: 7).accessibilityLabel(store.status)
             }
+            if store.connection != .connected {
+                HStack(spacing: 6) {
+                    if store.connection == .connecting { ProgressView().controlSize(.small) }
+                    Text(store.status).font(.caption).foregroundStyle(.secondary)
+                    if let date = store.nextReconnect {
+                        Text("Retry in").font(.caption).foregroundStyle(.secondary)
+                        Text(date, style: .timer).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                    }
+                }
+                if store.connection == .disconnected {
+                    Button(text("conn_action_connect")) { store.connectPreferred() }
+                } else {
+                    Button("Cancel connection") { store.disconnect() }
+                }
+            }
             if store.connection == .connected {
                 HStack(spacing: 8) {
                 ForEach([UInt8(1), 2, 3], id: \.self) { part in
@@ -215,7 +230,32 @@ private struct MenuBarView: View {
                     NoiseControlPanel(store: store, compact: true)
                 }
             }
-            if let error = store.error { Text(error).font(.caption).foregroundStyle(.orange) }
+            if store.connection == .connected {
+                if store.canEQ {
+                    Menu {
+                        ForEach(store.model?.eqPresets ?? []) { preset in
+                            Button { store.selectEQ(preset.slot) } label: {
+                                if store.eqSelection == preset.slot { Label(text(preset.titleKey), systemImage: "checkmark") }
+                                else { Text(text(preset.titleKey)) }
+                            }
+                        }
+                    } label: { Label("Sound Master EQ", systemImage: "slider.horizontal.3") }
+                    .disabled(store.audioBusy)
+                }
+                HStack {
+                    Button { store.refreshBattery() } label: { Label("Refresh", systemImage: "arrow.clockwise") }
+                    Spacer()
+                    Button(text("conn_action_disconnect")) { store.disconnect() }
+                }.font(.callout)
+            }
+            if let error = store.error {
+                HStack(alignment: .top) {
+                    Text(error).font(.caption).foregroundStyle(.orange)
+                    Spacer(minLength: 2)
+                    Button { store.error = nil } label: { Image(systemName: "xmark") }
+                        .buttonStyle(.plain).accessibilityLabel(text("dialog_close"))
+                }
+            }
             Divider()
             Button(text("desktop_nav_overview")) {
                 openWindow(id: "main")

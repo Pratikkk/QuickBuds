@@ -34,7 +34,7 @@ When working inside a sandbox that disallows SwiftPM's nested sandbox, set
 4. Battery levels and firmware appear when the earbuds report them. Noise controls
    appear only when the device's command bitmap and model catalog support them.
 
-The menu bar item shows batteries and noise controls. Closing the main window keeps
+The menu bar item shows batteries, noise controls, and an EQ preset menu, plus refresh and connect/disconnect actions. Closing the main window keeps
 the app running; choose Quit QuickBuds to end its Bluetooth control link. Disconnect
 closes only the control channel, leaving the system's audio connection alone. After a link drop, QuickBuds retries the remembered device when macOS reports its audio connection available. Disconnect stops retries for the current app session.
 
@@ -94,8 +94,7 @@ availability on Air5 still depends on what its firmware reports; no percentage i
 estimated when the device has not supplied one.
 
 
-Automatic reconnect remembers the selected paired-device ID locally and checks every
-five seconds while disconnected. It attempts a control link only when macOS reports
+Automatic reconnect remembers the selected paired-device ID locally and checks while disconnected with retries paced at 2, 5, 10, 20, then 30 seconds. It attempts a control link only when macOS reports
 that device connected. Explicit Disconnect disables retries until Connect is selected
 again or the app restarts. Battery timestamps track each part separately. Omitted
 parts retain their value with a cached label, and disconnect marks all readings cached.
@@ -132,3 +131,23 @@ sound is restored. A temporary flat ten-band custom preset was created, confirme
 in the returned table, then deleted; Ultimate sound was selected afterward. Editing
 nonzero gains, dual toggling, and remote-device connect/disconnect still need physical
 verification. Protocol tests and compilation alone do not establish those behaviors.
+
+
+## Tray and reconnect reliability
+
+The compact tray offers Connect for the remembered Air5, cancellation during a
+connection attempt, Disconnect, battery refresh, dismissible errors, and the supported
+built-in EQ presets. It shows a countdown while an automatic retry is scheduled.
+Explicit Connect resets retry pacing. Successful command-bitmap initialization also
+resets pacing; absent devices and failed attempts back off to a maximum 30 seconds.
+No automatic attempt starts unless macOS reports the remembered device connected.
+
+Before system sleep the control connection and pending tasks are closed. Wake restarts
+retries if the user has not explicitly disconnected. An open channel that does not
+provide a command bitmap within eight seconds is closed and retried. Protocol and
+retry-policy tests cover capped pacing and reset; physical sleep/wake and silent-link
+failure scenarios remain to be verified.
+
+Live restart check on Air5 firmware `116.116.101`: after quitting and relaunching,
+the remembered earbuds reconnected automatically without selecting Connect. Battery,
+ANC, connected-device list, EQ selection, and firmware reads were restored.
