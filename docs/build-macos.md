@@ -225,3 +225,10 @@ A native segmented control separates Sound (ANC and Sound Master EQ) from Device
 (dual-device management). Firmware and battery diagnostics sit in a collapsed Details
 section. Device help is also collapsed by default. Existing colors, materials, tray
 controls, Bluetooth operations, and remote reconnect limitations are unchanged.
+
+Sidebar layout uses the native balanced split-view style, a stable 220-point sidebar,
+and a 420-point minimum detail width. The detail content is anchored to its leading
+edge instead of re-centering at the content-width cap. The sidebar's contents are
+clipped during collapse so its labels do not reflow while the native column contracts.
+No custom animation or motion override is added. Expanded and collapsed states were
+visually checked at the narrow window width; the main section positions stayed stable.

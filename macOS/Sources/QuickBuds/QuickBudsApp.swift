@@ -61,7 +61,9 @@ private struct OverviewView: View {
                 .buttonStyle(.borderless).padding()
             }
             .navigationTitle("QuickBuds")
-            .navigationSplitViewColumnWidth(min: 210, ideal: 240)
+            .frame(width: 220)
+            .clipped()
+            .navigationSplitViewColumnWidth(min: 220, ideal: 220, max: 220)
         } detail: {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
@@ -122,10 +124,12 @@ private struct OverviewView: View {
                 }
                 .padding(20)
                 .frame(maxWidth: 800, alignment: .leading)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .frame(minWidth: 420)
             .navigationTitle(text("desktop_nav_overview"))
         }
+        .navigationSplitViewStyle(.balanced)
         .onAppear { if selectedDevice == nil { selectedDevice = store.devices.first?.id } }
         .onChange(of: store.devices.map(\.id)) { _, ids in
             if selectedDevice == nil || !ids.contains(selectedDevice!) { selectedDevice = ids.first }
