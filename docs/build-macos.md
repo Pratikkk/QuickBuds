@@ -185,3 +185,20 @@ single observation, not a long-running energy or memory guarantee.
 Live lifecycle check during hardening: explicit Disconnect remained disconnected
 beyond the first retry interval; selecting Connect restored Air5 battery reads.
 Long-duration soak testing and physical sleep/wake testing remain outstanding.
+
+
+## Remote-device reconnect confirmation
+
+Device actions use the existing documented `0x0429 01|02 <MAC>` payloads. They now
+observe device-list reads once per second for up to 15 seconds, independently of
+whether a write acknowledgment arrives, and accept a matching real device-state
+push. Only the original command is sent; polling never resends the action. Explicit
+refusals still fail immediately. Other audio operations keep their six-second window.
+A bounded on-screen diagnostic records request/acknowledgment/read/push events without
+Bluetooth addresses; it is not uploaded or written to disk.
+
+The phone must already be paired with the earbuds. QuickBuds cannot establish that
+pairing on the phone. The user reported the NARZO 70 was no longer paired after a
+Disconnect action. The implementation sends the repo's documented disconnect action
+`02`, never its unused unpair action `03`; the observed pairing behavior requires
+verification after re-pairing. Do not treat this firmware behavior as confirmed.

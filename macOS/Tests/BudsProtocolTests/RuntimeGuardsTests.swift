@@ -55,6 +55,13 @@ final class RuntimeGuardsTests: XCTestCase {
         XCTAssertEqual(window.decide(valid: true, matches: true, now: 107), .failed)
     }
 
+    func testDeviceConnectionHasLongerBoundedObservationWindow() {
+        let device = ConfirmationWindow(now: 100, timeout: 15)
+        XCTAssertEqual(device.decide(valid: true, matches: false, now: 107), .retry)
+        XCTAssertEqual(device.decide(valid: true, matches: true, now: 114), .confirmed)
+        XCTAssertEqual(device.decide(valid: true, matches: false, now: 115), .failed)
+    }
+
     func testInvalidPresetGainIsRejected() throws {
         let preset = CustomEQ(name: "Test", frequencies: [1000])
         var payload = try XCTUnwrap(preset.payload(action: 2))

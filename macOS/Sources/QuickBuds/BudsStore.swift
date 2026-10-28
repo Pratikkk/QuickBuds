@@ -29,6 +29,9 @@ final class BudsStore: ObservableObject {
     @Published var customPresets: [CustomEQ] = []
     @Published var dualEnabled: Bool?
     @Published var audioBusy = false
+    @Published var deviceDiagnostic = "No device action requested yet."
+    private var devicePoll: Task<Void, Never>?
+    private var deviceReadSequences: Set<UInt8> = []
     private var audioTransaction: (command: UInt16, sequence: UInt8, read: UInt16, payload: [UInt8], verify: () -> Bool)?
     private var audioRefresh: Task<Void, Never>?
     private var requestedDual: Bool?
@@ -173,6 +176,9 @@ final class BudsStore: ObservableObject {
     }
 
     private func closeConnection() {
+        devicePoll?.cancel()
+        devicePoll = nil
+        deviceReadSequences = []
         deferredBatteryRead?.cancel()
         deferredBatteryRead = nil
         handshakeWatchdog?.cancel()
@@ -333,12 +339,13 @@ final class BudsStore: ObservableObject {
         var validAudioReport = false
         if let transaction = audioTransaction, message.command == transaction.command | 0x8000,
            message.sequence == transaction.sequence, let status = p.first {
+            if transaction.command == 0x0429 { recordDeviceDiagnostic("Acknowledgment: status \(status), sequence \(message.sequence).") }
             guard status == 0 else { finishAudio("The earbuds refused the change (status \(status))."); return }
             if transaction.command == 0x0403, supports(bit: 27) {
                 send(0x0413, [8, 0, requestedDual == true ? 0 : 1])
             }
             if transaction.command == 0x0418 && p.count >= 2 { createdEQID = p[1] }
-            audioReadSequence = send(transaction.read, transaction.payload)
+            if transaction.command != 0x0429 { audioReadSequence = send(transaction.read, transaction.payload) }
         }
         switch message.command {
         case 0x810F where p.count >= 2 && p[0] == 0: eqSelection = p[1]; validAudioReport = true
@@ -348,7 +355,12 @@ final class BudsStore: ObservableObject {
         case 0x8122 where p.first == 0:
             if let presets = CustomEQ.decode(Array(p.dropFirst())) { customPresets = presets; validAudioReport = true }
         case 0x8112 where p.first == 0:
-            if let devices = LinkedDevice.decode(Array(p.dropFirst())) { linkedDevices = devices; validAudioReport = true }
+            if let devices = LinkedDevice.decode(Array(p.dropFirst())) {
+                linkedDevices = devices; validAudioReport = true
+                if audioTransaction?.command == 0x0429 {
+                    recordDeviceDiagnostic("Status reply: sequence \(message.sequence), \(devices.filter(\.connected).count) connected devices.")
+                }
+            }
         case 0x810D where p.count >= 2 && p[0] == 0:
             if p.count >= 2 + Int(p[1]) * 2 {
                 for i in stride(from: 2, to: 2 + Int(p[1]) * 2, by: 2) where p[i] == 0x11 { dualEnabled = p[i + 1] != 0; validAudioReport = true }
@@ -383,7 +395,18 @@ final class BudsStore: ObservableObject {
             case 1:
                 batteryDiagnostic = "Battery event: " + p.map { String(format: "%02X", $0) }.joined(separator: " ")
                 if let cells = Decode.battery(Array(p.dropFirst())) { mergeBattery(cells) }
-            case 6: if let devices = LinkedDevice.decode(Array(p.dropFirst())) { linkedDevices = devices }
+            case 6:
+                if let devices = LinkedDevice.decode(Array(p.dropFirst())) {
+                    linkedDevices = devices
+                    if let active = audioTransaction, active.command == 0x0429 {
+                        recordDeviceDiagnostic("Device-state push received.")
+                        if active.verify() {
+                            recordDeviceDiagnostic("Requested device state confirmed by push.")
+                            finishAudio()
+                            refreshAudioControls()
+                        }
+                    }
+                }
             case 2: refreshBattery()
             case 3: reportNoise(Array(p.dropFirst()), isPush: true)
             case 0xF2: reply(message, [0, 0xF2])
@@ -399,16 +422,18 @@ final class BudsStore: ObservableObject {
         default: break
         }
         if let transaction = audioTransaction, message.command == transaction.read | 0x8000,
-           message.sequence == audioReadSequence {
+           (message.sequence == audioReadSequence || (transaction.command == 0x0429 && deviceReadSequences.contains(message.sequence))) {
             let decision = audioConfirmationWindow?.decide(valid: validAudioReport, matches: transaction.verify(), now: ProcessInfo.processInfo.systemUptime) ?? .failed
             switch decision {
             case .confirmed:
+                if transaction.command == 0x0429 { recordDeviceDiagnostic("Requested device state confirmed by read.") }
                 finishAudio()
                 refreshAudioControls()
             case .failed:
                 finishAudio("The earbuds did not apply the requested change.")
                 refreshAudioControls()
             case .retry:
+                if transaction.command == 0x0429 { return } // The bounded device poll owns these reads.
                 audioConfirmationRetry?.cancel()
                 audioConfirmationRetry = Task { @MainActor [weak self] in
                     do { try await Task.sleep(nanoseconds: 500_000_000) } catch { return }
@@ -449,20 +474,48 @@ final class BudsStore: ObservableObject {
     private func changeAudio(_ command: UInt16, payload: [UInt8], read: UInt16, query: [UInt8] = [], verify: @escaping () -> Bool) {
         guard connection == .connected, !audioBusy else { return }
         audioBusy = true
-        audioConfirmationWindow = ConfirmationWindow(now: ProcessInfo.processInfo.systemUptime)
+        let timeout: TimeInterval = command == 0x0429 ? 15 : 6
+        audioConfirmationWindow = ConfirmationWindow(now: ProcessInfo.processInfo.systemUptime, timeout: timeout)
         createdEQID = nil
         audioRefresh?.cancel()
         error = nil
         let seq = send(command, payload)
         audioTransaction = (command, seq, read, query, verify)
         audioReadSequence = nil
+        if command == 0x0429 {
+            deviceReadSequences = []
+            recordDeviceDiagnostic("Request sent: command 0429, sequence \(seq). Waiting for reported state.")
+            devicePoll = Task { @MainActor [weak self] in
+                do {
+                    while !Task.isCancelled {
+                        try await Task.sleep(nanoseconds: 1_000_000_000)
+                        guard let self, self.audioTransaction?.sequence == seq, self.connection == .connected else { return }
+                        let readSequence = self.send(0x0112)
+                        self.deviceReadSequences.insert(readSequence)
+                    }
+                } catch { }
+            }
+        }
         audioTimeout = Task { @MainActor [weak self] in
-            do { try await Task.sleep(nanoseconds: 6_000_000_000) } catch { return }
-            self?.finishAudio("The earbuds did not confirm the change. Refresh and try again.")
+            do { try await Task.sleep(nanoseconds: UInt64(timeout) * 1_000_000_000) } catch { return }
+            if command == 0x0429 {
+                self?.recordDeviceDiagnostic("No confirmation within 15 seconds.")
+                self?.finishAudio("The earbuds did not report the requested phone connection. Check that the phone’s Bluetooth is on and the earbuds are paired; try connecting from the phone’s Bluetooth settings.")
+            } else {
+                self?.finishAudio("The earbuds did not confirm the change. Refresh and try again.")
+            }
         }
     }
 
+    private func recordDeviceDiagnostic(_ line: String) {
+        let entries = deviceDiagnostic.split(separator: "\n").map(String.init)
+        deviceDiagnostic = (Array(entries.suffix(11)) + [line]).joined(separator: "\n")
+    }
+
     private func finishAudio(_ message: String? = nil) {
+        devicePoll?.cancel()
+        devicePoll = nil
+        deviceReadSequences = []
         audioConfirmationRetry?.cancel()
         audioConfirmationRetry = nil
         audioConfirmationWindow = nil
@@ -480,7 +533,8 @@ final class BudsStore: ObservableObject {
     }
 
     func setLinkedDevice(_ device: LinkedDevice) {
-        guard canManageDevices, !device.isThisDevice else { return }
+        guard canManageDevices, !device.isThisDevice, !audioBusy else { return }
+        deviceDiagnostic = "Request: " + (device.connected ? "disconnect" : "connect") + " " + device.name
         changeAudio(0x0429, payload: device.command.payload, read: 0x0112) { [weak self] in
             self?.linkedDevices.first(where: { $0.id == device.id })?.connected == !device.connected
         }

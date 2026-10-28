@@ -22,6 +22,8 @@ struct AudioControlsView: View {
                     if store.linkedDevices.isEmpty {
                         Text("No devices reported yet.").foregroundStyle(.secondary)
                     }
+                    Text("Connect requires an existing pairing. If the earbuds are no longer paired with your phone, pair them again in the phone’s Bluetooth settings first.")
+                        .font(.caption).foregroundStyle(.secondary)
                     ForEach(store.linkedDevices) { device in
                         HStack(spacing: 12) {
                             Image(systemName: device.isThisDevice ? "desktopcomputer" : "iphone").font(.title2).foregroundStyle(.secondary)
@@ -37,7 +39,13 @@ struct AudioControlsView: View {
                             }
                         }.padding(.vertical, 4)
                     }
-                    Button("Refresh devices", systemImage: "arrow.clockwise") { store.refreshAudioControls() }.disabled(store.audioBusy)
+                    HStack {
+                        Button("Refresh devices", systemImage: "arrow.clockwise") { store.refreshAudioControls() }.disabled(store.audioBusy)
+                        if store.audioBusy { ProgressView().controlSize(.small) }
+                    }
+                    DisclosureGroup("Device connection diagnostics") {
+                        Text(store.deviceDiagnostic).font(.caption.monospaced()).textSelection(.enabled)
+                    }.font(.caption)
                 }.padding(8)
             }
             if store.canEQ || store.canCustomEQ {
