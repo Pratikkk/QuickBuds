@@ -151,3 +151,37 @@ failure scenarios remain to be verified.
 Live restart check on Air5 firmware `116.116.101`: after quitting and relaunching,
 the remembered earbuds reconnected automatically without selecting Connect. Battery,
 ANC, connected-device list, EQ selection, and firmware reads were restored.
+
+## Runtime hardening
+
+Queued writes carry a per-connection cancellation gate; disconnect invalidates queued
+work before closing the channel. A 64-write cap prevents an unresponsive transport
+from accumulating work indefinitely. Write failures and expired connection timers
+cannot tear down a newer connection through an old gate.
+
+Battery queries are paced to at most one per second, with one deferred refresh to
+retain the latest lid/wearing event in a burst. Deferred work is canceled on
+connection teardown. Battery arrays publish only when values change; timestamps
+still record each received report. Manual audio-table refreshes cannot interrupt a
+pending setting confirmation.
+
+The framer rejects missing or out-of-order slice counters. Invalid custom-EQ gains
+are rejected before reaching sliders, and fixed gain ranges disable editing.
+F4 acknowledgments now match the Rust core for empty JSON payloads and valid JSON
+values without a string command. Tests cover these guards and malformed input.
+
+A matching acknowledgment followed by an unchanged, valid status read no longer
+fails immediately. Read-back confirmation retries every 500 ms within the original
+six-second operation deadline, allowing asynchronous device changes to settle.
+Invalid replies and explicit refusals fail immediately. These retries only read
+state; they never resend the original write. Closing the connection cancels them.
+
+Battery age labels update on a 30-second timeline rather than every second. The
+compact tray's retry countdown remains live when shown. A launch-time CPU sample
+is not used as an idle benchmark; before the final age-label change, a settled live
+snapshot on the development Mac showed 0.9% CPU and about 84 MiB RSS. This is a
+single observation, not a long-running energy or memory guarantee.
+
+Live lifecycle check during hardening: explicit Disconnect remained disconnected
+beyond the first retry interval; selecting Connect restored Air5 battery reads.
+Long-duration soak testing and physical sleep/wake testing remain outstanding.

@@ -1,5 +1,6 @@
 import Foundation
 import IOBluetooth
+import BudsProtocol
 
 struct PairedDevice: Identifiable {
     let device: IOBluetoothDevice
@@ -18,6 +19,8 @@ final class BluetoothTransport: NSObject, IOBluetoothRFCOMMChannelDelegate {
     private var channel: IOBluetoothRFCOMMChannel?
     private var services: [BluetoothRFCOMMChannelID] = []
     private var timeout: DispatchWorkItem?
+    private var writeGate = ConnectionGate()
+    private var queuedWrites = 0
     private let writer = DispatchQueue(label: "com.quickbuds.rfcomm-writes")
     private let uuids = ["0000079A-D102-11E1-9B23-00025B00A5A5", "00001107-D102-11E1-9B23-00025B00A5A5"]
 
@@ -30,7 +33,12 @@ final class BluetoothTransport: NSObject, IOBluetoothRFCOMMChannelDelegate {
     func connect(_ device: IOBluetoothDevice) {
         disconnect()
         self.device = device
-        let timer = DispatchWorkItem { [weak self] in self?.fail("Bluetooth connection timed out.") }
+        writeGate = ConnectionGate()
+        let gate = writeGate
+        let timer = DispatchWorkItem { [weak self] in
+            guard gate.isActive else { return }
+            self?.fail("Bluetooth connection timed out.")
+        }
         timeout = timer
         DispatchQueue.main.asyncAfter(deadline: .now() + 12, execute: timer)
         let result = device.performSDPQuery(self)
@@ -89,12 +97,28 @@ final class BluetoothTransport: NSObject, IOBluetoothRFCOMMChannelDelegate {
 
     func write(_ bytes: [UInt8]) {
         guard let active = channel else { return }
+        guard bytes.count <= Int(UInt16.max), queuedWrites < 64 else {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.channel === active else { return }
+                self.fail("The Bluetooth write queue stalled. Reconnecting.")
+            }
+            return
+        }
+        let gate = writeGate
+        queuedWrites += 1
         writer.async { [weak self] in
+            defer {
+                DispatchQueue.main.async {
+                    guard let self, self.writeGate === gate else { return }
+                    self.queuedWrites = max(0, self.queuedWrites - 1)
+                }
+            }
+            guard gate.isActive else { return }
             var data = bytes
             let result = data.withUnsafeMutableBytes { active.writeSync($0.baseAddress, length: UInt16($0.count)) }
             if result != kIOReturnSuccess {
                 DispatchQueue.main.async {
-                    guard let self, self.channel === active else { return }
+                    guard let self, gate.isActive, self.channel === active else { return }
                     self.fail("Bluetooth write failed (\(result)).")
                 }
             }
@@ -102,6 +126,8 @@ final class BluetoothTransport: NSObject, IOBluetoothRFCOMMChannelDelegate {
     }
 
     func disconnect() {
+        writeGate.invalidate()
+        queuedWrites = 0
         timeout?.cancel()
         timeout = nil
         channel?.setDelegate(nil)

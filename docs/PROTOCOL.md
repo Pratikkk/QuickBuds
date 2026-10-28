@@ -1204,3 +1204,10 @@ The writes are `0x0408`, `0x0414`, `0x0419`, `0x041D`, `0x041F`, `0x042B`, `0x04
 - Other models' ANC bits, gesture writes and `[VENDOR]` features: unverified until an owner reads a write back.
 
 **Code:** `protocol/Commands.kt` (hold mask, level form), `protocol/Anc.kt`, `protocol/Gestures.kt`; `core/src/msg.rs`.
+
+### Native macOS receiver validation
+
+`macOS/Sources/BudsProtocol/Wire.swift` checks the slice counter: a first slice starts
+at zero and following slices increment modulo 256. An out-of-order slice abandons
+that assembly. A whole message clears an unfinished assembly. This describes native
+receiver validation; no new commands or payload meanings are introduced.

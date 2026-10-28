@@ -127,8 +127,9 @@ private struct EQEditor: View {
                         HStack {
                             Text(preset.frequencies[i] >= 1000 ? "\(Double(preset.frequencies[i]) / 1000, specifier: "%g") kHz" : "\(preset.frequencies[i]) Hz")
                                 .frame(width: 75, alignment: .leading)
-                            Slider(value: Binding(get: { Double(preset.gains[i]) }, set: { preset.gains[i] = Int8($0.rounded()) }),
+                            Slider(value: Binding(get: { Double(preset.gains[i]) }, set: { preset.gains[i] = Int8(clamping: Int($0.rounded())) }),
                                    in: Double(preset.minimum)...max(Double(preset.minimum) + 1, Double(preset.maximum)), step: 1)
+                                .disabled(preset.minimum == preset.maximum)
                                 .accessibilityLabel("\(preset.frequencies[i]) Hz")
                             Text("\(preset.gains[i]) dB").monospacedDigit().frame(width: 50, alignment: .trailing)
                         }

@@ -73,6 +73,7 @@ public struct CustomEQ: Identifiable, Equatable {
                 preset.frequencies.append(UInt16(data[at]) | UInt16(data[at + 1]) << 8)
                 preset.gains.append(Int8(bitPattern: data[at + 2]))
             }
+            guard preset.gains.allSatisfy({ $0 >= preset.minimum && $0 <= preset.maximum }) else { return nil }
             result.append(preset)
             offset += 6 + length + bands * 3
         }

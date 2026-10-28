@@ -35,11 +35,15 @@ final class BudsStore: ObservableObject {
     private var createdEQID: UInt8?
     private var audioReadSequence: UInt8?
     private var audioTimeout: Task<Void, Never>?
+    private var audioConfirmationRetry: Task<Void, Never>?
+    private var audioConfirmationWindow: ConfirmationWindow?
     private let transport = BluetoothTransport()
     private var framer = Framer()
     private var sequence: UInt8 = 0
     private var bitmap: [UInt8] = []
     private var offered: [UInt8]?
+    private var batteryReadThrottle = ReadThrottle()
+    private var deferredBatteryRead: Task<Void, Never>?
     private var initialization: Task<Void, Never>?
     private var pending: NoiseOperation?
     private var failureTimer: Task<Void, Never>?
@@ -132,6 +136,8 @@ final class BudsStore: ObservableObject {
         bitmap = []
         offered = nil
         sequence = 0
+        batteryReadThrottle = ReadThrottle()
+        batteryDiagnostic = "No battery response received yet."
         connection = .connecting
         transport.connect(device.device)
     }
@@ -167,11 +173,16 @@ final class BudsStore: ObservableObject {
     }
 
     private func closeConnection() {
+        deferredBatteryRead?.cancel()
+        deferredBatteryRead = nil
         handshakeWatchdog?.cancel()
         handshakeWatchdog = nil
         audioRefresh?.cancel()
         audioRefresh = nil
         audioTimeout?.cancel()
+        audioConfirmationRetry?.cancel()
+        audioConfirmationRetry = nil
+        audioConfirmationWindow = nil
         if audioBusy { error = "The connection ended before the setting was confirmed." }
         audioTransaction = nil
         audioReadSequence = nil
@@ -229,7 +240,7 @@ final class BudsStore: ObservableObject {
                     }
                 }
                 try await Task.sleep(nanoseconds: 200_000_000)
-                self.send(0x0106, sequence: 0xF0)
+                self.refreshBattery()
                 if self.supports(bit: 8) {
                     try await Task.sleep(nanoseconds: 200_000_000)
                     self.send(0x010C, [1, 1])
@@ -285,18 +296,32 @@ final class BudsStore: ObservableObject {
 
     func refreshBattery() {
         guard connection == .connected else { return }
+        guard batteryReadThrottle.allow(at: ProcessInfo.processInfo.systemUptime) else {
+            if deferredBatteryRead == nil {
+                deferredBatteryRead = Task { @MainActor [weak self] in
+                    do { try await Task.sleep(nanoseconds: 1_000_000_000) } catch { return }
+                    guard let self else { return }
+                    self.deferredBatteryRead = nil
+                    self.refreshBattery()
+                }
+            }
+            return
+        }
+        deferredBatteryRead?.cancel()
+        deferredBatteryRead = nil
         send(0x0106, sequence: 0xF0)
     }
 
     private func mergeBattery(_ cells: [BatteryCell]) {
         // Missing parts and zero levels mean unknown, not an empty battery.
-        cachedBattery.formUnion(battery.map(\.part))
-        for cell in cells {
-            batteryUpdated[cell.part] = Date()
-            cachedBattery.remove(cell.part)
-            battery.removeAll { $0.part == cell.part }
-            battery.append(cell)
-        }
+        let reported = Set(cells.map(\.part))
+        cachedBattery = Set(battery.map(\.part)).union(cachedBattery).subtracting(reported)
+        var updated = batteryUpdated
+        let now = Date()
+        for cell in cells { updated[cell.part] = now }
+        batteryUpdated = updated
+        let merged = (battery.filter { !reported.contains($0.part) } + cells).sorted { $0.part < $1.part }
+        if battery != merged { battery = merged }
     }
 
     private func receive(_ bytes: [UInt8]) {
@@ -362,12 +387,7 @@ final class BudsStore: ObservableObject {
             case 2: refreshBattery()
             case 3: reportNoise(Array(p.dropFirst()), isPush: true)
             case 0xF2: reply(message, [0, 0xF2])
-            case 0xF4:
-                if let json = try? JSONSerialization.jsonObject(with: Data(p.dropFirst())), let object = json as? [String: Any] {
-                    let echo = object["cmd"] as? String
-                    let data = (try? JSONSerialization.data(withJSONObject: echo.map { ["cmd": $0] } ?? [:], options: [.sortedKeys])) ?? Data("{}".utf8)
-                    reply(message, [0, 0xF4] + data)
-                } else { reply(message, [1, 0xF4]) }
+            case 0xF4: reply(message, ControlReply.jsonAcknowledgment(Array(p.dropFirst())))
             default: break
             }
         case 0x0500:
@@ -380,8 +400,23 @@ final class BudsStore: ObservableObject {
         }
         if let transaction = audioTransaction, message.command == transaction.read | 0x8000,
            message.sequence == audioReadSequence {
-            finishAudio(validAudioReport && transaction.verify() ? nil : "The earbuds did not apply the requested change.")
-            refreshAudioControls()
+            let decision = audioConfirmationWindow?.decide(valid: validAudioReport, matches: transaction.verify(), now: ProcessInfo.processInfo.systemUptime) ?? .failed
+            switch decision {
+            case .confirmed:
+                finishAudio()
+                refreshAudioControls()
+            case .failed:
+                finishAudio("The earbuds did not apply the requested change.")
+                refreshAudioControls()
+            case .retry:
+                audioConfirmationRetry?.cancel()
+                audioConfirmationRetry = Task { @MainActor [weak self] in
+                    do { try await Task.sleep(nanoseconds: 500_000_000) } catch { return }
+                    guard let self, let active = self.audioTransaction,
+                          active.sequence == transaction.sequence, self.connection == .connected else { return }
+                    self.audioReadSequence = self.send(active.read, active.payload)
+                }
+            }
         }
     }
 
@@ -392,7 +427,7 @@ final class BudsStore: ObservableObject {
     var canDualToggle: Bool { hasAir5Audio && supports(bit: 7) && dualEnabled != nil }
 
     func refreshAudioControls() {
-        guard connection == .connected else { return }
+        guard connection == .connected, !audioBusy else { return }
         audioRefresh?.cancel()
         var queries: [(UInt16, [UInt8])] = []
         if canEQ { queries.append((0x010F, [])) }
@@ -414,6 +449,7 @@ final class BudsStore: ObservableObject {
     private func changeAudio(_ command: UInt16, payload: [UInt8], read: UInt16, query: [UInt8] = [], verify: @escaping () -> Bool) {
         guard connection == .connected, !audioBusy else { return }
         audioBusy = true
+        audioConfirmationWindow = ConfirmationWindow(now: ProcessInfo.processInfo.systemUptime)
         createdEQID = nil
         audioRefresh?.cancel()
         error = nil
@@ -427,6 +463,9 @@ final class BudsStore: ObservableObject {
     }
 
     private func finishAudio(_ message: String? = nil) {
+        audioConfirmationRetry?.cancel()
+        audioConfirmationRetry = nil
+        audioConfirmationWindow = nil
         if let message { error = message }
         audioTimeout?.cancel()
         audioTimeout = nil

@@ -29,6 +29,7 @@ public struct Message: Equatable {
 public struct Framer {
     private var buffer: [UInt8] = []
     private var slices: [UInt8]?
+    private var nextSlice: UInt8 = 0
     public init() {}
 
     public mutating func feed(_ bytes: [UInt8]) -> [Message] {
@@ -53,10 +54,15 @@ public struct Framer {
             buffer.removeFirst(header + length)
             var complete: [UInt8]?
             switch body[0] {
-            case 0: complete = Array(body.dropFirst(2))
-            case 1 where body.count >= 3: slices = Array(body.dropFirst(3))
+            case 0: slices = nil; complete = Array(body.dropFirst(2))
+            case 1 where body.count >= 3:
+                guard body[2] == 0 else { slices = nil; continue }
+                slices = Array(body.dropFirst(3))
+                nextSlice = 1
             case 2 where body.count >= 3, 3 where body.count >= 3:
                 if slices != nil {
+                    guard body[2] == nextSlice else { slices = nil; continue }
+                    nextSlice &+= 1
                     slices! += body.dropFirst(3)
                     if slices!.count > 65540 { slices = nil }
                     if body[0] == 3 { complete = slices; slices = nil }

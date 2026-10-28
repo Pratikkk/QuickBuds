@@ -98,7 +98,9 @@ private struct OverviewView: View {
                             LabeledContent(text("row_firmware_title"), value: store.firmware).padding(8)
                         }
                     } else {
-                        Text(text("no_buds_paired")).foregroundStyle(.secondary)
+                        Text(store.devices.isEmpty ? text("no_buds_paired") : store.nextReconnect != nil
+                             ? "Waiting to reconnect to your earbuds…" : "Select your earbuds and choose Connect.")
+                            .foregroundStyle(.secondary)
                     }
                     HStack {
                         if store.connection != .disconnected {
@@ -163,7 +165,10 @@ private struct OverviewView: View {
             if let updated = store.batteryUpdated[part] {
                 VStack(spacing: 2) {
                     if store.cachedBattery.contains(part) { Text("Last known").font(.caption2) }
-                    Text(updated, style: .relative).font(.caption2)
+                    TimelineView(.periodic(from: .now, by: 30)) { context in
+                        Text(RelativeDateTimeFormatter().localizedString(for: updated, relativeTo: context.date))
+                            .font(.caption2)
+                    }
                 }.foregroundStyle(.secondary)
             }
         }
